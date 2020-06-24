@@ -1,0 +1,70 @@
+# ! /bin/sh
+  
+# Get the fully qualified path to the script
+case $0 in
+    /*)
+        SCRIPT="$0"
+        ;;
+    *)
+        PWD=`pwd`
+        SCRIPT="$PWD/$0"
+        ;;
+esac
+
+# Resolve the true real path without any sym links.
+CHANGED=true
+while [ "X$CHANGED" != "X" ]
+do
+    # Change spaces to ":" so the tokens can be parsed.
+    SAFESCRIPT=`echo $SCRIPT | sed -e 's; ;:;g'`
+    # Get the real path to this script, resolving any symbolic links
+    TOKENS=`echo $SAFESCRIPT | sed -e 's;/; ;g'`
+    REALPATH=
+    for C in $TOKENS; do
+        # Change any ":" in the token back to a space.
+        C=`echo $C | sed -e 's;:; ;g'`
+        REALPATH="$REALPATH/$C"
+        # If REALPATH is a sym link, resolve it.  Loop for nested links.
+        while [ -h "$REALPATH" ] ; do
+            LS="`ls -ld "$REALPATH"`"
+            LINK="`expr "$LS" : '.*-> \(.*\)$'`"
+            if expr "$LINK" : '/.*' > /dev/null; then
+                # LINK is absolute.
+                REALPATH="$LINK"
+            else
+                # LINK is relative.
+                REALPATH="`dirname "$REALPATH"`""/$LINK"
+            fi
+        done
+    done
+
+    if [ "$REALPATH" = "$SCRIPT" ]
+    then
+        CHANGED=""
+    else
+        SCRIPT="$REALPATH"
+    fi
+done
+
+# Get the location of the script.
+REALDIR=`dirname "$REALPATH"`
+# Normalize the path
+REALDIR=`cd "${REALDIR}/../"; pwd`
+
+export YTSN_HOME=$REALDIR
+
+export P2PHOST_CONNECTTIMEOUT=30000
+export P2PHOST_READTIMEOUT=30000
+export P2PHOST_WRITETIMEOUT=30000
+export IPFS_LOGGING=error
+export NODEMGMT_SPOTCHECKINTERVAL=60
+export NODEMGMT_PUNISHGAPUNIT=60
+export NODEMGMT_MINERVERSIONTHRESHOLD=18
+export P2PHOST_ENABLEPPROF=true
+export NODEMGMT_ENABLESPOTCHECK=yes
+export NODEMGMT_SPOTCHECKSKIPTIME=1586793600
+export P2PHOST_UNDERTOW_WORKERTHREADS=3000 
+export NODEMGMT_ANALYSISHOSTNAME=129.211.111.47
+export NODEMGMT_ANALYSISPORT=8080
+export NODEMGMT_ANALYSISTIMEOUT=30000
+export NODEMGMT_BPSYNCINTERVAL=10
