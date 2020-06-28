@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kardianos/service"
@@ -35,6 +36,15 @@ func (p *Program) run() {
 }
 
 func main() {
+	vni := []byte("000000000000000001234567890abcdef")
+	size := len(vni)
+	if size > 16 {
+		vni = vni[size-16:]
+	}
+	fmt.Println(string(vni))
+}
+
+func main11() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {

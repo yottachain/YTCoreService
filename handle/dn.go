@@ -1,17 +1,20 @@
 package handle
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
+	ytanalysis "github.com/yottachain/yotta-analysis"
 )
 
 var NODE_CACHE = cache.New(60*time.Minute, 60*time.Minute)
@@ -244,30 +247,68 @@ var SPOT_NODE_LIST = struct {
 	index int
 }{index: 0}
 
-//var SPOT_SERVICE *ytanalysis.AnalysisClient
+var SPOTCHECK_SERVICE *ytanalysis.AnalysisClient
 
-func SendSpotCheck(node *YTDNMgmt.Node) {
-	//if env.SPOTCHECK {
-	SPOT_NODE_LIST.Lock()
-	pos := SPOT_NODE_LIST.index + 1
-	if pos >= env.SPOTCHECKNUM {
-		SPOT_NODE_LIST.index = 0
-	} else {
-		SPOT_NODE_LIST.index = pos
+func InitSpotCheckService() {
+	if env.SPOTCHECK_ADDR != "" {
+		var err error
+		SPOTCHECK_SERVICE, err = ytanalysis.NewClient(env.SPOTCHECK_ADDR)
+		if err != nil {
+			env.Log.Errorf("Init SpotCheck service err:%s\n", err)
+		}
 	}
-	SPOT_NODE_LIST.nodes[SPOT_NODE_LIST.index] = node
-	SPOT_NODE_LIST.Unlock()
-	if atomic.LoadInt32(ROUTINE_SIZE) > MAX_ROUTINE_SIZE {
-		env.Log.Errorf("Exec SpotCheck ERR:Too many routines.")
-		return
-	}
-	atomic.AddInt32(ROUTINE_SIZE, 1)
-	defer atomic.AddInt32(ROUTINE_SIZE, -1)
-	go ExecSendSpotCheck()
-	//}
 }
 
-func ExecSendSpotCheck() error {
+func SendSpotCheck(node *YTDNMgmt.Node) {
+	if SPOTCHECK_SERVICE != nil {
+		SPOT_NODE_LIST.Lock()
+		pos := SPOT_NODE_LIST.index + 1
+		if pos >= env.SPOTCHECKNUM {
+			SPOT_NODE_LIST.index = 0
+		} else {
+			SPOT_NODE_LIST.index = pos
+		}
+		SPOT_NODE_LIST.nodes[SPOT_NODE_LIST.index] = node
+		SPOT_NODE_LIST.Unlock()
+		if atomic.LoadInt32(ROUTINE_SIZE) > MAX_ROUTINE_SIZE {
+			env.Log.Errorf("Exec SpotCheck ERR:Too many routines.\n")
+			return
+		}
+		atomic.AddInt32(ROUTINE_SIZE, 1)
+		defer atomic.AddInt32(ROUTINE_SIZE, -1)
+		go ExecSendSpotCheck()
+	}
+}
 
-	return nil
+func ExecSendSpotCheck() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	defer cancel()
+	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
+	if err != nil {
+		env.Log.Errorf("IsNodeSelected ERR:%s\n", err)
+		return
+	}
+	if ischeck {
+		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+		defer cancel2()
+		list, err := SPOTCHECK_SERVICE.GetSpotCheckList(ctx2)
+		if err != nil {
+			env.Log.Errorf("GetSpotCheckList ERR:%s\n", err)
+			return
+		}
+		num := len(list.TaskList)
+		req := &pkt.SpotCheckTaskList{TaskId: list.TaskID.Hex(), Snid: int32(env.SuperNodeID)}
+		req.TaskList = make([]*pkt.SpotCheckTask, num)
+		for ii := 0; ii < num; ii++ {
+			t := list.TaskList[ii]
+			req.TaskList[ii] = &pkt.SpotCheckTask{Id: t.ID, NodeId: t.NodeID, Addr: t.Addr}
+			vni := base58.Decode(t.VNI)
+			size := len(vni)
+			if size > 16 {
+				vni = vni[size-16:]
+			}
+			req.TaskList[ii].VHF = vni
+		}
+
+	}
 }

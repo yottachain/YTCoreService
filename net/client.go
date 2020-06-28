@@ -18,8 +18,8 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
-var conntimeout = readTimeout("P2PHOST_CONNECTTIMEOUT")
-var writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
+var Conntimeout = readTimeout("P2PHOST_CONNECTTIMEOUT")
+var Writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
 
 func readTimeout(key string) int {
 	ct := os.Getenv(key)
@@ -132,7 +132,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(writetimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Writetimeout))
 	defer cancel()
 	res, serr := p2phst.SendMsg(ctx, client.PeerId, msgid, data)
 	if serr != nil {
@@ -173,7 +173,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 					env.Log.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(conntimeout))
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Conntimeout))
 				defer cancel()
 				_, err = p2phst.ClientStore().Get(ctx, client.PeerId, maddrs)
 				if err != nil {

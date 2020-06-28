@@ -19,6 +19,7 @@ func Start() {
 	go SumUsedSpace()
 	go DoNodeStatSyncLoop()
 	go DoCacheActionLoop()
+	InitSpotCheckService()
 }
 
 type MessageEvent interface {

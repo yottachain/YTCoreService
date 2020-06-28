@@ -194,6 +194,7 @@ github.com/ipfs/go-cid v0.0.4 h1:UlfXKrZx1DjZoBhQHmNHLC1fK1dUJDN20Y28A7s+gJ8=
 github.com/ipfs/go-cid v0.0.4/go.mod h1:4LLaPOQwmk5z9LBgQnpkivrx8BJjUyGwTXCd5Xfj6+M=
 github.com/ipipdotnet/ipdb-go v1.2.0 h1:Afa0qx/SgRevzIK8Qg1TevuD5M28kFLWbzPvU+GQJ08=
 github.com/ipipdotnet/ipdb-go v1.2.0/go.mod h1:6SFLNyXDBF6q99FQvbOZJQCc2rdPrB1V5DSy4S83RSw=
+github.com/ivpusic/grpool v1.0.0 h1:+FCiCo3GhfsvzfXuJWnpJUNb/VaqyYVgG8C+qvh07Rc=
 github.com/ivpusic/grpool v1.0.0/go.mod h1:WPmiAI5ExAn06vg+0JzyPzXMQutJmpb7TrBtyLJkOHQ=
 github.com/jackpal/go-nat-pmp v1.0.2-0.20160603034137-1fa385a6f458/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
 github.com/jbenet/go-cienv v0.1.0/go.mod h1:TqNnHUmJgXau0nCzC7kXWeotg3J9W34CUv5Djy1+FlA=
@@ -417,6 +418,7 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/subchen/go-trylock/v2 v2.0.0 h1:XAZYp/ZvkBFuvSPAeGM0TjbMby/mHoWnnLBAv2FidUw=
 github.com/subchen/go-trylock/v2 v2.0.0/go.mod h1:jjSakPS+IvBCtFw5Fao9rQqdiCnF0ZrkzVkauvkZzLY=
 github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
@@ -461,8 +463,8 @@ github.com/yottachain/YTDNMgmt v0.0.0-20200528030233-f3f42135b092/go.mod h1:1qEp
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200421075459-15b3e110c71a h1:kYM388CiSzz3j7ec6LeNu/gVZpm9qYLoxsyB/hfaHU4=
 github.com/yottachain/YTHost v1.0.2-0.20200421075459-15b3e110c71a/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
-github.com/yottachain/yotta-analysis v0.0.0-20200612040034-70d70f1e7986/go.mod h1:W8tWsvUGE2LBo3qJLu2fEzPG281ODd9XKpfgUuW63qA=
-github.com/yottachain/yotta-analysis v0.0.0-20200617074002-0474da702f9a/go.mod h1:W8tWsvUGE2LBo3qJLu2fEzPG281ODd9XKpfgUuW63qA=
+github.com/yottachain/yotta-analysis v0.0.0-20200628071244-817ceb5dbbaa h1:Pk9qE27cajFd0q+rBT5bPcGSc2K7cPNEotSFPWIHTuk=
+github.com/yottachain/yotta-analysis v0.0.0-20200628071244-817ceb5dbbaa/go.mod h1:W8tWsvUGE2LBo3qJLu2fEzPG281ODd9XKpfgUuW63qA=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
