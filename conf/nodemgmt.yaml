@@ -67,5 +67,5 @@ misc:
   #是否在权重计算中使用实验性参数，默认为true
   enable-extra-weight-params: true
   #IP数据库的位置
-  ipdb-path: "/root/coreservice/conf/yotta.ipdb"
+  ipdb-path: "conf/yotta.ipdb"
 

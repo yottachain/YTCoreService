@@ -10,6 +10,7 @@ const BP_ENABLE bool = true
 const SPOTCHECKNUM = 3
 
 var DE_DUPLICATION bool = true
+var SPOTCHECK_ADDR string = ""
 var ServerLogLevel string
 var nodemgrLog string
 
@@ -50,11 +51,11 @@ func readSnProperties() {
 	if SuperNodeID < 0 || SuperNodeID > 31 {
 		log.Panicf("The 'superNodeID' parameter is not configured.\n")
 	}
-
 	ss := strings.ToUpper(strings.Trim(config["DE_DUPLICATION"], " "))
 	if ss == "FALSE" {
 		DE_DUPLICATION = false
 	}
+	SPOTCHECK_ADDR = strings.Trim(config["SPOTCHECK_ADDR"], " ")
 	ss = strings.ToUpper(strings.Trim(config["nodemgrLog"], " "))
 	if ss == "OFF" {
 		nodemgrLog = "off"

@@ -23,9 +23,9 @@ require (
 	github.com/tebeka/strftime v0.1.4 // indirect
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
 	github.com/yottachain/YTDNMgmt v0.0.0-20200528030233-f3f42135b092
-	github.com/yottachain/YTDataNode v0.0.0-20200312053251-fbc6b05cc208 // indirect
 	github.com/yottachain/YTHost v1.0.2-0.20200421075459-15b3e110c71a
-	go.mongodb.org/mongo-driver v1.1.3
+	github.com/yottachain/yotta-analysis v0.0.0-20200617074002-0474da702f9a
+	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	golang.org/x/mod v0.3.0 // indirect
 	golang.org/x/tools v0.0.0-20200605181038-cef9fc3bc8f0 // indirect

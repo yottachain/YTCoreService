@@ -18,6 +18,9 @@ import (
 var YTSN_HOME string
 var YTClient_HOME string
 
+var Log *logrus.Logger
+var NodeMgrLog *logrus.Logger
+
 func InitClient() {
 	YTClient_HOME = os.Getenv("YTClient_HOME")
 	if YTClient_HOME == "" {
@@ -58,19 +61,19 @@ func InitServer() {
 func initClientLog() {
 	logFileName := YTClient_HOME + "log/client.log"
 	os.MkdirAll(YTClient_HOME+"log", os.ModePerm)
-	initLog(logFileName)
+	Log = initLog(logFileName)
 }
 
 func initServerLog() {
 	logFileName := YTSN_HOME + "log/server.log"
+	nodelogFileName := YTSN_HOME + "log/nodemgr.log"
 	os.MkdirAll(YTSN_HOME+"log", os.ModePerm)
-	initLog(logFileName)
+	Log = initLog(logFileName)
+	NodeMgrLog = initLog(nodelogFileName)
 }
 
-var Log *logrus.Logger
-
-func initLog(logFileName string) {
-	Log = logrus.New()
+func initLog(logFileName string) *logrus.Logger {
+	logger := logrus.New()
 	logFile, logErr := os.OpenFile(logFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if logErr != nil {
 		logrus.Panic("Fail to find", *logFile, "Server start Failed")
@@ -79,19 +82,20 @@ func initLog(logFileName string) {
 		TimestampFormat: time.StampMilli,
 		LogFormat:       "[%lvl%][%time%]%msg%",
 	}
-	Log.SetFormatter(format)
+	logger.SetFormatter(format)
 	lv, err := logrus.ParseLevel(ServerLogLevel)
 	if err != nil {
-		Log.SetLevel(logrus.TraceLevel)
-		Log.SetOutput(os.Stdout)
+		logger.SetLevel(logrus.TraceLevel)
+		logger.SetOutput(os.Stdout)
 	} else {
-		Log.SetOutput(logFile)
-		Log.SetLevel(lv)
+		logger.SetOutput(logFile)
+		logger.SetLevel(lv)
 		hook, err := newHook(logFileName, format)
 		if err == nil {
-			Log.AddHook(hook)
+			logger.AddHook(hook)
 		}
 	}
+	return logger
 }
 
 func newHook(logName string, format *easy.Formatter) (logrus.Hook, error) {
@@ -114,6 +118,7 @@ func newHook(logName string, format *easy.Formatter) (logrus.Hook, error) {
 }
 
 func SetLimit() {
+
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
@@ -208,15 +213,25 @@ type LogWrite struct {
 }
 
 func (l LogWrite) Write(p []byte) (n int, err error) {
-	if nodemgrLog == "off" {
-		return 0, nil
-	}
 	num := len(p)
-	if Log != nil {
+	if nodemgrLog == "off" {
+		return num, nil
+	}
+	if nodemgrLog == "on" {
+		if Log != nil {
+			if num > 20 {
+				Log.Printf(string(p[20:]))
+			} else {
+				Log.Printf(string(p))
+			}
+		}
+		return num, nil
+	}
+	if NodeMgrLog != nil {
 		if num > 20 {
-			Log.Printf(string(p[20:]))
+			NodeMgrLog.Printf(string(p[20:]))
 		} else {
-			Log.Printf(string(p))
+			NodeMgrLog.Printf(string(p))
 		}
 	}
 	return num, nil

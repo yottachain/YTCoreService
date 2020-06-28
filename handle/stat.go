@@ -218,14 +218,16 @@ func SumUsedSpace() {
 		time.Sleep(time.Duration(15) * time.Minute)
 		m, err := dao.SumRelationship()
 		if err == nil {
-			mowner := []string{}
-			usedspaces := []uint64{}
-			for k, v := range m {
-				mowner = append(mowner, k)
-				usedspaces = append(usedspaces, uint64(v))
+			if len(m) > 0 {
+				mowner := []string{}
+				usedspaces := []uint64{}
+				for k, v := range m {
+					mowner = append(mowner, k)
+					usedspaces = append(usedspaces, uint64(v))
+				}
+				req := &pkt.RelationShipSum{Mowner: mowner, Usedspace: usedspaces}
+				AyncRequest(req, -1, 0)
 			}
-			req := &pkt.RelationShipSum{Mowner: mowner, Usedspace: usedspaces}
-			AyncRequest(req, -1, 0)
 			time.Sleep(time.Duration(15) * time.Minute)
 		} else {
 			time.Sleep(time.Duration(1) * time.Minute)

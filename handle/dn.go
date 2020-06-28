@@ -1,7 +1,6 @@
 package handle
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -9,10 +8,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
-	"github.com/yottachain/YTDNMgmt"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTDNMgmt"
 )
 
 var NODE_CACHE = cache.New(60*time.Minute, 60*time.Minute)
@@ -245,7 +244,10 @@ var SPOT_NODE_LIST = struct {
 	index int
 }{index: 0}
 
+//var SPOT_SERVICE *ytanalysis.AnalysisClient
+
 func SendSpotCheck(node *YTDNMgmt.Node) {
+	//if env.SPOTCHECK {
 	SPOT_NODE_LIST.Lock()
 	pos := SPOT_NODE_LIST.index + 1
 	if pos >= env.SPOTCHECKNUM {
@@ -255,14 +257,17 @@ func SendSpotCheck(node *YTDNMgmt.Node) {
 	}
 	SPOT_NODE_LIST.nodes[SPOT_NODE_LIST.index] = node
 	SPOT_NODE_LIST.Unlock()
-}
-
-func ExecSendSpotCheck() error {
 	if atomic.LoadInt32(ROUTINE_SIZE) > MAX_ROUTINE_SIZE {
-		return errors.New("Too many routines.")
+		env.Log.Errorf("Exec SpotCheck ERR:Too many routines.")
+		return
 	}
 	atomic.AddInt32(ROUTINE_SIZE, 1)
 	defer atomic.AddInt32(ROUTINE_SIZE, -1)
-	//	net.NodeMgr.SpotcheckSelected()
+	go ExecSendSpotCheck()
+	//}
+}
+
+func ExecSendSpotCheck() error {
+
 	return nil
 }

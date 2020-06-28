@@ -34,10 +34,6 @@ func (p *Program) run() {
 	StartServer()
 }
 
-func mainaa() {
-	StartServer()
-}
-
 func main() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
