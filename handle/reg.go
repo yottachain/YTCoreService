@@ -3,15 +3,17 @@ package handle
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
-	"github.com/yottachain/YTCrypto"
-	"github.com/yottachain/YTDNMgmt"
+	"github.com/patrickmn/go-cache"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCrypto"
+	"github.com/yottachain/YTDNMgmt"
 )
 
 type ListSuperNodeHandler struct {
@@ -215,6 +217,8 @@ func (h *QueryUserHandler) Handle() proto.Message {
 	return resp
 }
 
+var NODELIST_CACHE = cache.New(1*time.Minute, 1*time.Minute)
+
 type PreAllocNodeHandler struct {
 	pkey string
 	m    *pkt.PreAllocNodeReqV2
@@ -254,6 +258,9 @@ func (h *PreAllocNodeHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
 }
 
 func (h *PreAllocNodeHandler) Handle() proto.Message {
+	//v, found := BUCKET_LIST_CACHE.Get(key)
+	//if !found {
+	//}
 	env.Log.Infof("User %d AllocNodes,count:%d\n", h.user.UserID, *h.m.Count)
 	nodes := []*pkt.PreAllocNodeResp_PreAllocNode{}
 	ls, err := net.NodeMgr.AllocNodes(int32(*h.m.Count), h.m.Excludes)

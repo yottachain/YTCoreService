@@ -8,10 +8,10 @@ import (
 	"time"
 
 	proto "github.com/golang/protobuf/proto"
-	"github.com/yottachain/YTDNMgmt"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTDNMgmt"
 )
 
 func AyncRequest(reqmsg proto.Message, exclude int, retrytime int) error {
@@ -112,7 +112,7 @@ func (self *SNSynchronizer) run() {
 			}
 		}
 		name := reflect.Indirect(reflect.ValueOf(self.req)).Type().Name()
-		env.Log.Errorf("Sync %s tp %d ErrCode:%d,ERR:%s\n", name, self.sn.ID, self.err.Code, self.err.Msg)
+		env.Log.Errorf("Sync %s to %d ErrCode:%d,ERR:%s\n", name, self.sn.ID, self.err.Code, self.err.Msg)
 		if self.retryTimes == 0 {
 			return
 		} else {

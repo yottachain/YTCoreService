@@ -1,4 +1,4 @@
-# ! /bin/sh
+#!/bin/sh
   
 export P2PHOST_CONNECTTIMEOUT=30000
 export P2PHOST_READTIMEOUT=30000

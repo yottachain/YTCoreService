@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync/atomic"
+	"time"
 
 	proto "github.com/golang/protobuf/proto"
 	"github.com/yottachain/YTCoreService/env"
@@ -59,11 +60,7 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 	return handler, nil
 }
 
-func OnError(msg proto.Message) {
-	name := ""
-	if msg != nil {
-		name = reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
-	}
+func OnError(msg proto.Message, name string) {
 	if r := recover(); r != nil {
 		env.Log.Tracef("OnMessage %s ERR:%s\n", name, r)
 	}
@@ -76,18 +73,24 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 		return pkt.ErrorMsg(pkt.INVALID_ARGS, fmt.Sprintf("Invalid msgid:%d", msgType))
 	}
 	msg := msgfunc()
-	defer OnError(msg)
+	name := reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
+	defer OnError(msg, name)
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
 		env.Log.Errorf("Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())
 		return pkt.ErrorMsg(pkt.INVALID_ARGS, fmt.Sprintf("Deserialize (Msgid:%d) ERR:%s", msgType, err.Error()))
 	}
+	startTime := time.Now()
 	handler, err1 := findHandler(msg, msgType)
 	if err1 != nil {
 		return pkt.MarshalError(err1)
 	}
 	handler.SetPubkey(pubkey)
 	res := handler.Handle()
+	stime := time.Now().Sub(startTime).Milliseconds()
+	if stime > 50 {
+		env.Log.Infof("OnMessage %s take times %d ms\n", name, stime)
+	}
 	return pkt.MarshalMsgBytes(res)
 }
 

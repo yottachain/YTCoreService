@@ -309,6 +309,65 @@ func ExecSendSpotCheck() {
 			}
 			req.TaskList[ii].VHF = vni
 		}
-
+		nodes := []*net.Node{}
+		SPOT_NODE_LIST.RLock()
+		for _, n := range SPOT_NODE_LIST.nodes {
+			if n != nil {
+				node := &net.Node{Id: uint32(n.ID), Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
+				nodes = append(nodes, node)
+			}
+		}
+		SPOT_NODE_LIST.RUnlock()
+		for _, n := range nodes {
+			_, err := net.RequestDN(req, n, req.TaskId)
+			if err != nil {
+				env.Log.Errorf("Send task ERR:%d--%s\n", err.Code, err.Msg)
+			} else {
+				env.Log.Infof("Send task OK.")
+			}
+		}
 	}
+}
+
+type SpotCheckRepHandler struct {
+	pkey string
+	m    *pkt.SpotCheckStatus
+}
+
+func (h *SpotCheckRepHandler) SetPubkey(pubkey string) {
+	h.pkey = pubkey
+}
+
+func (h *SpotCheckRepHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+	req, ok := msg.(*pkt.SpotCheckStatus)
+	if ok {
+		h.m = req
+		return nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+	}
+}
+
+func (h *SpotCheckRepHandler) Handle() proto.Message {
+	_, err := GetNodeId(h.pkey)
+	if err != nil {
+		emsg := fmt.Sprintf("Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
+		env.Log.Errorf(emsg)
+		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
+	}
+	if h.m.InvalidNodeList == nil || len(h.m.InvalidNodeList) == 0 {
+		env.Log.Infof("SpotCheckTaskStatus:%s,invalidNodeList is empty.\n", h.m.TaskId)
+	} else {
+		for _, res := range h.m.InvalidNodeList {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+			defer cancel()
+			err := SPOTCHECK_SERVICE.UpdateTaskStatus(ctx, h.m.TaskId, int32(res))
+			if err != nil {
+				env.Log.Errorf("UpdateTaskStatus TaskID=%s,InvalidNode=%d,ERR:%s\n", h.m.TaskId, res, err)
+			} else {
+				env.Log.Infof("UpdateTaskStatus OK,TaskID=%s,InvalidNode=%d\n", h.m.TaskId, res)
+			}
+		}
+	}
+	return &pkt.VoidResp{}
 }

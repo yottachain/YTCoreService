@@ -1,4 +1,4 @@
-# ! /bin/sh
+#!/bin/sh
 
 case $0 in
     /*)
