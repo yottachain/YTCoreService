@@ -109,10 +109,10 @@ func (h *StatusRepHandler) Handle() proto.Message {
 		relayUrl = newnode.Addrs[0]
 	}
 	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: uint64(productiveSpace), RelayUrl: relayUrl}
-	node.Addrs = addrs
-	NodeStatSync(node)
-	SendSpotCheck(node)
-	SendRebuildTask(node)
+	newnode.Addrs = addrs
+	//NodeStatSync(newnode)
+	SendSpotCheck(newnode)
+	SendRebuildTask(newnode)
 	env.Log.Debugf("StatusRep Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	return statusRepResp
 }
