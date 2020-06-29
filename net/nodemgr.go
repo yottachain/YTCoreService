@@ -10,9 +10,9 @@ import (
 
 	"github.com/eoscanada/eos-go"
 	"github.com/mr-tron/base58"
-	"github.com/yottachain/YTDNMgmt"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTDNMgmt"
 )
 
 var NodeMgr *YTDNMgmt.NodeDaoImpl
@@ -24,6 +24,12 @@ func InitNodeMgr(MongoAddress string) error {
 	if err != nil {
 		return err
 	}
+	env.Log.Infof("BPAccount:%s\n", env.BPAccount)
+	env.Log.Infof("BPPrivateKey:%s\n", env.ShadowPriKey)
+	env.Log.Infof("ContractOwnerM:%s\n", env.ContractAccount)
+	env.Log.Infof("ContractOwnerD:%s\n", env.ContractOwnerD)
+	env.Log.Infof("ShadowAccount:%s\n", env.ShadowAccount)
+	env.Log.Infof("SuperNodeID:%d\n", env.SuperNodeID)
 	config := YTDNMgmt.InitConfig(env.EOSURI, env.BPAccount, env.ShadowPriKey,
 		env.ContractAccount, env.ContractOwnerD, env.ShadowAccount, int32(env.SuperNodeID))
 	if config.PProf.Enable {
