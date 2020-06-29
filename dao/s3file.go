@@ -57,6 +57,7 @@ func (self *FileMeta) GetLastFileMeta(justversion bool) error {
 			return err
 		}
 	}
+	self.FileId = res.FileId
 	self.VersionId = res.Version[0].VersionId
 	self.Meta = res.Version[0].Meta
 	self.Latest = true
@@ -122,10 +123,10 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 			filter = bson.M{"bucketId": bid}
 		}
 	} else {
-		meta := &FileMeta{BucketId: bid, FileName: nFileName}
+		meta := &FileMeta{BucketId: bid, FileName: nFileName, UserId: int32(uid)}
 		err := meta.GetLastFileMeta(true)
 		if err != nil {
-			env.Log.Errorf("ListFileMeta.GetLastFileMeta ERR:%s\n", err)
+			env.Log.Errorf("ListFileMeta.GetLastFileMeta %s/%s ERR:%s\n", bid.Hex(), nFileName, err)
 			return nil, err
 		}
 		if !wversion {

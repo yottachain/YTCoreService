@@ -1,6 +1,8 @@
 package handle
 
 import (
+	"sync/atomic"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
@@ -14,11 +16,8 @@ type CreateBucketHandler struct {
 	user *dao.User
 }
 
-func (h *CreateBucketHandler) SetPubkey(pubkey string) {
+func (h *CreateBucketHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
 	h.pkey = pubkey
-}
-
-func (h *CreateBucketHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
 	req, ok := msg.(*pkt.CreateBucketReqV2)
 	if ok {
 		h.m = req
@@ -33,6 +32,14 @@ func (h *CreateBucketHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
 	}
+}
+
+func (h *CreateBucketHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
 func (h *CreateBucketHandler) Handle() proto.Message {
@@ -64,11 +71,16 @@ type GetBucketHandler struct {
 	user *dao.User
 }
 
-func (h *GetBucketHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *GetBucketHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *GetBucketHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *GetBucketHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.GetBucketReqV2)
 	if ok {
 		h.m = req
@@ -100,11 +112,16 @@ type DeleteBucketHandler struct {
 	user *dao.User
 }
 
-func (h *DeleteBucketHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *DeleteBucketHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *DeleteBucketHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *DeleteBucketHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.DeleteBucketReqV2)
 	if ok {
 		h.m = req
@@ -127,7 +144,7 @@ func (h *DeleteBucketHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
 	}
-	has, err := dao.BucketIsEmpty(uint32(h.user.UserID))
+	has, err := dao.BucketIsEmpty(uint32(h.user.UserID), bmeta.BucketId)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
@@ -149,11 +166,16 @@ type UpdateBucketHandler struct {
 	user *dao.User
 }
 
-func (h *UpdateBucketHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UpdateBucketHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UpdateBucketHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UpdateBucketHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UpdateBucketReqV2)
 	if ok {
 		h.m = req
@@ -191,11 +213,16 @@ type ListBucketHandler struct {
 	user *dao.User
 }
 
-func (h *ListBucketHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *ListBucketHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *ListBucketHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *ListBucketHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListBucketReqV2)
 	if ok {
 		h.m = req

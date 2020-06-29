@@ -178,12 +178,13 @@ func SaveBucketMeta(meta *BucketMeta) error {
 	return nil
 }
 
-func BucketIsEmpty(uid uint32) (bool, error) {
+func BucketIsEmpty(uid uint32, id primitive.ObjectID) (bool, error) {
 	source := NewUserMetaSource(uid)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res := &FileMeta{}
-	err := source.GetObjectColl().FindOne(ctx, bson.M{}).Decode(res)
+	res := &FileMetaWithVersion{}
+	filter := bson.M{"bucketId": id}
+	err := source.GetFileColl().FindOne(ctx, filter).Decode(res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return true, nil

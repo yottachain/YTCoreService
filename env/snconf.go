@@ -11,6 +11,8 @@ const SPOTCHECKNUM = 3
 
 var DE_DUPLICATION bool = true
 var SPOTCHECK_ADDR string = ""
+var REBUILD_ADDR string = ""
+
 var ServerLogLevel string
 var nodemgrLog string
 
@@ -39,6 +41,12 @@ var ShadowPriKey string
 var ContractAccount string
 var ContractOwnerD string
 
+var MAX_AYNC_ROUTINE int32
+var MAX_READ_ROUTINE int32
+var MAX_WRITE_ROUTINE int32
+var MAX_STAT_ROUTINE int32
+var SLOW_OP_TIMES int
+
 func readSnProperties() {
 	confpath := YTSN_HOME + "conf/server.properties"
 	config := ReadConfig(confpath)
@@ -56,6 +64,7 @@ func readSnProperties() {
 		DE_DUPLICATION = false
 	}
 	SPOTCHECK_ADDR = strings.Trim(config["SPOTCHECK_ADDR"], " ")
+	REBUILD_ADDR = strings.Trim(config["REBUILD_ADDR"], " ")
 	ss = strings.ToUpper(strings.Trim(config["nodemgrLog"], " "))
 	if ss == "OFF" {
 		nodemgrLog = "off"
@@ -96,4 +105,9 @@ func readSnProperties() {
 	if ContractOwnerD == "" {
 		log.Panicf("The 'contractOwnerD' parameter is not configured.\n")
 	}
+	MAX_AYNC_ROUTINE = int32(StringToInt(config["MAX_AYNC_ROUTINE"], 200, 2000, 1000))
+	MAX_READ_ROUTINE = int32(StringToInt(config["MAX_READ_ROUTINE"], 200, 2000, 1000))
+	MAX_WRITE_ROUTINE = int32(StringToInt(config["MAX_WRITE_ROUTINE"], 500, 5000, 2000))
+	MAX_STAT_ROUTINE = int32(StringToInt(config["MAX_STAT_ROUTINE"], 200, 2000, 1000))
+	SLOW_OP_TIMES = StringToInt(config["SLOW_OP_TIMES"], 10, 200, 50)
 }

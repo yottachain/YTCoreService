@@ -21,6 +21,7 @@ require (
 	github.com/yottachain/YTDNMgmt v0.0.0-20200528030233-f3f42135b092
 	github.com/yottachain/YTHost v1.0.2-0.20200421075459-15b3e110c71a
 	github.com/yottachain/yotta-analysis v0.0.0-20200628071244-817ceb5dbbaa
+	github.com/yottachain/yotta-rebuilder v0.0.0-20200628094122-6334751bff53
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	golang.org/x/mod v0.3.0 // indirect

@@ -15,6 +15,7 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
 	ytanalysis "github.com/yottachain/yotta-analysis"
+	ytrebuilder "github.com/yottachain/yotta-rebuilder"
 )
 
 var NODE_CACHE = cache.New(60*time.Minute, 60*time.Minute)
@@ -38,11 +39,16 @@ type StatusRepHandler struct {
 	m    *pkt.StatusRepReq
 }
 
-func (h *StatusRepHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *StatusRepHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(STAT_ROUTINE_NUM, 1)
+	return STAT_ROUTINE_NUM
 }
 
-func (h *StatusRepHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.StatusRepReq)
 	if ok {
 		h.m = req
@@ -106,6 +112,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	node.Addrs = addrs
 	NodeStatSync(node)
 	SendSpotCheck(node)
+	SendRebuildTask(node)
 	env.Log.Debugf("StatusRep Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	return statusRepResp
 }
@@ -184,11 +191,16 @@ type NodeSyncHandler struct {
 	m    *pkt.NodeSyncReq
 }
 
-func (h *NodeSyncHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *NodeSyncHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *NodeSyncHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.NodeSyncReq)
 	if ok {
 		h.m = req
@@ -270,17 +282,17 @@ func SendSpotCheck(node *YTDNMgmt.Node) {
 		}
 		SPOT_NODE_LIST.nodes[SPOT_NODE_LIST.index] = node
 		SPOT_NODE_LIST.Unlock()
-		if atomic.LoadInt32(ROUTINE_SIZE) > MAX_ROUTINE_SIZE {
+		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
 			env.Log.Errorf("Exec SpotCheck ERR:Too many routines.\n")
 			return
 		}
-		atomic.AddInt32(ROUTINE_SIZE, 1)
-		defer atomic.AddInt32(ROUTINE_SIZE, -1)
 		go ExecSendSpotCheck()
 	}
 }
 
 func ExecSendSpotCheck() {
+	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
+	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
 	defer cancel()
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
@@ -319,11 +331,11 @@ func ExecSendSpotCheck() {
 		}
 		SPOT_NODE_LIST.RUnlock()
 		for _, n := range nodes {
-			_, err := net.RequestDN(req, n, req.TaskId)
+			_, err := net.RequestDN(req, n, "")
 			if err != nil {
-				env.Log.Errorf("Send task ERR:%d--%s\n", err.Code, err.Msg)
+				env.Log.Errorf("Send spotcheck task [%s] ERR:%d--%s\n", req.TaskId, err.Code, err.Msg)
 			} else {
-				env.Log.Infof("Send task OK.")
+				env.Log.Infof("Send spotcheck task [%s] OK.\n", req.TaskId)
 			}
 		}
 	}
@@ -334,11 +346,16 @@ type SpotCheckRepHandler struct {
 	m    *pkt.SpotCheckStatus
 }
 
-func (h *SpotCheckRepHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *SpotCheckRepHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(STAT_ROUTINE_NUM, 1)
+	return STAT_ROUTINE_NUM
 }
 
-func (h *SpotCheckRepHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.SpotCheckStatus)
 	if ok {
 		h.m = req
@@ -369,5 +386,93 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 			}
 		}
 	}
+	return &pkt.VoidResp{}
+}
+
+var REBUILDER_SERVICE *ytrebuilder.RebuilderClient
+
+func InitRebuildService() {
+	if env.REBUILD_ADDR != "" {
+		var err error
+		REBUILDER_SERVICE, err = ytrebuilder.NewClient(env.REBUILD_ADDR)
+		if err != nil {
+			env.Log.Errorf("Init Rebuild service err:%s\n", err)
+		}
+	}
+}
+
+func SendRebuildTask(node *YTDNMgmt.Node) {
+	if REBUILDER_SERVICE != nil {
+		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
+			env.Log.Errorf("Exec SendRebuildTask ERR:Too many routines.\n")
+			return
+		}
+		go ExecSendRebuildTask(node)
+	}
+}
+
+func ExecSendRebuildTask(n *YTDNMgmt.Node) {
+	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
+	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	defer cancel()
+	ls, err := REBUILDER_SERVICE.GetRebuildTasks(ctx)
+	if err != nil {
+		env.Log.Errorf("GetRebuildTasks ERR:%s\n", err)
+	}
+	node := &net.Node{Id: uint32(n.ID), Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
+	req := &pkt.TaskList{Tasklist: ls.Tasklist}
+	_, e := net.RequestDN(req, node, "")
+	if err != nil {
+		env.Log.Errorf("Send rebuild task ERR:%d--%s\n", e.Code, e.Msg)
+	} else {
+		env.Log.Infof("Send rebuild task OK.\n")
+	}
+}
+
+type TaskOpResultListHandler struct {
+	pkey string
+	m    *pkt.TaskOpResultList
+}
+
+func (h *TaskOpResultListHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(STAT_ROUTINE_NUM, 1)
+	return STAT_ROUTINE_NUM
+}
+
+func (h *TaskOpResultListHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
+	req, ok := msg.(*pkt.TaskOpResultList)
+	if ok {
+		h.m = req
+		return nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+	}
+}
+
+func (h *TaskOpResultListHandler) Handle() proto.Message {
+	_, err := GetNodeId(h.pkey)
+	if err != nil {
+		emsg := fmt.Sprintf("Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
+		env.Log.Errorf(emsg)
+		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
+	}
+	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
+		env.Log.Errorf("Rebuild task OpResultList is empty.\n")
+		return &pkt.VoidResp{}
+	}
+	if REBUILDER_SERVICE == nil {
+		env.Log.Errorf("Rebuild server Not started.\n")
+		return &pkt.VoidResp{}
+	}
+
+	//ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	//defer cancel()
+	//req := &ytrebuildpb.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
+	//REBUILDER_SERVICE.UpdateTaskStatus(ctx, nil)
 	return &pkt.VoidResp{}
 }

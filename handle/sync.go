@@ -15,7 +15,7 @@ import (
 )
 
 func AyncRequest(reqmsg proto.Message, exclude int, retrytime int) error {
-	if atomic.LoadInt32(ROUTINE_SIZE) > MAX_ROUTINE_SIZE {
+	if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
 		return errors.New("Too many routines.")
 	}
 	list := net.GetSuperNodes()
@@ -34,8 +34,8 @@ func AyncRequest(reqmsg proto.Message, exclude int, retrytime int) error {
 }
 
 func SyncRequest(reqmsg proto.Message, exclude int, retrytime int) ([]*SNSynchronizer, error) {
-	if atomic.LoadInt32(ROUTINE_SIZE) > MAX_ROUTINE_SIZE {
-		return nil, errors.New("Too many routines.")
+	if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
+		return nil, errors.New("SyncRequest:Too many routines.")
 	}
 	list := net.GetSuperNodes()
 	num := len(list)
@@ -85,8 +85,8 @@ func (self *SNSynchronizer) run() {
 	if self.wg != nil {
 		defer self.wg.Done()
 	}
-	atomic.AddInt32(ROUTINE_SIZE, 1)
-	defer atomic.AddInt32(ROUTINE_SIZE, -1)
+	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
+	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	for {
 		if self.sn.ID == int32(env.SuperNodeID) {
 			handler, err := FindHandler(self.req)
@@ -94,7 +94,11 @@ func (self *SNSynchronizer) run() {
 				self.err = err
 				return
 			}
-			handler.SetPubkey(self.sn.PubKey)
+			err1 := handler.SetMessage(self.sn.PubKey, self.req)
+			if err1 != nil {
+				self.err = err1
+				return
+			}
 			res := handler.Handle()
 			if errmsg, ok := res.(*pkt.ErrorMessage); ok {
 				self.err = errmsg

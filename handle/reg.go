@@ -3,6 +3,8 @@ package handle
 import (
 	"bytes"
 	"fmt"
+	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -21,11 +23,16 @@ type ListSuperNodeHandler struct {
 	m    *pkt.ListSuperNodeReq
 }
 
-func (h *ListSuperNodeHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *ListSuperNodeHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *ListSuperNodeHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *ListSuperNodeHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListSuperNodeReq)
 	if ok {
 		h.m = req
@@ -53,11 +60,16 @@ type RegUserHandler struct {
 	m    *pkt.RegUserReqV2
 }
 
-func (h *RegUserHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *RegUserHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *RegUserHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *RegUserHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.RegUserReqV2)
 	if ok {
 		h.m = req
@@ -140,11 +152,16 @@ type QueryUserHandler struct {
 	m    *pkt.QueryUserReqV2
 }
 
-func (h *QueryUserHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *QueryUserHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *QueryUserHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *QueryUserHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.QueryUserReqV2)
 	if ok {
 		h.m = req
@@ -225,11 +242,16 @@ type PreAllocNodeHandler struct {
 	user *dao.User
 }
 
-func (h *PreAllocNodeHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *PreAllocNodeHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *PreAllocNodeHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *PreAllocNodeHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.PreAllocNodeReqV2)
 	if ok {
 		h.m = req
@@ -258,9 +280,11 @@ func (h *PreAllocNodeHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
 }
 
 func (h *PreAllocNodeHandler) Handle() proto.Message {
-	//v, found := BUCKET_LIST_CACHE.Get(key)
-	//if !found {
-	//}
+	v, found := NODELIST_CACHE.Get(strconv.Itoa(int(h.user.UserID)))
+	if found {
+		env.Log.Debugf("User %d AllocNodes,from cache\n", h.user.UserID)
+		return v.(*pkt.PreAllocNodeResp)
+	}
 	env.Log.Infof("User %d AllocNodes,count:%d\n", h.user.UserID, *h.m.Count)
 	nodes := []*pkt.PreAllocNodeResp_PreAllocNode{}
 	ls, err := net.NodeMgr.AllocNodes(int32(*h.m.Count), h.m.Excludes)
@@ -275,7 +299,9 @@ func (h *PreAllocNodeHandler) Handle() proto.Message {
 		nodes = signNode(nodes, n)
 	}
 	env.Log.Infof("User %d AllocNodes OK,return %d\n", h.user.UserID, len(nodes))
-	return &pkt.PreAllocNodeResp{Preallocnode: nodes}
+	resp := &pkt.PreAllocNodeResp{Preallocnode: nodes}
+	NODELIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), resp)
+	return resp
 }
 
 func signNode(nodes []*pkt.PreAllocNodeResp_PreAllocNode, n *YTDNMgmt.Node) []*pkt.PreAllocNodeResp_PreAllocNode {

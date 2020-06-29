@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
   
 # Get the fully qualified path to the script
 case $0 in

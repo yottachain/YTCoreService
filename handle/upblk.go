@@ -3,15 +3,16 @@ package handle
 import (
 	"bytes"
 	"crypto/md5"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/yottachain/YTDNMgmt"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTDNMgmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,11 +23,16 @@ type UploadBlockInitHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockInitHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadBlockInitHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadBlockInitHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockInitReqV2)
 	if ok {
 		h.m = req
@@ -88,11 +94,16 @@ type UploadBlockDBHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockDBHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadBlockDBHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadBlockDBHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockDBHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockDBReqV2)
 	if ok {
 		h.m = req
@@ -188,11 +199,16 @@ type UploadBlockDupHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockDupHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadBlockDupHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadBlockDupHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockDupHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockDupReqV2)
 	if ok {
 		h.m = req
@@ -263,11 +279,16 @@ type UploadBlockEndHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockEndHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadBlockEndHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadBlockEndHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockEndReqV2)
 	if ok {
 		h.m = req
@@ -429,11 +450,16 @@ type UploadBlockEndSyncHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockEndSyncHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadBlockEndSyncHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadBlockEndSyncHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockEndSyncReqV2)
 	if ok {
 		h.m = req

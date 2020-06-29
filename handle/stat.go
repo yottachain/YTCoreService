@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -15,11 +16,16 @@ type TotalHandler struct {
 	m    *pkt.TotalReq
 }
 
-func (h *TotalHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *TotalHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *TotalHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.TotalReq)
 	if ok {
 		h.m = req
@@ -62,11 +68,16 @@ type UserSpaceHandler struct {
 	m    *pkt.UserSpaceReq
 }
 
-func (h *UserSpaceHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UserSpaceHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *UserSpaceHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UserSpaceReq)
 	if ok {
 		h.m = req
@@ -98,11 +109,16 @@ type UserListHandler struct {
 	m    *pkt.UserListReq
 }
 
-func (h *UserListHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UserListHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *UserListHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UserListReq)
 	if ok {
 		h.m = req
@@ -146,11 +162,16 @@ type RelationshipHandler struct {
 	m    *pkt.Relationship
 }
 
-func (h *RelationshipHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *RelationshipHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *RelationshipHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.Relationship)
 	if ok {
 		h.m = req
@@ -182,11 +203,16 @@ type RelationshipSumHandler struct {
 	m    *pkt.RelationShipSum
 }
 
-func (h *RelationshipSumHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *RelationshipSumHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *RelationshipSumHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *RelationshipSumHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.RelationShipSum)
 	if ok {
 		h.m = req

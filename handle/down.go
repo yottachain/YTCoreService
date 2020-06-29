@@ -1,6 +1,8 @@
 package handle
 
 import (
+	"sync/atomic"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
@@ -15,11 +17,16 @@ type DownloadObjectInitHandler struct {
 	user *dao.User
 }
 
-func (h *DownloadObjectInitHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *DownloadObjectInitHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *DownloadObjectInitHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *DownloadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadObjectInitReqV2)
 	if ok {
 		h.m = req
@@ -55,11 +62,16 @@ type DownloadFileHandler struct {
 	verid primitive.ObjectID
 }
 
-func (h *DownloadFileHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *DownloadFileHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *DownloadFileHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadFileReqV2)
 	if ok {
 		h.m = req
@@ -115,11 +127,16 @@ type DownloadBlockInitHandler struct {
 	user *dao.User
 }
 
-func (h *DownloadBlockInitHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *DownloadBlockInitHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *DownloadBlockInitHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadBlockInitReqV2)
 	if ok {
 		h.m = req

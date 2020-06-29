@@ -41,6 +41,8 @@ const TOO_MANY_CURSOR = 0x24
 const TOO_LOW_VERSION = 0x25
 const INVALID_ARGS = 0x30
 
+var BUSY_ERROR = NewErrorMsg(SERVER_ERROR, "Too many routines")
+
 func NewErrorMsg(code int32, msg string) *ErrorMessage {
 	err := &ErrorMessage{}
 	err.Code = code

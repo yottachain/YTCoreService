@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -25,11 +26,16 @@ type UploadFileHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadFileHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadFileHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadFileHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadFileReqV2)
 	if ok {
 		h.m = req
@@ -74,11 +80,16 @@ type CopyObjectHandler struct {
 	user *dao.User
 }
 
-func (h *CopyObjectHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *CopyObjectHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *CopyObjectHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *CopyObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.CopyObjectReqV2)
 	if ok {
 		h.m = req
@@ -141,11 +152,16 @@ type DeleteFileHandler struct {
 	verid primitive.ObjectID
 }
 
-func (h *DeleteFileHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *DeleteFileHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *DeleteFileHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *DeleteFileHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.DeleteFileReqV2)
 	if ok {
 		h.m = req
@@ -193,11 +209,16 @@ type GetObjectHandler struct {
 	user *dao.User
 }
 
-func (h *GetObjectHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *GetObjectHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *GetObjectHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.GetObjectReqV2)
 	if ok {
 		h.m = req
@@ -244,11 +265,16 @@ type ListObjectHandler struct {
 	HashKey      string
 }
 
-func (h *ListObjectHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *ListObjectHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(READ_ROUTINE_NUM, 1)
+	return READ_ROUTINE_NUM
 }
 
-func (h *ListObjectHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListObjectReqV2)
 	if ok {
 		h.m = req
@@ -269,7 +295,7 @@ func (h *ListObjectHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
 			return pkt.NewError(pkt.INVALID_SIGNATURE)
 		}
 		if h.m.FileName != nil {
-			h.nextfileName = *h.m.FileName
+			h.nextfileName = strings.TrimSpace(*h.m.FileName)
 		}
 		if h.m.Prefix != nil {
 			h.prefix = *h.m.Prefix
@@ -321,19 +347,18 @@ var ListHandles = struct {
 }{handles: make(map[int32]*Handles)}
 
 func (h *ListObjectHandler) Handle() proto.Message {
-	/*
-		v, found := OBJ_LIST_CACHE.Get(h.HashKey)
-		if found {
-			size := OBJ_LIST_CACHE.ItemCount()
-			env.Log.Infof("List object:%d/%s from Cache,Size:%d\n", h.user.UserID, *h.m.BucketName, size)
-			if size >= env.LsCacheMaxSize {
-				DEFAULT_EXPIRE_TIME = time.Duration(2000) * time.Second
-				OBJ_LIST_CACHE.DeleteExpired()
-			} else {
-				DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
-			}
-			return v.(proto.Message)
-		}*/
+	v, found := OBJ_LIST_CACHE.Get(h.HashKey)
+	if found {
+		size := OBJ_LIST_CACHE.ItemCount()
+		env.Log.Infof("List object:%d/%s from Cache,Size:%d\n", h.user.UserID, *h.m.BucketName, size)
+		if size >= env.LsCacheMaxSize {
+			DEFAULT_EXPIRE_TIME = time.Duration(2000) * time.Second
+			OBJ_LIST_CACHE.DeleteExpired()
+		} else {
+			DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
+		}
+		return v.(proto.Message)
+	}
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if meta == nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -362,7 +387,6 @@ func (h *ListObjectHandler) Handle() proto.Message {
 	}
 	atomic.AddInt32(handles.cursorCount, 1)
 	defer atomic.AddInt32(handles.cursorCount, -1)
-	env.Log.Infof("List object:%d/%s\n", h.user.UserID, *h.m.BucketName)
 	startTime := time.Now()
 	resp, err := dao.ListFileMeta(uint32(h.user.UserID), meta.BucketId, h.prefix, h.nextfileName, h.nextid, int64(h.limit), h.version)
 	if err != nil {

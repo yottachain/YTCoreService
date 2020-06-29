@@ -11,22 +11,27 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
-var ROUTINE_SIZE *int32 = new(int32)
-
-const MAX_ROUTINE_SIZE = 3000
+var AYNC_ROUTINE_NUM *int32 = new(int32)
+var READ_ROUTINE_NUM *int32 = new(int32)
+var WRITE_ROUTINE_NUM *int32 = new(int32)
+var STAT_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
-	atomic.StoreInt32(ROUTINE_SIZE, 0)
+	atomic.StoreInt32(AYNC_ROUTINE_NUM, 0)
+	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
+	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
+	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
 	go SumUsedSpace()
 	go DoNodeStatSyncLoop()
 	go DoCacheActionLoop()
 	InitSpotCheckService()
+	InitRebuildService()
 }
 
 type MessageEvent interface {
 	Handle() proto.Message
-	SetPubkey(pubkey string)
-	SetMessage(msg proto.Message) *pkt.ErrorMessage
+	SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage
+	CheckRoutine() *int32
 }
 
 func FindHandler(msg proto.Message) (MessageEvent, *pkt.ErrorMessage) {
@@ -52,12 +57,7 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 		env.Log.Errorf(emsg)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, emsg)
 	}
-	handler := handfunc()
-	err1 := handler.SetMessage(msg)
-	if err1 != nil {
-		return nil, err1
-	}
-	return handler, nil
+	return handfunc(), nil
 }
 
 func OnError(msg proto.Message, name string) {
@@ -80,15 +80,24 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 		env.Log.Errorf("Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())
 		return pkt.ErrorMsg(pkt.INVALID_ARGS, fmt.Sprintf("Deserialize (Msgid:%d) ERR:%s", msgType, err.Error()))
 	}
-	startTime := time.Now()
 	handler, err1 := findHandler(msg, msgType)
 	if err1 != nil {
 		return pkt.MarshalError(err1)
 	}
-	handler.SetPubkey(pubkey)
+	err2 := handler.SetMessage(pubkey, msg)
+	if err2 != nil {
+		return pkt.MarshalMsgBytes(err2)
+	}
+	rnum := handler.CheckRoutine()
+	if rnum == nil {
+		env.Log.Errorf("OnMessage %s ERR:Too many routines\n", name)
+		return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
+	}
+	defer atomic.AddInt32(rnum, -1)
+	startTime := time.Now()
 	res := handler.Handle()
 	stime := time.Now().Sub(startTime).Milliseconds()
-	if stime > 50 {
+	if stime > int64(env.SLOW_OP_TIMES) {
 		env.Log.Infof("OnMessage %s take times %d ms\n", name, stime)
 	}
 	return pkt.MarshalMsgBytes(res)

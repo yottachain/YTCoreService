@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
-	"github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCrypto"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,7 +23,7 @@ func SetUploadObject(vnu primitive.ObjectID, ca *UploadObjectCache) {
 	Upload_CACHE.SetDefault(vnu.Hex(), ca)
 }
 
-func GetdUploadObject(vnu primitive.ObjectID) *UploadObjectCache {
+func GetUploadObject(vnu primitive.ObjectID) *UploadObjectCache {
 	var ca *UploadObjectCache
 	v, found := Upload_CACHE.Get(vnu.Hex())
 	if found {
@@ -31,7 +32,7 @@ func GetdUploadObject(vnu primitive.ObjectID) *UploadObjectCache {
 	return ca
 }
 
-func DeldUploadObject(vnu primitive.ObjectID) {
+func DelUploadObject(vnu primitive.ObjectID) {
 	Upload_CACHE.Delete(vnu.Hex())
 }
 
@@ -115,11 +116,16 @@ type UploadObjectInitHandler struct {
 	user *dao.User
 }
 
-func (h *UploadObjectInitHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadObjectInitHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadObjectInitHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadObjectInitReqV2)
 	if ok {
 		h.m = req
@@ -243,11 +249,16 @@ type SaveObjectMetaHandler struct {
 	vnu   primitive.ObjectID
 }
 
-func (h *SaveObjectMetaHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *SaveObjectMetaHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *SaveObjectMetaHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.SaveObjectMetaReq)
 	if ok {
 		h.m = req
@@ -308,11 +319,16 @@ type ActiveCacheHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *ActiveCacheHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *ActiveCacheHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *ActiveCacheHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *ActiveCacheHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.ActiveCacheV2)
 	if ok {
 		h.m = req
@@ -334,7 +350,7 @@ func (h *ActiveCacheHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
 }
 
 func (h *ActiveCacheHandler) Handle() proto.Message {
-	ca := GetdUploadObject(h.vnu)
+	ca := GetUploadObject(h.vnu)
 	if ca != nil {
 		SetUploadObject(h.vnu, ca)
 	}
@@ -348,11 +364,16 @@ type UploadObjectEndHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadObjectEndHandler) SetPubkey(pubkey string) {
-	h.pkey = pubkey
+func (h *UploadObjectEndHandler) CheckRoutine() *int32 {
+	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+		return nil
+	}
+	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
+	return WRITE_ROUTINE_NUM
 }
 
-func (h *UploadObjectEndHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadObjectEndReqV2)
 	if ok {
 		h.m = req
@@ -374,7 +395,7 @@ func (h *UploadObjectEndHandler) SetMessage(msg proto.Message) *pkt.ErrorMessage
 }
 
 func (h *UploadObjectEndHandler) Handle() proto.Message {
-	ca := GetdUploadObject(h.vnu)
+	ca := GetUploadObject(h.vnu)
 	if ca == nil {
 		env.Log.Warnf("[%s] already completed.\n", h.vnu.Hex())
 		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
@@ -399,7 +420,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 0)
 		env.Log.Errorf("[%d] Add usedSpace ERR:%s\n", h.user.UserID, err)
 		env.Log.Infof("Upload object %d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
-		DeldUploadObject(meta.VNU)
+		DelUploadObject(meta.VNU)
 		return &pkt.VoidResp{}
 	}
 	env.Log.Infof("User [%d] add usedSpace:%d\n", h.user.UserID, usedspace)
@@ -411,7 +432,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	}
 	env.Log.Infof("User [%d] sub balance:%d\n", h.user.UserID, firstCost)
 	env.Log.Infof("Upload object %d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
-	DeldUploadObject(meta.VNU)
+	DelUploadObject(meta.VNU)
 	return &pkt.VoidResp{}
 }
 

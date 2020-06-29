@@ -87,8 +87,7 @@ func RelationshipHandle(w http.ResponseWriter, req *http.Request) {
 	var errmsg string = ""
 	if sn.ID == int32(env.SuperNodeID) {
 		handler := &handle.RelationshipHandler{}
-		handler.SetPubkey(sn.PubKey)
-		err := handler.SetMessage(requset)
+		err := handler.SetMessage(sn.PubKey, requset)
 		if err != nil {
 			errmsg = "RelationshipHandle err:" + err.Msg
 		} else {
