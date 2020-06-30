@@ -17,7 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20200528030233-f3f42135b092
+	github.com/yottachain/YTDNMgmt v0.0.0-20200630022127-87f62b6af84f
 	github.com/yottachain/YTHost v1.0.2-0.20200421075459-15b3e110c71a
 	github.com/yottachain/yotta-analysis v0.0.0-20200628071244-817ceb5dbbaa
 	github.com/yottachain/yotta-rebuilder v0.0.0-20200628094122-6334751bff53
