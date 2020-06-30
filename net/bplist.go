@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/eoscanada/eos-go"
-	"github.com/eoscanada/eos-go/ecc"
+	"github.com/aurawing/eos-go"
+	"github.com/aurawing/eos-go/ecc"
 	"github.com/yottachain/YTCoreService/env"
 	ytcrypto "github.com/yottachain/YTCrypto"
 )
@@ -117,7 +117,7 @@ func (self *EOSURI) NewApi() (*eos.API, error) {
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(func(tx *eos.Transaction) ([]ecc.PublicKey, error) {
 		publickey, _ := ytcrypto.GetPublicKeyByPrivateKey(env.ShadowPriKey)
-		pubkey, _ := ecc.NewPublicKey(fmt.Sprintf("%s%s", "EOS", publickey))
+		pubkey, _ := ecc.NewPublicKey(fmt.Sprintf("%s%s", "YTA", publickey))
 		return []ecc.PublicKey{pubkey}, nil
 	})
 	self.apivalue.Store(api)

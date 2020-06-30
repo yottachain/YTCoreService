@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
 	"github.com/yottachain/YTCoreService/env"

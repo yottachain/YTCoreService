@@ -3,8 +3,7 @@ module github.com/yottachain/YTCoreService
 go 1.14
 
 require (
-	github.com/aurawing/eos-go v0.9.1-0.20200517061225-3b03c8403b28 // indirect
-	github.com/eoscanada/eos-go v0.9.0
+	github.com/aurawing/eos-go v0.9.1-0.20200517061225-3b03c8403b28
 	github.com/gobuffalo/packr/v2 v2.5.1
 	github.com/golang/protobuf v1.4.1
 	github.com/kardianos/service v1.1.0

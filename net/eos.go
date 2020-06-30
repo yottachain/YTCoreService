@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eoscanada/eos-go"
+	"github.com/aurawing/eos-go"
 	"github.com/patrickmn/go-cache"
 	"github.com/yottachain/YTCoreService/env"
 )
