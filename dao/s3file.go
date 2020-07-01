@@ -28,14 +28,14 @@ type FileVerion struct {
 }
 
 type FileMeta struct {
-	FileId    primitive.ObjectID `bson:"_id"`
-	BucketId  primitive.ObjectID `bson:"bucketId"`
-	FileName  string             `bson:"fileName"`
-	VersionId primitive.ObjectID `bson:"version.versionId"`
-	Meta      []byte             `bson:"version.meta"`
-	Acl       []byte             `bson:"version.acl"`
-	UserId    int32              `bson:"-"`
-	Latest    bool               `bson:"-"`
+	FileId    primitive.ObjectID
+	BucketId  primitive.ObjectID
+	FileName  string
+	VersionId primitive.ObjectID
+	Meta      []byte
+	Acl       []byte
+	UserId    int32
+	Latest    bool
 }
 
 func (self *FileMeta) GetLastFileMeta(justversion bool) error {

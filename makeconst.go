@@ -17,10 +17,6 @@ var CLASS_ID_MAP_CODE bytes.Buffer
 
 var CLASS_MAP = make(map[string]string)
 
-func mainMake() {
-	Make()
-}
-
 func Make() {
 	CreateMsgCode()
 	ListHandler()

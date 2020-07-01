@@ -16,6 +16,7 @@ import (
 	"github.com/yottachain/YTDNMgmt"
 	ytanalysis "github.com/yottachain/yotta-analysis"
 	ytrebuilder "github.com/yottachain/yotta-rebuilder"
+	"github.com/yottachain/yotta-rebuilder/pbrebuilder"
 )
 
 var NODE_CACHE = cache.New(60*time.Minute, 60*time.Minute)
@@ -469,10 +470,14 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		env.Log.Errorf("Rebuild server Not started.\n")
 		return &pkt.VoidResp{}
 	}
-
-	//ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
-	//defer cancel()
-	//req := &ytrebuildpb.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
-	//REBUILDER_SERVICE.UpdateTaskStatus(ctx, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	defer cancel()
+	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
+	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
+	if err != nil {
+		env.Log.Errorf("Update rebuid TaskStatus, count=%d,ERR:%s\n", len(h.m.Id), err)
+	} else {
+		env.Log.Infof("Update rebuid TaskStatus OK,count=%d\n", len(h.m.Id))
+	}
 	return &pkt.VoidResp{}
 }

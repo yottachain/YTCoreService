@@ -39,7 +39,9 @@ var eosURIList *list.List
 func SetBakURI(eos *EOSURI) {
 	bakeos := backupEosURI.Load()
 	if eos != bakeos {
-		NodeMgr.ChangeEosURL(eos.Url)
+		if NodeMgr != nil {
+			NodeMgr.ChangeEosURL(eos.Url)
+		}
 		backupEosURI.Store(eos)
 	}
 }
@@ -76,7 +78,9 @@ func GetEOSURI() *EOSURI {
 
 func EOSInit() {
 	firstEosURI = NewEOSURI(env.EOSURI)
-	NodeMgr.ChangeEosURL(firstEosURI.Url)
+	if NodeMgr != nil {
+		NodeMgr.ChangeEosURL(firstEosURI.Url)
+	}
 	backupEosURI.Store(firstEosURI)
 	ls := loadBpList()
 	eosURIList = list.New()

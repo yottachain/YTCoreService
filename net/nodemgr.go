@@ -19,8 +19,26 @@ var NodeMgr *YTDNMgmt.NodeDaoImpl
 var superNodeList []*YTDNMgmt.SuperNode
 var superNodeMap = make(map[string]*YTDNMgmt.SuperNode)
 
+func InitShadowPriKey() error {
+	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {
+		keystr := strings.ReplaceAll(env.ShadowPriKey, "yotta:", "")
+		data, err := base58.Decode(keystr)
+		if err != nil {
+			env.Log.Errorf("Base58.Decode 'ShadowPriKey' ERR%s\n", err.Error())
+			return err
+		}
+		key, err := readKey()
+		if err != nil {
+			return err
+		}
+		bs := codec.ECBDecrypt(data, key)
+		env.ShadowPriKey = string(bs)
+	}
+	return nil
+}
+
 func InitNodeMgr(MongoAddress string) error {
-	err := initShadowPriKey()
+	err := InitShadowPriKey()
 	if err != nil {
 		return err
 	}
@@ -49,24 +67,6 @@ func InitNodeMgr(MongoAddress string) error {
 	}
 	readSuperNodeList(ls)
 	IsActive()
-	return nil
-}
-
-func initShadowPriKey() error {
-	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {
-		keystr := strings.ReplaceAll(env.ShadowPriKey, "yotta:", "")
-		data, err := base58.Decode(keystr)
-		if err != nil {
-			env.Log.Errorf("Base58.Decode 'ShadowPriKey' ERR%s\n", err.Error())
-			return err
-		}
-		key, err := readKey()
-		if err != nil {
-			return err
-		}
-		bs := codec.ECBDecrypt(data, key)
-		env.ShadowPriKey = string(bs)
-	}
 	return nil
 }
 

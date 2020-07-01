@@ -14,10 +14,13 @@ func init() {
 
 	ID_HANDLER_MAP[0xc9a9] = func() MessageEvent { return MessageEvent(&StatusRepHandler{}) }
 	ID_HANDLER_MAP[0x9edf] = func() MessageEvent { return MessageEvent(&NodeSyncHandler{}) }
+	ID_HANDLER_MAP[0xa583] = func() MessageEvent { return MessageEvent(&SpotCheckRepHandler{}) }
+	ID_HANDLER_MAP[0x1b31] = func() MessageEvent { return MessageEvent(&TaskOpResultListHandler{}) }
 
 	ID_HANDLER_MAP[0x75c5] = func() MessageEvent { return MessageEvent(&DownloadObjectInitHandler{}) }
 	ID_HANDLER_MAP[0xbef5] = func() MessageEvent { return MessageEvent(&DownloadFileHandler{}) }
 	ID_HANDLER_MAP[0xe66e] = func() MessageEvent { return MessageEvent(&DownloadBlockInitHandler{}) }
+
 
 	ID_HANDLER_MAP[0x76a8] = func() MessageEvent { return MessageEvent(&ListSuperNodeHandler{}) }
 	ID_HANDLER_MAP[0xf8a9] = func() MessageEvent { return MessageEvent(&RegUserHandler{}) }

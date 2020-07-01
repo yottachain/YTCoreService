@@ -9,6 +9,7 @@ import (
 	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/http"
 	"github.com/yottachain/YTCoreService/net"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 var logger service.Logger
@@ -35,6 +36,10 @@ func (p *Program) run() {
 }
 
 func main() {
+	test.TestEOS()
+}
+
+func mainsa() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {

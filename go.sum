@@ -31,8 +31,6 @@ github.com/aurawing/auramq v0.0.2-0.20200521072017-845ffa488ac8 h1:Ud6zoi5n9oMQ3
 github.com/aurawing/auramq v0.0.2-0.20200521072017-845ffa488ac8/go.mod h1:ZLSq+trILQnz+NlOOrGg36+r4D+EeubaWzGaGPrSxHE=
 github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974 h1:AWsipbTmmSFgp4eLtaeMQwNzGqaqXTNK45giuWILLek=
 github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974/go.mod h1:pNJJkccyQLvStzk9aCsuJALvhOpD4CKaMcVyOjXS5Fo=
-github.com/aurawing/eos-go v0.9.1-0.20200517061225-3b03c8403b28 h1:Gun4XbH01mYnbfKj6i1X8vnJZOq1XiUFlDeB3HfvZx4=
-github.com/aurawing/eos-go v0.9.1-0.20200517061225-3b03c8403b28/go.mod h1:pNJJkccyQLvStzk9aCsuJALvhOpD4CKaMcVyOjXS5Fo=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=

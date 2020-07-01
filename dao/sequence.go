@@ -61,8 +61,14 @@ func GetSequence(inc int) int32 {
 	return vbi
 }
 
+func GenerateZeroID(timestamp int64) int64 {
+	high := (time.Now().Unix() & 0x000000ffffffff) << 32
+	low := int64(0) & 0x00000000ffffffff
+	return high | low
+}
+
 func GenerateBlockID(shardCount int) int64 {
-	h := int64(time.Now().Unix())
+	h := time.Now().Unix()
 	l := int64(GetSequence(shardCount) - int32(shardCount))
 	high := (h & 0x000000ffffffff) << 32
 	low := l & 0x00000000ffffffff
