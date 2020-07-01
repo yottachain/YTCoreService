@@ -96,7 +96,8 @@ const BLOCK_DAT_TABLE_NAME = "blocks_data"
 const BLOCK_CNT_TABLE_NAME = "block_count"
 
 const SHARD_TABLE_NAME = "shards"
-const SHARD_CNT_TABLE_NAME = "block_count"
+const SHARD_CNT_TABLE_NAME = "shard_count"
+const SHARD_RBD_TABLE_NAME = "shards_rebuild"
 
 type MetaBaseSource struct {
 	db          *mongo.Database
@@ -106,6 +107,7 @@ type MetaBaseSource struct {
 	block_cnt_c *mongo.Collection
 	shard_c     *mongo.Collection
 	shard_cnt_c *mongo.Collection
+	shard_rbd_c *mongo.Collection
 }
 
 var metaBaseSource *MetaBaseSource = nil
@@ -138,6 +140,7 @@ func (source *MetaBaseSource) initMetaDB() {
 	source.block_cnt_c = source.db.Collection(BLOCK_CNT_TABLE_NAME)
 	source.shard_c = source.db.Collection(SHARD_TABLE_NAME)
 	source.shard_cnt_c = source.db.Collection(SHARD_CNT_TABLE_NAME)
+	source.shard_rbd_c = source.db.Collection(SHARD_RBD_TABLE_NAME)
 	env.Log.Infof("Create metabase tables Success.\n")
 }
 
@@ -166,6 +169,10 @@ func (source *MetaBaseSource) GetShardColl() *mongo.Collection {
 }
 
 func (source *MetaBaseSource) GetShardCountColl() *mongo.Collection {
+	return source.shard_cnt_c
+}
+
+func (source *MetaBaseSource) GetShardRebuildColl() *mongo.Collection {
 	return source.shard_cnt_c
 }
 
