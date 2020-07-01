@@ -15,6 +15,7 @@ import (
 var USERID_SEQ *uint32 = new(uint32)
 
 var BLKID_SEQ *int32 = new(int32)
+var SHDID_SEQ *int32 = new(int32)
 
 func InitUserID_seq() {
 	source := NewBaseSource()
@@ -37,6 +38,7 @@ func InitUserID_seq() {
 	atomic.StoreUint32(USERID_SEQ, result.ID)
 	env.Log.Infof("User sequence init value:%d\n", result.ID)
 	atomic.StoreInt32(BLKID_SEQ, 0)
+	atomic.StoreInt32(SHDID_SEQ, 0)
 }
 
 func GenerateUserID() uint32 {
@@ -61,9 +63,11 @@ func GetSequence(inc int) int32 {
 	return vbi
 }
 
-func GenerateZeroID(timestamp int64) int64 {
-	high := (time.Now().Unix() & 0x000000ffffffff) << 32
-	low := int64(0) & 0x00000000ffffffff
+func GenerateShardID(shardCount int) int64 {
+	h := time.Now().Unix()
+	l := int64(atomic.AddInt32(SHDID_SEQ, int32(shardCount)) - int32(shardCount))
+	high := (h & 0x000000ffffffff) << 32
+	low := l & 0x00000000ffffffff
 	return high | low
 }
 
@@ -72,5 +76,11 @@ func GenerateBlockID(shardCount int) int64 {
 	l := int64(GetSequence(shardCount) - int32(shardCount))
 	high := (h & 0x000000ffffffff) << 32
 	low := l & 0x00000000ffffffff
+	return high | low
+}
+
+func GenerateZeroID(timestamp int64) int64 {
+	high := (time.Now().Unix() & 0x000000ffffffff) << 32
+	low := int64(0) & 0x00000000ffffffff
 	return high | low
 }

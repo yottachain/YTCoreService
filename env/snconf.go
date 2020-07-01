@@ -30,6 +30,7 @@ var LsCacheExpireTime int
 var LsCachePageNum int
 var LsCursorLimit int
 var LsCacheMaxSize int
+var LsShardInterval int
 
 var HttpPort int
 var HttpRemoteIp string
@@ -80,6 +81,8 @@ func readSnProperties() {
 	LsCachePageNum = StringToInt(config["lsCachePageNum"], 1, 100, 10)
 	LsCursorLimit = StringToInt(config["lsCursorLimit"], 0, 5, 1)
 	LsCacheMaxSize = StringToInt(config["lsCacheMaxSize"], 1000, 500000, 20000)
+	LsShardInterval = StringToInt(config["lsShardInterval"], 1, 10, 1)
+
 	HttpRemoteIp = strings.Trim(config["httpRemoteIp"], " ")
 	EOSURI = strings.Trim(config["eosURI"], " ")
 	if EOSURI == "" {

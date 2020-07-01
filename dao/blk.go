@@ -170,7 +170,7 @@ func GetBlockCount() (uint64, error) {
 	opt := options.FindOne().SetProjection(bson.M{"NLINK": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := source.GetBlockCountColl().FindOne(ctx, filter, opt).Decode(result)
+	err := source.GetBlockCountColl().FindOne(ctx, filter, opt).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
 			env.Log.Errorf("GetBlockCount ERR:%s\n", err)

@@ -429,12 +429,9 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	if !bytes.Equal(vhb, VHB) {
 		return pkt.NewError(pkt.INVALID_VHB)
 	}
-	ok, err := dao.SaveShardMetas(shardMetas)
+	err = dao.SaveShardMetas(shardMetas)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	if ok {
-		dao.UpdateShardNum(shardMetas)
 	}
 	return nil
 }

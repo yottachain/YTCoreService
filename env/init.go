@@ -80,7 +80,7 @@ func initLog(logFileName string) *logrus.Logger {
 	}
 	format := &easy.Formatter{
 		TimestampFormat: time.StampMilli,
-		LogFormat:       "[%lvl%][%time%]%msg%",
+		LogFormat:       "[%time%][%lvl%]%msg%",
 	}
 	logger.SetFormatter(format)
 	lv, err := logrus.ParseLevel(ServerLogLevel)
@@ -118,7 +118,6 @@ func newHook(logName string, format *easy.Formatter) (logrus.Hook, error) {
 }
 
 func SetLimit() {
-
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
@@ -136,7 +135,6 @@ func SetLimit() {
 		Log.Errorf("Error Getting Rlimit %s\n", err)
 	}
 	Log.Infof("Rlimit Final%d\n", rLimit)
-
 }
 
 func ReadExport(path string) {

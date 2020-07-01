@@ -56,10 +56,10 @@ func SetShardCountProgress(id int64) error {
 
 func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 	source := NewBaseSource()
-	filter := bson.M{"_id": bson.M{"$gte": firstid, "$lte": lastid}}
+	filter := bson.M{"_id": bson.M{"$gt": firstid, "$lte": lastid}}
 	fields := bson.M{"_id": 1, "nodeId": 1}
 	opt := options.Find().SetProjection(fields)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
@@ -89,16 +89,19 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 	return count, nil
 }
 
-func UpdateShardCount(hash map[int32]int64) error {
+func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
+	f1 := fmt.Sprintf("uspaces.sn%d", env.SuperNodeID)
+	f2 := fmt.Sprintf("uspaces.lstid%d", env.SuperNodeID)
 	operations := []mongo.WriteModel{}
 	for k, v := range hash {
-		key := fmt.Sprintf("uspaces.sn%d", env.SuperNodeID)
-		mode := &mongo.UpdateOneModel{Filter: bson.M{"_id": k},
-			Update: bson.M{"$inc": bson.M{key: v}}}
+		b1 := bson.M{"_id": k}
+		b2 := bson.M{f2: bson.M{"$gt": firstid}}
+		filter := bson.M{"$and": []bson.M{b1, b2}}
+		mode := &mongo.UpdateOneModel{Filter: filter, Update: bson.M{"$inc": bson.M{f1: v}, "$set": bson.M{f2: lastid}}}
 		operations = append(operations, mode)
 	}
 	source := NewDNIBaseSource()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	_, err := source.GetNodeColl().BulkWrite(ctx, operations)
 	if err != nil {
@@ -122,7 +125,7 @@ func UpdateShardMeta(VFI int64, nodeid int32) error {
 	return nil
 }
 
-func SaveShardMetas(ls []*ShardMeta) (bool, error) {
+func SaveShardMetas(ls []*ShardMeta) error {
 	source := NewBaseSource()
 	count := len(ls)
 	obs := make([]interface{}, count)
@@ -136,12 +139,10 @@ func SaveShardMetas(ls []*ShardMeta) (bool, error) {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
 			env.Log.Errorf("SaveShardMetas ERR:%s\n", err)
-			return false, err
-		} else {
-			return false, nil
+			return err
 		}
 	}
-	return true, nil
+	return nil
 }
 
 func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {
@@ -174,16 +175,4 @@ func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {
 		return nil, errors.New("")
 	}
 	return metas, nil
-}
-
-func UpdateShardNum(ls []*ShardMeta) error {
-	hash := make(map[int32]int64)
-	for _, m := range ls {
-		if num, ok := hash[m.NodeId]; ok {
-			hash[m.NodeId] = num + 1
-		} else {
-			hash[m.NodeId] = 1
-		}
-	}
-	return UpdateShardCount(hash)
 }

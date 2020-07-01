@@ -54,7 +54,7 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 	if !ok {
 		name := reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
 		emsg := fmt.Sprintf("Invalid instruction:%d<-->%s\n", mtype, name)
-		env.Log.Errorf(emsg)
+		//env.Log.Errorf(emsg)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, emsg)
 	}
 	return handfunc(), nil
