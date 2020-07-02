@@ -113,7 +113,6 @@ func newHook(logName string, format *Formatter) (logrus.Hook, error) {
 }
 
 func SetLimit() {
-
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
@@ -131,7 +130,6 @@ func SetLimit() {
 		Log.Errorf("Error Getting Rlimit %s\n", err)
 	}
 	Log.Infof("Rlimit Final%d\n", rLimit)
-
 }
 
 func ReadExport(path string) {
