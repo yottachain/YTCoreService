@@ -37,7 +37,7 @@ func GetShardCountProgress() (int64, error) {
 	err := source.GetShardCountColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return GenerateZeroID(time.Now().Unix()), nil
+			return 0, nil
 		} else {
 			env.Log.Errorf("GetShardCountProgress ERR:%s\n", err)
 			return 0, err
@@ -63,10 +63,10 @@ func SetShardCountProgress(id int64) error {
 
 func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 	source := NewBaseSource()
-	filter := bson.M{"_id": bson.M{"$gt": firstid, "$lte": lastid}}
+	filter := bson.M{"_id": bson.M{"$gt": firstid}}
 	fields := bson.M{"_id": 1, "nodeId": 1}
-	opt := options.Find().SetProjection(fields)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	opt := options.Find().SetProjection(fields).SetSort(bson.M{"_id": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
@@ -74,6 +74,7 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 		env.Log.Errorf("ListShardCount ERR:%s\n", err)
 		return nil, err
 	}
+	ii := 0
 	count := make(map[int32]int64)
 	for cur.Next(ctx) {
 		var res = &ShardMeta{}
@@ -82,15 +83,19 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 			env.Log.Errorf("ListShardCount.Decode ERR:%s\n", err)
 			return nil, err
 		}
+		if res.VFI > lastid {
+			break
+		}
 		num, ok := count[res.NodeId]
 		if ok {
 			count[res.NodeId] = num + 1
 		} else {
 			count[res.NodeId] = 1
 		}
+		ii++
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("ListShardCount ERR:%s\n", curerr)
+		env.Log.Errorf("ListShardCount.cursor ERR:%s, at line :%d\n", curerr, ii)
 		return nil, curerr
 	}
 	return count, nil
@@ -98,23 +103,28 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 
 func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[int64]int32, error) {
 	source := NewBaseSource()
-	filter := bson.M{"_id": bson.M{"$gt": firstid, "$lte": lastid}}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	filter := bson.M{"_id": bson.M{"$gt": firstid}}
+	opt := options.Find().SetSort(bson.M{"_id": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
-	cur, err := source.GetShardColl().Find(ctx, filter)
+	cur, err := source.GetShardColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("ListShardCount ERR:%s\n", err)
+		env.Log.Errorf("ListRebuildShardCount ERR:%s\n", err)
 		return nil, nil, err
 	}
 	count := make(map[int32]int64)
 	upmetas := make(map[int64]int32)
+	ii := 0
 	for cur.Next(ctx) {
 		var res = &ShardRebuidMeta{}
 		err = cur.Decode(res)
 		if err != nil {
 			env.Log.Errorf("ListRebuildShardCount.Decode ERR:%s\n", err)
 			return nil, nil, err
+		}
+		if res.ID > lastid {
+			break
 		}
 		num, ok := count[res.NewNodeId]
 		if ok {
@@ -129,9 +139,10 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 			count[res.NewNodeId] = -1
 		}
 		upmetas[res.VFI] = res.NewNodeId
+		ii++
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("ListRebuildShardCount ERR:%s\n", curerr)
+		env.Log.Errorf("ListRebuildShardCount .cursor ERR:%s,at line %d\n", curerr, ii)
 		return nil, nil, curerr
 	}
 	return count, upmetas, nil
@@ -149,7 +160,7 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 		operations = append(operations, mode)
 	}
 	source := NewDNIBaseSource()
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	_, err := source.GetNodeColl().BulkWrite(ctx, operations)
 	if err != nil {
@@ -168,7 +179,7 @@ func UpdateShardMeta(metas map[int64]int32) error {
 		mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
 		operations = append(operations, mode)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	_, err := source.GetShardColl().BulkWrite(ctx, operations)
 	if err != nil {
@@ -205,7 +216,7 @@ func SaveShardRebuildMetas(ls []*ShardRebuidMeta) error {
 	for ii, o := range ls {
 		obs[ii] = o
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	_, err := source.GetShardRebuildColl().InsertMany(ctx, obs)
 	if err != nil {

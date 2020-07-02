@@ -16,8 +16,17 @@ func StartIterate() {
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 		} else {
-			firstId = id
-			env.Log.Infof("Start iterate the shards table from id:%d\n", id)
+			if id == 0 {
+				firstId = dao.GenerateZeroID(time.Now().Unix())
+				err = dao.SetShardCountProgress(firstId)
+				if err != nil {
+					time.Sleep(time.Duration(30) * time.Second)
+					continue
+				}
+			} else {
+				firstId = id
+			}
+			env.Log.Infof("Start iterate the shards table from:%s\n", time.Unix(firstId>>32, 0).Format("2006-01-02 15:04:05"))
 			break
 		}
 	}
@@ -27,6 +36,7 @@ func StartIterate() {
 		if lasttime > querylasttime {
 			time.Sleep(time.Duration(30) * time.Second)
 		} else {
+			env.Log.Infof("Start iterate  shards  from id:%d\n", firstId)
 			lastid := dao.GenerateZeroID(lasttime)
 			hash, err := dao.ListShardCount(firstId, lastid)
 			if err != nil {
@@ -38,30 +48,39 @@ func StartIterate() {
 				time.Sleep(time.Duration(30) * time.Second)
 				continue
 			}
-			for k, v := range hash2 {
-				num, ok := hash[k]
-				if ok {
-					hash[k] = num + v
-				} else {
-					hash[k] = v
+			if len(hash2) > 0 {
+				for k, v := range hash2 {
+					num, ok := hash[k]
+					if ok {
+						hash[k] = num + v
+					} else {
+						hash[k] = v
+					}
+				}
+				if len(metas) > 0 {
+					err = dao.UpdateShardMeta(metas)
+					if err != nil {
+						time.Sleep(time.Duration(30) * time.Second)
+						continue
+					}
+					env.Log.Infof("UpdateShardMeta OK, count %d\n", len(metas))
 				}
 			}
-			err = dao.UpdateShardMeta(metas)
-			if err != nil {
-				time.Sleep(time.Duration(30) * time.Second)
-				continue
-			}
-			err = dao.UpdateShardCount(hash, firstId, lastid)
-			if err != nil {
-				time.Sleep(time.Duration(30) * time.Second)
-				continue
+			if len(hash) > 0 {
+				err = dao.UpdateShardCount(hash, firstId, lastid)
+				if err != nil {
+					time.Sleep(time.Duration(30) * time.Second)
+					continue
+				}
+				env.Log.Infof("UpdateShardCount OK, count %d\n", len(hash))
 			}
 			err = dao.SetShardCountProgress(lastid)
 			if err != nil {
 				time.Sleep(time.Duration(30) * time.Second)
 				continue
 			}
-			firstId = lasttime
+			env.Log.Infof("Iterate  shards OK, lastId:%d\n", lastid)
+			firstId = lastid
 		}
 	}
 
