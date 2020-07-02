@@ -111,134 +111,6 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	return statusRepResp
 }
 
-var NODE_MAP = struct {
-	sync.RWMutex
-	nodes map[int32]*YTDNMgmt.Node
-}{nodes: make(map[int32]*YTDNMgmt.Node)}
-
-func NodeStatSync(node *YTDNMgmt.Node) {
-	NODE_MAP.Lock()
-	NODE_MAP.nodes[node.ID] = node
-	NODE_MAP.Unlock()
-}
-
-func DoNodeStatSyncLoop() {
-	for {
-		time.Sleep(time.Duration(30) * time.Second)
-		if net.IsActive() {
-			DoNodeStatSync()
-		}
-		time.Sleep(time.Duration(30) * time.Second)
-	}
-}
-
-func DoNodeStatSync() {
-	ns := []*pkt.NodeSyncReq_Node{}
-	ids := []int32{}
-	NODE_MAP.RLock()
-	for k, v := range NODE_MAP.nodes {
-		if time.Now().Unix()-v.Timestamp < 60*4 {
-			n := &pkt.NodeSyncReq_Node{
-				Id:            &v.ID,
-				Cpu:           &v.CPU,
-				Memory:        &v.Memory,
-				Bandwidth:     &v.Bandwidth,
-				MaxDataSpace:  &v.MaxDataSpace,
-				AssignedSpace: &v.AssignedSpace,
-				UsedSpace:     &v.UsedSpace,
-				Addrs:         v.Addrs,
-				Relay:         &v.Relay,
-				Version:       &v.Version,
-				Rebuilding:    &v.Rebuilding,
-				RealSpace:     &v.RealSpace,
-				Tx:            &v.Tx,
-				Rx:            &v.Rx,
-				Other:         &v.Ext,
-				Timestamp:     &v.Timestamp,
-			}
-			ns = append(ns, n)
-		} else {
-			ids = append(ids, k)
-		}
-	}
-	NODE_MAP.RUnlock()
-	if len(ids) > 0 {
-		NODE_MAP.Lock()
-		for _, id := range ids {
-			delete(NODE_MAP.nodes, id)
-		}
-		NODE_MAP.Unlock()
-	}
-	if len(ns) > 0 {
-		nodeSyncReq := &pkt.NodeSyncReq{Node: ns}
-		_, err := SyncRequest(nodeSyncReq, env.SuperNodeID, 3)
-		if err != nil {
-			env.Log.Errorf("Sync Node STAT,ERR:%s\n", err.Error())
-		} else {
-			env.Log.Debugf("Sync Node STAT,count:%d\n", len(ns))
-		}
-	}
-}
-
-type NodeSyncHandler struct {
-	pkey string
-	m    *pkt.NodeSyncReq
-}
-
-func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
-	h.pkey = pubkey
-	req, ok := msg.(*pkt.NodeSyncReq)
-	if ok {
-		h.m = req
-		if h.m.Node == nil || len(h.m.Node) == 0 {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
-		}
-		return nil, WRITE_ROUTINE_NUM
-	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
-	}
-}
-
-func (h *NodeSyncHandler) Handle() proto.Message {
-	sn, err := net.AuthSuperNode(h.pkey)
-	if err != nil {
-		env.Log.Errorf("%s\n", err)
-		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			env.Log.Tracef("NodeSyncHandler ERR:%s\n", r)
-		}
-	}()
-	startTime := time.Now()
-	for _, n := range h.m.Node {
-		node := &YTDNMgmt.Node{
-			ID:            *n.Id,
-			CPU:           *n.Cpu,
-			Memory:        *n.Memory,
-			Bandwidth:     *n.Bandwidth,
-			MaxDataSpace:  *n.MaxDataSpace,
-			AssignedSpace: *n.AssignedSpace,
-			UsedSpace:     *n.UsedSpace,
-			Addrs:         n.Addrs,
-			Relay:         *n.Relay,
-			Version:       *n.Version,
-			Rebuilding:    *n.Rebuilding,
-			RealSpace:     *n.RealSpace,
-			Tx:            *n.Tx,
-			Rx:            *n.Rx,
-			Ext:           *n.Other,
-			Timestamp:     *n.Timestamp,
-		}
-		err := net.NodeMgr.SyncNode(node)
-		if err != nil {
-			env.Log.Errorf("SyncNode ERR:%s,ID:%d\n", err.Error(), *n.Id)
-		}
-	}
-	env.Log.Debugf("Sync Node STAT,count:%d,from sn %d,take times %d ms.\n", len(h.m.Node), sn.ID, time.Now().Sub(startTime).Milliseconds())
-	return &pkt.VoidResp{}
-}
-
 var SPOT_NODE_LIST = struct {
 	sync.RWMutex
 	nodes [env.SPOTCHECKNUM]*YTDNMgmt.Node
@@ -321,9 +193,9 @@ func ExecSendSpotCheck() {
 		for _, n := range nodes {
 			_, err := net.RequestDN(req, n, "")
 			if err != nil {
-				env.Log.Errorf("Send spotcheck task [%s] ERR:%d--%s\n", req.TaskId, err.Code, err.Msg)
+				env.Log.Errorf("[%d]Send spotcheck task [%s] ERR:%d--%s\n", n.Id, req.TaskId, err.Code, err.Msg)
 			} else {
-				env.Log.Infof("Send spotcheck task [%s] OK.\n", req.TaskId)
+				env.Log.Infof("[%d]Send spotcheck task [%s] OK,count %d\n", n.Id, req.TaskId, num)
 			}
 		}
 	}
@@ -346,23 +218,23 @@ func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 }
 
 func (h *SpotCheckRepHandler) Handle() proto.Message {
-	_, err := GetNodeId(h.pkey)
+	myid, err := GetNodeId(h.pkey)
 	if err != nil {
 		emsg := fmt.Sprintf("Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
 		env.Log.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	if h.m.InvalidNodeList == nil || len(h.m.InvalidNodeList) == 0 {
-		env.Log.Infof("SpotCheckTaskStatus:%s,invalidNodeList is empty.\n", h.m.TaskId)
+		env.Log.Infof("[%d]Exec spotcheck results,TaskID:[%s],Not err.\n", myid, h.m.TaskId)
 	} else {
 		for _, res := range h.m.InvalidNodeList {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
 			defer cancel()
 			err := SPOTCHECK_SERVICE.UpdateTaskStatus(ctx, h.m.TaskId, int32(res))
 			if err != nil {
-				env.Log.Errorf("UpdateTaskStatus TaskID=%s,InvalidNode=%d,ERR:%s\n", h.m.TaskId, res, err)
+				env.Log.Errorf("[%d]Exec spotcheck results,TaskID:[%s],Node [%d] mistake,UpdateTaskStatus ERR:%s\n", myid, h.m.TaskId, res, err)
 			} else {
-				env.Log.Infof("UpdateTaskStatus OK,TaskID=%s,InvalidNode=%d\n", h.m.TaskId, res)
+				env.Log.Infof("[%d]Exec spotcheck results,TaskID:[%s],Node [%d] mistake\n", myid, h.m.TaskId, res)
 			}
 		}
 	}
@@ -406,9 +278,9 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	req := &pkt.TaskList{Tasklist: ls.Tasklist}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {
-		env.Log.Errorf("Send rebuild task ERR:%d--%s\n", e.Code, e.Msg)
+		env.Log.Errorf("[%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
 	} else {
-		env.Log.Infof("Send rebuild task OK.\n")
+		env.Log.Infof("[%d]Send rebuild task OK,count \n", node.Id, len(ls.Tasklist))
 	}
 }
 
@@ -436,11 +308,11 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
-		env.Log.Errorf("Rebuild task OpResultList is empty.\n")
+		env.Log.Errorf("[%d]Rebuild task OpResultList is empty.\n", newid)
 		return &pkt.VoidResp{}
 	}
 	if REBUILDER_SERVICE == nil {
-		env.Log.Errorf("Rebuild server Not started.\n")
+		env.Log.Errorf("[%d]Rebuild server Not started.\n", newid)
 		return &pkt.VoidResp{}
 	}
 	okList := []int64{}
@@ -465,15 +337,15 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
 	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 	if err != nil {
-		env.Log.Errorf("Update rebuid TaskStatus, count=%d,ERR:%s\n", len(h.m.Id), err)
+		env.Log.Errorf("[%d]Update rebuid TaskStatus, count=%d,ERR:%s\n", newid, len(h.m.Id), err)
 	} else {
-		env.Log.Infof("Update rebuid TaskStatus OK,count=%d\n", len(h.m.Id))
+		env.Log.Infof("[%d]Update rebuid TaskStatus OK,count=%d\n", newid, len(h.m.Id))
 	}
 	err = dao.SaveShardRebuildMetas(metas)
 	if err != nil {
-		env.Log.Errorf("Save Rebuild TaskOpResult ERR:%s\n", err)
+		env.Log.Errorf("[%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
 	} else {
-		env.Log.Infof("Save Rebuild TaskOpResult ok, count:%d\n", size)
+		env.Log.Infof("[%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
 	}
 	return &pkt.VoidResp{}
 }

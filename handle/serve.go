@@ -23,7 +23,7 @@ func Start() {
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
 	go SumUsedSpace()
-	go DoNodeStatSyncLoop()
+	//go DoNodeStatSyncLoop()
 	go DoCacheActionLoop()
 	InitSpotCheckService()
 	InitRebuildService()
