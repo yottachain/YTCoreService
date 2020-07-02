@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sync/atomic"
@@ -26,12 +27,12 @@ func Start() {
 	go DoCacheActionLoop()
 	InitSpotCheckService()
 	InitRebuildService()
+	go StartIterate()
 }
 
 type MessageEvent interface {
 	Handle() proto.Message
-	SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage
-	CheckRoutine() *int32
+	SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32)
 }
 
 func FindHandler(msg proto.Message) (MessageEvent, *pkt.ErrorMessage) {
@@ -54,7 +55,6 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 	if !ok {
 		name := reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
 		emsg := fmt.Sprintf("Invalid instruction:%d<-->%s\n", mtype, name)
-		//env.Log.Errorf(emsg)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, emsg)
 	}
 	return handfunc(), nil
@@ -84,16 +84,19 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	if err1 != nil {
 		return pkt.MarshalError(err1)
 	}
-	err2 := handler.SetMessage(pubkey, msg)
+	err2, rnum := handler.SetMessage(pubkey, msg)
 	if err2 != nil {
 		return pkt.MarshalMsgBytes(err2)
 	}
-	rnum := handler.CheckRoutine()
-	if rnum == nil {
-		env.Log.Errorf("OnMessage %s ERR:Too many routines\n", name)
-		return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
+	if rnum != nil {
+		err = CheckRoutine(rnum)
+		if err != nil {
+			env.Log.Errorf("OnMessage %s ERR:%s\n", name, err)
+			return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
+		}
+		atomic.AddInt32(rnum, 1)
+		defer atomic.AddInt32(rnum, -1)
 	}
-	defer atomic.AddInt32(rnum, -1)
 	startTime := time.Now()
 	res := handler.Handle()
 	stime := time.Now().Sub(startTime).Milliseconds()
@@ -101,6 +104,27 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 		env.Log.Infof("OnMessage %s take times %d ms\n", name, stime)
 	}
 	return pkt.MarshalMsgBytes(res)
+}
+
+func CheckRoutine(rnum *int32) error {
+	if WRITE_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
+			return errors.New("WRITE_ROUTINE:Too many routines")
+		}
+	} else if READ_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+			return errors.New("READ_ROUTINE:Too many routines")
+		}
+	} else if STAT_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
+			return errors.New("STAT_ROUTINE:Too many routines")
+		}
+	} else {
+		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
+			return errors.New("AYNC_ROUTINE:Too many routines")
+		}
+	}
+	return nil
 }
 
 func IsExistInArray(id int32, array []int32) bool {

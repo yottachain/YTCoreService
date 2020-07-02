@@ -7,7 +7,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-const DELAY_TIMES = 60 * 10
+const DELAY_TIMES = 60 * 5
 
 func StartIterate() {
 	var firstId int64
@@ -29,6 +29,24 @@ func StartIterate() {
 		} else {
 			lastid := dao.GenerateZeroID(lasttime)
 			hash, err := dao.ListShardCount(firstId, lastid)
+			if err != nil {
+				time.Sleep(time.Duration(30) * time.Second)
+				continue
+			}
+			hash2, metas, err := dao.ListRebuildShardCount(firstId, lastid)
+			if err != nil {
+				time.Sleep(time.Duration(30) * time.Second)
+				continue
+			}
+			for k, v := range hash2 {
+				num, ok := hash[k]
+				if ok {
+					hash[k] = num + v
+				} else {
+					hash[k] = v
+				}
+			}
+			err = dao.UpdateShardMeta(metas)
 			if err != nil {
 				time.Sleep(time.Duration(30) * time.Second)
 				continue

@@ -1,8 +1,6 @@
 package handle
 
 import (
-	"sync/atomic"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
@@ -17,29 +15,21 @@ type DownloadObjectInitHandler struct {
 	user *dao.User
 }
 
-func (h *DownloadObjectInitHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *DownloadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *DownloadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadObjectInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VHW == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -62,38 +52,30 @@ type DownloadFileHandler struct {
 	verid primitive.ObjectID
 }
 
-func (h *DownloadFileHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadFileReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Bucketname == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.Versionid != nil {
 			if h.m.Versionid.Timestamp == nil || h.m.Versionid.MachineIdentifier == nil || h.m.Versionid.ProcessIdentifier == nil || h.m.Versionid.Counter == nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 			}
 			h.verid = pkt.NewObjectId(*h.m.Versionid.Timestamp, *h.m.Versionid.MachineIdentifier, *h.m.Versionid.ProcessIdentifier, *h.m.Versionid.Counter)
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -127,29 +109,21 @@ type DownloadBlockInitHandler struct {
 	user *dao.User
 }
 
-func (h *DownloadBlockInitHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadBlockInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VBI == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 

@@ -3,7 +3,6 @@ package handle
 import (
 	"bytes"
 	"crypto/md5"
-	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -23,33 +22,25 @@ type UploadBlockInitHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockInitHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Id == nil || h.m.VHP == nil || h.m.Vnu == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -94,51 +85,43 @@ type UploadBlockDBHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockDBHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadBlockDBHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockDBHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockDBReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Id == nil || h.m.Vnu == nil || h.m.OriginalSize == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.Data == nil || len(h.m.Data) > env.PL2 {
-			return pkt.NewError(pkt.TOO_BIG_BLOCK)
+			return pkt.NewError(pkt.TOO_BIG_BLOCK), nil
 		}
 		b := &codec.EncryptedBlock{}
 		b.Data = h.m.Data
 		err := b.MakeVHB()
 		if err != nil || h.m.VHB == nil || len(h.m.VHB) != 16 || !bytes.Equal(b.VHB, h.m.VHB) {
-			return pkt.NewError(pkt.INVALID_VHB)
+			return pkt.NewError(pkt.INVALID_VHB), nil
 		}
 		if h.m.VHP == nil || len(h.m.VHP) != 32 {
-			return pkt.NewError(pkt.INVALID_VHP)
+			return pkt.NewError(pkt.INVALID_VHP), nil
 		}
 		if h.m.KEU == nil || len(h.m.KEU) != 32 {
-			return pkt.NewError(pkt.INVALID_KEU)
+			return pkt.NewError(pkt.INVALID_KEU), nil
 		}
 		if h.m.KED == nil || len(h.m.KED) != 32 {
-			return pkt.NewError(pkt.INVALID_KED)
+			return pkt.NewError(pkt.INVALID_KED), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -199,45 +182,37 @@ type UploadBlockDupHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockDupHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadBlockDupHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockDupHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockDupReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Vnu == nil || h.m.Id == nil || h.m.OriginalSize == nil || h.m.RealSize == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.KEU == nil || len(h.m.KEU) != 32 {
-			return pkt.NewError(pkt.INVALID_KEU)
+			return pkt.NewError(pkt.INVALID_KEU), nil
 		}
 		if h.m.VHP == nil || len(h.m.VHP) != 32 {
-			return pkt.NewError(pkt.INVALID_VHP)
+			return pkt.NewError(pkt.INVALID_VHP), nil
 		}
 		if h.m.VHB == nil || len(h.m.VHB) != 16 {
-			return pkt.NewError(pkt.INVALID_VHB)
+			return pkt.NewError(pkt.INVALID_VHB), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -279,51 +254,43 @@ type UploadBlockEndHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockEndHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockEndReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || len(h.m.Oklist) > env.Max_Shard_Count+env.Default_PND {
-			return pkt.NewError(pkt.TOO_MANY_SHARDS)
+			return pkt.NewError(pkt.TOO_MANY_SHARDS), nil
 		}
 		if h.m.VHB == nil || len(h.m.VHB) != 16 {
-			return pkt.NewError(pkt.INVALID_VHB)
+			return pkt.NewError(pkt.INVALID_VHB), nil
 		}
 		if h.m.VHP == nil || len(h.m.VHP) != 32 {
-			return pkt.NewError(pkt.INVALID_VHP)
+			return pkt.NewError(pkt.INVALID_VHP), nil
 		}
 		if h.m.KEU == nil || len(h.m.KEU) != 32 {
-			return pkt.NewError(pkt.INVALID_KEU)
+			return pkt.NewError(pkt.INVALID_KEU), nil
 		}
 		if h.m.KED == nil || len(h.m.KED) != 32 {
-			return pkt.NewError(pkt.INVALID_KED)
+			return pkt.NewError(pkt.INVALID_KED), nil
 		}
 		if h.m.Vnu == nil || h.m.Id == nil || h.m.OriginalSize == nil || h.m.RealSize == nil || h.m.AR == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -447,51 +414,43 @@ type UploadBlockEndSyncHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadBlockEndSyncHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockEndSyncReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VBI == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || len(h.m.Oklist) > env.Max_Shard_Count+env.Default_PND {
-			return pkt.NewError(pkt.TOO_MANY_SHARDS)
+			return pkt.NewError(pkt.TOO_MANY_SHARDS), nil
 		}
 		if h.m.VHB == nil || len(h.m.VHB) != 16 {
-			return pkt.NewError(pkt.INVALID_VHB)
+			return pkt.NewError(pkt.INVALID_VHB), nil
 		}
 		if h.m.VHP == nil || len(h.m.VHP) != 32 {
-			return pkt.NewError(pkt.INVALID_VHP)
+			return pkt.NewError(pkt.INVALID_VHP), nil
 		}
 		if h.m.KEU == nil || len(h.m.KEU) != 32 {
-			return pkt.NewError(pkt.INVALID_KEU)
+			return pkt.NewError(pkt.INVALID_KEU), nil
 		}
 		if h.m.KED == nil || len(h.m.KED) != 32 {
-			return pkt.NewError(pkt.INVALID_KED)
+			return pkt.NewError(pkt.INVALID_KED), nil
 		}
 		if h.m.Vnu == nil || h.m.Id == nil || h.m.OriginalSize == nil || h.m.RealSize == nil || h.m.AR == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 

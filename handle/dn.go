@@ -10,6 +10,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
+	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -40,25 +41,17 @@ type StatusRepHandler struct {
 	m    *pkt.StatusRepReq
 }
 
-func (h *StatusRepHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(STAT_ROUTINE_NUM, 1)
-	return STAT_ROUTINE_NUM
-}
-
-func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.StatusRepReq)
 	if ok {
 		h.m = req
 		if h.m.Addrs == nil || len(h.m.Addrs) == 0 {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
-		return nil
+		return nil, STAT_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -192,25 +185,17 @@ type NodeSyncHandler struct {
 	m    *pkt.NodeSyncReq
 }
 
-func (h *NodeSyncHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.NodeSyncReq)
 	if ok {
 		h.m = req
 		if h.m.Node == nil || len(h.m.Node) == 0 {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -268,6 +253,8 @@ func InitSpotCheckService() {
 		SPOTCHECK_SERVICE, err = ytanalysis.NewClient(env.SPOTCHECK_ADDR)
 		if err != nil {
 			env.Log.Errorf("Init SpotCheck service err:%s\n", err)
+		} else {
+			env.Log.Infof("Init SpotCheck service:%s\n", env.SPOTCHECK_ADDR)
 		}
 	}
 }
@@ -347,22 +334,14 @@ type SpotCheckRepHandler struct {
 	m    *pkt.SpotCheckStatus
 }
 
-func (h *SpotCheckRepHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(STAT_ROUTINE_NUM, 1)
-	return STAT_ROUTINE_NUM
-}
-
-func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.SpotCheckStatus)
 	if ok {
 		h.m = req
-		return nil
+		return nil, STAT_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -398,6 +377,8 @@ func InitRebuildService() {
 		REBUILDER_SERVICE, err = ytrebuilder.NewClient(env.REBUILD_ADDR)
 		if err != nil {
 			env.Log.Errorf("Init Rebuild service err:%s\n", err)
+		} else {
+			env.Log.Infof("Init Rebuild service:%s\n", env.REBUILD_ADDR)
 		}
 	}
 }
@@ -436,27 +417,19 @@ type TaskOpResultListHandler struct {
 	m    *pkt.TaskOpResultList
 }
 
-func (h *TaskOpResultListHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(STAT_ROUTINE_NUM, 1)
-	return STAT_ROUTINE_NUM
-}
-
-func (h *TaskOpResultListHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *TaskOpResultListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.TaskOpResultList)
 	if ok {
 		h.m = req
-		return nil
+		return nil, STAT_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
 func (h *TaskOpResultListHandler) Handle() proto.Message {
-	_, err := GetNodeId(h.pkey)
+	newid, err := GetNodeId(h.pkey)
 	if err != nil {
 		emsg := fmt.Sprintf("Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
 		env.Log.Errorf(emsg)
@@ -470,6 +443,23 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		env.Log.Errorf("Rebuild server Not started.\n")
 		return &pkt.VoidResp{}
 	}
+	okList := []int64{}
+	for index, idbs := range h.m.Id {
+		if h.m.RES[index] == 0 {
+			id := dao.BytesToId(idbs)
+			okList = append(okList, id)
+		}
+	}
+	metas, err := dao.GetShardNodes(okList)
+	if err != nil {
+		return &pkt.VoidResp{}
+	}
+	size := len(metas)
+	vbi := dao.GenerateShardID(size)
+	for index, m := range metas {
+		m.ID = vbi + int64(index)
+		m.NewNodeId = newid
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
 	defer cancel()
 	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
@@ -478,6 +468,12 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		env.Log.Errorf("Update rebuid TaskStatus, count=%d,ERR:%s\n", len(h.m.Id), err)
 	} else {
 		env.Log.Infof("Update rebuid TaskStatus OK,count=%d\n", len(h.m.Id))
+	}
+	err = dao.SaveShardRebuildMetas(metas)
+	if err != nil {
+		env.Log.Errorf("Save Rebuild TaskOpResult ERR:%s\n", err)
+	} else {
+		env.Log.Infof("Save Rebuild TaskOpResult ok, count:%d\n", size)
 	}
 	return &pkt.VoidResp{}
 }

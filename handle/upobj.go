@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -116,29 +115,21 @@ type UploadObjectInitHandler struct {
 	user *dao.User
 }
 
-func (h *UploadObjectInitHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadObjectInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Length == nil || h.m.VHW == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -249,34 +240,26 @@ type SaveObjectMetaHandler struct {
 	vnu   primitive.ObjectID
 }
 
-func (h *SaveObjectMetaHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.SaveObjectMetaReq)
 	if ok {
 		h.m = req
 		if h.m.UserID == nil || h.m.VNU == nil || h.m.UsedSpace == nil || h.m.Mode == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.refer = pkt.NewRefer(h.m.Refer)
 		if h.refer == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer is Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer is Null value"), nil
 		}
 		v, err := primitive.ObjectIDFromHex(*h.m.VNU)
 		if err != nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Invalid VNU")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Invalid VNU"), nil
 		}
 		h.vnu = v
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -319,33 +302,25 @@ type ActiveCacheHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *ActiveCacheHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *ActiveCacheHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *ActiveCacheHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.ActiveCacheV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Vnu == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -364,33 +339,25 @@ type UploadObjectEndHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadObjectEndHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadObjectEndReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Vnu == nil || h.m.VHW == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 

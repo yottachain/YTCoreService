@@ -26,33 +26,25 @@ type UploadFileHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadFileHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadFileReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Vnu == nil || h.m.Bucketname == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_UPLOAD_ID, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_UPLOAD_ID, "Invalid request:Null value"), nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -80,32 +72,24 @@ type CopyObjectHandler struct {
 	user *dao.User
 }
 
-func (h *CopyObjectHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *CopyObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *CopyObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.CopyObjectReqV2)
 	if ok {
 		h.m = req
 		if h.m.SrcBucket == nil || h.m.SrcObjectKey == nil || h.m.DestBucket == nil || h.m.DestObjectKey == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Meta == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -152,35 +136,27 @@ type DeleteFileHandler struct {
 	verid primitive.ObjectID
 }
 
-func (h *DeleteFileHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(WRITE_ROUTINE_NUM, 1)
-	return WRITE_ROUTINE_NUM
-}
-
-func (h *DeleteFileHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *DeleteFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DeleteFileReqV2)
 	if ok {
 		h.m = req
 		if h.m.Vnu != nil {
 			if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 			}
 			h.verid = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
 		}
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
-		return nil
+		return nil, WRITE_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -209,29 +185,21 @@ type GetObjectHandler struct {
 	user *dao.User
 }
 
-func (h *GetObjectHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.GetObjectReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -265,22 +233,14 @@ type ListObjectHandler struct {
 	HashKey      string
 }
 
-func (h *ListObjectHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListObjectReqV2)
 	if ok {
 		h.m = req
 		if h.m.Nextversionid != nil {
 			if h.m.Nextversionid.Timestamp == nil || h.m.Nextversionid.MachineIdentifier == nil || h.m.Nextversionid.ProcessIdentifier == nil || h.m.Nextversionid.Counter == nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 			}
 			h.nextid = pkt.NewObjectId(*h.m.Nextversionid.Timestamp, *h.m.Nextversionid.MachineIdentifier, *h.m.Nextversionid.ProcessIdentifier, *h.m.Nextversionid.Counter)
 			h.version = true
@@ -288,11 +248,11 @@ func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.Er
 			h.version = false
 		}
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE)
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
 		}
 		if h.m.FileName != nil {
 			h.nextfileName = strings.TrimSpace(*h.m.FileName)
@@ -313,9 +273,9 @@ func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) *pkt.Er
 			h.compress = *h.m.Compress
 		}
 		h.HashKey = h.ReqHashCode(h.nextfileName, h.nextid)
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
