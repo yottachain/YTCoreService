@@ -1,7 +1,6 @@
 package handle
 
 import (
-	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -16,22 +15,14 @@ type TotalHandler struct {
 	m    *pkt.TotalReq
 }
 
-func (h *TotalHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.TotalReq)
 	if ok {
 		h.m = req
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -68,25 +59,17 @@ type UserSpaceHandler struct {
 	m    *pkt.UserSpaceReq
 }
 
-func (h *UserSpaceHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UserSpaceReq)
 	if ok {
 		h.m = req
 		if h.m.Userid == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -109,15 +92,7 @@ type UserListHandler struct {
 	m    *pkt.UserListReq
 }
 
-func (h *UserListHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UserListReq)
 	if ok {
@@ -132,9 +107,9 @@ func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) *pkt.Erro
 		} else {
 			*h.m.Count = int32(env.CheckInt(int(*h.m.Count), 100, 1000))
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -162,25 +137,17 @@ type RelationshipHandler struct {
 	m    *pkt.Relationship
 }
 
-func (h *RelationshipHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.Relationship)
 	if ok {
 		h.m = req
 		if h.m.Username == nil || h.m.MpoolOwner == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 
@@ -203,25 +170,17 @@ type RelationshipSumHandler struct {
 	m    *pkt.RelationShipSum
 }
 
-func (h *RelationshipSumHandler) CheckRoutine() *int32 {
-	if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-		return nil
-	}
-	atomic.AddInt32(READ_ROUTINE_NUM, 1)
-	return READ_ROUTINE_NUM
-}
-
-func (h *RelationshipSumHandler) SetMessage(pubkey string, msg proto.Message) *pkt.ErrorMessage {
+func (h *RelationshipSumHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.RelationShipSum)
 	if ok {
 		h.m = req
 		if h.m.Mowner == nil || h.m.Usedspace == nil || len(h.m.Mowner) != len(h.m.Usedspace) {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value")
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
 		}
-		return nil
+		return nil, READ_ROUTINE_NUM
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request")
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
 	}
 }
 

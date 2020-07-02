@@ -5,13 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -78,10 +75,7 @@ func initLog(logFileName string) *logrus.Logger {
 	if logErr != nil {
 		logrus.Panic("Fail to find", *logFile, "Server start Failed")
 	}
-	format := &easy.Formatter{
-		TimestampFormat: time.StampMilli,
-		LogFormat:       "[%time%][%lvl%]%msg%",
-	}
+	format := &Formatter{}
 	logger.SetFormatter(format)
 	lv, err := logrus.ParseLevel(ServerLogLevel)
 	if err != nil {
@@ -98,7 +92,7 @@ func initLog(logFileName string) *logrus.Logger {
 	return logger
 }
 
-func newHook(logName string, format *easy.Formatter) (logrus.Hook, error) {
+func newHook(logName string, format *Formatter) (logrus.Hook, error) {
 	writer, err := rotatelogs.New(
 		logName+".%Y%m%d",
 		rotatelogs.WithRotationTime(time.Hour*24),
@@ -118,23 +112,25 @@ func newHook(logName string, format *easy.Formatter) (logrus.Hook, error) {
 }
 
 func SetLimit() {
-	var rLimit syscall.Rlimit
-	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		Log.Errorf("Error Getting Rlimit%s\n ", err)
-	}
-	Log.Infof("Rlimit %d\n", rLimit)
-	rLimit.Max = 655350
-	rLimit.Cur = 655350
-	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		Log.Errorf("Error Setting Rlimit %s\n", err)
-	}
-	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		Log.Errorf("Error Getting Rlimit %s\n", err)
-	}
-	Log.Infof("Rlimit Final%d\n", rLimit)
+	/*
+		var rLimit syscall.Rlimit
+		err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			Log.Errorf("Error Getting Rlimit%s\n ", err)
+		}
+		Log.Infof("Rlimit %d\n", rLimit)
+		rLimit.Max = 655350
+		rLimit.Cur = 655350
+		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			Log.Errorf("Error Setting Rlimit %s\n", err)
+		}
+		err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			Log.Errorf("Error Getting Rlimit %s\n", err)
+		}
+		Log.Infof("Rlimit Final%d\n", rLimit)
+	*/
 }
 
 func ReadExport(path string) {
