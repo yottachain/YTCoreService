@@ -151,13 +151,12 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 
 func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 	f1 := fmt.Sprintf("uspaces.sn%d", env.SuperNodeID)
-	f2 := fmt.Sprintf("uspaces.lstid%d", env.SuperNodeID)
 	operations := []mongo.WriteModel{}
 	for k, v := range hash {
 		b1 := bson.M{"_id": k}
-		b2 := bson.M{f2: bson.M{"$gt": firstid}}
+		b2 := bson.M{"lstid": bson.M{"$gt": firstid}}
 		filter := bson.M{"$and": []bson.M{b1, b2}}
-		mode := &mongo.UpdateOneModel{Filter: filter, Update: bson.M{"$inc": bson.M{f1: v}, "$set": bson.M{f2: lastid}}}
+		mode := &mongo.UpdateOneModel{Filter: filter, Update: bson.M{"$inc": bson.M{f1: v}, "$set": bson.M{"lstid": lastid}}}
 		operations = append(operations, mode)
 	}
 	source := NewDNIBaseSource()
