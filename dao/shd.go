@@ -108,7 +108,7 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 	opt := options.Find().SetSort(bson.M{"_id": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
-	cur, err := source.GetShardColl().Find(ctx, filter, opt)
+	cur, err := source.GetShardRebuildColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
 		logrus.Errorf("[ListRebuildShardCount]ERR:%s\n", err)
@@ -165,7 +165,6 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 	defer cancel()
 	_, err := source.GetNodeColl().BulkWrite(ctx, operations)
 	if err != nil {
-		logrus.Errorf("[UpdateShardCount]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -184,7 +183,6 @@ func UpdateShardMeta(metas map[int64]int32) error {
 	defer cancel()
 	_, err := source.GetShardColl().BulkWrite(ctx, operations)
 	if err != nil {
-		logrus.Errorf("[UpdateShardMeta]ERR:%s\n", err)
 		return err
 	}
 	return nil

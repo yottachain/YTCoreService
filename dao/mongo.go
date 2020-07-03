@@ -174,7 +174,7 @@ func (source *MetaBaseSource) GetShardCountColl() *mongo.Collection {
 }
 
 func (source *MetaBaseSource) GetShardRebuildColl() *mongo.Collection {
-	return source.shard_cnt_c
+	return source.shard_rbd_c
 }
 
 const BUCKET_TABLE_NAME = "buckets"
