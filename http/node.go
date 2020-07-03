@@ -31,13 +31,15 @@ func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		WriteErr(w, "ActiveNodesList err:"+err.Error())
 	} else {
-		m := make(map[string]interface{})
-		for _, n := range nodes {
+		ns := make([]map[string]interface{}, len(nodes))
+		for index, n := range nodes {
+			m := make(map[string]interface{})
 			m["id"] = strconv.Itoa(int(n.ID))
 			m["ip"] = n.Addrs
 			m["nodeid"] = n.NodeID
+			ns[index] = m
 		}
-		txt, err := json.Marshal(m)
+		txt, err := json.Marshal(ns)
 		if err != nil {
 			WriteErr(w, "ActiveNodesList Marshal err:"+err.Error())
 		} else {

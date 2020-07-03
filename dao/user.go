@@ -163,12 +163,12 @@ func AddUser(user *User) error {
 	return nil
 }
 
-func ListUsers(lastId int, limit int) ([]*User, error) {
+func ListUsers(lastId int, limit int, fields bson.M) ([]*User, error) {
 	source := NewBaseSource()
 	mod := bson.M{"_id": bson.M{"$mod": []interface{}{net.GetSuperNodeCount(), env.SuperNodeID}}}
 	gt := bson.M{"_id": bson.M{"$gt": lastId}}
 	filter := bson.M{"$and": []bson.M{mod, gt}}
-	opt := options.Find().SetProjection(bson.M{"_id": 1, "username": 1, "spaceTotal": 1})
+	opt := options.Find().SetProjection(fields)
 	opt = opt.SetSort(bson.M{"_id": 1}).SetLimit(int64(limit))
 	var result = []*User{}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
