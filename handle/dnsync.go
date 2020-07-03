@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -73,9 +74,9 @@ func DoNodeStatSync() {
 		nodeSyncReq := &pkt.NodeSyncReq{Node: ns}
 		_, err := SyncRequest(nodeSyncReq, env.SuperNodeID, 3)
 		if err != nil {
-			env.Log.Errorf("Sync Node STAT,ERR:%s\n", err.Error())
+			logrus.Errorf("[NodeStatSync]Sync Node STAT,ERR:%s\n", err.Error())
 		} else {
-			env.Log.Debugf("Sync Node STAT,count:%d\n", len(ns))
+			logrus.Debugf("[NodeStatSync]Sync Node STAT,count:%d\n", len(ns))
 		}
 	}
 }
@@ -102,12 +103,12 @@ func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Err
 func (h *NodeSyncHandler) Handle() proto.Message {
 	sn, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[NodeStatSync]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			env.Log.Tracef("NodeSyncHandler ERR:%s\n", r)
+			logrus.Tracef("[NodeStatSync]ERR:%s\n", r)
 		}
 	}()
 	startTime := time.Now()
@@ -132,9 +133,9 @@ func (h *NodeSyncHandler) Handle() proto.Message {
 		}
 		err := net.NodeMgr.SyncNode(node)
 		if err != nil {
-			env.Log.Errorf("SyncNode ERR:%s,ID:%d\n", err.Error(), *n.Id)
+			logrus.Errorf("[NodeStatSync]ERR:%s,ID:%d\n", err.Error(), *n.Id)
 		}
 	}
-	env.Log.Debugf("Sync Node STAT,count:%d,from sn %d,take times %d ms.\n", len(h.m.Node), sn.ID, time.Now().Sub(startTime).Milliseconds())
+	logrus.Debugf("[NodeStatSync]Count:%d,from sn %d,take times %d ms.\n", len(h.m.Node), sn.ID, time.Now().Sub(startTime).Milliseconds())
 	return &pkt.VoidResp{}
 }

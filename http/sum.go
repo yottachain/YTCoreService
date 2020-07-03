@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync/atomic"
+	"time"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/mr-tron/base58"
+	"github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/handle"
@@ -14,53 +20,69 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+var TotalCache = struct {
+	Value     atomic.Value
+	LastTimes *int64
+}{LastTimes: new(int64)}
+
 func TotalHandle(w http.ResponseWriter, req *http.Request) {
-	var errmsg string = ""
 	if !checkIp(req.RemoteAddr) {
-		errmsg = fmt.Sprintf("Invalid IP:%s", req.RemoteAddr)
+		WriteErr(w, fmt.Sprintf("Invalid IP:%s", req.RemoteAddr))
+		return
+	}
+	if time.Now().Unix()-atomic.LoadInt64(TotalCache.LastTimes) < CacheExpiredTime {
+		v := TotalCache.Value.Load()
+		if v != nil {
+			ss, _ := v.(string)
+			WriteJson(w, ss)
+			return
+		}
+	}
+	var errmsg string = ""
+	userTotal, err := dao.GetUserCount()
+	if err != nil {
+		errmsg = "TotalHandle err:" + err.Error()
 	} else {
-		userTotal, err := dao.GetUserCount()
+		req := &pkt.TotalReq{B: new(bool)}
+		var FileTotal uint64 = 0
+		var SpaceTotal uint64 = 0
+		var Usedspace uint64 = 0
+		var BkTotal uint64 = 0
+		var ActualBkTotal uint64 = 0
+		data, err := handle.SyncRequest(req, -1, 3)
 		if err != nil {
 			errmsg = "TotalHandle err:" + err.Error()
 		} else {
-			req := &pkt.TotalReq{B: new(bool)}
-			var FileTotal uint64 = 0
-			var SpaceTotal uint64 = 0
-			var Usedspace uint64 = 0
-			var BkTotal uint64 = 0
-			var ActualBkTotal uint64 = 0
-			data, err := handle.SyncRequest(req, -1, 3)
-			if err != nil {
-				errmsg = "TotalHandle err:" + err.Error()
-			} else {
-				for _, res := range data {
-					if res != nil {
-						if res.Error() != nil {
-							errmsg = "TotalHandle err:" + res.Error().Msg
-							break
-						} else {
-							total, _ := res.Response().(*pkt.TotalResp)
-							FileTotal = FileTotal + *total.FileTotal
-							SpaceTotal = SpaceTotal + *total.SpaceTotal
-							Usedspace = Usedspace + *total.Usedspace
-							BkTotal = BkTotal + *total.BkTotal
-							ActualBkTotal = ActualBkTotal + *total.ActualBkTotal
-						}
+			for _, res := range data {
+				if res != nil {
+					if res.Error() != nil {
+						errmsg = "TotalHandle err:" + res.Error().Msg
+						break
+					} else {
+						total, _ := res.Response().(*pkt.TotalResp)
+						FileTotal = FileTotal + *total.FileTotal
+						SpaceTotal = SpaceTotal + *total.SpaceTotal
+						Usedspace = Usedspace + *total.Usedspace
+						BkTotal = BkTotal + *total.BkTotal
+						ActualBkTotal = ActualBkTotal + *total.ActualBkTotal
 					}
 				}
 			}
-			if errmsg == "" {
-				resmap := make(map[string]uint64)
-				resmap["userTotal"] = uint64(userTotal)
-				resmap["fileTotal"] = FileTotal
-				resmap["spaceTotal"] = SpaceTotal
-				resmap["usedspace"] = Usedspace
-				resmap["bkTotal"] = BkTotal
-				resmap["actualBkTotal"] = ActualBkTotal
-				res, _ := json.Marshal(resmap)
-				WriteJson(w, string(res))
-				return
-			}
+		}
+		if errmsg == "" {
+			resmap := make(map[string]uint64)
+			resmap["userTotal"] = uint64(userTotal)
+			resmap["fileTotal"] = FileTotal
+			resmap["spaceTotal"] = SpaceTotal
+			resmap["usedspace"] = Usedspace
+			resmap["bkTotal"] = BkTotal
+			resmap["actualBkTotal"] = ActualBkTotal
+			res, _ := json.Marshal(resmap)
+			ss := string(res)
+			TotalCache.Value.Store(ss)
+			atomic.StoreInt64(TotalCache.LastTimes, time.Now().Unix())
+			WriteJson(w, ss)
+			return
 		}
 	}
 	WriteErr(w, errmsg)
@@ -154,6 +176,9 @@ func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+var DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
+var USER_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
+
 func ListHandle(w http.ResponseWriter, req *http.Request) {
 	if !checkIp(req.RemoteAddr) {
 		WriteErr(w, fmt.Sprintf("Invalid IP:%s", req.RemoteAddr))
@@ -164,6 +189,17 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 	if err == nil && len(queryForm["lastId"]) > 0 && len(queryForm["count"]) > 0 {
 		*lsreq.LastId = int32(env.ToInt(queryForm["lastId"][0], -1))
 		*lsreq.Count = int32(env.StringToInt(queryForm["lastId"][0], 100, 1000, 1000))
+	}
+	key := "0"
+	res, _ := proto.Marshal(lsreq)
+	if res != nil {
+		key = base58.Encode(res)
+	}
+	v, found := USER_LIST_CACHE.Get(key)
+	if found {
+		logrus.Infof("[ListUsers]From Cache\n")
+		WriteJson(w, v.(string))
+		return
 	}
 	data, err := handle.SyncRequest(lsreq, -1, 3)
 	users := []*pkt.UserListResp_UserSpace{}
@@ -184,7 +220,10 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 		}
 		if errmsg == "" {
 			sortusers := &UserListSort{Users: users}
-			WriteJson(w, sortusers.ToJson())
+			logrus.Infof("[ListUsers]Return %d\n", len(users))
+			ss := sortusers.ToJson()
+			USER_LIST_CACHE.Set(key, ss, DEFAULT_EXPIRE_TIME)
+			WriteJson(w, ss)
 			return
 		}
 	}

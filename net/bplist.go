@@ -12,6 +12,7 @@ import (
 
 	"github.com/aurawing/eos-go"
 	"github.com/aurawing/eos-go/ecc"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	ytcrypto "github.com/yottachain/YTCrypto"
 )
@@ -20,13 +21,13 @@ func loadBpList() []string {
 	confpath := env.YTSN_HOME + "conf/bplist.properties"
 	txt, err := ioutil.ReadFile(confpath)
 	if err != nil {
-		env.Log.Errorf("Read file '%s' err:%s\n", confpath, err.Error())
+		logrus.Errorf("[BpList]Read file '%s' err:%s\n", confpath, err.Error())
 		return nil
 	}
 	var list []string
 	err = json.Unmarshal([]byte(txt), &list)
 	if err != nil {
-		env.Log.Errorf("Unmarshal file '%s' err:%s\n", confpath, err.Error())
+		logrus.Errorf("[BpList]Unmarshal file '%s' err:%s\n", confpath, err.Error())
 		return nil
 	}
 	return list
@@ -87,7 +88,7 @@ func EOSInit() {
 	if ls != nil {
 		newUrl, err := url.Parse(env.EOSURI)
 		if err != nil {
-			env.Log.Errorf("EOSURI '%s' err:%s\n", env.EOSURI, err.Error())
+			logrus.Errorf("[BpList]EOSURI '%s' err:%s\n", env.EOSURI, err.Error())
 			return
 		}
 		localIp := newUrl.Hostname()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/yottachain/YTCoreService/env"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,7 +33,7 @@ func (self *ObjectMeta) GetAndUpdateNlink() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOneAndUpdate(ctx, filter, update).Decode(self)
 	if err != nil {
-		env.Log.Errorf("GetAndUpdateNlink ERR:%s\n", err)
+		logrus.Errorf("[GetAndUpdateNlink]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (self *ObjectMeta) IsExists() (bool, error) {
 		if err == mongo.ErrNoDocuments {
 			return false, nil
 		} else {
-			env.Log.Errorf("IsExists ERR:%s\n", err)
+			logrus.Errorf("[IsExists]ERR:%s\n", err)
 			return false, err
 		}
 	}
@@ -65,7 +65,7 @@ func (self *ObjectMeta) InsertOrUpdate() error {
 	defer cancel()
 	_, err := source.GetObjectColl().UpdateOne(ctx, filter, bson.M{"$set": self}, opt)
 	if err != nil {
-		env.Log.Errorf("InsertOrUpdate ERR:%s\n", err)
+		logrus.Errorf("[InsertOrUpdate]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -82,7 +82,7 @@ func (self *ObjectMeta) INCObjectNLINK() error {
 	defer cancel()
 	_, err := source.GetObjectColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		env.Log.Errorf("INCObjectNLINK ERR:%s\n", err)
+		logrus.Errorf("[INCObjectNLINK]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -95,7 +95,7 @@ func (self *ObjectMeta) GetByVHW() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOne(ctx, filter).Decode(self)
 	if err != nil {
-		env.Log.Errorf("GetByVHW ERR:%s\n", err)
+		logrus.Errorf("[GetByVHW]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -108,7 +108,7 @@ func (self *ObjectMeta) GetByVNU() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOne(ctx, filter).Decode(self)
 	if err != nil {
-		env.Log.Errorf("GetByVNU ERR:%s\n", err)
+		logrus.Errorf("[GetByVNU]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -122,7 +122,7 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 	defer cancel()
 	_, err := source.GetObjectColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		env.Log.Errorf("AddRefer ERR:%s\n", err)
+		logrus.Errorf("[AddRefer]ERR:%s\n", err)
 		return err
 	}
 	return nil

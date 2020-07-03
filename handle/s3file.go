@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -49,7 +50,7 @@ func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *UploadFileHandler) Handle() proto.Message {
-	env.Log.Infof("Create object:%d/%s/%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
+	logrus.Infof("[CreateOBJ]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
 	meta, _ := dao.GetBucketIdFromCache(*h.m.Bucketname, h.user.UserID)
 	if meta == nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -94,7 +95,7 @@ func (h *CopyObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *CopyObjectHandler) Handle() proto.Message {
-	env.Log.Infof("Copy object:%d/%s/%s\n", h.user.UserID, *h.m.SrcBucket, *h.m.SrcObjectKey)
+	logrus.Infof("[CopyObject]UID:%d,BucketName:%s,Key:%s\n", h.user.UserID, *h.m.SrcBucket, *h.m.SrcObjectKey)
 	srcmeta, _ := dao.GetBucketIdFromCache(*h.m.SrcBucket, h.user.UserID)
 	dstmeta, _ := dao.GetBucketIdFromCache(*h.m.DestBucket, h.user.UserID)
 	if srcmeta == nil || dstmeta == nil {
@@ -161,7 +162,7 @@ func (h *DeleteFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *DeleteFileHandler) Handle() proto.Message {
-	env.Log.Infof("Delete object:%d/%s/%s\n", h.user.UserID, *h.m.BucketName, *h.m.FileName)
+	logrus.Infof("[DeleteOBJ]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.BucketName, *h.m.FileName)
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if meta == nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -204,7 +205,7 @@ func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 }
 
 func (h *GetObjectHandler) Handle() proto.Message {
-	env.Log.Infof("Get object:%d/%s/%s\n", h.user.UserID, *h.m.BucketName, *h.m.FileName)
+	logrus.Infof("[GetObject]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.BucketName, *h.m.FileName)
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if meta == nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -310,7 +311,7 @@ func (h *ListObjectHandler) Handle() proto.Message {
 	v, found := OBJ_LIST_CACHE.Get(h.HashKey)
 	if found {
 		size := OBJ_LIST_CACHE.ItemCount()
-		env.Log.Infof("List object:%d/%s from Cache,Size:%d\n", h.user.UserID, *h.m.BucketName, size)
+		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from Cache,current size:%d\n", h.user.UserID, *h.m.BucketName, size)
 		if size >= env.LsCacheMaxSize {
 			DEFAULT_EXPIRE_TIME = time.Duration(2000) * time.Second
 			OBJ_LIST_CACHE.DeleteExpired()
@@ -353,7 +354,7 @@ func (h *ListObjectHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.TOO_MANY_CURSOR)
 	}
 	res, count := h.doResponse(resp)
-	env.Log.Infof("LIST object:%d/%s/%s,return lines:%d,take times %d ms\n",
+	logrus.Infof("[ListObject]UID:%d,Bucket:%s,Prefix:%s,return lines:%d,take times %d ms\n",
 		h.user.UserID, *h.m.BucketName, h.prefix, count, time.Now().Sub(startTime).Milliseconds())
 	if res == nil {
 		res = &pkt.ListObjectResp{}

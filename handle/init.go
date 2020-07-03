@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/mr-tron/base58"
-	ytcrypto "github.com/yottachain/YTCrypto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
+	ytcrypto "github.com/yottachain/YTCrypto"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -46,7 +47,7 @@ type JsonSuperNode struct {
 func InitSN() {
 	env.InitServer()
 	dao.InitMongo()
-	env.Log.SetOutput(os.Stdout)
+	logrus.SetOutput(os.Stdout)
 	UpdatePrivateKey()
 	s := strings.Trim(os.Getenv("IPFS_DBNAME_SNID"), " ")
 	IPFS_DBNAME_SNID := strings.EqualFold(s, "yes")
@@ -62,28 +63,28 @@ func InitSN() {
 		Options: options.Index().SetUnique(true).SetName(INDEX_NAME),
 	}
 	collection.Indexes().CreateOne(context.Background(), index1)
-	env.Log.Infof("Create table %s\n", TABLE_NAME)
+	logrus.Infof("Create table %s\n", TABLE_NAME)
 	insertSuperNode()
 	dao.Close()
-	env.Log.Infof("Init OK!\n")
+	logrus.Infof("Init OK!\n")
 }
 
 func insertSuperNode() {
 	path := env.YTSN_HOME + "conf/snlist.properties"
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		env.Log.Panicf("Failed to read snlist.properties:%s\n", err)
+		logrus.Panicf("Failed to read snlist.properties:%s\n", err)
 	}
 	list := []*JsonSuperNode{}
 	err = json.Unmarshal(data, &list)
 	if err != nil {
-		env.Log.Panicf("Failed to unmarshal snlist.properties:%s\n", err)
+		logrus.Panicf("Failed to unmarshal snlist.properties:%s\n", err)
 	}
 	for _, sn := range list {
 		n := &SuperNode{ID: sn.Number, Nodeid: sn.ID, Privkey: sn.PrivateKey, Addrs: sn.Addrs}
 		n.Pubkey, err = ytcrypto.GetPublicKeyByPrivateKey(sn.PrivateKey)
 		if err != nil {
-			env.Log.Panicf("PrivateKey %s ERR:%s\n", sn.PrivateKey, err)
+			logrus.Panicf("PrivateKey %s ERR:%s\n", sn.PrivateKey, err)
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -91,12 +92,12 @@ func insertSuperNode() {
 		if err != nil {
 			errstr := err.Error()
 			if !strings.ContainsAny(errstr, "duplicate key error") {
-				env.Log.Panicf("Save superNode ERR:%s\n", err)
+				logrus.Panicf("Save superNode ERR:%s\n", err)
 			} else {
-				env.Log.Errorf("Save superNode ERR:%s\n", err)
+				logrus.Errorf("Save superNode ERR:%s\n", err)
 			}
 		} else {
-			env.Log.Infof("Insert OK:%d\n", n.ID)
+			logrus.Infof("Insert OK:%d\n", n.ID)
 		}
 	}
 }
@@ -105,7 +106,7 @@ func UpdatePrivateKey() {
 	confpath := env.YTSN_HOME + "conf/server.properties"
 	data, err := ioutil.ReadFile(confpath)
 	if err != nil {
-		env.Log.Panicf("Failed to read server.properties:%s\n", err)
+		logrus.Panicf("Failed to read server.properties:%s\n", err)
 	}
 	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {
 		return
@@ -117,9 +118,9 @@ func UpdatePrivateKey() {
 	context = strings.ReplaceAll(context, env.ShadowPriKey, ss)
 	err = env.SaveConfig(confpath, context)
 	if err != nil {
-		env.Log.Panicf("Failed to save profile:%s\n", err)
+		logrus.Panicf("Failed to save profile:%s\n", err)
 	} else {
-		env.Log.Infof("ShadowPriKey  encrypted.\n")
+		logrus.Infof("ShadowPriKey  encrypted.\n")
 	}
 }
 
@@ -127,7 +128,7 @@ func readKey() []byte {
 	path := env.YTSN_HOME + "res/key"
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		env.Log.Panicf("Resource file 'ShadowPriKey.key' read failure\n")
+		logrus.Panicf("Resource file 'ShadowPriKey.key' read failure\n")
 	}
 	sha256Digest := sha256.New()
 	sha256Digest.Write(data)

@@ -10,6 +10,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -58,13 +59,13 @@ func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 func (h *StatusRepHandler) Handle() proto.Message {
 	id, err := GetNodeId(h.pkey)
 	if err != nil {
-		emsg := fmt.Sprintf("Invalid node pubkey:%s,ID,%d,ERR:%s\n", h.pkey, h.m.Id, err.Error())
-		env.Log.Errorf(emsg)
+		emsg := fmt.Sprintf("[DNStatusRep]Invalid node pubkey:%s,ID,%d,ERR:%s\n", h.pkey, h.m.Id, err.Error())
+		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	if id != int32(h.m.Id) {
-		emsg := fmt.Sprintf("StatusRep Nodeid ERR:%d!=%d\n", id, h.m.Id)
-		env.Log.Errorf(emsg)
+		emsg := fmt.Sprintf("[DNStatusRep]Nodeid ERR:%d!=%d\n", id, h.m.Id)
+		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	relay := 0
@@ -93,8 +94,8 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	startTime := time.Now()
 	newnode, err := net.NodeMgr.UpdateNodeStatus(node)
 	if err != nil {
-		emsg := fmt.Sprintf("UpdateNodeStatus ERR:%s,ID:%d,take times %d ms\n", err.Error(), h.m.Id, time.Now().Sub(startTime).Milliseconds())
-		env.Log.Errorf(emsg)
+		emsg := fmt.Sprintf("[DNStatusRep]ERR:%s,ID:%d,take times %d ms\n", err.Error(), h.m.Id, time.Now().Sub(startTime).Milliseconds())
+		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	productiveSpace := newnode.ProductiveSpace
@@ -107,7 +108,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	//NodeStatSync(newnode)
 	SendSpotCheck(newnode)
 	SendRebuildTask(newnode)
-	env.Log.Debugf("StatusRep Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	logrus.Debugf("[DNStatusRep]Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	return statusRepResp
 }
 
@@ -124,9 +125,9 @@ func InitSpotCheckService() {
 		var err error
 		SPOTCHECK_SERVICE, err = ytanalysis.NewClient(env.SPOTCHECK_ADDR)
 		if err != nil {
-			env.Log.Errorf("Init SpotCheck service err:%s\n", err)
+			logrus.Errorf("[DN]Init spotCheck service err:%s\n", err)
 		} else {
-			env.Log.Infof("Init SpotCheck service:%s\n", env.SPOTCHECK_ADDR)
+			logrus.Infof("[DN]Init spotCheck service:%s\n", env.SPOTCHECK_ADDR)
 		}
 	}
 }
@@ -143,7 +144,7 @@ func SendSpotCheck(node *YTDNMgmt.Node) {
 		SPOT_NODE_LIST.nodes[SPOT_NODE_LIST.index] = node
 		SPOT_NODE_LIST.Unlock()
 		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
-			env.Log.Errorf("Exec SpotCheck ERR:Too many routines.\n")
+			logrus.Errorf("[SendSpotCheck]ERR:Too many routines.\n")
 			return
 		}
 		go ExecSendSpotCheck()
@@ -157,7 +158,7 @@ func ExecSendSpotCheck() {
 	defer cancel()
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
 	if err != nil {
-		env.Log.Errorf("IsNodeSelected ERR:%s\n", err)
+		logrus.Errorf("[IsNodeSelected]ERR:%s\n", err)
 		return
 	}
 	if ischeck {
@@ -165,7 +166,7 @@ func ExecSendSpotCheck() {
 		defer cancel2()
 		list, err := SPOTCHECK_SERVICE.GetSpotCheckList(ctx2)
 		if err != nil {
-			env.Log.Errorf("GetSpotCheckList ERR:%s\n", err)
+			logrus.Errorf("[GetSpotCheckList]ERR:%s\n", err)
 			return
 		}
 		num := len(list.TaskList)
@@ -193,9 +194,9 @@ func ExecSendSpotCheck() {
 		for _, n := range nodes {
 			_, err := net.RequestDN(req, n, "")
 			if err != nil {
-				env.Log.Errorf("[%d]Send spotcheck task [%s] ERR:%d--%s\n", n.Id, req.TaskId, err.Code, err.Msg)
+				logrus.Errorf("[SendTask][%d]Send spotcheck task [%s] ERR:%d--%s\n", n.Id, req.TaskId, err.Code, err.Msg)
 			} else {
-				env.Log.Infof("[%d]Send spotcheck task [%s] OK,count %d\n", n.Id, req.TaskId, num)
+				logrus.Infof("[SendTask][%d]Send spotcheck task [%s] OK,count %d\n", n.Id, req.TaskId, num)
 			}
 		}
 	}
@@ -220,21 +221,21 @@ func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 func (h *SpotCheckRepHandler) Handle() proto.Message {
 	myid, err := GetNodeId(h.pkey)
 	if err != nil {
-		emsg := fmt.Sprintf("Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
-		env.Log.Errorf(emsg)
+		emsg := fmt.Sprintf("[DNSpotCheckRep]Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
+		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	if h.m.InvalidNodeList == nil || len(h.m.InvalidNodeList) == 0 {
-		env.Log.Infof("[%d]Exec spotcheck results,TaskID:[%s],Not err.\n", myid, h.m.TaskId)
+		logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Not err.\n", myid, h.m.TaskId)
 	} else {
 		for _, res := range h.m.InvalidNodeList {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
 			defer cancel()
 			err := SPOTCHECK_SERVICE.UpdateTaskStatus(ctx, h.m.TaskId, int32(res))
 			if err != nil {
-				env.Log.Errorf("[%d]Exec spotcheck results,TaskID:[%s],Node [%d] mistake,UpdateTaskStatus ERR:%s\n", myid, h.m.TaskId, res, err)
+				logrus.Errorf("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Node [%d] ERR,UpdateTaskStatus ERR:%s\n", myid, h.m.TaskId, res, err)
 			} else {
-				env.Log.Infof("[%d]Exec spotcheck results,TaskID:[%s],Node [%d] mistake\n", myid, h.m.TaskId, res)
+				logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Node [%d] ERR\n", myid, h.m.TaskId, res)
 			}
 		}
 	}
@@ -248,9 +249,9 @@ func InitRebuildService() {
 		var err error
 		REBUILDER_SERVICE, err = ytrebuilder.NewClient(env.REBUILD_ADDR)
 		if err != nil {
-			env.Log.Errorf("Init Rebuild service err:%s\n", err)
+			logrus.Errorf("[DN]Init Rebuild service err:%s\n", err)
 		} else {
-			env.Log.Infof("Init Rebuild service:%s\n", env.REBUILD_ADDR)
+			logrus.Infof("[DN]Init Rebuild service:%s\n", env.REBUILD_ADDR)
 		}
 	}
 }
@@ -258,7 +259,7 @@ func InitRebuildService() {
 func SendRebuildTask(node *YTDNMgmt.Node) {
 	if REBUILDER_SERVICE != nil {
 		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
-			env.Log.Errorf("Exec SendRebuildTask ERR:Too many routines.\n")
+			logrus.Errorf("[SendRebuildTask]ERR:Too many routines.\n")
 			return
 		}
 		go ExecSendRebuildTask(node)
@@ -272,15 +273,15 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	defer cancel()
 	ls, err := REBUILDER_SERVICE.GetRebuildTasks(ctx)
 	if err != nil {
-		env.Log.Errorf("GetRebuildTasks ERR:%s\n", err)
+		logrus.Errorf("[GetRebuildTasks]ERR:%s\n", err)
 	}
 	node := &net.Node{Id: uint32(n.ID), Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
 	req := &pkt.TaskList{Tasklist: ls.Tasklist}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {
-		env.Log.Errorf("[%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
+		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
 	} else {
-		env.Log.Infof("[%d]Send rebuild task OK,count \n", node.Id, len(ls.Tasklist))
+		logrus.Infof("[SendRebuildTask][%d]Send rebuild task OK,count \n", node.Id, len(ls.Tasklist))
 	}
 }
 
@@ -303,16 +304,16 @@ func (h *TaskOpResultListHandler) SetMessage(pubkey string, msg proto.Message) (
 func (h *TaskOpResultListHandler) Handle() proto.Message {
 	newid, err := GetNodeId(h.pkey)
 	if err != nil {
-		emsg := fmt.Sprintf("Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
-		env.Log.Errorf(emsg)
+		emsg := fmt.Sprintf("[DNRebuidRep]Invalid node pubkey:%s,ERR:%s\n", h.pkey, err.Error())
+		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
-		env.Log.Errorf("[%d]Rebuild task OpResultList is empty.\n", newid)
+		logrus.Errorf("[DNRebuidRep][%d]Rebuild task OpResultList is empty.\n", newid)
 		return &pkt.VoidResp{}
 	}
 	if REBUILDER_SERVICE == nil {
-		env.Log.Errorf("[%d]Rebuild server Not started.\n", newid)
+		logrus.Errorf("[DNRebuidRep][%d]Rebuild server Not started.\n", newid)
 		return &pkt.VoidResp{}
 	}
 	okList := []int64{}
@@ -337,15 +338,15 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
 	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 	if err != nil {
-		env.Log.Errorf("[%d]Update rebuid TaskStatus, count=%d,ERR:%s\n", newid, len(h.m.Id), err)
+		logrus.Errorf("[DNRebuidRep][%d]Update rebuid TaskStatus, count=%d,ERR:%s\n", newid, len(h.m.Id), err)
 	} else {
-		env.Log.Infof("[%d]Update rebuid TaskStatus OK,count=%d\n", newid, len(h.m.Id))
+		logrus.Infof("[DNRebuidRep][%d]Update rebuid TaskStatus OK,count=%d\n", newid, len(h.m.Id))
 	}
 	err = dao.SaveShardRebuildMetas(metas)
 	if err != nil {
-		env.Log.Errorf("[%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
+		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
 	} else {
-		env.Log.Infof("[%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
+		logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
 	}
 	return &pkt.VoidResp{}
 }

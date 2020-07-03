@@ -10,6 +10,7 @@ import (
 
 	"github.com/aurawing/eos-go"
 	"github.com/mr-tron/base58"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTDNMgmt"
@@ -24,7 +25,7 @@ func InitShadowPriKey() error {
 		keystr := strings.ReplaceAll(env.ShadowPriKey, "yotta:", "")
 		data, err := base58.Decode(keystr)
 		if err != nil {
-			env.Log.Errorf("Base58.Decode 'ShadowPriKey' ERR%s\n", err.Error())
+			logrus.Errorf("[NodeMgr]Base58.Decode 'ShadowPriKey' ERR%s\n", err.Error())
 			return err
 		}
 		key, err := readKey()
@@ -48,9 +49,9 @@ func InitNodeMgr(MongoAddress string) error {
 		go func() {
 			err := http.ListenAndServe(config.PProf.BindAddr, nil)
 			if err != nil {
-				env.Log.Errorf("ERR when starting pprof server on address %s: %s\n", config.PProf.BindAddr, err)
+				logrus.Errorf("[NodeMgr]ERR when starting pprof server on address %s: %s\n", config.PProf.BindAddr, err)
 			} else {
-				env.Log.Infof("Enable pprof server:%s\n", config.PProf.BindAddr)
+				logrus.Infof("[NodeMgr]Enable pprof server:%s\n", config.PProf.BindAddr)
 			}
 		}()
 	}
@@ -58,12 +59,12 @@ func InitNodeMgr(MongoAddress string) error {
 		env.ContractAccount, env.ContractOwnerD, env.ShadowAccount, int32(env.SuperNodeID),
 		0, config)
 	if err != nil {
-		env.Log.Panicf("YTDNMgmt failed to start:%s\n", err.Error())
+		logrus.Panicf("[NodeMgr]Failed to start:%s\n", err.Error())
 	}
 	NodeMgr = mgr
 	ls, err := mgr.GetSuperNodes()
 	if err != nil {
-		env.Log.Panicf("YTDNMgmt failed to GetSuperNodes:%s\n", err.Error())
+		logrus.Panicf("[NodeMgr]Failed to GetSuperNodes:%s\n", err.Error())
 	}
 	readSuperNodeList(ls)
 	IsActive()
@@ -74,7 +75,7 @@ func readKey() ([]byte, error) {
 	path := env.YTSN_HOME + "res/key"
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		env.Log.Errorf("Resource file 'ShadowPriKey.key' read failure\n")
+		logrus.Errorf("[NodeMgr]Resource file 'ShadowPriKey.key' read failure\n")
 		return nil, errors.New("Resource file 'ShadowPriKey.key' read failure\n")
 	}
 	sha256Digest := sha256.New()
@@ -92,7 +93,7 @@ func readSuperNodeList(ls []*YTDNMgmt.SuperNode) {
 	}
 	for index, sn := range superNodeList {
 		if sn == nil || sn.Addrs == nil || len(sn.Addrs) == 0 {
-			env.Log.Panicf("YTDNMgmt:No 'SN%d' in yotta.SuperNode.\n", index)
+			logrus.Panicf("[NodeMgr]:No 'SN%d' in yotta.SuperNode.\n", index)
 		}
 		pkey := sn.PubKey
 		if strings.HasPrefix(strings.ToUpper(pkey), "EOS") {
@@ -176,7 +177,7 @@ func GetUserSuperNode(id int32) *YTDNMgmt.SuperNode {
 func GetRegSuperNode(username string) *YTDNMgmt.SuperNode {
 	number, err := eos.StringToName(username)
 	if err != nil {
-		env.Log.Errorf("Eos.StringToName(%s) return err:%s\n", username, err)
+		logrus.Errorf("[NodeMgr]Eos.StringToName(%s) return err:%s\n", username, err)
 		return superNodeList[0]
 	}
 	index := number % uint64(GetSuperNodeCount())

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/yottachain/YTCoreService/env"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +24,7 @@ func AddAction(action *Action) error {
 	defer cancel()
 	_, err := source.GetOBJColl().InsertOne(ctx, action)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' AddAction ERR:%s\n", action.UserID, err)
+		logrus.Errorf("[AddAction]UserID:%d,ERR:%s\n", action.UserID, err)
 		return err
 	}
 	return nil
@@ -37,7 +37,7 @@ func AddNewObject(id primitive.ObjectID, usedSpace uint64, userID int32, usernam
 	defer cancel()
 	_, err := source.GetOBJColl().InsertOne(ctx, action)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' AddNewObject ERR:%s\n", userID, err)
+		logrus.Errorf("[AddNewObject]UserID:%d,ERR:%s\n", userID, err)
 		return err
 	}
 	return nil
@@ -53,7 +53,7 @@ func FindOneNewObject() *Action {
 		if err == mongo.ErrNoDocuments {
 			return nil
 		}
-		env.Log.Errorf("FindOneNewObject ERR:%s\n", err)
+		logrus.Errorf("[FindOneNewObject]ERR:%s\n", err)
 		return nil
 	}
 	return action

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	proto "github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 )
@@ -62,14 +63,14 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 
 func OnError(msg proto.Message, name string) {
 	if r := recover(); r != nil {
-		env.Log.Tracef("OnMessage %s ERR:%s\n", name, r)
+		logrus.Tracef("[OnMessage] %s ERR:%s\n", name, r)
 	}
 }
 
 func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	msgfunc, ok := pkt.ID_CLASS_MAP[msgType]
 	if !ok {
-		env.Log.Errorf("Invalid msgid:%d\n", msgType)
+		logrus.Errorf("[OnMessage]Invalid msgid:%d\n", msgType)
 		return pkt.ErrorMsg(pkt.INVALID_ARGS, fmt.Sprintf("Invalid msgid:%d", msgType))
 	}
 	msg := msgfunc()
@@ -77,7 +78,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	defer OnError(msg, name)
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
-		env.Log.Errorf("Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())
+		logrus.Errorf("[OnMessage]Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())
 		return pkt.ErrorMsg(pkt.INVALID_ARGS, fmt.Sprintf("Deserialize (Msgid:%d) ERR:%s", msgType, err.Error()))
 	}
 	handler, err1 := findHandler(msg, msgType)
@@ -91,7 +92,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	if rnum != nil {
 		err = CheckRoutine(rnum)
 		if err != nil {
-			env.Log.Errorf("OnMessage %s ERR:%s\n", name, err)
+			logrus.Errorf("[OnMessage]%s,ERR:%s\n", name, err)
 			return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
 		}
 		atomic.AddInt32(rnum, 1)
@@ -101,7 +102,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	res := handler.Handle()
 	stime := time.Now().Sub(startTime).Milliseconds()
 	if stime > int64(env.SLOW_OP_TIMES) {
-		env.Log.Infof("OnMessage %s take times %d ms\n", name, stime)
+		logrus.Infof("[OnMessage]%s,take times %d ms\n", name, stime)
 	}
 	return pkt.MarshalMsgBytes(res)
 }

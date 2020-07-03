@@ -3,6 +3,7 @@ package handle
 import (
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 )
@@ -26,7 +27,7 @@ func StartIterate() {
 			} else {
 				firstId = id
 			}
-			env.Log.Infof("Start iterate the shards table from:%s\n", time.Unix(firstId>>32, 0).Format("2006-01-02 15:04:05"))
+			logrus.Infof("[IterateShard]Start iterate the shards table from:%s\n", time.Unix(firstId>>32, 0).Format("2006-01-02 15:04:05"))
 			break
 		}
 	}
@@ -36,7 +37,7 @@ func StartIterate() {
 		if lasttime > querylasttime {
 			time.Sleep(time.Duration(30) * time.Second)
 		} else {
-			env.Log.Infof("Start iterate  shards  from id:%d\n", firstId)
+			logrus.Infof("[IterateShard]Start iterate shards from id:%d\n", firstId)
 			lastid := dao.GenerateZeroID(lasttime)
 			hash, err := dao.ListShardCount(firstId, lastid)
 			if err != nil {
@@ -57,31 +58,86 @@ func StartIterate() {
 						hash[k] = v
 					}
 				}
-				if len(metas) > 0 {
-					err = dao.UpdateShardMeta(metas)
-					if err != nil {
-						time.Sleep(time.Duration(30) * time.Second)
-						continue
-					}
-					env.Log.Infof("UpdateShardMeta OK, count %d\n", len(metas))
-				}
+				UpdateShardMeta(metas)
 			}
-			if len(hash) > 0 {
-				err = dao.UpdateShardCount(hash, firstId, lastid)
-				if err != nil {
-					time.Sleep(time.Duration(30) * time.Second)
-					continue
-				}
-				env.Log.Infof("UpdateShardCount OK, count %d\n", len(hash))
-			}
+			UpdateShardCount(hash, firstId, lastid)
 			err = dao.SetShardCountProgress(lastid)
 			if err != nil {
 				time.Sleep(time.Duration(30) * time.Second)
 				continue
 			}
-			env.Log.Infof("Iterate  shards OK, lastId:%d\n", lastid)
+			logrus.Infof("[IterateShard]Iterate shards OK, lastId:%d\n", lastid)
 			firstId = lastid
 		}
 	}
+}
 
+const BATCH_UPDATE_MAXSIZE = 500
+
+func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) {
+	size := len(hash)
+	if size > 0 {
+		if size > BATCH_UPDATE_MAXSIZE {
+			m := make(map[int32]int64)
+			for k, v := range hash {
+				m[k] = v
+				if len(m) >= BATCH_UPDATE_MAXSIZE {
+					UpdateShardCountWRetry(m, firstid, lastid)
+					m = make(map[int32]int64)
+				}
+			}
+			if len(m) > 0 {
+				UpdateShardCountWRetry(m, firstid, lastid)
+			}
+		} else {
+			UpdateShardCountWRetry(hash, firstid, lastid)
+		}
+	}
+}
+
+func UpdateShardCountWRetry(hash map[int32]int64, firstid int64, lastid int64) {
+	for {
+		err := dao.UpdateShardCount(hash, firstid, lastid)
+		if err != nil {
+			logrus.Errorf("[IterateShard]UpdateShardCount ERR:%s,count %d\n", err, len(hash))
+			time.Sleep(time.Duration(30) * time.Second)
+		} else {
+			logrus.Infof("[IterateShard]UpdateShardCount OK,count %d\n", len(hash))
+			return
+		}
+	}
+}
+
+func UpdateShardMeta(metas map[int64]int32) {
+	size := len(metas)
+	if size > 0 {
+		if size > BATCH_UPDATE_MAXSIZE {
+			m := make(map[int64]int32)
+			for k, v := range metas {
+				m[k] = v
+				if len(m) >= BATCH_UPDATE_MAXSIZE {
+					UpdateShardMetaWRetry(m)
+					m = make(map[int64]int32)
+				}
+			}
+			if len(m) > 0 {
+				UpdateShardMetaWRetry(m)
+			}
+		} else {
+			UpdateShardMetaWRetry(metas)
+		}
+	}
+}
+
+func UpdateShardMetaWRetry(metas map[int64]int32) {
+	for {
+		err := dao.UpdateShardMeta(metas)
+		if err != nil {
+			logrus.Errorf("[IterateShard]UpdateShardMeta ERR:%s,count %d\n", err, len(metas))
+			time.Sleep(time.Duration(30) * time.Second)
+		} else {
+			logrus.Infof("[IterateShard]UpdateShardMeta OK,count %d\n", len(metas))
+			return
+		}
+	}
 }

@@ -9,9 +9,10 @@ import (
 
 	"github.com/mr-tron/base58"
 	"github.com/patrickmn/go-cache"
-	"github.com/yottachain/YTCrypto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
+	"github.com/yottachain/YTCrypto"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -67,7 +68,7 @@ func GetUserCache(userid int32, keyNumber int, signdata string) *User {
 	pkey := base58.Encode(user.KUEp[0])
 	pass := YTCrypto.Verify(pkey, []byte(data), signdata)
 	if !pass {
-		env.Log.Errorf("Signature verification failed,UserId:%d\n", userid)
+		logrus.Errorf("[GetUserCache]Signature verification failed,UserId:%d\n", userid)
 		return nil
 	}
 	return user
@@ -81,7 +82,7 @@ func UpdateNilRelationship() {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateMany(ctx, filter, update)
 	if err != nil {
-		env.Log.Errorf("UpdateNilRelationship ERR:%s\n", err)
+		logrus.Errorf("[UpdateNilRelationship]ERR:%s\n", err)
 	}
 }
 
@@ -94,7 +95,7 @@ func GetUserByUserId(userid int32) *User {
 	err := source.GetUserColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			env.Log.Errorf("GetUserByUserId ERR:%s\n", err)
+			logrus.Errorf("[GetUserByUserId]ERR:%s\n", err)
 		}
 		return nil
 	}
@@ -110,7 +111,7 @@ func GetUserByUsername(username string) *User {
 	err := source.GetUserColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			env.Log.Errorf("GetUserByUsername ERR:%s\n", err)
+			logrus.Errorf("[GetUserByUsername]ERR:%s\n", err)
 		}
 		return nil
 	}
@@ -125,7 +126,7 @@ func AddUserKUEp(userid int32, kuep []byte) error {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' AddUserKUEp ERR:%s\n", userid, err)
+		logrus.Errorf("[AddUserKUEp]UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
@@ -139,7 +140,7 @@ func UpdateUserSpace(userid int32, usedSpace uint64, fileTotal uint64, spaceTota
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' UpdateUserSpace ERR:%s\n", userid, err)
+		logrus.Errorf("[UpdateUserSpace]UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
@@ -151,7 +152,7 @@ func AddUser(user *User) error {
 	defer cancel()
 	_, err := source.GetUserColl().InsertOne(ctx, user)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' AddUser ERR:%s\n", user.UserID, err)
+		logrus.Errorf("[AddUser]UserID:%d,ERR:%s\n", user.UserID, err)
 		return err
 	}
 	return nil
@@ -170,20 +171,20 @@ func ListUsers(lastId int, limit int) ([]*User, error) {
 	cur, err := source.GetUserColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("ListUsers ERR:%s\n", err)
+		logrus.Errorf("[ListUsers]ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &User{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("ListUsers.Decode ERR:%s\n", err)
+			logrus.Errorf("[ListUsers]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		result = append(result, res)
 	}
 	if err := cur.Err(); err != nil {
-		env.Log.Errorf("ListUsers ERR:%s\n", err)
+		logrus.Errorf("[ListUsers]Cursor ERR:%s\n", err)
 		return nil, err
 	}
 	return result, nil
@@ -202,20 +203,20 @@ func TotalUsers() (*User, error) {
 	cur, err := source.GetUserColl().Aggregate(ctx, []bson.M{o})
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("TotalUsers ERR:%s\n", err)
+		logrus.Errorf("[TotalUsers]ERR:%s\n", err)
 		return nil, err
 	}
 	if cur.Next(ctx) {
 		var res = &User{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("TotalUsers.Decode ERR:%s\n", err)
+			logrus.Errorf("[TotalUsers]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		return res, nil
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("TotalUsers ERR:%s\n", curerr)
+		logrus.Errorf("[TotalUsers]Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return &User{Usedspace: 0, SpaceTotal: 0, FileTotal: 0}, nil
@@ -231,7 +232,7 @@ func GetUserCount() (int32, error) {
 		if strings.ContainsAny(errstr, "document is nil") {
 			return 0, nil
 		} else {
-			env.Log.Errorf("GetUserCount ERR:%s\n", err)
+			logrus.Errorf("[GetUserCount]ERR:%s\n", err)
 			return 0, err
 		}
 	} else {
@@ -247,7 +248,7 @@ func SetRelationship(username, relationship string) error {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		env.Log.Errorf("SetRelationship ERR:%s\n", err)
+		logrus.Errorf("[SetRelationship]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -272,20 +273,20 @@ func SumRelationship() (map[string]int64, error) {
 	cur, err := source.GetUserColl().Aggregate(ctx, []bson.M{filter, o})
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("SumRelationship ERR:%s\n", err)
+		logrus.Errorf("[SumRelationship]ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &SumType{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("SumRelationship.Decode ERR:%s\n", err)
+			logrus.Errorf("[SumRelationship]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		resmap[res.Relationship] = res.Usedspace
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("SumRelationship ERR:%s\n", curerr)
+		logrus.Errorf("[SumRelationship]Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return resmap, nil
@@ -300,7 +301,7 @@ func SetSpaceSum(snid int32, mowner string, usedspace uint64) error {
 	defer cancel()
 	_, err := source.GetSumColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		env.Log.Errorf("SetSpaceSum ERR:%s\n", err)
+		logrus.Errorf("[SetSpaceSum]ERR:%s\n", err)
 		return err
 	}
 	return nil

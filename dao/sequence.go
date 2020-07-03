@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,13 +31,13 @@ func InitUserID_seq() {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			atomic.StoreUint32(USERID_SEQ, uint32(env.SuperNodeID))
-			env.Log.Infof("User sequence init value:%d\n", env.SuperNodeID)
+			logrus.Infof("[InitSquence]User sequence init value:%d\n", env.SuperNodeID)
 		} else {
-			env.Log.Panicf("InitUserID_seq err:%s\n", err)
+			logrus.Panicf("[InitSquence]Err:%s\n", err)
 		}
 	}
 	atomic.StoreUint32(USERID_SEQ, result.ID)
-	env.Log.Infof("User sequence init value:%d\n", result.ID)
+	logrus.Infof("[InitSquence]User sequence init value:%d\n", result.ID)
 	atomic.StoreInt32(BLKID_SEQ, 0)
 	atomic.StoreInt32(SHDID_SEQ, 0)
 }

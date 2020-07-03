@@ -2,8 +2,8 @@ package handle
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
-	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -39,7 +39,7 @@ func (h *DownloadObjectInitHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	env.Log.Infof("Download object:%d/%s\n", h.user.UserID, meta.VNU.Hex())
+	logrus.Infof("[DownloadObj]UID:%d,VNU:%s\n", h.user.UserID, meta.VNU.Hex())
 	size := uint32(len(meta.BlockList))
 	refs := &pkt.DownloadObjectInitResp_RefList{Count: &size, Refers: meta.BlockList}
 	return &pkt.DownloadObjectInitResp{Reflist: refs, Length: &meta.Length}
@@ -80,7 +80,7 @@ func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 }
 
 func (h *DownloadFileHandler) Handle() proto.Message {
-	env.Log.Infof("Read object:%d/%s/%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
+	logrus.Infof("[DownloadFile]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
 	bmeta, err := dao.GetBucketIdFromCache(*h.m.Bucketname, h.user.UserID)
 	if err != nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -128,7 +128,7 @@ func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) 
 }
 
 func (h *DownloadBlockInitHandler) Handle() proto.Message {
-	env.Log.Infof("Download block:%d\n", *h.m.VBI)
+	logrus.Infof("[DownloadBLK]VBI:%d\n", *h.m.VBI)
 	bmeta, err := dao.GetBlockVNF(int64(*h.m.VBI))
 	if bmeta == nil {
 		return pkt.NewError(pkt.NO_SUCH_BLOCK)
@@ -153,12 +153,12 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 	}
 	nodes, err := net.NodeMgr.GetNodes(nodeidsls)
 	if err != nil {
-		env.Log.Errorf("GetNodes:ERR:%s\n", err)
+		logrus.Errorf("[DownloadBLK]GetNodes ERR:%s\n", err)
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	num := len(nodes)
 	if num != len(nodeidsls) {
-		env.Log.Errorf("Some Nodes have been cancelled\n")
+		logrus.Errorf("[DownloadBLK]Some Nodes have been cancelled\n")
 	}
 	respNodes := make([]*pkt.DownloadBlockInitResp_NList_Ns, num)
 	for index, n := range nodes {

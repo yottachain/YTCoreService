@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/yottachain/YTCoreService/env"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -78,20 +78,20 @@ func ListBucket(uid int32) ([]string, error) {
 	cur, err := source.GetBucketColl().Find(ctx, bson.M{}, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("ListBucket ERR:%s\n", err)
+		logrus.Errorf("[ListBucket]ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &BucketMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("ListBucket.Decode ERR:%s\n", err)
+			logrus.Errorf("[ListBucket]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		result = append(result, res.BucketName)
 	}
 	if err := cur.Err(); err != nil {
-		env.Log.Errorf("ListBucket ERR:%s\n", err)
+		logrus.Errorf("[ListBucket]Cursor ERR:%s\n", err)
 		return nil, err
 	}
 	return result, nil
@@ -105,7 +105,7 @@ func GetBucketByName(bname string, uid int32) (*BucketMeta, error) {
 	res := &BucketMeta{}
 	err := source.GetBucketColl().FindOne(ctx, filter).Decode(res)
 	if err != nil {
-		env.Log.Errorf("GetBucketByName ERR:%s\n", err)
+		logrus.Errorf("[GetBucketByName]ERR:%s\n", err)
 		return nil, err
 	}
 	return res, nil
@@ -121,7 +121,7 @@ func GetBucketCount(uid uint32) (int32, error) {
 		if strings.ContainsAny(errstr, "document is nil") {
 			return 0, nil
 		} else {
-			env.Log.Errorf("GetBucketCount ERR:%s\n", err)
+			logrus.Errorf("[GetBucketCount]ERR:%s\n", err)
 			return 0, err
 		}
 	} else {
@@ -136,7 +136,7 @@ func DeleteBucketMeta(meta *BucketMeta) error {
 	filter := bson.M{"_id": meta.BucketId}
 	_, err := source.GetBucketColl().DeleteOne(ctx, filter)
 	if err != nil {
-		env.Log.Errorf("DeleteBucketMeta ERR:%s\n", err)
+		logrus.Errorf("[DeleteBucketMeta]ERR:%s\n", err)
 		return err
 	} else {
 		key := fmt.Sprintf("%d-%s", meta.UserId, meta.BucketName)
@@ -153,7 +153,7 @@ func UpdateBucketMeta(meta *BucketMeta) error {
 	update := bson.M{"$set": bson.M{"Meta": meta.Meta}}
 	_, err := source.GetBucketColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' UpdateBucketMeta %s ERR:%s\n", meta.UserId, meta.BucketName, err)
+		logrus.Errorf("[UpdateBucketMeta]UserID:%d,Name:%s,ERR:%s\n", meta.UserId, meta.BucketName, err)
 		return err
 	}
 	key := fmt.Sprintf("%d-%s", meta.UserId, meta.BucketName)
@@ -169,7 +169,7 @@ func SaveBucketMeta(meta *BucketMeta) error {
 	if err != nil {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
-			env.Log.Errorf("UserID '%d' SaveBucketMeta %s ERR:%s\n", meta.UserId, meta.BucketName, err)
+			logrus.Errorf("[SaveBucketMeta]UserID:%d,Name:%s,ERR:%s\n", meta.UserId, meta.BucketName, err)
 			return err
 		}
 	}
@@ -189,7 +189,7 @@ func BucketIsEmpty(uid uint32, id primitive.ObjectID) (bool, error) {
 		if err == mongo.ErrNoDocuments {
 			return true, nil
 		} else {
-			env.Log.Errorf("BucketIsEmpty ERR:%s\n", err)
+			logrus.Errorf("[BucketIsEmpty]ERR:%s\n", err)
 			return false, err
 		}
 	}

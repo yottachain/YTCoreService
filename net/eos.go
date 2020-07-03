@@ -7,6 +7,7 @@ import (
 
 	"github.com/aurawing/eos-go"
 	"github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
@@ -27,7 +28,7 @@ func HasSpace(length uint64, username string) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		env.Log.Infof("Get [%s] balance:%d\n", username, balance)
+		logrus.Infof("[EOS]Get [%s] balance:%d\n", username, balance)
 		balan = BalanceValue{Balance: balance}
 		USER_Banlance_CACHE.Set(username, balan, cache.DefaultExpiration)
 	} else {
@@ -98,7 +99,7 @@ func GetBalance(username string) (uint64, error) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			env.Log.Tracef("GetBalance ERR:%s\n", r)
+			logrus.Tracef("[EOS]GetBalance ERR:%s\n", r)
 		}
 	}()
 	obj := GetBalanceReq{Owner: eos.AN(username),
@@ -115,7 +116,7 @@ func GetBalance(username string) (uint64, error) {
 	balance := &BalanceValue{}
 	err = json.Unmarshal([]byte(console), balance)
 	if err != nil {
-		env.Log.Errorf("Unmarshal '%s' ERR:%s\n", console, err)
+		logrus.Errorf("[EOS]Unmarshal '%s' ERR:%s\n", console, err)
 		return 0, err
 	}
 	return balance.Balance, nil
@@ -141,7 +142,7 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTr
 func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransactionFullResp, error) {
 	api, err := URI.NewApi()
 	if err != nil {
-		env.Log.Errorf("New Api,url:%s,ERR:%s\n", URI.Url, err)
+		logrus.Errorf("[EOS]New Api,url:%s,ERR:%s\n", URI.Url, err)
 		return nil, err
 	}
 	action := &eos.Action{
@@ -154,19 +155,19 @@ func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransaction
 	}
 	txOpts := &eos.TxOptions{}
 	if err = txOpts.FillFromChain(api); err != nil {
-		env.Log.Errorf("Filling tx opts: %s\n", err)
+		logrus.Errorf("[EOS]Filling tx opts: %s\n", err)
 		return nil, err
 	}
 	tx := eos.NewTransaction([]*eos.Action{action}, txOpts)
 	tx.SetExpiration(URI.GetExpiration())
 	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
 	if err != nil {
-		env.Log.Errorf("Sign transaction: %s\n", err)
+		logrus.Errorf("[EOS]Sign transaction: %s\n", err)
 		return nil, err
 	}
 	res, err := api.PushTransaction(packedTx)
 	if err != nil {
-		env.Log.Errorf("Push %s transaction: %s\n", actname, err)
+		logrus.Errorf("[EOS]Push %s transaction: %s\n", actname, err)
 		return nil, err
 	}
 	return res, nil

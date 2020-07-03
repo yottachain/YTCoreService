@@ -10,12 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
 var home_page string
 var ip_list []string
 var server *http.Server
+
+const CacheExpiredTime = 10
 
 func Stop() {
 	server.Close()
@@ -25,7 +28,7 @@ func Start(port int) error {
 	path := env.YTSN_HOME + "res/statapi.html"
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		env.Log.Errorf("Resource file 'statapi.html' read failure\n")
+		logrus.Errorf("[Http]Resource file 'statapi.html' read failure\n")
 		return errors.New("Resource file 'statapi.html' read failure\n")
 	}
 	home_page = string(data)
@@ -53,7 +56,7 @@ func Start(port int) error {
 	}
 	err = server.ListenAndServe()
 	if err != nil {
-		env.Log.Panicf("ListenAndServe: %s\n", err)
+		logrus.Panicf("[Http]ListenAndServe: %s\n", err)
 	}
 	return nil
 }

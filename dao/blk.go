@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yottachain/YTCoreService/env"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -35,20 +35,20 @@ func GetBlockByVHP(vhp []byte) ([]*BlockMeta, error) {
 	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("GetBlockByVHP ERR:%s\n", err)
+		logrus.Errorf("[GetBlockByVHP]ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &BlockMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("GetBlockByVHP.Decode ERR:%s\n", err)
+			logrus.Errorf("[GetBlockByVHP]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		result = append(result, res)
 	}
 	if err := cur.Err(); err != nil {
-		env.Log.Errorf("GetBlockByVHP ERR:%s\n", err)
+		logrus.Errorf("[GetBlockByVHP]Cursor ERR:%s\n", err)
 		return nil, err
 	}
 	return result, nil
@@ -66,7 +66,7 @@ func GetBlockVNF(vbi int64) (*BlockMeta, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			env.Log.Errorf("GetBlockVNF ERR:%s\n", err)
+			logrus.Errorf("[GetBlockVNF]ERR:%s\n", err)
 			return nil, err
 		}
 	}
@@ -85,7 +85,7 @@ func GetBlockById(vbi int64) (*BlockMeta, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			env.Log.Errorf("GetBlockById ERR:%s\n", err)
+			logrus.Errorf("[GetBlockById]ERR:%s\n", err)
 			return nil, err
 		}
 	}
@@ -104,7 +104,7 @@ func GetBlockByVHP_VHB(vhp []byte, vhb []byte) (*BlockMeta, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			env.Log.Errorf("GetBlockByVHP_VHB ERR:%s\n", err)
+			logrus.Errorf("[GetBlockByVHP_VHB]ERR:%s\n", err)
 			return nil, err
 		}
 	}
@@ -119,7 +119,7 @@ func SaveBlockMeta(meta *BlockMeta) error {
 	if err != nil {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
-			env.Log.Errorf("SaveBlockMeta ERR:%s\n", err)
+			logrus.Errorf("[SaveBlockMeta]ERR:%s\n", err)
 			return err
 		}
 	}
@@ -138,7 +138,7 @@ func SaveBlockData(id int64, data []byte) error {
 	if err != nil {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
-			env.Log.Errorf("SaveBlockData ERR:%s\n", err)
+			logrus.Errorf("[SaveBlockData]ERR:%s\n", err)
 			return err
 		}
 	}
@@ -156,7 +156,7 @@ func GetBlockData(id int64) []byte {
 	err := source.GetBlockDataColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			env.Log.Errorf("GetBlockData ERR:%s\n", err)
+			logrus.Errorf("[GetBlockData]ERR:%s\n", err)
 		}
 		return nil
 	}
@@ -173,7 +173,7 @@ func GetBlockCount() (uint64, error) {
 	err := source.GetBlockCountColl().FindOne(ctx, filter, opt).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			env.Log.Errorf("GetBlockCount ERR:%s\n", err)
+			logrus.Errorf("[GetBlockCount]ERR:%s\n", err)
 			return 0, err
 		} else {
 			return 0, nil
@@ -191,7 +191,7 @@ func IncBlockCount() error {
 	defer cancel()
 	_, err := source.GetBlockCountColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		env.Log.Errorf("IncBlockCount ERR:%s\n", err)
+		logrus.Errorf("[IncBlockCount]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -207,7 +207,7 @@ func GetBlockNlinkCount() (uint64, error) {
 	err := source.GetBlockCountColl().FindOne(ctx, filter, opt).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			env.Log.Errorf("GetBlockNlinkCount ERR:%s\n", err)
+			logrus.Errorf("[GetBlockNlinkCount]ERR:%s\n", err)
 			return 0, err
 		} else {
 			return 0, nil
@@ -225,7 +225,7 @@ func IncBlockNlinkCount() error {
 	defer cancel()
 	_, err := source.GetBlockCountColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		env.Log.Errorf("IncBlockNlinkCount ERR:%s\n", err)
+		logrus.Errorf("[IncBlockNlinkCount]ERR:%s\n", err)
 		return err
 	}
 	return nil

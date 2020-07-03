@@ -5,26 +5,64 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"sync/atomic"
+	"time"
 
-	"github.com/yottachain/YTCoreService/env"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/net"
 )
 
+var ActiveNodesCache = struct {
+	Value     atomic.Value
+	LastTimes *int64
+}{LastTimes: new(int64)}
+
 func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
+	if time.Now().Unix()-atomic.LoadInt64(ActiveNodesCache.LastTimes) < CacheExpiredTime {
+		v := ActiveNodesCache.Value.Load()
+		if v != nil {
+			ss, _ := v.(string)
+			WriteJson(w, ss)
+			return
+		}
+	}
 	nodes, err := net.NodeMgr.ActiveNodesList()
 	if err != nil {
 		WriteErr(w, "ActiveNodesList err:"+err.Error())
 	} else {
-		txt, err := json.Marshal(nodes)
+		m := make(map[string]interface{})
+		for _, n := range nodes {
+			m["id"] = strconv.Itoa(int(n.ID))
+			m["ip"] = n.Addrs
+			m["nodeid"] = n.NodeID
+		}
+		txt, err := json.Marshal(m)
 		if err != nil {
 			WriteErr(w, "ActiveNodesList Marshal err:"+err.Error())
 		} else {
-			WriteJson(w, string(txt))
+			ss := string(txt)
+			ActiveNodesCache.Value.Store(ss)
+			atomic.StoreInt64(ActiveNodesCache.LastTimes, time.Now().Unix())
+			WriteJson(w, ss)
 		}
 	}
 }
 
+var StatisticsCache = struct {
+	Value     atomic.Value
+	LastTimes *int64
+}{LastTimes: new(int64)}
+
 func StatisticsHandle(w http.ResponseWriter, req *http.Request) {
+	if time.Now().Unix()-atomic.LoadInt64(StatisticsCache.LastTimes) < CacheExpiredTime {
+		v := StatisticsCache.Value.Load()
+		if v != nil {
+			ss, _ := v.(string)
+			WriteJson(w, ss)
+			return
+		}
+	}
 	stat, err := net.NodeMgr.Statistics()
 	if err != nil {
 		WriteErr(w, "Statistics err:"+err.Error())
@@ -33,7 +71,10 @@ func StatisticsHandle(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			WriteErr(w, "Statistics Marshal err:"+err.Error())
 		} else {
-			WriteJson(w, string(txt))
+			ss := string(txt)
+			StatisticsCache.Value.Store(ss)
+			atomic.StoreInt64(StatisticsCache.LastTimes, time.Now().Unix())
+			WriteJson(w, ss)
 		}
 	}
 }
@@ -81,11 +122,11 @@ func CallApiHandle(w http.ResponseWriter, req *http.Request, callname string) {
 			WriteErr(w, "ReadRequest err:"+err.Error())
 		} else {
 			apiname := callname
-			env.Log.Infof("Call API:%s,trx:%s\n", apiname, trx)
+			logrus.Infof("[HttpDN]Call API:%s,trx:%s\n", apiname, trx)
 			err := net.NodeMgr.CallAPI(trx, apiname)
 			if err != nil {
-				emsg := fmt.Sprintf("Call API:%s,ERR:%s\n", apiname, err.Error())
-				env.Log.Infof(emsg)
+				emsg := fmt.Sprintf("[HttpDN]Call API:%s,ERR:%s\n", apiname, err.Error())
+				logrus.Infof(emsg)
 				WriteErr(w, emsg)
 			} else {
 				WriteText(w, "OK")

@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	proto "github.com/golang/protobuf/proto"
-	"github.com/yottachain/YTCoreService/env"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -31,8 +31,8 @@ func MarshalMsg(msg proto.Message) ([]byte, string, int32, error) {
 	}
 	res, err := proto.Marshal(msg)
 	if err != nil {
-		errmsg := fmt.Sprintf("Marshal ERR%s.", err.Error())
-		env.Log.Errorln(errmsg)
+		errmsg := fmt.Sprintf("[Packet]Marshal ERR%s.", err.Error())
+		logrus.Errorln(errmsg)
 		return nil, name, msgType, err
 	}
 	return res, name, msgType, nil
@@ -42,7 +42,7 @@ func GetMessageID(name string) (int32, error) {
 	if crc16, ok := CLASS_ID_MAP[name]; ok {
 		return int32(crc16), nil
 	} else {
-		env.Log.Errorf("Message name '%s' no registration.\n", name)
+		logrus.Errorf("[Packet]Message name '%s' no registration.\n", name)
 		return 0, errors.New("Message name '" + name + "' no registration.")
 	}
 }
@@ -52,8 +52,8 @@ func GetEmptyMessage(msgType []byte) (proto.Message, error) {
 	if curfunc, ok := ID_CLASS_MAP[crc]; ok {
 		return curfunc(), nil
 	} else {
-		errmsg := fmt.Sprintf("Message type id'%d' no registration.", crc)
-		env.Log.Errorln(errmsg)
+		errmsg := fmt.Sprintf("[Packet]Message type id'%d' no registration.", crc)
+		logrus.Errorln(errmsg)
 		return nil, errors.New(errmsg)
 	}
 }
@@ -67,8 +67,8 @@ func UnmarshalMsg(data []byte) proto.Message {
 	bs := data[2:]
 	err = proto.Unmarshal(bs, msg)
 	if err != nil {
-		errmsg := fmt.Sprintf("Unmarshal ERR%s.", err.Error())
-		env.Log.Errorln(errmsg)
+		errmsg := fmt.Sprintf("[Packet]Unmarshal ERR%s.", err.Error())
+		logrus.Errorln(errmsg)
 		return NewErrorMsg(INVALID_ARGS, errmsg)
 	}
 	return msg

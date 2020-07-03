@@ -2,8 +2,8 @@ package handle
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
-	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -33,7 +33,7 @@ func (h *CreateBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 }
 
 func (h *CreateBucketHandler) Handle() proto.Message {
-	env.Log.Infof("Create bucket:%d/%s\n", h.user.UserID, *h.m.BucketName)
+	logrus.Infof("[CreateBucket]UID:%d,Name:%s\n", h.user.UserID, *h.m.BucketName)
 	name := *h.m.BucketName
 	if len(name) < 1 || len(name) > 20 {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -43,7 +43,7 @@ func (h *CreateBucketHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	if num >= dao.Max_Bucket_count {
-		env.Log.Errorf("[%d] Create bucket ERR:TOO_MANY_BUCKETS %d\n", h.user.UserID, num)
+		logrus.Errorf("[CreateBucket]UID:%d,ERR:TOO_MANY_BUCKETS %d\n", h.user.UserID, num)
 		return pkt.NewError(pkt.TOO_MANY_BUCKETS)
 	}
 	meta := &dao.BucketMeta{UserId: h.user.UserID, BucketId: primitive.NewObjectID(), Meta: h.m.Meta, BucketName: name}
@@ -80,7 +80,7 @@ func (h *GetBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 }
 
 func (h *GetBucketHandler) Handle() proto.Message {
-	env.Log.Infof("GET bucket:%d/%s\n", h.user.UserID, *h.m.BucketName)
+	logrus.Infof("[GetBucket]:UID:%d,Name:%s\n", h.user.UserID, *h.m.BucketName)
 	bmeta, err := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if err != nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -113,7 +113,7 @@ func (h *DeleteBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 }
 
 func (h *DeleteBucketHandler) Handle() proto.Message {
-	env.Log.Infof("Delete bucket:%d/%s\n", h.user.UserID, *h.m.BucketName)
+	logrus.Infof("[Deletebucket]UID:%d,Name:%s\n", h.user.UserID, *h.m.BucketName)
 	bmeta, err := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if err != nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -159,7 +159,7 @@ func (h *UpdateBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 }
 
 func (h *UpdateBucketHandler) Handle() proto.Message {
-	env.Log.Infof("Update bucket:%d/%s\n", h.user.UserID, *h.m.BucketName)
+	logrus.Infof("[Updatebucket]UID:%d,Name:%s\n", h.user.UserID, *h.m.BucketName)
 	bmeta, err := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if err != nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -198,7 +198,7 @@ func (h *ListBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *ListBucketHandler) Handle() proto.Message {
-	env.Log.Infof("List bucket:%d\n", h.user.UserID)
+	logrus.Infof("[Listbucket]UID:%d\n", h.user.UserID)
 	ss, err := dao.ListBucketFromCache(h.user.UserID)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)

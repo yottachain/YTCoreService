@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,7 +40,7 @@ func GetShardCountProgress() (int64, error) {
 		if err == mongo.ErrNoDocuments {
 			return 0, nil
 		} else {
-			env.Log.Errorf("GetShardCountProgress ERR:%s\n", err)
+			logrus.Errorf("[GetShardCountProgress]ERR:%s\n", err)
 			return 0, err
 		}
 	}
@@ -55,7 +56,7 @@ func SetShardCountProgress(id int64) error {
 	opt := options.Update().SetUpsert(true)
 	_, err := source.GetShardCountColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		env.Log.Errorf("SetShardCountProgress ERR:%s\n", err)
+		logrus.Errorf("[SetShardCountProgress]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -71,7 +72,7 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("ListShardCount ERR:%s\n", err)
+		logrus.Errorf("[ListShardCount]ERR:%s\n", err)
 		return nil, err
 	}
 	ii := 0
@@ -80,7 +81,7 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 		var res = &ShardMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("ListShardCount.Decode ERR:%s\n", err)
+			logrus.Errorf("[ListShardCount]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		if res.VFI > lastid {
@@ -95,7 +96,7 @@ func ListShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 		ii++
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("ListShardCount.cursor ERR:%s, at line :%d\n", curerr, ii)
+		logrus.Errorf("[ListShardCount]Cursor ERR:%s, at line :%d\n", curerr, ii)
 		return nil, curerr
 	}
 	return count, nil
@@ -110,7 +111,7 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("ListRebuildShardCount ERR:%s\n", err)
+		logrus.Errorf("[ListRebuildShardCount]ERR:%s\n", err)
 		return nil, nil, err
 	}
 	count := make(map[int32]int64)
@@ -120,7 +121,7 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 		var res = &ShardRebuidMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("ListRebuildShardCount.Decode ERR:%s\n", err)
+			logrus.Errorf("[ListRebuildShardCount]Decode ERR:%s\n", err)
 			return nil, nil, err
 		}
 		if res.ID > lastid {
@@ -142,7 +143,7 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 		ii++
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("ListRebuildShardCount .cursor ERR:%s,at line %d\n", curerr, ii)
+		logrus.Errorf("[ListRebuildShardCount]Cursor ERR:%s,at line %d\n", curerr, ii)
 		return nil, nil, curerr
 	}
 	return count, upmetas, nil
@@ -164,7 +165,7 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 	defer cancel()
 	_, err := source.GetNodeColl().BulkWrite(ctx, operations)
 	if err != nil {
-		env.Log.Errorf("UpdateShardCount ERR:%s\n", err)
+		logrus.Errorf("[UpdateShardCount]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -183,7 +184,7 @@ func UpdateShardMeta(metas map[int64]int32) error {
 	defer cancel()
 	_, err := source.GetShardColl().BulkWrite(ctx, operations)
 	if err != nil {
-		env.Log.Errorf("UpdateShardMeta ERR:%s\n", err)
+		logrus.Errorf("[UpdateShardMeta]ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -202,7 +203,7 @@ func SaveShardMetas(ls []*ShardMeta) error {
 	if err != nil {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
-			env.Log.Errorf("SaveShardMetas ERR:%s\n", err)
+			logrus.Errorf("[SaveShardMetas]ERR:%s\n", err)
 			return err
 		}
 	}
@@ -236,25 +237,25 @@ func GetShardNodes(ids []int64) ([]*ShardRebuidMeta, error) {
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("GetShardNodes ERR:%s\n", err)
+		logrus.Errorf("[GetShardNodes]ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &ShardMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("GetShardNodes.Decode ERR:%s\n", err)
+			logrus.Errorf("[GetShardNodes]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		meta := &ShardRebuidMeta{VFI: res.VFI, OldNodeId: res.NodeId}
 		metas = append(metas, meta)
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("GetShardNodes ERR:%s\n", curerr)
+		logrus.Errorf("[GetShardNodes]Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	if len(metas) != len(ids) {
-		env.Log.Warnf("GetShardNodes return:%d reqcount:%d\n", len(metas), len(ids))
+		logrus.Warnf("[GetShardNodes]Return:%d,reqcount:%d\n", len(metas), len(ids))
 	}
 	return metas, nil
 }
@@ -268,24 +269,24 @@ func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {
 	cur, err := source.GetShardColl().Find(ctx, filter)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("GetShardMetas ERR:%s\n", err)
+		logrus.Errorf("[GetShardMetas]ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &ShardMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("GetShardMetas.Decode ERR:%s\n", err)
+			logrus.Errorf("[GetShardMetas]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		metas = append(metas, res)
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("GetShardMetas ERR:%s\n", curerr)
+		logrus.Errorf("[GetShardMetas]Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	if len(metas) != count {
-		env.Log.Errorf("GetShardMetas return:%d reqcount:%d\n", len(metas), count)
+		logrus.Errorf("[GetShardMetas]Return:%d,reqcount:%d\n", len(metas), count)
 		return nil, errors.New("")
 	}
 	return metas, nil

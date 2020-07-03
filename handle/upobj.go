@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -134,10 +135,10 @@ func (h *UploadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (
 }
 
 func (h *UploadObjectInitHandler) Handle() proto.Message {
-	env.Log.Infof("Upload object init %d\n", h.user.UserID)
+	logrus.Infof("[UploadOBJInit]Init %d\n", h.user.UserID)
 	n := net.GetUserSuperNode(h.user.UserID)
 	if n.ID != int32(env.SuperNodeID) {
-		env.Log.Infof("Upload object init %d,INVALID_USER_ID\n", h.user.UserID)
+		logrus.Infof("[UploadOBJInit]UID:%d,INVALID_USER_ID\n", h.user.UserID)
 		return pkt.NewError(pkt.INVALID_USER_ID)
 	}
 	if len(h.m.VHW) != 32 {
@@ -158,9 +159,9 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 			nums := pkt.ReferIds(pkt.ParseRefers(meta.BlockList))
 			ca.AddBlocks(nums)
 			if meta.Length != *h.m.Length {
-				env.Log.Warnf("Upload object %d,File length inconsistency.\n", h.user.UserID)
+				logrus.Warnf("[UploadOBJInit]UID:%d,File length inconsistency.\n", h.user.UserID)
 			} else {
-				env.Log.Debugf("Upload object %d,Uploading...\n", h.user.UserID)
+				logrus.Debugf("[UploadOBJInit]UID:%d,Uploading...\n", h.user.UserID)
 			}
 			resp.Blocks = nums
 		} else {
@@ -169,7 +170,7 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 				return pkt.NewError(pkt.SERVER_ERROR)
 			}
 			*resp.Repeat = true
-			env.Log.Debugf("Upload object %d,Already exists.\n", h.user.UserID)
+			logrus.Debugf("[UploadOBJInit]UID:%d,Already exists.\n", h.user.UserID)
 			return resp
 		}
 	} else {
@@ -192,7 +193,7 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 	} else {
 		return pkt.NewError(pkt.NOT_ENOUGH_DHH)
 	}
-	env.Log.Infof("Upload object %d,UploadId:%s.\n", h.user.UserID, meta.VNU.Hex())
+	logrus.Infof("[UploadOBJInit]UID:%d,UploadId:%s.\n", h.user.UserID, meta.VNU.Hex())
 	SetUploadObject(meta.VNU, ca)
 	h.sign(resp, meta.VNU)
 	return resp
@@ -207,7 +208,7 @@ func (h *UploadObjectInitHandler) sign(resp *pkt.UploadObjectInitResp, vnu primi
 	bytebuf.WriteString(strconv.FormatInt(int64(t), 10))
 	signdata, err := YTCrypto.Sign(net.GetLocalSuperNode().PrivKey, bytebuf.Bytes())
 	if err != nil {
-		env.Log.Errorf("UploadObjectInitResp Sign ERR%s\n", err)
+		logrus.Errorf("[UploadOBJInit]UploadObjectInitResp Sign ERR%s\n", err)
 	} else {
 		resp.SignArg = &signdata
 	}
@@ -266,10 +267,10 @@ func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) (*p
 func (h *SaveObjectMetaHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[SaveObjectMeta]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
-	env.Log.Infof("Save object meta:%d/%s/%d/%d\n", *h.m.UserID, *h.m.VNU, h.refer.Id, h.refer.VBI)
+	logrus.Infof("[SaveObjectMeta]/%d/%s/%d/%d\n", *h.m.UserID, *h.m.VNU, h.refer.Id, h.refer.VBI)
 	if h.refer.VBI == 0 {
 		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
 	}
@@ -364,7 +365,7 @@ func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) (*
 func (h *UploadObjectEndHandler) Handle() proto.Message {
 	ca := GetUploadObject(h.vnu)
 	if ca == nil {
-		env.Log.Warnf("[%s] already completed.\n", h.vnu.Hex())
+		logrus.Warnf("[UploadOBJEnd][%s] already completed.\n", h.vnu.Hex())
 		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
 	}
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
@@ -385,20 +386,20 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	err = net.AddUsedSpace(h.user.Username, addusedspace)
 	if err != nil {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 0)
-		env.Log.Errorf("[%d] Add usedSpace ERR:%s\n", h.user.UserID, err)
-		env.Log.Infof("Upload object %d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
+		logrus.Errorf("[UploadOBJEnd][%d] Add usedSpace ERR:%s\n", h.user.UserID, err)
+		logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 		DelUploadObject(meta.VNU)
 		return &pkt.VoidResp{}
 	}
-	env.Log.Infof("User [%d] add usedSpace:%d\n", h.user.UserID, usedspace)
+	logrus.Infof("[UploadOBJEnd]User [%d] add usedSpace:%d\n", h.user.UserID, usedspace)
 	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
 	err = net.SubBalance(h.user.Username, firstCost)
 	if err != nil {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
-		env.Log.Errorf("[%d] Sub Balance ERR:%s\n", h.user.UserID, err)
+		logrus.Errorf("[UploadOBJEnd][%d] Sub Balance ERR:%s\n", h.user.UserID, err)
 	}
-	env.Log.Infof("User [%d] sub balance:%d\n", h.user.UserID, firstCost)
-	env.Log.Infof("Upload object %d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
+	logrus.Infof("[UploadOBJEnd]User [%d] sub balance:%d\n", h.user.UserID, firstCost)
+	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 	DelUploadObject(meta.VNU)
 	return &pkt.VoidResp{}
 }
@@ -427,21 +428,21 @@ func DoCacheAction() bool {
 		err := net.AddUsedSpace(action.Username, addusedspace)
 		if err != nil {
 			dao.AddAction(action)
-			env.Log.Errorf("[%d] Add usedSpace ERR:%s\n", action.UserID, err)
+			logrus.Errorf("[DoCacheAction][%d] Add usedSpace ERR:%s\n", action.UserID, err)
 			time.Sleep(time.Duration(3) * time.Minute)
 			return true
 		}
-		env.Log.Infof("User [%d] add usedSpace:%d\n", action.UserID, addusedspace)
+		logrus.Infof("[DoCacheAction]User [%d] add usedSpace:%d\n", action.UserID, addusedspace)
 	}
 	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
 	err := net.SubBalance(action.Username, firstCost)
 	if err != nil {
 		action.Step = 1
 		dao.AddAction(action)
-		env.Log.Errorf("[%d] Sub Balance ERR:%s\n", action.UserID, err)
+		logrus.Errorf("[DoCacheAction][%d] Sub Balance ERR:%s\n", action.UserID, err)
 		time.Sleep(time.Duration(3) * time.Minute)
 	} else {
-		env.Log.Infof("User [%d] sub balance:%d\n", action.UserID, firstCost)
+		logrus.Infof("[DoCacheAction]User [%d] sub balance:%d\n", action.UserID, firstCost)
 	}
 	return true
 }

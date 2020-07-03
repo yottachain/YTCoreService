@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -53,7 +54,7 @@ func (self *FileMeta) GetLastFileMeta(justversion bool) error {
 		if err == mongo.ErrNoDocuments {
 			return err
 		} else {
-			env.Log.Errorf("GetFileMeta ERR:%s\n", err)
+			logrus.Errorf("[GetFileMeta]ERR:%s\n", err)
 			return err
 		}
 	}
@@ -71,7 +72,7 @@ func (self *FileMeta) DeleteFileMeta() error {
 	defer cancel()
 	_, err := source.GetFileColl().DeleteOne(ctx, filter)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' DeleteFileMeta ERR:%s\n", self.UserId, err)
+		logrus.Errorf("[DeleteFileMeta]UserID:%d,ERR:%s\n", self.UserId, err)
 		return err
 	}
 	return nil
@@ -85,7 +86,7 @@ func (self *FileMeta) DeleteLastFileMeta() error {
 	defer cancel()
 	_, err := source.GetFileColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' DeleteLastFileMeta ERR:%s\n", self.UserId, err)
+		logrus.Errorf("[DeleteLastFileMeta]UserID:%d,ERR:%s\n", self.UserId, err)
 		return err
 	}
 	filter = bson.M{"bucketId": self.BucketId, "fileName": self.FileName, "version": bson.M{"$size": 0}}
@@ -105,7 +106,7 @@ func (self *FileMeta) SaveFileMeta() error {
 	opt := options.Update().SetUpsert(true)
 	_, err := source.GetFileColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		env.Log.Errorf("UserID '%d' SaveFileMeta ERR:%s\n", self.UserId, err)
+		logrus.Errorf("[SaveFileMeta]UserID:%d,ERR:%s\n", self.UserId, err)
 		return err
 	}
 	return nil
@@ -126,7 +127,7 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 		meta := &FileMeta{BucketId: bid, FileName: nFileName, UserId: int32(uid)}
 		err := meta.GetLastFileMeta(true)
 		if err != nil {
-			env.Log.Errorf("ListFileMeta.GetLastFileMeta %s/%s ERR:%s\n", bid.Hex(), nFileName, err)
+			logrus.Errorf("[ListFileMeta]GetLastFileMeta %s/%s ERR:%s\n", bid.Hex(), nFileName, err)
 			return nil, err
 		}
 		if !wversion {
@@ -162,7 +163,7 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 	cur, err := source.GetFileColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		env.Log.Errorf("ListFileMeta ERR:%s\n", err)
+		logrus.Errorf("[ListFileMeta]ERR:%s\n", err)
 		return nil, err
 	}
 	count := 0
@@ -171,7 +172,7 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 		res := &FileMetaWithVersion{}
 		err = cur.Decode(res)
 		if err != nil {
-			env.Log.Errorf("ListFileMeta.Decode ERR:%s\n", err)
+			logrus.Errorf("[ListFileMeta]Decode ERR:%s\n", err)
 			return nil, err
 		}
 		versize := len(res.Version)
@@ -199,13 +200,13 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 				}
 			}
 			if toFindNextVersionId {
-				env.Log.Errorf("ListFileMeta ERR:INVALID_NEXTVERSIONID%s\n", nversion.Hex())
+				logrus.Errorf("[ListFileMeta]ERR:INVALID_NEXTVERSIONID%s\n", nversion.Hex())
 				return nil, errors.New("INVALID_NEXTVERSIONID")
 			}
 		}
 	}
 	if curerr := cur.Err(); curerr != nil {
-		env.Log.Errorf("ListFileMeta ERR:%s\n", curerr)
+		logrus.Errorf("[ListFileMeta]Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return result, nil

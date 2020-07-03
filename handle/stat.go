@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -29,12 +30,12 @@ func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorM
 func (h *TotalHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[TotalUsers]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
 	m, err := dao.TotalUsers()
 	if err != nil {
-		env.Log.Errorf("TotalUsers ERR%s\n", err)
+		logrus.Errorf("[TotalUsers]ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	}
 	usedspace := uint64(m.Usedspace)
@@ -76,7 +77,7 @@ func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 func (h *UserSpaceHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[TotalUsers]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
 	user := dao.GetUserByUserId(int32(*h.m.Userid))
@@ -116,7 +117,7 @@ func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Err
 func (h *UserListHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[UserList]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
 	ls, err := dao.ListUsers(int(*h.m.LastId), int(*h.m.Count))
@@ -154,7 +155,7 @@ func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 func (h *RelationshipHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[Relationship]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
 	err = dao.SetRelationship(*h.m.Username, *h.m.MpoolOwner)
@@ -187,7 +188,7 @@ func (h *RelationshipSumHandler) SetMessage(pubkey string, msg proto.Message) (*
 func (h *RelationshipSumHandler) Handle() proto.Message {
 	sn, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[RelationshipSum]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
 	count := len(h.m.Mowner)

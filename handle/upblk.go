@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
@@ -45,7 +46,7 @@ func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*
 }
 
 func (h *UploadBlockInitHandler) Handle() proto.Message {
-	env.Log.Infof("Upload block init %d/%s/%d\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+	logrus.Infof("[UploadBLK]Init %d/%s/%d\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 	n := net.GetBlockSuperNode(h.m.VHP)
 	if n.ID != int32(env.SuperNodeID) {
 		return pkt.NewErrorMsg(pkt.ILLEGAL_VHP_NODEID, "Invalid request")
@@ -126,7 +127,7 @@ func (h *UploadBlockDBHandler) SetMessage(pubkey string, msg proto.Message) (*pk
 }
 
 func (h *UploadBlockDBHandler) Handle() proto.Message {
-	env.Log.Infof("Save block %d/%s/%d to DB...\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+	logrus.Infof("[UploadBLK]Save block %d/%s/%d to DB...\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 	n := net.GetBlockSuperNode(h.m.VHP)
 	if n.ID != int32(env.SuperNodeID) {
 		return pkt.NewErrorMsg(pkt.ILLEGAL_VHP_NODEID, "Invalid request")
@@ -138,7 +139,7 @@ func (h *UploadBlockDBHandler) Handle() proto.Message {
 	}
 	if meta != nil {
 		if !bytes.Equal(meta.KED, h.m.KED) {
-			env.Log.Errorf("Block meta duplicate writing.\n")
+			logrus.Errorf("[UploadBLK]Block meta duplicate writing.\n")
 			return pkt.NewError(pkt.SERVER_ERROR)
 		} else {
 			vbi = meta.VBI
@@ -168,7 +169,7 @@ func (h *UploadBlockDBHandler) Handle() proto.Message {
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-				env.Log.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 			}
 		}
 	}
@@ -217,7 +218,7 @@ func (h *UploadBlockDupHandler) SetMessage(pubkey string, msg proto.Message) (*p
 }
 
 func (h *UploadBlockDupHandler) Handle() proto.Message {
-	env.Log.Infof("Upload block %d/%s/%d exist...\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+	logrus.Infof("[UploadBLK]/%d/%s/%d exist...\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 	meta, _ := dao.GetBlockByVHP_VHB(h.m.VHP, h.m.VHB)
 	if meta == nil {
 		return pkt.NewError(pkt.NO_SUCH_BLOCK)
@@ -238,7 +239,7 @@ func (h *UploadBlockDupHandler) Handle() proto.Message {
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-				env.Log.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 			} else {
 				dao.IncBlockNlinkCount()
 			}
@@ -295,7 +296,7 @@ func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*p
 }
 
 func (h *UploadBlockEndHandler) Handle() proto.Message {
-	env.Log.Debugf("Receive UploadBlockEnd request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
+	logrus.Debugf("[UploadBLK]Receive UploadBlockEnd request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
 	shardcount := len(h.m.Oklist)
 	vbi := dao.GenerateBlockID(shardcount)
@@ -305,7 +306,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	}
 	if meta != nil {
 		if !bytes.Equal(meta.KED, h.m.KED) {
-			env.Log.Warnf("Block meta duplicate writing.\n")
+			logrus.Warnf("[UploadBLK]Block meta duplicate writing.\n")
 		} else {
 			vbi = meta.VBI
 		}
@@ -330,7 +331,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 			VNF: int16(shardcount), NLINK: 1, AR: int16(*h.m.AR)}
 		dao.SaveBlockMeta(meta)
 	}
-	env.Log.Debugf("Upload block:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	logrus.Debugf("[UploadBLK]/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	startTime = time.Now()
 	usedSpace := uint64(env.PFL * shardcount)
 	vnustr := h.vnu.Hex()
@@ -341,16 +342,16 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	*saveObjectMetaReq.Mode = false
 	res, perr := SaveObjectMeta(saveObjectMetaReq, ref, h.vnu)
 	if perr != nil {
-		env.Log.Infof("Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
+		logrus.Infof("Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
 		return perr
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-				env.Log.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+				logrus.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 			}
 		}
 	}
-	env.Log.Infof("Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	logrus.Infof("[UploadBLK]Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	ip := net.GetSelfIp()
 	return &pkt.UploadBlockEndResp{Host: &ip, VBI: &vbi}
 }
@@ -364,11 +365,11 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	}
 	nodes, err := net.NodeMgr.GetNodes(nodeidsls)
 	if err != nil {
-		env.Log.Errorf("GetNodes:ERR:%s\n", err)
+		logrus.Errorf("[UploadBLK]GetNodes ERR:%s\n", err)
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
 	}
 	if len(nodes) != len(nodeidsls) {
-		env.Log.Errorf("Some Nodes have been cancelled\n")
+		logrus.Errorf("[UploadBLK]Some Nodes have been cancelled\n")
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
 	}
 	num := count / len(nodeidsls)
@@ -376,7 +377,7 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 		num = num + 1
 	}
 	if num > env.ShardNumPerNode {
-		env.Log.Warnf("Number of nodes less than %d/%d\n", len(nodeidsls), count)
+		logrus.Warnf("[UploadBLK]Number of nodes less than %d/%d\n", len(nodeidsls), count)
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
 	}
 	md5Digest := md5.New()
@@ -455,7 +456,7 @@ func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message)
 }
 
 func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
-	env.Log.Debugf("Receive UploadBlockEndSync request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
+	logrus.Debugf("[UploadBLK]Receive UploadBlockEndSync request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
 	vbi := *h.m.VBI
 	meta, err := dao.GetBlockById(vbi)
@@ -484,7 +485,7 @@ func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
 	meta = &dao.BlockMeta{VBI: vbi, VHP: h.m.VHP, VHB: h.m.VHB, KED: h.m.KED,
 		VNF: int16(shardcount), NLINK: 1, AR: int16(*h.m.AR)}
 	dao.SaveBlockMeta(meta)
-	env.Log.Debugf("Upload block Sync:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	logrus.Debugf("[UploadBLK]Upload block Sync:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	startTime = time.Now()
 	usedSpace := uint64(env.PFL * shardcount)
 	vnustr := h.vnu.Hex()
@@ -495,15 +496,15 @@ func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
 	*saveObjectMetaReq.Mode = false
 	res, perr := SaveObjectMeta(saveObjectMetaReq, ref, h.vnu)
 	if perr != nil {
-		env.Log.Infof("Sync Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
+		logrus.Infof("[UploadBLK]Sync Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
 		return perr
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-				env.Log.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 			}
 		}
 	}
-	env.Log.Infof("Sync Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	logrus.Infof("[UploadBLK]Sync Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	return &pkt.VoidResp{}
 }

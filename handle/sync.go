@@ -8,6 +8,7 @@ import (
 	"time"
 
 	proto "github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -116,7 +117,7 @@ func (self *SNSynchronizer) run() {
 			}
 		}
 		name := reflect.Indirect(reflect.ValueOf(self.req)).Type().Name()
-		env.Log.Errorf("Sync %s to %d ErrCode:%d,ERR:%s\n", name, self.sn.ID, self.err.Code, self.err.Msg)
+		logrus.Errorf("[SyncMsg]Sync %s to %d ErrCode:%d,ERR:%s\n", name, self.sn.ID, self.err.Code, self.err.Msg)
 		if self.retryTimes == 0 {
 			return
 		} else {

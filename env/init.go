@@ -16,9 +16,6 @@ import (
 var YTSN_HOME string
 var YTClient_HOME string
 
-var Log *logrus.Logger
-var NodeMgrLog *logrus.Logger
-
 func InitClient() {
 	YTClient_HOME = os.Getenv("YTClient_HOME")
 	if YTClient_HOME == "" {
@@ -59,38 +56,50 @@ func InitServer() {
 func initClientLog() {
 	logFileName := YTClient_HOME + "log/client.log"
 	os.MkdirAll(YTClient_HOME+"log", os.ModePerm)
-	Log = initLog(logFileName)
+	initLog(logFileName, nil)
 }
 
 func initServerLog() {
 	logFileName := YTSN_HOME + "log/server.log"
 	nodelogFileName := YTSN_HOME + "log/nodemgr.log"
 	os.MkdirAll(YTSN_HOME+"log", os.ModePerm)
-	Log = initLog(logFileName)
-	NodeMgrLog = initLog(nodelogFileName)
+	initLog(logFileName, nil)
+	initLog(nodelogFileName, NodeMgrLog)
 }
 
-func initLog(logFileName string) *logrus.Logger {
-	logger := logrus.New()
+func initLog(logFileName string, log *logrus.Logger) {
 	logFile, logErr := os.OpenFile(logFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if logErr != nil {
 		logrus.Panic("Fail to find", *logFile, "Server start Failed")
 	}
 	format := &Formatter{}
-	logger.SetFormatter(format)
 	lv, err := logrus.ParseLevel(ServerLogLevel)
-	if err != nil {
-		logger.SetLevel(logrus.TraceLevel)
-		logger.SetOutput(os.Stdout)
+	hook, _ := newHook(logFileName, format)
+	if log != nil {
+		log.SetFormatter(format)
+		if err != nil {
+			log.SetLevel(logrus.TraceLevel)
+			log.SetOutput(os.Stdout)
+		} else {
+			log.SetOutput(logFile)
+			log.SetLevel(lv)
+			if hook != nil {
+				log.AddHook(hook)
+			}
+		}
 	} else {
-		logger.SetOutput(logFile)
-		logger.SetLevel(lv)
-		hook, err := newHook(logFileName, format)
-		if err == nil {
-			logger.AddHook(hook)
+		logrus.SetFormatter(format)
+		if err != nil {
+			logrus.SetLevel(logrus.TraceLevel)
+			logrus.SetOutput(os.Stdout)
+		} else {
+			logrus.SetOutput(logFile)
+			logrus.SetLevel(lv)
+			if hook != nil {
+				logrus.AddHook(hook)
+			}
 		}
 	}
-	return logger
 }
 
 func newHook(logName string, format *Formatter) (logrus.Hook, error) {
@@ -116,20 +125,20 @@ func SetLimit() {
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
-		Log.Errorf("Error Getting Rlimit%s\n ", err)
+		logrus.Errorf("[SetLimit]Error Getting Rlimit%s\n ", err)
 	}
-	Log.Infof("Rlimit %d\n", rLimit)
+	logrus.Infof("[SetLimit]Rlimit %d\n", rLimit)
 	rLimit.Max = 655350
 	rLimit.Cur = 655350
 	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
-		Log.Errorf("Error Setting Rlimit %s\n", err)
+		logrus.Errorf("[SetLimit]Error Setting Rlimit %s\n", err)
 	}
 	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
-		Log.Errorf("Error Getting Rlimit %s\n", err)
+		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
 	}
-	Log.Infof("Rlimit Final%d\n", rLimit)
+	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
 }
 
 func ReadExport(path string) {
@@ -158,7 +167,7 @@ func ReadExport(path string) {
 			value := strings.TrimSpace(s[index+1:])
 			if strings.Index(value, "$") < 0 {
 				os.Setenv(key, value)
-				Log.Infof("Set ENV %s=%s\n", key, value)
+				logrus.Infof("[Init]Set ENV %s=%s\n", key, value)
 			}
 		}
 	}
@@ -168,7 +177,7 @@ func SaveConfig(path string, ss string) error {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	defer f.Close()
 	if err != nil {
-		Log.Infof("Write properties file Err:%s\n", err)
+		logrus.Infof("[Init]Write properties file Err:%s\n", err)
 		return err
 	}
 	f.Write([]byte(ss))
@@ -180,7 +189,7 @@ func ReadConfig(path string) map[string]string {
 	f, err := os.Open(path)
 	defer f.Close()
 	if err != nil {
-		Log.Infoln("No properties file could be found for ytfs service")
+		logrus.Infoln("[Init]No properties file could be found for ytfs service")
 	}
 	r := bufio.NewReader(f)
 	for {
@@ -203,6 +212,8 @@ func ReadConfig(path string) map[string]string {
 	return config
 }
 
+var NodeMgrLog *logrus.Logger = logrus.New()
+
 type LogWrite struct {
 }
 
@@ -212,12 +223,10 @@ func (l LogWrite) Write(p []byte) (n int, err error) {
 		return num, nil
 	}
 	if nodemgrLog == "on" {
-		if Log != nil {
-			if num > 20 {
-				Log.Printf(string(p[20:]))
-			} else {
-				Log.Printf(string(p))
-			}
+		if num > 20 {
+			logrus.Printf(string(p[20:]))
+		} else {
+			logrus.Printf(string(p))
 		}
 		return num, nil
 	}

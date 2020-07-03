@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,7 +21,7 @@ var CACHE_DATABASENAME string
 
 func InitMongo() {
 	s := strings.Trim(os.Getenv("IPFS_DBNAME_SNID"), " ")
-	env.Log.Printf("READ dev IPFS_DBNAME_SNID:%s\n", s)
+	logrus.Printf("[InitMongo]READ dev IPFS_DBNAME_SNID:%s\n", s)
 	IPFS_DBNAME_SNID := strings.EqualFold(s, "yes")
 	if IPFS_DBNAME_SNID {
 		DATABASENAME = "metabase" + "_" + strconv.Itoa(env.SuperNodeID)
@@ -59,7 +60,7 @@ func GetSession() *mongo.Client {
 func initclient() {
 	MongoAddress = strings.Trim(config["serverlist"], " ")
 	if MongoAddress == "" {
-		env.Log.Panicf("No serverlist is specified in the MongoSource.properties file.")
+		logrus.Panicf("[InitMongo]No serverlist is specified in the MongoSource.properties file.")
 	}
 	username := strings.Trim(config["username"], " ")
 	password := strings.Trim(config["password"], " ")
@@ -72,11 +73,11 @@ func initclient() {
 	var err error
 	session, err = mongo.Connect(context.Background(), opt)
 	if err != nil {
-		env.Log.Panicln("Failed to connect to Mongo server[", MongoAddress, "]")
+		logrus.Panicln("[InitMongo]Failed to connect to Mongo server[", MongoAddress, "]")
 		session = nil
 		return
 	}
-	env.Log.Infof("Successful connection to Mongo server[%s]\n", MongoAddress)
+	logrus.Infof("[InitMongo]Successful connection to Mongo server[%s]\n", MongoAddress)
 	metaBaseSource = &MetaBaseSource{}
 	metaBaseSource.initMetaDB()
 	dniBaseSource = &DNIBaseSource{}
@@ -141,7 +142,7 @@ func (source *MetaBaseSource) initMetaDB() {
 	source.shard_c = source.db.Collection(SHARD_TABLE_NAME)
 	source.shard_cnt_c = source.db.Collection(SHARD_CNT_TABLE_NAME)
 	source.shard_rbd_c = source.db.Collection(SHARD_RBD_TABLE_NAME)
-	env.Log.Infof("Create metabase tables Success.\n")
+	logrus.Infof("[InitMongo]Create metabase tables Success.\n")
 }
 
 func (source *MetaBaseSource) GetDB() *mongo.Database {
@@ -236,7 +237,7 @@ func (source *UserMetaSource) initMetaDB() {
 		Options: options.Index().SetUnique(true).SetName(OBJECT_INDEX_NAME),
 	}
 	source.object_c.Indexes().CreateOne(context.Background(), index3)
-	env.Log.Infof("Create usermeta %d tables Success.\n", source.userid)
+	logrus.Infof("[InitMongo]Create usermeta %d tables Success.\n", source.userid)
 }
 
 func (source *UserMetaSource) GetDB() *mongo.Database {
@@ -283,7 +284,7 @@ func (source *DNIBaseSource) initMetaDB() {
 	source.sum_c.Indexes().CreateOne(context.Background(), index)
 	source.dni_c = source.db.Collection(DNI_TABLE_NAME)
 	source.node_c = source.db.Collection(NODE_TABLE_NAME)
-	env.Log.Infof("Create dni tables Success.\n")
+	logrus.Infof("[InitMongo]Create dni tables Success.\n")
 }
 
 func (source *DNIBaseSource) GetDB() *mongo.Database {
@@ -324,7 +325,7 @@ func (source *CacheBaseSource) initMetaDB() {
 	source.dni_c = source.db.Collection(DNI_CACHE_NAME)
 	source.obj_c = source.db.Collection(OBJECT_NEW_TABLE_NAME)
 	source.sum_c = source.db.Collection(USERSUM_CACHE_NAME)
-	env.Log.Infof("Create cache tables Success.\n")
+	logrus.Infof("[InitMongo]Create cache tables Success.\n")
 }
 
 func (source *CacheBaseSource) GetDB() *mongo.Database {

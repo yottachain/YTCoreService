@@ -9,11 +9,11 @@ import (
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/sirupsen/logrus"
 	hst "github.com/yottachain/YTHost"
 	host "github.com/yottachain/YTHost/hostInterface"
 	"github.com/yottachain/YTHost/option"
 	"github.com/yottachain/YTHost/service"
-	"github.com/yottachain/YTCoreService/env"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -44,11 +44,11 @@ func Start(port int32, privatekey string) error {
 		return err
 	}
 	go p2phst.Accept()
-	env.Log.Infof("P2P initialization completed, port %d\n", port)
-	env.Log.Infof("NodeID:%s\n", p2phst.Config().ID.String())
+	logrus.Infof("[Booter]P2P initialization completed, port %d\n", port)
+	logrus.Infof("[Booter]NodeID:%s\n", p2phst.Config().ID.String())
 	maddrs := p2phst.Addrs()
 	for k, m := range maddrs {
-		env.Log.Infof("Node Addrs %d:%s\n", k, m.String())
+		logrus.Infof("[Booter]Node Addrs %d:%s\n", k, m.String())
 	}
 	go Clear()
 	return nil

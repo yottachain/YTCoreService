@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/kardianos/service"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/handle"
@@ -96,7 +97,7 @@ func main() {
 			return
 		}
 		logger.Info("Commands:")
-		logger.Info("init          create  yotta.SuperNode table.")
+		logger.Info("init          Create  yotta.SuperNode table.")
 		logger.Info("start        Start in the background as a daemon process.")
 		logger.Info("stop         Stop if running as a daemon or in another console.")
 		logger.Info("restart         Restart if running as a daemon or in another console.")
@@ -127,6 +128,6 @@ func StartServer() {
 func StopServer() {
 	net.Stop()
 	dao.Close()
-	env.Log.Infof("Service shutdown.\n")
+	logrus.Infof("[Booter]Service shutdown.\n")
 	http.Stop()
 }

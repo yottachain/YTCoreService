@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -66,11 +67,11 @@ func (h *RegUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Erro
 }
 
 func (h *RegUserHandler) Handle() proto.Message {
-	env.Log.Infof("UserLogin:%s\n", *h.m.Username)
+	logrus.Infof("[RegUser]Name:%s\n", *h.m.Username)
 	if env.S3Version != "" {
 		if *h.m.VersionId == "" || bytes.Compare([]byte(*h.m.VersionId), []byte(env.S3Version)) < 0 {
-			errmsg := fmt.Sprintf("UserLogin:%s,ERR:TOO_LOW_VERSION?%s\n", *h.m.Username, *h.m.VersionId)
-			env.Log.Errorf(errmsg)
+			errmsg := fmt.Sprintf("[RegUser]Name:%s,ERR:TOO_LOW_VERSION?%s\n", *h.m.Username, *h.m.VersionId)
+			logrus.Errorf(errmsg)
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
 	}
@@ -97,27 +98,27 @@ func (h *RegUserHandler) Handle() proto.Message {
 	}
 	queryUserResp, ok := res.(*pkt.QueryUserResp)
 	if !ok {
-		env.Log.Errorf("Return error type.\n")
+		logrus.Errorf("[RegUser]Return error type.\n")
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Error type")
 	}
 	*queryUserReqV2.UserId = *queryUserResp.UserId
-	env.Log.Infof("[%s] is registered @ SN-%d,userID:%d\n", *h.m.Username, sn.ID, *queryUserResp.UserId)
+	logrus.Infof("[RegUser][%s] is registered @ SN-%d,userID:%d\n", *h.m.Username, sn.ID, *queryUserResp.UserId)
 	syncres, err := SyncRequest(queryUserReqV2, int(sn.ID), 0)
 	if err != nil {
-		env.Log.Errorf("SyncRequest err:%s\n", err)
+		logrus.Errorf("[RegUser]SyncRequest err:%s\n", err)
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Error type")
 	}
 	for _, snresp := range syncres {
 		if snresp != nil {
 			if snresp.Error() != nil {
-				env.Log.Errorf("Sync userinfo ERR:%d\n", snresp.Error().Code)
+				logrus.Errorf("[RegUser]Sync userinfo ERR:%d\n", snresp.Error().Code)
 				return snresp.Error()
 			}
 		}
 	}
 	newsn := net.GetUserSuperNode(*queryUserResp.UserId)
 	if newsn.ID != sn.ID {
-		env.Log.Errorf("SuperID inconsistency[%d!=%d]\n", newsn.ID, sn.ID)
+		logrus.Errorf("[RegUser]SuperID inconsistency[%d!=%d]\n", newsn.ID, sn.ID)
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	resp := &pkt.RegUserResp{SuperNodeNum: new(uint32),
@@ -152,24 +153,24 @@ func (h *QueryUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 func (h *QueryUserHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		env.Log.Errorf("%s\n", err)
+		logrus.Errorf("[QueryUser]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
-	env.Log.Debugf("User '%s' sync request.\n", *h.m.Username)
+	logrus.Debugf("User '%s' sync request.\n", *h.m.Username)
 	if *h.m.UserId == -1 {
 		_, err := net.GetBalance(*h.m.Username)
 		if err != nil {
-			env.Log.Errorf("User '%s' auth ERR:%s\n", *h.m.Username, err)
+			logrus.Errorf("[QueryUser]User '%s' auth ERR:%s\n", *h.m.Username, err)
 			return pkt.NewErrorMsg(pkt.SERVER_ERROR, "UserID invalid")
 		}
-		env.Log.Infof("[%s] Certification passed.\n", *h.m.Username)
+		logrus.Infof("[QueryUser][%s] Certification passed.\n", *h.m.Username)
 	}
 	KUEp, err := base58.Decode(*h.m.Pubkey)
 	keyNumber := 0
 	user := dao.GetUserByUsername(*h.m.Username)
 	if user != nil {
 		if *h.m.UserId != -1 && *h.m.UserId != user.UserID {
-			env.Log.Errorf("UserID '%d/%d' invalid,username:%s\n", user.UserID, *h.m.UserId, *h.m.Username)
+			logrus.Errorf("[QueryUser]UserID '%d/%d' invalid,username:%s\n", user.UserID, *h.m.UserId, *h.m.Username)
 			return pkt.NewErrorMsg(pkt.SERVER_ERROR, "UserID invalid")
 		}
 		ii := 0
@@ -249,14 +250,14 @@ func (h *PreAllocNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 func (h *PreAllocNodeHandler) Handle() proto.Message {
 	v, found := NODELIST_CACHE.Get(strconv.Itoa(int(h.user.UserID)))
 	if found {
-		env.Log.Debugf("User %d AllocNodes,from cache\n", h.user.UserID)
+		logrus.Debugf("[PreAllocNode]User %d AllocNodes,from cache\n", h.user.UserID)
 		return v.(*pkt.PreAllocNodeResp)
 	}
-	env.Log.Infof("User %d AllocNodes,count:%d\n", h.user.UserID, *h.m.Count)
+	logrus.Infof("[PreAllocNode]User %d AllocNodes,count:%d\n", h.user.UserID, *h.m.Count)
 	nodes := []*pkt.PreAllocNodeResp_PreAllocNode{}
 	ls, err := net.NodeMgr.AllocNodes(int32(*h.m.Count), h.m.Excludes)
 	if err != nil {
-		env.Log.Errorf("User %d AllocNodes,ERR:%s\n", h.user.UserID, err)
+		logrus.Errorf("[PreAllocNode]User %d AllocNodes,ERR:%s\n", h.user.UserID, err)
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	}
 	for _, n := range ls {
@@ -265,7 +266,7 @@ func (h *PreAllocNodeHandler) Handle() proto.Message {
 		}
 		nodes = signNode(nodes, n)
 	}
-	env.Log.Infof("User %d AllocNodes OK,return %d\n", h.user.UserID, len(nodes))
+	logrus.Infof("[PreAllocNode]User %d AllocNodes OK,return %d\n", h.user.UserID, len(nodes))
 	resp := &pkt.PreAllocNodeResp{Preallocnode: nodes}
 	NODELIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), resp)
 	return resp
@@ -291,7 +292,7 @@ func signNode(nodes []*pkt.PreAllocNodeResp_PreAllocNode, n *YTDNMgmt.Node) []*p
 		data := fmt.Sprintf("%d%s%d", n.ID, bytebuf.String(), n.Timestamp)
 		signdata, err := YTCrypto.Sign(net.GetLocalSuperNode().PrivKey, []byte(data))
 		if err != nil {
-			env.Log.Errorf("SignNode ERR%s\n", err)
+			logrus.Errorf("[PreAllocNode]SignNode ERR%s\n", err)
 		} else {
 			node.Sign = &signdata
 			return append(nodes, node)

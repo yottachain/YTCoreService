@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
@@ -108,8 +109,8 @@ func NewP2P(key string) (*TcpClient, *pkt.ErrorMessage) {
 	atomic.StoreInt64(c.connectedTime, 0)
 	id, err := peer.Decode(key)
 	if err != nil {
-		logmsg := fmt.Sprintf("PeerID %s INVALID.\n", err.Error())
-		env.Log.Errorf(logmsg)
+		logmsg := fmt.Sprintf("[P2P]PeerID %s INVALID.\n", err.Error())
+		logrus.Errorf(logmsg)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 	}
 	c.PeerId = id
@@ -123,8 +124,8 @@ func (client *TcpClient) IsActive() bool {
 func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_pre string) (proto.Message, *pkt.ErrorMessage) {
 	if atomic.LoadInt32(client.statu) == 1 {
 		addrString := AddrsToString(addrs)
-		logmsg := fmt.Sprintf("%s%s Connection destroyed!\n", log_pre, addrString)
-		env.Log.Errorf(logmsg)
+		logmsg := fmt.Sprintf("[P2P]%s%s Connection destroyed!\n", log_pre, addrString)
+		logrus.Errorf(logmsg)
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
@@ -137,8 +138,8 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	res, serr := p2phst.SendMsg(ctx, client.PeerId, msgid, data)
 	if serr != nil {
 		addrString := AddrsToString(addrs)
-		logmsg := fmt.Sprintf("%s%s COMM_ERROR:%s\n", log_pre, addrString, serr.Error())
-		env.Log.Errorf(logmsg)
+		logmsg := fmt.Sprintf("[P2P]%s%s COMM_ERROR:%s\n", log_pre, addrString, serr.Error())
+		logrus.Errorf(logmsg)
 		if atomic.LoadInt32(client.statu) != 2 {
 			atomic.StoreInt64(client.connectedTime, 0)
 		}
@@ -162,15 +163,15 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 		if contime >= 0 {
 			addrString := AddrsToString(addrs)
 			if time.Now().Unix()-contime < 15 {
-				logmsg := fmt.Sprintf("%s%s did not connect successfully 15 seconds ago\n", log_pre, addrString)
-				env.Log.Errorf(logmsg)
+				logmsg := fmt.Sprintf("[P2P]%s%s did not connect successfully 15 seconds ago\n", log_pre, addrString)
+				logrus.Errorf(logmsg)
 				return pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 			} else {
 				maddrs, err := StringListToMaddrs(addrs)
 				if err != nil {
 					atomic.StoreInt64(client.connectedTime, time.Now().Unix())
-					logmsg := fmt.Sprintf("%sAddrs %s ERR:%s\n", log_pre, addrString, err.Error())
-					env.Log.Errorf(logmsg)
+					logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, err.Error())
+					logrus.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Conntimeout))
@@ -178,8 +179,8 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 				_, err = p2phst.ClientStore().Get(ctx, client.PeerId, maddrs)
 				if err != nil {
 					atomic.StoreInt64(client.connectedTime, time.Now().Unix())
-					logmsg := fmt.Sprintf("%sConnect %s ERR:%s\n", log_pre, addrString, err.Error())
-					env.Log.Errorf(logmsg)
+					logmsg := fmt.Sprintf("[P2P]%sConnect %s ERR:%s\n", log_pre, addrString, err.Error())
+					logrus.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 				}
 				atomic.StoreInt64(client.connectedTime, -1)
