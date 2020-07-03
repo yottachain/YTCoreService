@@ -28,6 +28,7 @@ type User struct {
 	CostPerCycle uint64   `bson:"costPerCycle"`
 	NextCycle    uint64   `bson:"nextCycle"`
 	Relationship string   `bson:"relationship"`
+	Routine      *int32   `bson:"-"`
 }
 
 func (user *User) GetTotalJson() string {
@@ -46,6 +47,8 @@ var USER_CACHE = cache.New(10*time.Minute, 10*time.Minute)
 func AddUserCache(userid int32, keyNumber int, user *User) {
 	key := fmt.Sprintf("%d-%d", userid, keyNumber)
 	user.KUEp = [][]byte{user.KUEp[keyNumber]}
+	user.Routine = new(int32)
+	*user.Routine = 0
 	USER_CACHE.Set(key, user, cache.DefaultExpiration)
 }
 
@@ -59,6 +62,8 @@ func GetUserCache(userid int32, keyNumber int, signdata string) *User {
 			return nil
 		} else {
 			user.KUEp = [][]byte{user.KUEp[keyNumber]}
+			user.Routine = new(int32)
+			*user.Routine = 0
 			USER_CACHE.Set(key, user, cache.DefaultExpiration)
 		}
 	} else {

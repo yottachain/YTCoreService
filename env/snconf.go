@@ -46,6 +46,7 @@ var MAX_AYNC_ROUTINE int32
 var MAX_READ_ROUTINE int32
 var MAX_WRITE_ROUTINE int32
 var MAX_STAT_ROUTINE int32
+var PER_USER_MAX_READ_ROUTINE int32
 var SLOW_OP_TIMES int
 
 func readSnProperties() {
@@ -112,5 +113,6 @@ func readSnProperties() {
 	MAX_READ_ROUTINE = int32(StringToInt(config["MAX_READ_ROUTINE"], 200, 2000, 1000))
 	MAX_WRITE_ROUTINE = int32(StringToInt(config["MAX_WRITE_ROUTINE"], 500, 5000, 2000))
 	MAX_STAT_ROUTINE = int32(StringToInt(config["MAX_STAT_ROUTINE"], 200, 2000, 1000))
+	PER_USER_MAX_READ_ROUTINE = int32(StringToInt(config["PER_USER_MAX_READ_ROUTINE"], 1, 20, 5))
 	SLOW_OP_TIMES = StringToInt(config["SLOW_OP_TIMES"], 10, 200, 50)
 }

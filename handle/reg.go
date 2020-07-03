@@ -47,6 +47,8 @@ func (h *ListSuperNodeHandler) Handle() proto.Message {
 	return resp
 }
 
+var REG_PEER_CACHE = cache.New(5*time.Second, 5*time.Second)
+
 type RegUserHandler struct {
 	pkey string
 	m    *pkt.RegUserReqV2
@@ -74,6 +76,12 @@ func (h *RegUserHandler) Handle() proto.Message {
 			logrus.Errorf(errmsg)
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
+	}
+	_, found := NODELIST_CACHE.Get(h.pkey)
+	if found {
+		errmsg := fmt.Sprintf("[RegUser]Name:%s,ERR:TOO_FREQUENTLY\n", *h.m.Username)
+		logrus.Errorf(errmsg)
+		return pkt.NewErrorMsg(pkt.SERVER_ERROR, errmsg)
 	}
 	sn := net.GetRegSuperNode(*h.m.Username)
 	queryUserReqV2 := &pkt.QueryUserReqV2{

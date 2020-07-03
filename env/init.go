@@ -64,6 +64,7 @@ func initServerLog() {
 	nodelogFileName := YTSN_HOME + "log/nodemgr.log"
 	os.MkdirAll(YTSN_HOME+"log", os.ModePerm)
 	initLog(logFileName, nil)
+	NodeMgrLog = logrus.New()
 	initLog(nodelogFileName, NodeMgrLog)
 }
 
@@ -122,6 +123,7 @@ func newHook(logName string, format *Formatter) (logrus.Hook, error) {
 }
 
 func SetLimit() {
+
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
@@ -139,6 +141,7 @@ func SetLimit() {
 		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
 	}
 	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
+
 }
 
 func ReadExport(path string) {
@@ -212,13 +215,16 @@ func ReadConfig(path string) map[string]string {
 	return config
 }
 
-var NodeMgrLog *logrus.Logger = logrus.New()
+var NodeMgrLog *logrus.Logger
 
 type LogWrite struct {
 }
 
 func (l LogWrite) Write(p []byte) (n int, err error) {
 	num := len(p)
+	if NodeMgrLog == nil {
+		return num, nil
+	}
 	if nodemgrLog == "off" {
 		return num, nil
 	}
@@ -230,12 +236,10 @@ func (l LogWrite) Write(p []byte) (n int, err error) {
 		}
 		return num, nil
 	}
-	if NodeMgrLog != nil {
-		if num > 20 {
-			NodeMgrLog.Printf(string(p[20:]))
-		} else {
-			NodeMgrLog.Printf(string(p))
-		}
+	if num > 20 {
+		NodeMgrLog.Printf(string(p[20:]))
+	} else {
+		NodeMgrLog.Printf(string(p))
 	}
 	return num, nil
 }

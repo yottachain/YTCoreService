@@ -1,9 +1,12 @@
 package handle
 
 import (
+	"sync/atomic"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -34,6 +37,12 @@ func (h *DownloadObjectInitHandler) SetMessage(pubkey string, msg proto.Message)
 }
 
 func (h *DownloadObjectInitHandler) Handle() proto.Message {
+	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
+		logrus.Warnf("[DownloadObj]UID:%d,Too many routines\n", h.user.UserID)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	atomic.AddInt32(h.user.Routine, 1)
+	defer atomic.AddInt32(h.user.Routine, -1)
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
 	err := meta.GetByVHW()
 	if err != nil {
@@ -80,6 +89,12 @@ func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 }
 
 func (h *DownloadFileHandler) Handle() proto.Message {
+	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
+		logrus.Warnf("[DownloadFile]UID:%d,Too many routines\n", h.user.UserID)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	atomic.AddInt32(h.user.Routine, 1)
+	defer atomic.AddInt32(h.user.Routine, -1)
 	logrus.Infof("[DownloadFile]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
 	bmeta, err := dao.GetBucketIdFromCache(*h.m.Bucketname, h.user.UserID)
 	if err != nil {
@@ -128,6 +143,12 @@ func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) 
 }
 
 func (h *DownloadBlockInitHandler) Handle() proto.Message {
+	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
+		logrus.Warnf("[DownloadBLK]UID:%d,Too many routines\n", h.user.UserID)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	atomic.AddInt32(h.user.Routine, 1)
+	defer atomic.AddInt32(h.user.Routine, -1)
 	logrus.Infof("[DownloadBLK]VBI:%d\n", *h.m.VBI)
 	bmeta, err := dao.GetBlockVNF(int64(*h.m.VBI))
 	if bmeta == nil {

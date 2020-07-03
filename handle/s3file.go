@@ -205,6 +205,12 @@ func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 }
 
 func (h *GetObjectHandler) Handle() proto.Message {
+	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
+		logrus.Warnf("[GetObject]UID:%d,Too many routines\n", h.user.UserID)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	atomic.AddInt32(h.user.Routine, 1)
+	defer atomic.AddInt32(h.user.Routine, -1)
 	logrus.Infof("[GetObject]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.BucketName, *h.m.FileName)
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if meta == nil {
