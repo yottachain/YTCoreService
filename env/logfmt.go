@@ -17,9 +17,9 @@ func GetLevelString(level logrus.Level) string {
 	case logrus.DebugLevel:
 		return "Debug"
 	case logrus.InfoLevel:
-		return "Info "
+		return "Infos"
 	case logrus.WarnLevel:
-		return "Warn "
+		return "Warns"
 	case logrus.ErrorLevel:
 		return "Error"
 	case logrus.FatalLevel:
