@@ -23,17 +23,17 @@ func Start() {
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
-	go SumUsedSpace()
-	//go DoNodeStatSyncLoop()
-	go DoCacheActionLoop()
 	InitSpotCheckService()
 	InitRebuildService()
-	go StartIterate()
+	//go StartSyncNodes()
+	go StartDoCacheFee()
+	go StartSumUsedSpace()
+	go StartIterateShards()
 }
 
 type MessageEvent interface {
 	Handle() proto.Message
-	SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32)
+	SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32)
 }
 
 func FindHandler(msg proto.Message) (MessageEvent, *pkt.ErrorMessage) {
@@ -85,7 +85,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	if err1 != nil {
 		return pkt.MarshalError(err1)
 	}
-	err2, rnum := handler.SetMessage(pubkey, msg)
+	err2, rnum, urnum := handler.SetMessage(pubkey, msg)
 	if err2 != nil {
 		return pkt.MarshalMsgBytes(err2)
 	}
@@ -97,6 +97,14 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 		}
 		atomic.AddInt32(rnum, 1)
 		defer atomic.AddInt32(rnum, -1)
+	}
+	if urnum != nil {
+		if atomic.LoadInt32(urnum) > env.PER_USER_MAX_READ_ROUTINE {
+			logrus.Warnf("[OnMessage]%s,The current user's concurrent read has reached the upper limit\n", name)
+			return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
+		}
+		atomic.AddInt32(urnum, 1)
+		defer atomic.AddInt32(urnum, -1)
 	}
 	startTime := time.Now()
 	res := handler.Handle()

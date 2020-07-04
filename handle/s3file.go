@@ -27,25 +27,25 @@ type UploadFileHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadFileReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Vnu == nil || h.m.Bucketname == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_UPLOAD_ID, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_UPLOAD_ID, "Invalid request:Null value"), nil, nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -73,24 +73,24 @@ type CopyObjectHandler struct {
 	user *dao.User
 }
 
-func (h *CopyObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *CopyObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.CopyObjectReqV2)
 	if ok {
 		h.m = req
 		if h.m.SrcBucket == nil || h.m.SrcObjectKey == nil || h.m.DestBucket == nil || h.m.DestObjectKey == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Meta == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -137,27 +137,27 @@ type DeleteFileHandler struct {
 	verid primitive.ObjectID
 }
 
-func (h *DeleteFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *DeleteFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DeleteFileReqV2)
 	if ok {
 		h.m = req
 		if h.m.Vnu != nil {
 			if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 			}
 			h.verid = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
 		}
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -186,31 +186,25 @@ type GetObjectHandler struct {
 	user *dao.User
 }
 
-func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *GetObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.GetObjectReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
 func (h *GetObjectHandler) Handle() proto.Message {
-	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
-		logrus.Warnf("[GetObject]UID:%d,Too many routines\n", h.user.UserID)
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	atomic.AddInt32(h.user.Routine, 1)
-	defer atomic.AddInt32(h.user.Routine, -1)
 	logrus.Infof("[GetObject]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.BucketName, *h.m.FileName)
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if meta == nil {
@@ -240,14 +234,14 @@ type ListObjectHandler struct {
 	HashKey      string
 }
 
-func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListObjectReqV2)
 	if ok {
 		h.m = req
 		if h.m.Nextversionid != nil {
 			if h.m.Nextversionid.Timestamp == nil || h.m.Nextversionid.MachineIdentifier == nil || h.m.Nextversionid.ProcessIdentifier == nil || h.m.Nextversionid.Counter == nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 			}
 			h.nextid = pkt.NewObjectId(*h.m.Nextversionid.Timestamp, *h.m.Nextversionid.MachineIdentifier, *h.m.Nextversionid.ProcessIdentifier, *h.m.Nextversionid.Counter)
 			h.version = true
@@ -255,11 +249,11 @@ func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 			h.version = false
 		}
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
 		if h.m.FileName != nil {
 			h.nextfileName = strings.TrimSpace(*h.m.FileName)
@@ -280,9 +274,9 @@ func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 			h.compress = *h.m.Compress
 		}
 		h.HashKey = h.ReqHashCode(h.nextfileName, h.nextid)
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 

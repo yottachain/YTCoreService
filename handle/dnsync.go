@@ -23,7 +23,7 @@ func NodeStatSync(node *YTDNMgmt.Node) {
 	NODE_MAP.Unlock()
 }
 
-func DoNodeStatSyncLoop() {
+func StartSyncNodes() {
 	for {
 		time.Sleep(time.Duration(30) * time.Second)
 		if net.IsActive() {
@@ -86,17 +86,17 @@ type NodeSyncHandler struct {
 	m    *pkt.NodeSyncReq
 }
 
-func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.NodeSyncReq)
 	if ok {
 		h.m = req
 		if h.m.Node == nil || len(h.m.Node) == 0 {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 

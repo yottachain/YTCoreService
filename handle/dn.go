@@ -42,17 +42,17 @@ type StatusRepHandler struct {
 	m    *pkt.StatusRepReq
 }
 
-func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.StatusRepReq)
 	if ok {
 		h.m = req
 		if h.m.Addrs == nil || len(h.m.Addrs) == 0 {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, STAT_ROUTINE_NUM
+		return nil, STAT_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -207,14 +207,14 @@ type SpotCheckRepHandler struct {
 	m    *pkt.SpotCheckStatus
 }
 
-func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *SpotCheckRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.SpotCheckStatus)
 	if ok {
 		h.m = req
-		return nil, STAT_ROUTINE_NUM
+		return nil, STAT_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -290,14 +290,14 @@ type TaskOpResultListHandler struct {
 	m    *pkt.TaskOpResultList
 }
 
-func (h *TaskOpResultListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *TaskOpResultListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.TaskOpResultList)
 	if ok {
 		h.m = req
-		return nil, STAT_ROUTINE_NUM
+		return nil, STAT_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 

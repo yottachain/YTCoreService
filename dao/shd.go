@@ -154,7 +154,9 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 	operations := []mongo.WriteModel{}
 	for k, v := range hash {
 		b1 := bson.M{"_id": k}
-		b2 := bson.M{"lstid": bson.M{"$gt": firstid}}
+		or1 := bson.M{"lstid": nil}
+		or2 := bson.M{"lstid": bson.M{"$lt": firstid}}
+		b2 := bson.M{"$or": []bson.M{or1, or2}}
 		filter := bson.M{"$and": []bson.M{b1, b2}}
 		mode := &mongo.UpdateOneModel{Filter: filter, Update: bson.M{"$inc": bson.M{f1: v}, "$set": bson.M{"lstid": lastid}}}
 		operations = append(operations, mode)

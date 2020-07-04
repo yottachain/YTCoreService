@@ -1,8 +1,6 @@
 package handle
 
 import (
-	"time"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
@@ -17,14 +15,14 @@ type TotalHandler struct {
 	m    *pkt.TotalReq
 }
 
-func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.TotalReq)
 	if ok {
 		h.m = req
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -61,17 +59,17 @@ type UserSpaceHandler struct {
 	m    *pkt.UserSpaceReq
 }
 
-func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UserSpaceReq)
 	if ok {
 		h.m = req
 		if h.m.Userid == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -94,7 +92,7 @@ type UserListHandler struct {
 	m    *pkt.UserListReq
 }
 
-func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UserListReq)
 	if ok {
@@ -109,9 +107,9 @@ func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Err
 		} else {
 			*h.m.Count = int32(env.CheckInt(int(*h.m.Count), 100, 1000))
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -139,17 +137,17 @@ type RelationshipHandler struct {
 	m    *pkt.Relationship
 }
 
-func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.Relationship)
 	if ok {
 		h.m = req
 		if h.m.Username == nil || h.m.MpoolOwner == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -164,60 +162,5 @@ func (h *RelationshipHandler) Handle() proto.Message {
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	} else {
 		return &pkt.VoidResp{}
-	}
-}
-
-type RelationshipSumHandler struct {
-	pkey string
-	m    *pkt.RelationShipSum
-}
-
-func (h *RelationshipSumHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
-	h.pkey = pubkey
-	req, ok := msg.(*pkt.RelationShipSum)
-	if ok {
-		h.m = req
-		if h.m.Mowner == nil || h.m.Usedspace == nil || len(h.m.Mowner) != len(h.m.Usedspace) {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
-		}
-		return nil, READ_ROUTINE_NUM
-	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
-	}
-}
-
-func (h *RelationshipSumHandler) Handle() proto.Message {
-	sn, err := net.AuthSuperNode(h.pkey)
-	if err != nil {
-		logrus.Errorf("[RelationshipSum]AuthSuper ERR:%s\n", err)
-		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
-	}
-	count := len(h.m.Mowner)
-	var ii int = 0
-	for ; ii < count; ii++ {
-		dao.SetSpaceSum(sn.ID, h.m.Mowner[ii], h.m.Usedspace[ii])
-	}
-	return &pkt.VoidResp{}
-}
-
-func SumUsedSpace() {
-	for {
-		time.Sleep(time.Duration(15) * time.Minute)
-		m, err := dao.SumRelationship()
-		if err == nil {
-			if len(m) > 0 {
-				mowner := []string{}
-				usedspaces := []uint64{}
-				for k, v := range m {
-					mowner = append(mowner, k)
-					usedspaces = append(usedspaces, uint64(v))
-				}
-				req := &pkt.RelationShipSum{Mowner: mowner, Usedspace: usedspaces}
-				AyncRequest(req, -1, 0)
-			}
-			time.Sleep(time.Duration(15) * time.Minute)
-		} else {
-			time.Sleep(time.Duration(1) * time.Minute)
-		}
 	}
 }

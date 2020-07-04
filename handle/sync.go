@@ -95,7 +95,7 @@ func (self *SNSynchronizer) run() {
 				self.err = err
 				return
 			}
-			err1, _ := handler.SetMessage(self.sn.PubKey, self.req)
+			err1, _, _ := handler.SetMessage(self.sn.PubKey, self.req)
 			if err1 != nil {
 				self.err = err1
 				return

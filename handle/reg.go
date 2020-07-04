@@ -23,14 +23,14 @@ type ListSuperNodeHandler struct {
 	m    *pkt.ListSuperNodeReq
 }
 
-func (h *ListSuperNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *ListSuperNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListSuperNodeReq)
 	if ok {
 		h.m = req
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -54,17 +54,17 @@ type RegUserHandler struct {
 	m    *pkt.RegUserReqV2
 }
 
-func (h *RegUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *RegUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.RegUserReqV2)
 	if ok {
 		h.m = req
 		if h.m.PubKey == nil || h.m.Username == nil || h.m.VersionId == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -144,17 +144,17 @@ type QueryUserHandler struct {
 	m    *pkt.QueryUserReqV2
 }
 
-func (h *QueryUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *QueryUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.QueryUserReqV2)
 	if ok {
 		h.m = req
 		if h.m.Pubkey == nil || h.m.Username == nil || h.m.UserId == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -226,13 +226,13 @@ type PreAllocNodeHandler struct {
 	user *dao.User
 }
 
-func (h *PreAllocNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *PreAllocNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.PreAllocNodeReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		if h.m.Count == nil {
 			h.m.Count = new(uint32)
@@ -247,11 +247,11 @@ func (h *PreAllocNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 

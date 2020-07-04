@@ -14,21 +14,21 @@ type CreateBucketHandler struct {
 	user *dao.User
 }
 
-func (h *CreateBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *CreateBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.CreateBucketReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil || h.m.Meta == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -61,21 +61,21 @@ type GetBucketHandler struct {
 	user *dao.User
 }
 
-func (h *GetBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *GetBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.GetBucketReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -94,21 +94,21 @@ type DeleteBucketHandler struct {
 	user *dao.User
 }
 
-func (h *DeleteBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *DeleteBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DeleteBucketReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -140,21 +140,21 @@ type UpdateBucketHandler struct {
 	user *dao.User
 }
 
-func (h *UpdateBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *UpdateBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UpdateBucketReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.BucketName == nil || h.m.Meta == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -179,21 +179,21 @@ type ListBucketHandler struct {
 	user *dao.User
 }
 
-func (h *ListBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *ListBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.ListBucketReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 

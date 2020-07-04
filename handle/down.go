@@ -1,12 +1,9 @@
 package handle
 
 import (
-	"sync/atomic"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
-	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,31 +15,25 @@ type DownloadObjectInitHandler struct {
 	user *dao.User
 }
 
-func (h *DownloadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *DownloadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadObjectInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VHW == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
 func (h *DownloadObjectInitHandler) Handle() proto.Message {
-	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
-		logrus.Warnf("[DownloadObj]UID:%d,Too many routines\n", h.user.UserID)
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	atomic.AddInt32(h.user.Routine, 1)
-	defer atomic.AddInt32(h.user.Routine, -1)
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
 	err := meta.GetByVHW()
 	if err != nil {
@@ -61,40 +52,34 @@ type DownloadFileHandler struct {
 	verid primitive.ObjectID
 }
 
-func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *DownloadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadFileReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
 		if h.m.Bucketname == nil || h.m.FileName == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		if h.m.Versionid != nil {
 			if h.m.Versionid.Timestamp == nil || h.m.Versionid.MachineIdentifier == nil || h.m.Versionid.ProcessIdentifier == nil || h.m.Versionid.Counter == nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 			}
 			h.verid = pkt.NewObjectId(*h.m.Versionid.Timestamp, *h.m.Versionid.MachineIdentifier, *h.m.Versionid.ProcessIdentifier, *h.m.Versionid.Counter)
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
 func (h *DownloadFileHandler) Handle() proto.Message {
-	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
-		logrus.Warnf("[DownloadFile]UID:%d,Too many routines\n", h.user.UserID)
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	atomic.AddInt32(h.user.Routine, 1)
-	defer atomic.AddInt32(h.user.Routine, -1)
 	logrus.Infof("[DownloadFile]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
 	bmeta, err := dao.GetBucketIdFromCache(*h.m.Bucketname, h.user.UserID)
 	if err != nil {
@@ -124,31 +109,25 @@ type DownloadBlockInitHandler struct {
 	user *dao.User
 }
 
-func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *DownloadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.DownloadBlockInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VBI == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
 func (h *DownloadBlockInitHandler) Handle() proto.Message {
-	if atomic.LoadInt32(h.user.Routine) > env.PER_USER_MAX_READ_ROUTINE {
-		logrus.Warnf("[DownloadBLK]UID:%d,Too many routines\n", h.user.UserID)
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	atomic.AddInt32(h.user.Routine, 1)
-	defer atomic.AddInt32(h.user.Routine, -1)
 	logrus.Infof("[DownloadBLK]VBI:%d\n", *h.m.VBI)
 	bmeta, err := dao.GetBlockVNF(int64(*h.m.VBI))
 	if bmeta == nil {

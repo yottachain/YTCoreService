@@ -116,21 +116,21 @@ type UploadObjectInitHandler struct {
 	user *dao.User
 }
 
-func (h *UploadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *UploadObjectInitHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadObjectInitReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Length == nil || h.m.VHW == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -241,26 +241,26 @@ type SaveObjectMetaHandler struct {
 	vnu   primitive.ObjectID
 }
 
-func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.SaveObjectMetaReq)
 	if ok {
 		h.m = req
 		if h.m.UserID == nil || h.m.VNU == nil || h.m.UsedSpace == nil || h.m.Mode == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.refer = pkt.NewRefer(h.m.Refer)
 		if h.refer == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer is Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer is Null value"), nil, nil
 		}
 		v, err := primitive.ObjectIDFromHex(*h.m.VNU)
 		if err != nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Invalid VNU"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Invalid VNU"), nil, nil
 		}
 		h.vnu = v
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -303,25 +303,25 @@ type ActiveCacheHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *ActiveCacheHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *ActiveCacheHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.ActiveCacheV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Vnu == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -340,25 +340,25 @@ type UploadObjectEndHandler struct {
 	vnu  primitive.ObjectID
 }
 
-func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32) {
+func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadObjectEndReqV2)
 	if ok {
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Vnu == nil || h.m.VHW == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		return nil, WRITE_ROUTINE_NUM
+		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
@@ -402,47 +402,4 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 	DelUploadObject(meta.VNU)
 	return &pkt.VoidResp{}
-}
-
-func DoCacheActionLoop() {
-	time.Sleep(time.Duration(30) * time.Second)
-	for {
-		if !DoCacheAction() {
-			time.Sleep(time.Duration(30) * time.Second)
-		}
-	}
-}
-
-func DoCacheAction() bool {
-	action := dao.FindOneNewObject()
-	if action == nil {
-		return false
-	}
-	usedspace := action.UsedSpace
-	if action.Step == 0 {
-		unitspace := uint64(1024 * 16)
-		addusedspace := usedspace / unitspace
-		if usedspace%unitspace > 1 {
-			addusedspace = addusedspace + 1
-		}
-		err := net.AddUsedSpace(action.Username, addusedspace)
-		if err != nil {
-			dao.AddAction(action)
-			logrus.Errorf("[DoCacheAction][%d] Add usedSpace ERR:%s\n", action.UserID, err)
-			time.Sleep(time.Duration(3) * time.Minute)
-			return true
-		}
-		logrus.Infof("[DoCacheAction]User [%d] add usedSpace:%d\n", action.UserID, addusedspace)
-	}
-	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
-	err := net.SubBalance(action.Username, firstCost)
-	if err != nil {
-		action.Step = 1
-		dao.AddAction(action)
-		logrus.Errorf("[DoCacheAction][%d] Sub Balance ERR:%s\n", action.UserID, err)
-		time.Sleep(time.Duration(3) * time.Minute)
-	} else {
-		logrus.Infof("[DoCacheAction]User [%d] sub balance:%d\n", action.UserID, firstCost)
-	}
-	return true
 }
