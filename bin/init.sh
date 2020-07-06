@@ -20,6 +20,7 @@ do
     # Get the real path to this script, resolving any symbolic links
     TOKENS=`echo $SAFESCRIPT | sed -e 's;/; ;g'`
     REALPATH=
+ME
     for C in $TOKENS; do
         # Change any ":" in the token back to a space.
         C=`echo $C | sed -e 's;:; ;g'`
@@ -47,7 +48,12 @@ do
 done
 
 
-source ytsn.ev
+# Get the location of the script.
+REALDIR=`dirname "$REALPATH"`
+# Normalize the path
+REALDIR=`cd "${REALDIR}/../"; pwd`
+
+export YTSN_HOME=$REALDIR
 
 if [ -z $YTSN_HOME ]; then  
     echo "Environment variable 'YTSN_HOME' not found "
@@ -55,6 +61,9 @@ if [ -z $YTSN_HOME ]; then
 fi 
 
 echo "YTSN_HOME:$YTSN_HOME"
-cd $YTSN_HOME
 
+source $YTSN_HOME/bin/ytsn.ev
+
+cd $YTSN_HOME
 ./ytsn init
+

@@ -127,3 +127,43 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 	}
 	return nil
 }
+
+func ListObjects(userid uint32, startVnu primitive.ObjectID, stopVNU primitive.ObjectID, limit int) ([][]byte, primitive.ObjectID, error) {
+	source := NewUserMetaSource(userid)
+	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
+	fields := bson.M{"VNU": 1, "blocks": 1}
+	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
+	defer cur.Close(ctx)
+	if err != nil {
+		logrus.Errorf("[ListObjects]ERR:%s\n", err)
+		return nil, startVnu, err
+	}
+	vbis := [][]byte{}
+	for cur.Next(ctx) {
+		var res = &ObjectMeta{}
+		err = cur.Decode(res)
+		if err != nil {
+			logrus.Errorf("[ListObjects]Decode ERR:%s\n", err)
+			return nil, startVnu, err
+		}
+		if res.VNU.Timestamp().Unix() > stopVNU.Timestamp().Unix() {
+			startVnu = primitive.NilObjectID
+			break
+		}
+		if len(vbis) > limit {
+			break
+		}
+		for _, bs := range res.BlockList {
+			vbis = append(vbis, bs[0:9])
+		}
+		startVnu = res.VNU
+	}
+	if curerr := cur.Err(); curerr != nil {
+		logrus.Errorf("[ListObjects]Cursor ERR:%s, block count:%d\n", curerr, len(vbis))
+		return nil, startVnu, curerr
+	}
+	return vbis, startVnu, nil
+}

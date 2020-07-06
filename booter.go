@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -36,6 +38,35 @@ func (p *Program) run() {
 }
 
 func main() {
+	ch := make(chan int, 4)
+
+	go func() {
+		for i := 0; i < 10; i++ {
+			ch <- i
+			fmt.Printf("%s:%d\n", time.Now().Format("2006-01-02 15:04:05"), i)
+		}
+	}()
+
+	go func() {
+		for i := 10; i < 20; i++ {
+			ch <- i
+			fmt.Printf("%s:%d\n", time.Now().Format("2006-01-02 15:04:05"), i)
+		}
+	}()
+
+	go func() {
+		time.Sleep(time.Duration(30) * time.Second)
+		close(ch)
+	}()
+
+	for {
+		i := <-ch
+		time.Sleep(time.Duration(1) * time.Second)
+		fmt.Printf("%s:%d\n", time.Now().Format("2006-01-02 15:04:05"), i)
+	}
+}
+
+func main11() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {
