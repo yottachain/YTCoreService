@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -122,25 +123,24 @@ func newHook(logName string, format *Formatter) (logrus.Hook, error) {
 }
 
 func SetLimit() {
-	/*
-		var rLimit syscall.Rlimit
-		err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-		if err != nil {
-			logrus.Errorf("[SetLimit]Error Getting Rlimit%s\n ", err)
-		}
-		logrus.Infof("[SetLimit]Rlimit %d\n", rLimit)
-		rLimit.Max = 655350
-		rLimit.Cur = 655350
-		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-		if err != nil {
-			logrus.Errorf("[SetLimit]Error Setting Rlimit %s\n", err)
-		}
-		err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-		if err != nil {
-			logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
-		}
-		logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
-	*/
+	var rLimit syscall.Rlimit
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		logrus.Errorf("[SetLimit]Error Getting Rlimit%s\n ", err)
+	}
+	logrus.Infof("[SetLimit]Rlimit %d\n", rLimit)
+	rLimit.Max = 655350
+	rLimit.Cur = 655350
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		logrus.Errorf("[SetLimit]Error Setting Rlimit %s\n", err)
+	}
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
+	}
+	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
+
 }
 
 func ReadExport(path string) {

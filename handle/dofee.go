@@ -33,21 +33,21 @@ func DoCacheAction() bool {
 		err := net.AddUsedSpace(action.Username, addusedspace)
 		if err != nil {
 			dao.AddAction(action)
-			logrus.Errorf("[DoCacheAction][%d] Add usedSpace ERR:%s\n", action.UserID, err)
+			logrus.Errorf("[DoCacheFee][%d] Add usedSpace ERR:%s\n", action.UserID, err)
 			time.Sleep(time.Duration(3) * time.Minute)
 			return true
 		}
-		logrus.Infof("[DoCacheAction]User [%d] add usedSpace:%d\n", action.UserID, addusedspace)
+		logrus.Infof("[DoCacheFee]User [%d] add usedSpace:%d\n", action.UserID, addusedspace)
 	}
 	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
 	err := net.SubBalance(action.Username, firstCost)
 	if err != nil {
 		action.Step = 1
 		dao.AddAction(action)
-		logrus.Errorf("[DoCacheAction][%d] Sub Balance ERR:%s\n", action.UserID, err)
+		logrus.Errorf("[DoCacheFee][%d] Sub Balance ERR:%s\n", action.UserID, err)
 		time.Sleep(time.Duration(3) * time.Minute)
 	} else {
-		logrus.Infof("[DoCacheAction]User [%d] sub balance:%d\n", action.UserID, firstCost)
+		logrus.Infof("[DoCacheFee]User [%d] sub balance:%d\n", action.UserID, firstCost)
 	}
 	return true
 }
