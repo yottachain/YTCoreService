@@ -37,7 +37,7 @@ func (p *Program) run() {
 	StartServer()
 }
 
-func main() {
+func mainaaa() {
 	ch := make(chan int, 4)
 
 	go func() {
@@ -66,7 +66,7 @@ func main() {
 	}
 }
 
-func main11() {
+func main() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {
