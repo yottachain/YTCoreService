@@ -119,7 +119,7 @@ func (h *UserListHandler) Handle() proto.Message {
 		logrus.Errorf("[UserList]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
-	ls, err := dao.ListUsers(int(*h.m.LastId), int(*h.m.Count), bson.M{"_id": 1, "username": 1, "spaceTotal": 1})
+	ls, err := dao.ListUsers(*h.m.LastId, int(*h.m.Count), bson.M{"_id": 1, "username": 1, "spaceTotal": 1})
 	if err != nil {
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	}

@@ -18,17 +18,30 @@ var BLK_SUMMER_CH chan *BlockSpaceSum
 
 func IterateUser() {
 	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount()*5)
-	lastId := 0
-	limit := 10
+	var lastId int32 = 0
+	limit := 100
 	for {
 		if !net.IsActive() {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		}
-
-		_, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "nextCycle": 1, "username": 1})
-		if err != nil {
-
+		logrus.Infof("[SumUsedSpace]Start iterate user...\n")
+		for {
+			us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "nextCycle": 1, "username": 1})
+			if err != nil {
+				time.Sleep(time.Duration(30) * time.Second)
+				continue
+			}
+			if len(us) == 0 {
+				break
+			} else {
+				for _, user := range us {
+					lastId = user.UserID
+					//
+					sum := &UserObjectSum{UserID: user.UserID, UsedSpace: 0}
+					sum.IterateObjects()
+				}
+			}
 		}
 	}
 }

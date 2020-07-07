@@ -67,7 +67,7 @@ func readSnProperties() {
 	}
 	SPOTCHECK_ADDR = strings.Trim(config["SPOTCHECK_ADDR"], " ")
 	REBUILD_ADDR = strings.Trim(config["REBUILD_ADDR"], " ")
-	ss = strings.ToUpper(strings.Trim(config["nodemgrLog"], " "))
+	nodemgrLog = strings.ToUpper(strings.TrimSpace(config["nodemgrLog"]))
 	Port = StringToInt(config["port"], 8888, 9999, 9999)
 	HttpPort = StringToInt(config["httpPort"], 8000, 12000, 8082)
 	Space_factor = StringToInt(config["space_factor"], 0, 100, 100)
