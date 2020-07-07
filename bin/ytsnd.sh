@@ -69,6 +69,12 @@ start)
 stop)
     ./ytsn stop
     ;;
+console)
+    ./ytsn
+    ;;
+init)
+    ./ytsn init
+    ;;
 restart)
     ./ytsn restart
     ;;

@@ -230,3 +230,33 @@ func IncBlockNlinkCount() error {
 	}
 	return nil
 }
+
+func GetUsedSpace(ids []int64) (map[int64]*BlockMeta, error) {
+	source := NewBaseSource()
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+	fields := bson.M{"_id": 1, "VNF": 1, "AR": 1, "NLINK": 1}
+	opt := options.Find().SetProjection(fields)
+	metas := make(map[int64]*BlockMeta)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
+	defer cur.Close(ctx)
+	if err != nil {
+		logrus.Errorf("[GetUsedSpace]ERR:%s\n", err)
+		return nil, err
+	}
+	for cur.Next(ctx) {
+		var res = &BlockMeta{}
+		err = cur.Decode(res)
+		if err != nil {
+			logrus.Errorf("[GetUsedSpace]Decode ERR:%s\n", err)
+			return nil, err
+		}
+		metas[res.VBI] = res
+	}
+	if curerr := cur.Err(); curerr != nil {
+		logrus.Errorf("[GetUsedSpace]Cursor ERR:%s\n", curerr)
+		return nil, curerr
+	}
+	return metas, nil
+}

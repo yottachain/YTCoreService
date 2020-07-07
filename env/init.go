@@ -140,7 +140,6 @@ func SetLimit() {
 		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
 	}
 	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
-
 }
 
 func ReadExport(path string) {
@@ -224,21 +223,21 @@ func (l LogWrite) Write(p []byte) (n int, err error) {
 	if NodeMgrLog == nil {
 		return num, nil
 	}
-	if nodemgrLog == "off" {
+	if nodemgrLog == "OFF" {
 		return num, nil
 	}
-	if nodemgrLog == "on" {
+	if nodemgrLog == "ON" {
 		if num > 20 {
-			logrus.Printf(string(p[20:]))
+			NodeMgrLog.Printf(string(p[20:]))
 		} else {
-			logrus.Printf(string(p))
+			NodeMgrLog.Printf(string(p))
 		}
 		return num, nil
 	}
 	if num > 20 {
-		NodeMgrLog.Printf(string(p[20:]))
+		logrus.Printf(string(p[20:]))
 	} else {
-		NodeMgrLog.Printf(string(p))
+		logrus.Printf(string(p))
 	}
 	return num, nil
 }

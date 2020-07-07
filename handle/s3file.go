@@ -313,10 +313,7 @@ func (h *ListObjectHandler) Handle() proto.Message {
 		size := OBJ_LIST_CACHE.ItemCount()
 		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from Cache,current size:%d\n", h.user.UserID, *h.m.BucketName, size)
 		if size >= env.LsCacheMaxSize {
-			DEFAULT_EXPIRE_TIME = time.Duration(2000) * time.Second
 			OBJ_LIST_CACHE.DeleteExpired()
-		} else {
-			DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
 		}
 		return v.(proto.Message)
 	}

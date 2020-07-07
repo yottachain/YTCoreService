@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -128,7 +129,7 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 	return nil
 }
 
-func ListObjects(userid uint32, startVnu primitive.ObjectID, stopVNU primitive.ObjectID, limit int) ([][]byte, primitive.ObjectID, error) {
+func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byte, primitive.ObjectID, error) {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
 	fields := bson.M{"VNU": 1, "blocks": 1}
@@ -142,6 +143,7 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, stopVNU primitive.O
 		return nil, startVnu, err
 	}
 	vbis := [][]byte{}
+	stoptime := time.Now().Unix() - int64(env.PMS*24*60*60)
 	for cur.Next(ctx) {
 		var res = &ObjectMeta{}
 		err = cur.Decode(res)
@@ -149,7 +151,7 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, stopVNU primitive.O
 			logrus.Errorf("[ListObjects]Decode ERR:%s\n", err)
 			return nil, startVnu, err
 		}
-		if res.VNU.Timestamp().Unix() > stopVNU.Timestamp().Unix() {
+		if res.VNU.Timestamp().Unix() > stoptime {
 			startVnu = primitive.NilObjectID
 			break
 		}

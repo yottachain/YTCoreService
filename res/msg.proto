@@ -16,7 +16,7 @@ message ErrorMessage{
 }
 
 message LongResp{
-   uint32 value=1;
+   int64 value=1;
 }
 
 message NodeRegReq{
