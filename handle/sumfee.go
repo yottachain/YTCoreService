@@ -2,6 +2,7 @@ package handle
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -21,7 +22,7 @@ func StartIterateUser() {
 	var lastId int32 = 0
 	limit := 100
 	for {
-		if !net.IsActive() {
+		if net.IsActive() {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		}
@@ -37,7 +38,8 @@ func StartIterateUser() {
 			} else {
 				for _, user := range us {
 					lastId = user.UserID
-					sum := &UserObjectSum{UserID: user.UserID, UsedSpace: 0, UserName: user.Username, CostPerCycle: user.CostPerCycle}
+					sum := &UserObjectSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username, CostPerCycle: user.CostPerCycle}
+					atomic.StoreInt64(sum.UsedSpace, 0)
 					sum.IterateObjects()
 				}
 			}
@@ -50,17 +52,18 @@ func StartIterateUser() {
 const BLKID_LIMIT = 500
 
 type UserObjectSum struct {
-	sync.RWMutex
 	UserID       int32
 	UserName     string
-	UsedSpace    int64
+	UsedSpace    *int64
 	CostPerCycle uint64
 }
 
 func (me *UserObjectSum) AddUsedSapce(space int64) {
-	me.Lock()
-	me.UsedSpace = me.UsedSpace + space
-	me.Unlock()
+	atomic.AddInt64(me.UsedSpace, space)
+}
+
+func (me *UserObjectSum) GetUsedSapce() int64 {
+	return atomic.LoadInt64(me.UsedSpace)
 }
 
 func (me *UserObjectSum) IterateObjects() {
@@ -93,7 +96,7 @@ func (me *UserObjectSum) IterateObjects() {
 			ids, ok := m[supid]
 			if ok {
 				if len(ids) >= BLKID_LIMIT {
-					bss := &BlockSpaceSum{SuperID: supid, VBIS: ids, WG: &wgroup}
+					bss := &BlockSpaceSum{SuperID: supid, VBIS: ids, WG: &wgroup, UserSum: me}
 					BLK_SUMMER_CH <- bss
 					wgroup.Add(1)
 					go DoBlockSpaceSum()
@@ -114,7 +117,7 @@ func (me *UserObjectSum) IterateObjects() {
 	if size > 0 {
 		wgroup.Add(size)
 		for k, v := range m {
-			bss := &BlockSpaceSum{SuperID: k, VBIS: v, WG: &wgroup}
+			bss := &BlockSpaceSum{SuperID: k, VBIS: v, WG: &wgroup, UserSum: me}
 			BLK_SUMMER_CH <- bss
 			go DoBlockSpaceSum()
 		}
@@ -124,7 +127,8 @@ func (me *UserObjectSum) IterateObjects() {
 }
 
 func (me *UserObjectSum) SetCycleFee() {
-	cost := env.UnitCycleCost * uint64(me.UsedSpace) / env.UnitSpace
+	uspace := me.GetUsedSapce()
+	cost := env.UnitCycleCost * uint64(uspace) / env.UnitSpace
 	logrus.Infof("[SumFileUsedSpace]File statistics completed,UserID:%d\n,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
 	var err error
 	if cost > 0 {

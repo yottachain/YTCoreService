@@ -64,7 +64,7 @@ cd $YTSN_HOME
 
 case "$1" in
 start)
-    ./ytsn start
+    ./ytsn start  
     ;;
 stop)
     ./ytsn stop
@@ -79,6 +79,8 @@ restart)
     ./ytsn restart
     ;;
 install)
+
+
     ./ytsn install
     ;;
 uninstall)

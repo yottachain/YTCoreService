@@ -2,7 +2,9 @@ package env
 
 import (
 	"bufio"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -16,13 +18,34 @@ import (
 var YTSN_HOME string
 var YTClient_HOME string
 
-func InitClient() {
-	YTClient_HOME = os.Getenv("YTClient_HOME")
-	if YTClient_HOME == "" {
-		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-		if err == nil {
-			YTClient_HOME = dir
+func GetCurrentPath() string {
+	file, _ := exec.LookPath(os.Args[0])
+	if file == "" {
+		ApplicationPath, _ := filepath.Abs(file)
+		return ApplicationPath
+	} else {
+		fi, err := os.Lstat(file)
+		if err != nil {
+			log.Panicf("GetCurrentPath.Lstat ERR:%s\n ", err)
 		}
+		if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+			execPath, err := os.Readlink(file)
+			if err != nil {
+				log.Panicf("GetCurrentPath.Readlink ERR:%s\n ", err)
+			}
+			ApplicationPath, _ := filepath.Split(execPath)
+			return ApplicationPath
+		} else {
+			ApplicationPath, _ := filepath.Split(file)
+			return ApplicationPath
+		}
+	}
+}
+
+func InitClient() {
+	YTClient_HOME = os.Getenv("YTSN_HOME")
+	if YTClient_HOME == "" {
+		YTClient_HOME = GetCurrentPath()
 	}
 	if !strings.HasSuffix(YTClient_HOME, "/") {
 		YTClient_HOME = YTClient_HOME + "/"
@@ -34,12 +57,7 @@ func InitClient() {
 func InitServer() {
 	YTSN_HOME = os.Getenv("YTSN_HOME")
 	if YTSN_HOME == "" {
-		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-		if err == nil {
-			YTSN_HOME = dir
-		} else {
-			YTSN_HOME = "/app/ytsn"
-		}
+		YTSN_HOME = GetCurrentPath()
 	}
 	if !strings.HasSuffix(YTSN_HOME, "/") {
 		YTSN_HOME = YTSN_HOME + "/"
@@ -49,8 +67,8 @@ func InitServer() {
 	readSnProperties()
 	initServerLog()
 	SetLimit()
-	ReadExport(YTClient_HOME + "bin/ytsn.ev")
-	ReadExport(YTClient_HOME + "bin/ytsnd.sh")
+	ReadExport(YTSN_HOME + "bin/ytsn.ev")
+	ReadExport(YTSN_HOME + "bin/ytsnd.sh")
 }
 
 func initClientLog() {
@@ -140,13 +158,13 @@ func SetLimit() {
 		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
 	}
 	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
-
 }
 
 func ReadExport(path string) {
 	f, err := os.Open(path)
 	defer f.Close()
 	if err != nil {
+		logrus.Errorf("[Init]Read export %s ERR: %s\n", path, err)
 		return
 	}
 	r := bufio.NewReader(f)
