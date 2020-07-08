@@ -140,7 +140,6 @@ func SetLimit() {
 		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
 	}
 	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
-
 }
 
 func ReadExport(path string) {
