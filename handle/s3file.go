@@ -294,8 +294,7 @@ func (h *ListObjectHandler) ReqHashCode(nfile string, nversion primitive.ObjectI
 	return string(md5Digest.Sum(nil))
 }
 
-var DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
-var OBJ_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
+var OBJ_LIST_CACHE *cache.Cache
 
 type Handles struct {
 	cursorCount *int32
@@ -311,7 +310,7 @@ func (h *ListObjectHandler) Handle() proto.Message {
 	v, found := OBJ_LIST_CACHE.Get(h.HashKey)
 	if found {
 		size := OBJ_LIST_CACHE.ItemCount()
-		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from cache,current size:%d,expired:%d\n", h.user.UserID, *h.m.BucketName, size, DEFAULT_EXPIRE_TIME)
+		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from cache,current size:%d:%d\n", h.user.UserID, *h.m.BucketName, size)
 		return v.(proto.Message)
 	}
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
@@ -407,7 +406,7 @@ func (h *ListObjectHandler) addCache(resp []*pkt.ListObjectResp_FileMetaList, ke
 	if h.compress {
 		bs, err := proto.Marshal(res)
 		if err != nil {
-			OBJ_LIST_CACHE.Set(key, res, DEFAULT_EXPIRE_TIME)
+			OBJ_LIST_CACHE.SetDefault(key, res)
 			return res
 		}
 		buf := bytes.NewBuffer(nil)
@@ -415,10 +414,10 @@ func (h *ListObjectHandler) addCache(resp []*pkt.ListObjectResp_FileMetaList, ke
 		_, err = gw.Write(bs)
 		gw.Close()
 		ress := &pkt.ListObjectRespV2{Data: buf.Bytes()}
-		OBJ_LIST_CACHE.Set(key, ress, DEFAULT_EXPIRE_TIME)
+		OBJ_LIST_CACHE.SetDefault(key, ress)
 		return ress
 	} else {
-		OBJ_LIST_CACHE.Set(key, res, DEFAULT_EXPIRE_TIME)
+		OBJ_LIST_CACHE.SetDefault(key, res)
 		return res
 	}
 }

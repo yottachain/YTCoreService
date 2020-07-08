@@ -262,7 +262,12 @@ func GetShardNodes(ids []int64) ([]*ShardRebuidMeta, error) {
 func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {
 	source := NewBaseSource()
 	metas := []*ShardMeta{}
-	filter := bson.M{"_id": bson.M{"$gte": vbi, "$lt": vbi + int64(count)}}
+	ids := make([]int64, count)
+	for ii := 0; ii < count; ii++ {
+		ids[ii] = vbi + int64(ii)
+	}
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+	//filter := bson.M{"_id": bson.M{"$gte": vbi, "$lt": vbi + int64(count)}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetShardColl().Find(ctx, filter)

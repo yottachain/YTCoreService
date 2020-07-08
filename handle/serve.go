@@ -8,6 +8,7 @@ import (
 	"time"
 
 	proto "github.com/golang/protobuf/proto"
+	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -19,6 +20,8 @@ var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
+
+	OBJ_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
 	atomic.StoreInt32(AYNC_ROUTINE_NUM, 0)
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
