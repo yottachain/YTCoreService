@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,20 +22,52 @@ import (
 	"github.com/yottachain/yotta-rebuilder/pbrebuilder"
 )
 
-var NODE_CACHE = cache.New(60*time.Minute, 60*time.Minute)
+var NODE_CACHE_BY_PUBKEY = cache.New(10*time.Minute, 5*time.Minute)
+var NODE_CACHE_BY_ID = cache.New(10*time.Minute, 5*time.Minute)
 
 func GetNodeId(key string) (int32, error) {
-	v, found := NODE_CACHE.Get(key)
+	v, found := NODE_CACHE_BY_PUBKEY.Get(key)
 	if !found {
-		id, err := net.NodeMgr.GetNodeIDByPubKey(key)
+		node, err := net.NodeMgr.GetNodeByPubKey(key)
 		if err != nil {
 			return 0, err
 		} else {
-			NODE_CACHE.Set(key, id, cache.DefaultExpiration)
-			return id, nil
+			n := &net.Node{Id: node.ID, Nodeid: node.NodeID, Pubkey: node.PubKey, Addrs: node.Addrs}
+			NODE_CACHE_BY_PUBKEY.Set(key, n, cache.DefaultExpiration)
+			NODE_CACHE_BY_ID.Set(strconv.Itoa(int(n.Id)), n, cache.DefaultExpiration)
+			return node.ID, nil
 		}
 	}
-	return v.(int32), nil
+	return int32(v.(*net.Node).Id), nil
+}
+
+func GetNode(id int32) (*net.Node, error) {
+	v, found := NODE_CACHE_BY_ID.Get(strconv.Itoa(int(id)))
+	if !found {
+		node, err := net.NodeMgr.GetNodes([]int32{id})
+		if err != nil || node == nil || len(node) == 0 {
+			return nil, err
+		} else {
+			n := &net.Node{Id: node[0].ID, Nodeid: node[0].NodeID, Pubkey: node[0].PubKey, Addrs: node[0].Addrs}
+			NODE_CACHE_BY_PUBKEY.Set(n.Pubkey, n, cache.DefaultExpiration)
+			NODE_CACHE_BY_ID.Set(strconv.Itoa(int(n.Id)), n, cache.DefaultExpiration)
+			return n, nil
+		}
+	}
+	return v.(*net.Node), nil
+}
+
+func GetNodes(ids []int32) ([]*net.Node, error) {
+	size := len(ids)
+	nodes := make([]*net.Node, size)
+	for ii := 0; ii < size; ii++ {
+		n, err := GetNode(ids[ii])
+		if err != nil {
+			return nil, err
+		}
+		nodes[ii] = n
+	}
+	return nodes, nil
 }
 
 type StatusRepHandler struct {
@@ -186,7 +219,7 @@ func ExecSendSpotCheck() {
 		SPOT_NODE_LIST.RLock()
 		for _, n := range SPOT_NODE_LIST.nodes {
 			if n != nil {
-				node := &net.Node{Id: uint32(n.ID), Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
+				node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
 				nodes = append(nodes, node)
 			}
 		}
@@ -275,7 +308,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	if err != nil {
 		logrus.Errorf("[GetRebuildTasks]ERR:%s\n", err)
 	}
-	node := &net.Node{Id: uint32(n.ID), Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
+	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
 	req := &pkt.TaskList{Tasklist: ls.Tasklist}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {

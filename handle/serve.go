@@ -29,6 +29,7 @@ func Start() {
 	go StartDoCacheFee()
 	go StartSumUsedSpace()
 	go StartIterateShards()
+	go StartIterateUser()
 }
 
 type MessageEvent interface {

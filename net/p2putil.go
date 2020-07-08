@@ -11,7 +11,7 @@ import (
 )
 
 type Node struct {
-	Id     uint32
+	Id     int32
 	Nodeid string
 	Pubkey string
 	Addrs  []string

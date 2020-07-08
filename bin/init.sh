@@ -20,7 +20,7 @@ do
     # Get the real path to this script, resolving any symbolic links
     TOKENS=`echo $SAFESCRIPT | sed -e 's;/; ;g'`
     REALPATH=
-ME
+
     for C in $TOKENS; do
         # Change any ":" in the token back to a space.
         C=`echo $C | sed -e 's;:; ;g'`

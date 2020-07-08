@@ -4,7 +4,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
-	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -151,7 +150,7 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 			nodeidsls = append(nodeidsls, v.NodeId)
 		}
 	}
-	nodes, err := net.NodeMgr.GetNodes(nodeidsls)
+	nodes, err := GetNodes(nodeidsls)
 	if err != nil {
 		logrus.Errorf("[DownloadBLK]GetNodes ERR:%s\n", err)
 		return pkt.NewError(pkt.SERVER_ERROR)
@@ -163,7 +162,7 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 	respNodes := make([]*pkt.DownloadBlockInitResp_NList_Ns, num)
 	for index, n := range nodes {
 		respNodes[index] = &pkt.DownloadBlockInitResp_NList_Ns{
-			Id: &n.ID, Nodeid: &n.NodeID, Pubkey: &n.PubKey, Addrs: n.Addrs,
+			Id: &n.Id, Nodeid: &n.Nodeid, Pubkey: &n.Pubkey, Addrs: n.Addrs,
 		}
 	}
 	count := uint32(num)

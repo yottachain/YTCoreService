@@ -56,6 +56,13 @@ type RegUserHandler struct {
 
 func (h *RegUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
+	lasttime, found := REG_PEER_CACHE.Get(h.pkey)
+	if found {
+		if time.Now().Unix()-lasttime.(int64) < 5 {
+			return pkt.NewErrorMsg(pkt.TOO_MANY_CURSOR, "Too frequently"), nil, nil
+		}
+	}
+	REG_PEER_CACHE.SetDefault(h.pkey, time.Now().Unix())
 	req, ok := msg.(*pkt.RegUserReqV2)
 	if ok {
 		h.m = req

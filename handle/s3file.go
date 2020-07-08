@@ -311,10 +311,7 @@ func (h *ListObjectHandler) Handle() proto.Message {
 	v, found := OBJ_LIST_CACHE.Get(h.HashKey)
 	if found {
 		size := OBJ_LIST_CACHE.ItemCount()
-		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from Cache,current size:%d\n", h.user.UserID, *h.m.BucketName, size)
-		if size >= env.LsCacheMaxSize {
-			OBJ_LIST_CACHE.DeleteExpired()
-		}
+		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from cache,current size:%d,expired:%d\n", h.user.UserID, *h.m.BucketName, size, DEFAULT_EXPIRE_TIME)
 		return v.(proto.Message)
 	}
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)

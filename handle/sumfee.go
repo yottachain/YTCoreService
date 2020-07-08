@@ -16,7 +16,7 @@ import (
 
 var BLK_SUMMER_CH chan *BlockSpaceSum
 
-func IterateUser() {
+func StartIterateUser() {
 	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount()*5)
 	var lastId int32 = 0
 	limit := 100
@@ -27,7 +27,7 @@ func IterateUser() {
 		}
 		logrus.Infof("[SumUsedSpace]Start iterate user...\n")
 		for {
-			us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "nextCycle": 1, "username": 1})
+			us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "nextCycle": 1, "username": 1, "costPerCycle": 1})
 			if err != nil {
 				time.Sleep(time.Duration(30) * time.Second)
 				continue
@@ -37,12 +37,13 @@ func IterateUser() {
 			} else {
 				for _, user := range us {
 					lastId = user.UserID
-					//
-					sum := &UserObjectSum{UserID: user.UserID, UsedSpace: 0}
+					sum := &UserObjectSum{UserID: user.UserID, UsedSpace: 0, UserName: user.Username, CostPerCycle: user.CostPerCycle}
 					sum.IterateObjects()
 				}
 			}
 		}
+		logrus.Infof("[SumUsedSpace]Iterate user OK!\n")
+		time.Sleep(time.Duration(180) * time.Second)
 	}
 }
 
@@ -50,8 +51,10 @@ const BLKID_LIMIT = 500
 
 type UserObjectSum struct {
 	sync.RWMutex
-	UserID    int32
-	UsedSpace int64
+	UserID       int32
+	UserName     string
+	UsedSpace    int64
+	CostPerCycle uint64
 }
 
 func (me *UserObjectSum) AddUsedSapce(space int64) {
@@ -61,6 +64,18 @@ func (me *UserObjectSum) AddUsedSapce(space int64) {
 }
 
 func (me *UserObjectSum) IterateObjects() {
+	for {
+		lasttime, err := dao.GetUserSumTime(me.UserID)
+		if err != nil {
+			time.Sleep(time.Duration(15) * time.Second)
+			continue
+		} else {
+			if time.Now().Unix()*1000-lasttime < int64(env.CostSumCycle) {
+				return
+			}
+			break
+		}
+	}
 	logrus.Infof("[SumFileUsedSpace]Start sum fee,UserID:%d\n", me.UserID)
 	wgroup := sync.WaitGroup{}
 	limit := net.GetSuperNodeCount() * BLKID_LIMIT
@@ -105,7 +120,27 @@ func (me *UserObjectSum) IterateObjects() {
 		}
 	}
 	wgroup.Wait()
-	logrus.Infof("[SumFileUsedSpace]File iterate completed,UserID:%d\n,usedspace:%d", me.UserID, me.UsedSpace)
+	me.SetCycleFee()
+}
+
+func (me *UserObjectSum) SetCycleFee() {
+	cost := env.UnitCycleCost * uint64(me.UsedSpace) / env.UnitSpace
+	logrus.Infof("[SumFileUsedSpace]File statistics completed,UserID:%d\n,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
+	var err error
+	if cost > 0 {
+		if me.CostPerCycle == cost {
+			logrus.Infof("[SumFileUsedSpace]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
+		} else {
+			err = net.SetHfee(me.UserName, cost)
+			if err == nil {
+				logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			}
+			dao.UpdateUserCost(me.UserID, cost)
+		}
+	}
+	if err == nil {
+		dao.SetUserSumTime(me.UserID)
+	}
 }
 
 func GetVBI(bs []byte) int64 {

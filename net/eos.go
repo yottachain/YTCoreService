@@ -15,7 +15,7 @@ type BalanceValue struct {
 	Balance uint64
 }
 
-var USER_Banlance_CACHE = cache.New(30*time.Second, 60*time.Second)
+var USER_Banlance_CACHE = cache.New(30*time.Second, 15*time.Second)
 
 func HasSpace(length uint64, username string) (bool, error) {
 	if !env.BP_ENABLE {

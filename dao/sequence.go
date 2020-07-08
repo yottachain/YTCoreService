@@ -31,13 +31,13 @@ func InitUserID_seq() {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			atomic.StoreUint32(USERID_SEQ, uint32(env.SuperNodeID))
-			logrus.Infof("[InitSquence]User sequence init value:%d\n", env.SuperNodeID)
+			logrus.Infof("[InitSequence]User sequence init value:%d\n", env.SuperNodeID)
 		} else {
-			logrus.Panicf("[InitSquence]Err:%s\n", err)
+			logrus.Panicf("[InitSequence]Err:%s\n", err)
 		}
 	}
 	atomic.StoreUint32(USERID_SEQ, result.ID)
-	logrus.Infof("[InitSquence]User sequence init value:%d\n", result.ID)
+	logrus.Infof("[InitSequence]User sequence init value:%d\n", result.ID)
 	atomic.StoreInt32(BLKID_SEQ, 0)
 	atomic.StoreInt32(SHDID_SEQ, 0)
 }

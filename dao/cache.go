@@ -58,3 +58,37 @@ func FindOneNewObject() *Action {
 	}
 	return action
 }
+
+func SetUserSumTime(userid int32) error {
+	source := NewCacheBaseSource()
+	filter := bson.M{"_id": userid}
+	data := bson.M{"$set": bson.M{"statTime": time.Now().Unix() * 1000}}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetSumColl().UpdateOne(ctx, filter, data)
+	if err != nil {
+		logrus.Errorf("[SetUserSumTime]UserID:%d,ERR:%s\n", userid, err)
+		return err
+	}
+	return nil
+}
+
+func GetUserSumTime(userid int32) (int64, error) {
+	source := NewCacheBaseSource()
+	filter := bson.M{"_id": userid}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result = struct {
+		statTime int64 `bson:"statTime"`
+	}{}
+	err := source.GetSumColl().FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return 0, nil
+		} else {
+			logrus.Errorf("[GetUserSumTime]ERR:%s\n", err)
+			return 0, err
+		}
+	}
+	return result.statTime, err
+}

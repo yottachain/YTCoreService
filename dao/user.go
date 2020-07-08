@@ -42,7 +42,7 @@ func (user *User) GetTotalJson() string {
 	return string(res)
 }
 
-var USER_CACHE = cache.New(10*time.Minute, 10*time.Minute)
+var USER_CACHE = cache.New(10*time.Minute, 5*time.Minute)
 
 func AddUserCache(userid int32, keyNumber int, user *User) {
 	key := fmt.Sprintf("%d-%d", userid, keyNumber)
@@ -132,6 +132,20 @@ func AddUserKUEp(userid int32, kuep []byte) error {
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
 		logrus.Errorf("[AddUserKUEp]UserID:%d,ERR:%s\n", userid, err)
+		return err
+	}
+	return nil
+}
+
+func UpdateUserCost(userid int32, costPerCycle uint64) error {
+	source := NewBaseSource()
+	filter := bson.M{"_id": userid}
+	data := bson.M{"$set": bson.M{"costPerCycle": costPerCycle}}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
+	if err != nil {
+		logrus.Errorf("[UpdateUserCost]UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
