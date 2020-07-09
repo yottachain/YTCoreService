@@ -41,7 +41,7 @@ func StartIterateShards() {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		}
-		lasttime := firstId>>32 + int64(env.LsShardInterval*60)
+		lasttime := firstId>>32 + int64(env.LsShardInterval)
 		querylasttime := time.Now().Unix() - DELAY_TIMES
 		if lasttime > querylasttime {
 			time.Sleep(time.Duration(30) * time.Second)

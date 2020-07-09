@@ -9,6 +9,7 @@ import (
 const BP_ENABLE bool = true
 const SPOTCHECKNUM = 3
 
+var STAT_SERVICE bool = true
 var DE_DUPLICATION bool = true
 var SPOTCHECK_ADDR string = ""
 var REBUILD_ADDR string = ""
@@ -18,6 +19,7 @@ var nodemgrLog string
 
 var SuperNodeID int
 var Port int
+var Port2 int
 
 var Space_factor int
 var IsBackup int
@@ -61,15 +63,20 @@ func readSnProperties() {
 	if SuperNodeID < 0 || SuperNodeID > 31 {
 		log.Panicf("The 'superNodeID' parameter is not configured.\n")
 	}
-	ss := strings.ToUpper(strings.Trim(config["DE_DUPLICATION"], " "))
+	ss := strings.ToUpper(strings.TrimSpace(config["DE_DUPLICATION"]))
 	if ss == "FALSE" {
 		DE_DUPLICATION = false
+	}
+	ss = strings.ToUpper(strings.TrimSpace(config["STAT_SERVICE"]))
+	if ss == "OFF" {
+		STAT_SERVICE = false
 	}
 	SPOTCHECK_ADDR = strings.Trim(config["SPOTCHECK_ADDR"], " ")
 	REBUILD_ADDR = strings.Trim(config["REBUILD_ADDR"], " ")
 	nodemgrLog = strings.ToUpper(strings.TrimSpace(config["nodemgrLog"]))
-	Port = StringToInt(config["port"], 8888, 9999, 9999)
-	HttpPort = StringToInt(config["httpPort"], 8000, 12000, 8082)
+	Port = StringToInt(config["port"], 8000, 20000, 9999)
+	Port2 = StringToInt(config["port2"], 8000, 20000, 9998)
+	HttpPort = StringToInt(config["httpPort"], 8000, 20000, 8082)
 	Space_factor = StringToInt(config["space_factor"], 0, 100, 100)
 	IsBackup = StringToInt(config["isBackup"], 0, 1, 0)
 	SelfIp = strings.Trim(config["selfIp"], " ")
@@ -79,7 +86,7 @@ func readSnProperties() {
 	LsCachePageNum = StringToInt(config["lsCachePageNum"], 1, 100, 10)
 	LsCursorLimit = StringToInt(config["lsCursorLimit"], 0, 5, 1)
 	LsCacheMaxSize = StringToInt(config["lsCacheMaxSize"], 1000, 500000, 20000)
-	LsShardInterval = StringToInt(config["lsShardInterval"], 1, 10, 1)
+	LsShardInterval = StringToInt(config["lsShardInterval"], 10, 180, 30)
 	HttpRemoteIp = strings.Trim(config["httpRemoteIp"], " ")
 	EOSURI = strings.Trim(config["eosURI"], " ")
 	if EOSURI == "" {

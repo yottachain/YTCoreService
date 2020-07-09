@@ -26,5 +26,4 @@ require (
 	golang.org/x/mod v0.3.0 // indirect
 	golang.org/x/tools v0.0.0-20200605181038-cef9fc3bc8f0 // indirect
 	google.golang.org/protobuf v1.22.0
-
 )

@@ -35,9 +35,10 @@ func InitUserID_seq() {
 		} else {
 			logrus.Panicf("[InitSequence]Err:%s\n", err)
 		}
+	} else {
+		atomic.StoreUint32(USERID_SEQ, result.ID)
+		logrus.Infof("[InitSequence]User sequence init value:%d\n", result.ID)
 	}
-	atomic.StoreUint32(USERID_SEQ, result.ID)
-	logrus.Infof("[InitSequence]User sequence init value:%d\n", result.ID)
 	atomic.StoreInt32(BLKID_SEQ, 0)
 	atomic.StoreInt32(SHDID_SEQ, 0)
 }

@@ -25,13 +25,15 @@ func Start() {
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
-	InitSpotCheckService()
-	InitRebuildService()
-	//go StartSyncNodes()
-	go StartDoCacheFee()
-	go StartSumUsedSpace()
-	go StartIterateShards()
-	go StartIterateUser()
+	if env.STAT_SERVICE {
+		InitSpotCheckService()
+		InitRebuildService()
+		//go StartSyncNodes()
+		go StartDoCacheFee()
+		go StartSumUsedSpace()
+		go StartIterateShards()
+		go StartIterateUser()
+	}
 }
 
 type MessageEvent interface {
