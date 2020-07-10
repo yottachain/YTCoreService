@@ -342,12 +342,14 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	*saveObjectMetaReq.Mode = false
 	res, perr := SaveObjectMeta(saveObjectMetaReq, ref, h.vnu)
 	if perr != nil {
-		logrus.Infof("Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
+		logrus.Errorf("[UploadBLK]Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
 		return perr
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-				logrus.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+			} else {
+				logrus.Errorf("[UploadBLK]Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 			}
 		}
 	}

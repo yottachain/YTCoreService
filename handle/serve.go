@@ -15,6 +15,7 @@ import (
 )
 
 var AYNC_ROUTINE_NUM *int32 = new(int32)
+var SYNC_ROUTINE_NUM *int32 = new(int32)
 var READ_ROUTINE_NUM *int32 = new(int32)
 var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
@@ -22,6 +23,7 @@ var STAT_ROUTINE_NUM *int32 = new(int32)
 func Start() {
 	OBJ_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
 	atomic.StoreInt32(AYNC_ROUTINE_NUM, 0)
+	atomic.StoreInt32(SYNC_ROUTINE_NUM, 0)
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
@@ -124,6 +126,10 @@ func CheckRoutine(rnum *int32) error {
 	if WRITE_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
 			return errors.New("WRITE_ROUTINE:Too many routines")
+		}
+	} else if SYNC_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(SYNC_ROUTINE_NUM) > env.MAX_SYNC_ROUTINE {
+			return errors.New("SYNC_ROUTINE:Too many routines")
 		}
 	} else if READ_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {

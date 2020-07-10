@@ -45,6 +45,7 @@ var ContractAccount string
 var ContractOwnerD string
 
 var MAX_AYNC_ROUTINE int32
+var MAX_SYNC_ROUTINE int32
 var MAX_READ_ROUTINE int32
 var MAX_WRITE_ROUTINE int32
 var MAX_STAT_ROUTINE int32
@@ -74,8 +75,8 @@ func readSnProperties() {
 	SPOTCHECK_ADDR = strings.Trim(config["SPOTCHECK_ADDR"], " ")
 	REBUILD_ADDR = strings.Trim(config["REBUILD_ADDR"], " ")
 	nodemgrLog = strings.ToUpper(strings.TrimSpace(config["nodemgrLog"]))
-	Port = StringToInt(config["port"], 8000, 20000, 9999)
-	Port2 = StringToInt(config["port2"], 8000, 20000, 9998)
+	Port = StringToInt(config["port"], -1, 20000, 9999)
+	Port2 = StringToInt(config["port2"], -1, 20000, 9998)
 	HttpPort = StringToInt(config["httpPort"], 8000, 20000, 8082)
 	Space_factor = StringToInt(config["space_factor"], 0, 100, 100)
 	IsBackup = StringToInt(config["isBackup"], 0, 1, 0)
@@ -112,9 +113,10 @@ func readSnProperties() {
 	if ContractOwnerD == "" {
 		log.Panicf("The 'contractOwnerD' parameter is not configured.\n")
 	}
-	MAX_AYNC_ROUTINE = int32(StringToInt(config["MAX_AYNC_ROUTINE"], 200, 2000, 1000))
-	MAX_READ_ROUTINE = int32(StringToInt(config["MAX_READ_ROUTINE"], 200, 2000, 1000))
+	MAX_AYNC_ROUTINE = int32(StringToInt(config["MAX_AYNC_ROUTINE"], 500, 5000, 2000))
 	MAX_WRITE_ROUTINE = int32(StringToInt(config["MAX_WRITE_ROUTINE"], 500, 5000, 2000))
+	MAX_SYNC_ROUTINE = int32(StringToInt(config["MAX_SYNC_ROUTINE"], 200, 2000, 1000))
+	MAX_READ_ROUTINE = int32(StringToInt(config["MAX_READ_ROUTINE"], 200, 2000, 1000))
 	MAX_STAT_ROUTINE = int32(StringToInt(config["MAX_STAT_ROUTINE"], 200, 2000, 1000))
 	PER_USER_MAX_READ_ROUTINE = int32(StringToInt(config["PER_USER_MAX_READ_ROUTINE"], 1, 20, 5))
 	SLOW_OP_TIMES = StringToInt(config["SLOW_OP_TIMES"], 10, 200, 50)

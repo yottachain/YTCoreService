@@ -108,7 +108,7 @@ func (self *SNSynchronizer) run() {
 				return
 			}
 		} else {
-			res, err := net.RequestSN(self.req, self.sn, "", 0)
+			res, err := net.RequestSN(self.req, self.sn, "", 0, true)
 			if err != nil {
 				self.err = err
 			} else {

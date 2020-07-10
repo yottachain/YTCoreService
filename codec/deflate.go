@@ -95,7 +95,6 @@ func (fileEncoder *FileEncoder) HasNext() (bool, error) {
 	if fileEncoder.finished {
 		fileEncoder.Close()
 	}
-
 	if fileEncoder.curBlock == nil {
 		return false, nil
 	} else {

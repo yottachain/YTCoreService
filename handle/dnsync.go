@@ -94,7 +94,7 @@ func (h *NodeSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Err
 		if h.m.Node == nil || len(h.m.Node) == 0 {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM, nil
+		return nil, SYNC_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

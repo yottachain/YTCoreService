@@ -20,7 +20,9 @@ import (
 )
 
 var Conntimeout = readTimeout("P2PHOST_CONNECTTIMEOUT")
+var DirectConntimeout = 200
 var Writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
+var DirectWritetimeout = 200
 
 func readTimeout(key string) int {
 	ct := os.Getenv(key)
@@ -63,7 +65,7 @@ func ClearClient() bool {
 	}
 }
 
-func NewClient(pid string) (*TcpClient, *pkt.ErrorMessage) {
+func NewClient(pid string, nowait bool) (*TcpClient, *pkt.ErrorMessage) {
 	connects.RLock()
 	con := connects.cons[pid]
 	connects.RUnlock()
@@ -72,7 +74,7 @@ func NewClient(pid string) (*TcpClient, *pkt.ErrorMessage) {
 		connects.Lock()
 		con = connects.cons[pid]
 		if con == nil {
-			con, err = NewP2P(pid)
+			con, err = NewP2P(pid, nowait)
 			if err == nil {
 				connects.cons[pid] = con
 			}
@@ -97,12 +99,14 @@ type TcpClient struct {
 	connectedTime *int64
 	statu         *int32
 	PeerId        peer.ID
+	nowait        bool
 	sync.Mutex
 }
 
-func NewP2P(key string) (*TcpClient, *pkt.ErrorMessage) {
+func NewP2P(key string, nowait bool) (*TcpClient, *pkt.ErrorMessage) {
 	c := &TcpClient{}
 	c.lastTime = new(int64)
+	c.nowait = nowait
 	c.statu = new(int32)
 	atomic.StoreInt32(c.statu, 0)
 	c.connectedTime = new(int64)
@@ -133,7 +137,11 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Writetimeout))
+	timeout := time.Second * time.Duration(Writetimeout)
+	if client.nowait {
+		timeout = time.Microsecond * time.Duration(DirectWritetimeout)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	res, serr := p2phst.SendMsg(ctx, client.PeerId, msgid, data)
 	if serr != nil {
@@ -174,7 +182,11 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 					logrus.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Conntimeout))
+				timeout := time.Second * time.Duration(Conntimeout)
+				if client.nowait {
+					timeout = time.Microsecond * time.Duration(DirectConntimeout)
+				}
+				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				defer cancel()
 				_, err = p2phst.ClientStore().Get(ctx, client.PeerId, maddrs)
 				if err != nil {

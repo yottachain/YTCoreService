@@ -225,7 +225,7 @@ func SaveObjectMeta(req *pkt.SaveObjectMetaReq, refer *pkt.Refer, v primitive.Ob
 			return msg, nil
 		}
 	} else {
-		msg, err := net.RequestSN(req, sn, "", 0)
+		msg, err := net.RequestSN(req, sn, "", 0, true)
 		if err != nil {
 			return nil, err
 		} else {
@@ -258,7 +258,7 @@ func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) (*p
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Invalid VNU"), nil, nil
 		}
 		h.vnu = v
-		return nil, WRITE_ROUTINE_NUM, nil
+		return nil, SYNC_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

@@ -178,7 +178,7 @@ func (bss *BlockSpaceSum) ReqBlockUsedSpace() (int64, *pkt.ErrorMessage) {
 			return (res.(*pkt.LongResp)).Value, nil
 		}
 	} else {
-		res, err := net.RequestSN(msg, sn, "", 0)
+		res, err := net.RequestSN(msg, sn, "", 0, true)
 		if err != nil {
 			return 0, err
 		} else {

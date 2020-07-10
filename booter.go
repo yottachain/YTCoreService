@@ -10,6 +10,7 @@ import (
 	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/http"
 	"github.com/yottachain/YTCoreService/net"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 var logger service.Logger
@@ -36,6 +37,10 @@ func (p *Program) run() {
 }
 
 func main() {
+	test.TestLRC()
+}
+
+func main11() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {
@@ -118,7 +123,7 @@ func StartServer() {
 	net.EOSInit()
 	dao.InitUserID_seq()
 
-	net.Start(int32(env.Port), net.GetSuperNode(env.SuperNodeID).PrivKey)
+	net.Start(int32(env.Port), int32(env.Port2), net.GetSuperNode(env.SuperNodeID).PrivKey)
 	net.RegisterGlobalMsgHandler(handle.OnMessage)
 
 	handle.Start()
