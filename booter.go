@@ -9,8 +9,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/http"
-	"github.com/yottachain/YTCoreService/net"
-	"github.com/yottachain/YTCoreService/test"
+	ytnet "github.com/yottachain/YTCoreService/net"
 )
 
 var logger service.Logger
@@ -36,11 +35,12 @@ func (p *Program) run() {
 	StartServer()
 }
 
-func main() {
-	test.TestLRC()
+func maintest() {
+
+	//test.TestLRC()
 }
 
-func main11() {
+func main() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {
@@ -119,19 +119,19 @@ func main11() {
 func StartServer() {
 	env.InitServer()
 	dao.InitMongo()
-	net.InitNodeMgr(dao.MongoAddress)
-	net.EOSInit()
+	ytnet.InitNodeMgr(dao.MongoAddress)
+	ytnet.EOSInit()
 	dao.InitUserID_seq()
 
-	net.Start(int32(env.Port), int32(env.Port2), net.GetSuperNode(env.SuperNodeID).PrivKey)
-	net.RegisterGlobalMsgHandler(handle.OnMessage)
+	ytnet.Start(int32(env.Port), int32(env.Port2), ytnet.GetSuperNode(env.SuperNodeID).PrivKey)
+	ytnet.RegisterGlobalMsgHandler(handle.OnMessage)
 
 	handle.Start()
 	http.Start(env.HttpPort)
 }
 
 func StopServer() {
-	net.Stop()
+	ytnet.Stop()
 	dao.Close()
 	logrus.Infof("[Booter]Service shutdown.\n")
 	http.Stop()

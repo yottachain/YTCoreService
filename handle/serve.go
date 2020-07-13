@@ -96,13 +96,14 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	if err2 != nil {
 		return pkt.MarshalMsgBytes(err2)
 	}
+	var curRouteNum int32 = 0
 	if rnum != nil {
 		err = CheckRoutine(rnum)
 		if err != nil {
 			logrus.Errorf("[OnMessage]%s,ERR:%s\n", name, err)
 			return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
 		}
-		atomic.AddInt32(rnum, 1)
+		curRouteNum = atomic.AddInt32(rnum, 1)
 		defer atomic.AddInt32(rnum, -1)
 	}
 	if urnum != nil {
@@ -117,7 +118,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	res := handler.Handle()
 	stime := time.Now().Sub(startTime).Milliseconds()
 	if stime > int64(env.SLOW_OP_TIMES) {
-		logrus.Infof("[OnMessage]%s,take times %d ms\n", name, stime)
+		logrus.Infof("[OnMessage]%s,routine num %d,take times %d ms\n", name, curRouteNum, stime)
 	}
 	return pkt.MarshalMsgBytes(res)
 }

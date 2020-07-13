@@ -19,6 +19,7 @@ import (
 var NodeMgr *YTDNMgmt.NodeDaoImpl
 var superNodeList []*YTDNMgmt.SuperNode
 var superNodeMap = make(map[string]*YTDNMgmt.SuperNode)
+var LocalIp string = ""
 
 func InitShadowPriKey() error {
 	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {
@@ -66,9 +67,34 @@ func InitNodeMgr(MongoAddress string) error {
 	if err != nil {
 		logrus.Panicf("[NodeMgr]Failed to GetSuperNodes:%s\n", err.Error())
 	}
+	if len(ls) == 0 {
+		logrus.Panicf("[NodeMgr]Table 'yotta.SuperNode' no data\n")
+	}
 	readSuperNodeList(ls)
+	readLocalIP()
 	IsActive()
 	return nil
+}
+
+func readLocalIP() {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		panic(err)
+	}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				ip := ipnet.IP.String()
+				if ip != env.SelfIp {
+					LocalIp = LocalIp + ip + ";"
+				}
+			}
+		}
+	}
+	if env.SelfIp != "" {
+		LocalIp = LocalIp + env.SelfIp + ";"
+	}
+	logrus.Infof("[NodeMgr]Local ip:%s\n", LocalIp)
 }
 
 func readKey() ([]byte, error) {
@@ -121,11 +147,12 @@ func GetSnIp(snid int) string {
 }
 
 func IsMaster() bool {
-	if env.SelfIp == "" {
-		return true
-	}
 	ip := GetSelfIp()
-	return ip == env.SelfIp
+	if strings.ContainsAny(LocalIp, ip+";") {
+		return true
+	} else {
+		return false
+	}
 }
 
 func IsActive() bool {
