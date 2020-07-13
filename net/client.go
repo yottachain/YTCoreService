@@ -22,7 +22,7 @@ import (
 var Conntimeout = readTimeout("P2PHOST_CONNECTTIMEOUT")
 var DirectConntimeout = 200
 var Writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
-var DirectWritetimeout = 200
+var DirectWritetimeout = 300
 
 func readTimeout(key string) int {
 	ct := os.Getenv(key)
