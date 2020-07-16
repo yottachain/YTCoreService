@@ -269,7 +269,10 @@ message UploadObjectInitResp{
         optional uint32 processIdentifier=3;
         optional int32 counter=4;   
     }
-    repeated uint32 blocks=3;
+    optional group Blocks=3{
+        optional uint32 count=1;
+        repeated uint32 blocks=2;
+    }
     optional string signArg=4;
     optional uint64 stamp=5;
 }

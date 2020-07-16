@@ -3,7 +3,6 @@ package net
 import (
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
@@ -18,18 +17,12 @@ import (
 )
 
 var p2phst host.Host
-var mu sync.Mutex
 
 func Stop() {
 
 }
 
-func Start(port int32, privatekey string) error {
-	mu.Lock()
-	defer mu.Unlock()
-	if p2phst != nil {
-		return nil
-	}
+func Start(port int32, port2 int32, privatekey string) error {
 	privbytes, err := base58.Decode(privatekey)
 	if err != nil {
 		return errors.New("bad format of private key,Base58 format needed")
@@ -80,4 +73,5 @@ var callback OnMessageFunc
 func RegisterGlobalMsgHandler(call OnMessageFunc) {
 	callback = call
 	p2phst.RegisterGlobalMsgHandler(MessageHandler)
+	//serverhost.RegisterHandler(0x1c, MessageHandler)
 }

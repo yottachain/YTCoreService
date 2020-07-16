@@ -119,7 +119,7 @@ func RelationshipHandle(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	} else {
-		_, errm := net.RequestSN(requset, sn, "", 0)
+		_, errm := net.RequestSN(requset, sn, "", 0, true)
 		if err != nil {
 			errmsg = "RelationshipHandle err:" + errm.Msg
 		}
@@ -156,7 +156,7 @@ func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
 			var errstr string = ""
 			req := &pkt.UserSpaceReq{Userid: new(uint32)}
 			*req.Userid = uint32(user.UserID)
-			resp, err := net.RequestSN(req, sn, "", 0)
+			resp, err := net.RequestSN(req, sn, "", 0, true)
 			if err != nil {
 				errstr = "UserTotalHandle Err:" + err.Msg
 			} else {

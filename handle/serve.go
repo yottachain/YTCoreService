@@ -15,6 +15,7 @@ import (
 )
 
 var AYNC_ROUTINE_NUM *int32 = new(int32)
+var SYNC_ROUTINE_NUM *int32 = new(int32)
 var READ_ROUTINE_NUM *int32 = new(int32)
 var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
@@ -22,6 +23,7 @@ var STAT_ROUTINE_NUM *int32 = new(int32)
 func Start() {
 	OBJ_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
 	atomic.StoreInt32(AYNC_ROUTINE_NUM, 0)
+	atomic.StoreInt32(SYNC_ROUTINE_NUM, 0)
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
@@ -66,6 +68,12 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 	return handfunc(), nil
 }
 
+func CatchError(name string) {
+	if r := recover(); r != nil {
+		logrus.Tracef("[%s] %s ERR:%s\n", name, r)
+	}
+}
+
 func OnError(msg proto.Message, name string) {
 	if r := recover(); r != nil {
 		logrus.Tracef("[OnMessage] %s ERR:%s\n", name, r)
@@ -94,13 +102,14 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	if err2 != nil {
 		return pkt.MarshalMsgBytes(err2)
 	}
+	var curRouteNum int32 = 0
 	if rnum != nil {
 		err = CheckRoutine(rnum)
 		if err != nil {
 			logrus.Errorf("[OnMessage]%s,ERR:%s\n", name, err)
 			return pkt.MarshalMsgBytes(pkt.BUSY_ERROR)
 		}
-		atomic.AddInt32(rnum, 1)
+		curRouteNum = atomic.AddInt32(rnum, 1)
 		defer atomic.AddInt32(rnum, -1)
 	}
 	if urnum != nil {
@@ -115,7 +124,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	res := handler.Handle()
 	stime := time.Now().Sub(startTime).Milliseconds()
 	if stime > int64(env.SLOW_OP_TIMES) {
-		logrus.Infof("[OnMessage]%s,take times %d ms\n", name, stime)
+		logrus.Infof("[OnMessage]%s,routine num %d,take times %d ms\n", name, curRouteNum, stime)
 	}
 	return pkt.MarshalMsgBytes(res)
 }
@@ -124,6 +133,10 @@ func CheckRoutine(rnum *int32) error {
 	if WRITE_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
 			return errors.New("WRITE_ROUTINE:Too many routines")
+		}
+	} else if SYNC_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(SYNC_ROUTINE_NUM) > env.MAX_SYNC_ROUTINE {
+			return errors.New("SYNC_ROUTINE:Too many routines")
 		}
 	} else if READ_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {

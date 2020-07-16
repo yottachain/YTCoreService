@@ -28,14 +28,14 @@ func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *
 	} else {
 		log_pre = fmt.Sprintf("[%s][%d]%s", name, dn.Id, log_prefix)
 	}
-	client, err := NewClient(dn.Nodeid)
+	client, err := NewClient(dn.Nodeid, false)
 	if err != nil {
 		return nil, err
 	}
 	return client.Request(int32(msgtype), data, dn.Addrs, log_pre)
 }
 
-func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, retry int) (proto.Message, *pkt.ErrorMessage) {
+func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, retry int, nowait bool) (proto.Message, *pkt.ErrorMessage) {
 	data, name, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
@@ -51,13 +51,13 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		if retryTimes > 0 {
 			logrus.Infof("[P2P]%sRetry...\n", log_pre)
 		}
-		client, err := NewClient(sn.NodeID)
+		client, err := NewClient(sn.NodeID, nowait)
 		if err != nil {
 			return nil, err
 		}
 		resmsg, err := client.Request(int32(msgtype), data, sn.Addrs, log_pre)
 		if err != nil {
-			if retryTimes >= retry {
+			if nowait || retryTimes >= retry {
 				return nil, err
 			}
 			if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR) {

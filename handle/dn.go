@@ -137,7 +137,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 		relayUrl = newnode.Addrs[0]
 	}
 	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: uint64(productiveSpace), RelayUrl: relayUrl}
-	newnode.Addrs = addrs
+	newnode.Addrs = YTDNMgmt.CheckPublicAddrs(node.Addrs, net.NodeMgr.Config.Misc.ExcludeAddrPrefix)
 	//NodeStatSync(newnode)
 	SendSpotCheck(newnode)
 	SendRebuildTask(newnode)
@@ -189,6 +189,7 @@ func ExecSendSpotCheck() {
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
 	defer cancel()
+	defer CatchError("SendSpotCheck")
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
 	if err != nil {
 		logrus.Errorf("[IsNodeSelected]ERR:%s\n", err)
@@ -302,11 +303,13 @@ func SendRebuildTask(node *YTDNMgmt.Node) {
 func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
+	defer CatchError("GetRebuildTasks")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
 	defer cancel()
 	ls, err := REBUILDER_SERVICE.GetRebuildTasks(ctx)
 	if err != nil {
 		logrus.Errorf("[GetRebuildTasks]ERR:%s\n", err)
+		return
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
 	req := &pkt.TaskList{Tasklist: ls.Tasklist}

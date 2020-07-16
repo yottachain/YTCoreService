@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -15,8 +14,31 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func SetLimit() {
+	/*
+		var rLimit syscall.Rlimit
+		err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			logrus.Errorf("[SetLimit]Error Getting Rlimit%s\n ", err)
+		}
+		logrus.Infof("[SetLimit]Rlimit %d\n", rLimit)
+		rLimit.Max = 655350
+		rLimit.Cur = 655350
+		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			logrus.Errorf("[SetLimit]Error Setting Rlimit %s\n", err)
+		}
+		err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
+		}
+		logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
+	*/
+}
+
 var YTSN_HOME string
-var YTClient_HOME string
+var YTFS_HOME string
+var Console bool = false
 
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
@@ -43,15 +65,16 @@ func GetCurrentPath() string {
 }
 
 func InitClient() {
-	YTClient_HOME = os.Getenv("YTSN_HOME")
-	if YTClient_HOME == "" {
-		YTClient_HOME = GetCurrentPath()
+	YTFS_HOME = os.Getenv("YTFS_HOME")
+	if YTFS_HOME == "" {
+		YTFS_HOME = GetCurrentPath()
 	}
-	if !strings.HasSuffix(YTClient_HOME, "/") {
-		YTClient_HOME = YTClient_HOME + "/"
+	if !strings.HasSuffix(YTFS_HOME, "/") {
+		YTFS_HOME = YTFS_HOME + "/"
 	}
 	readClientProperties()
 	initClientLog()
+	SetLimit()
 }
 
 func InitServer() {
@@ -72,8 +95,8 @@ func InitServer() {
 }
 
 func initClientLog() {
-	logFileName := YTClient_HOME + "log/client.log"
-	os.MkdirAll(YTClient_HOME+"log", os.ModePerm)
+	logFileName := YTFS_HOME + "log/client.log"
+	os.MkdirAll(YTFS_HOME+"log", os.ModePerm)
 	initLog(logFileName, nil)
 }
 
@@ -93,10 +116,13 @@ func initLog(logFileName string, log *logrus.Logger) {
 	}
 	format := &Formatter{}
 	lv, err := logrus.ParseLevel(ServerLogLevel)
+	if err != nil {
+		lv = logrus.TraceLevel
+	}
 	hook, _ := newHook(logFileName, format)
 	if log != nil {
 		log.SetFormatter(format)
-		if err != nil {
+		if Console {
 			log.SetLevel(logrus.TraceLevel)
 			log.SetOutput(os.Stdout)
 		} else {
@@ -108,7 +134,7 @@ func initLog(logFileName string, log *logrus.Logger) {
 		}
 	} else {
 		logrus.SetFormatter(format)
-		if err != nil {
+		if Console {
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.SetOutput(os.Stdout)
 		} else {
@@ -138,26 +164,6 @@ func newHook(logName string, format *Formatter) (logrus.Hook, error) {
 		logrus.PanicLevel: writer,
 	}, format)
 	return lfsHook, nil
-}
-
-func SetLimit() {
-	var rLimit syscall.Rlimit
-	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		logrus.Errorf("[SetLimit]Error Getting Rlimit%s\n ", err)
-	}
-	logrus.Infof("[SetLimit]Rlimit %d\n", rLimit)
-	rLimit.Max = 655350
-	rLimit.Cur = 655350
-	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		logrus.Errorf("[SetLimit]Error Setting Rlimit %s\n", err)
-	}
-	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
-	}
-	logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
 }
 
 func ReadExport(path string) {
@@ -245,7 +251,7 @@ func (l LogWrite) Write(p []byte) (n int, err error) {
 	if nodemgrLog == "OFF" {
 		return num, nil
 	}
-	if nodemgrLog == "ON" {
+	if nodemgrLog == "ON" && Console == false {
 		if num > 20 {
 			NodeMgrLog.Printf(string(p[20:]))
 		} else {

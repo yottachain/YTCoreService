@@ -79,15 +79,13 @@ restart)
     ./ytsn restart
     ;;
 install)
-
-
     ./ytsn install
     ;;
 uninstall)
     ./ytsn uninstall
     ;;
 *)
-    echo "usage: $0 start|stop|restart|install|uninstall"
+    echo "usage: $0 console|start|stop|restart|install|uninstall"
     exit 0;
 esac
 exit

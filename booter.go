@@ -9,7 +9,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/http"
-	"github.com/yottachain/YTCoreService/net"
+	ytnet "github.com/yottachain/YTCoreService/net"
 )
 
 var logger service.Logger
@@ -105,6 +105,7 @@ func main() {
 		logger.Info("uninstall    Uninstall.")
 		return
 	}
+	env.Console = true
 	err = s.Run()
 	if err != nil {
 		logger.Info("Run err:", err.Error())
@@ -114,19 +115,19 @@ func main() {
 func StartServer() {
 	env.InitServer()
 	dao.InitMongo()
-	net.InitNodeMgr(dao.MongoAddress)
-	net.EOSInit()
+	ytnet.InitNodeMgr(dao.MongoAddress)
+	ytnet.EOSInit()
 	dao.InitUserID_seq()
 
-	net.Start(int32(env.Port), net.GetSuperNode(env.SuperNodeID).PrivKey)
-	net.RegisterGlobalMsgHandler(handle.OnMessage)
+	ytnet.Start(int32(env.Port), int32(env.Port2), ytnet.GetSuperNode(env.SuperNodeID).PrivKey)
+	ytnet.RegisterGlobalMsgHandler(handle.OnMessage)
 
 	handle.Start()
 	http.Start(env.HttpPort)
 }
 
 func StopServer() {
-	net.Stop()
+	ytnet.Stop()
 	dao.Close()
 	logrus.Infof("[Booter]Service shutdown.\n")
 	http.Stop()

@@ -17,6 +17,12 @@ type Shard struct {
 	VHF  []byte
 }
 
+func (self *Shard) SumVHF() {
+	md5Digest := md5.New()
+	md5Digest.Write(self.Data)
+	self.VHF = md5Digest.Sum(nil)
+}
+
 func (self *Shard) GetShardIndex() uint8 {
 	return uint8(self.Data[0])
 }
@@ -139,6 +145,10 @@ type EncryptedBlock struct {
 	SecretKey []byte
 }
 
+func (self *EncryptedBlock) Length() int64 {
+	return int64(len(self.Data))
+}
+
 func (self *EncryptedBlock) MakeVHB() error {
 	if self.Data == nil {
 		return errors.New("data is null")
@@ -153,10 +163,11 @@ func (self *EncryptedBlock) MakeVHB() error {
 	return nil
 }
 
-func NeedLRCEncode(size int32) bool {
+func (self *EncryptedBlock) NeedLRCEncode() bool {
+	size := len(self.Data)
 	if size >= env.PL2 {
 		shardsize := env.PFL - 1
-		dataShardCount := size / int32(shardsize)
+		dataShardCount := size / shardsize
 		if dataShardCount > 0 {
 			return true
 		}
@@ -164,6 +175,7 @@ func NeedLRCEncode(size int32) bool {
 	return false
 }
 
-func NeedEncode(size int32) bool {
+func (self *EncryptedBlock) NeedEncode() bool {
+	size := len(self.Data)
 	return size >= env.PL2
 }

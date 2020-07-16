@@ -167,6 +167,7 @@ message UploadBlockInitReqV2{
         optional int32 counter=4;   
     } 
     optional uint32 id=6;
+    optional string version=7;
 }
 
 message UploadObjectEndReqV2{

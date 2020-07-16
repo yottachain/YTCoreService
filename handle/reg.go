@@ -106,7 +106,7 @@ func (h *RegUserHandler) Handle() proto.Message {
 		}
 	} else {
 		var serr *pkt.ErrorMessage
-		res, serr = net.RequestSN(queryUserReqV2, sn, "", 0)
+		res, serr = net.RequestSN(queryUserReqV2, sn, "", 0, true)
 		if serr != nil {
 			return serr
 		}
@@ -159,7 +159,7 @@ func (h *QueryUserHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 		if h.m.Pubkey == nil || h.m.Username == nil || h.m.UserId == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, WRITE_ROUTINE_NUM, nil
+		return nil, SYNC_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

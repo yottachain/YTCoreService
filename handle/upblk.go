@@ -3,6 +3,7 @@ package handle
 import (
 	"bytes"
 	"crypto/md5"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -12,7 +13,6 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
-	"github.com/yottachain/YTDNMgmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -47,6 +47,13 @@ func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*
 
 func (h *UploadBlockInitHandler) Handle() proto.Message {
 	logrus.Infof("[UploadBLK]Init %d/%s/%d\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+	if env.S3Version != "" {
+		if *h.m.Version == "" || bytes.Compare([]byte(*h.m.Version), []byte(env.S3Version)) < 0 {
+			errmsg := fmt.Sprintf("[UploadBLK]UID:%d,ERR:TOO_LOW_VERSION?%s\n", h.user.UserID, *h.m.Version)
+			logrus.Errorf(errmsg)
+			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
+		}
+	}
 	n := net.GetBlockSuperNode(h.m.VHP)
 	if n.ID != int32(env.SuperNodeID) {
 		return pkt.NewErrorMsg(pkt.ILLEGAL_VHP_NODEID, "Invalid request")
@@ -298,6 +305,9 @@ func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*p
 func (h *UploadBlockEndHandler) Handle() proto.Message {
 	logrus.Debugf("[UploadBLK]Receive UploadBlockEnd request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
+	if !NotInBlackList(h.m.Oklist, h.user.UserID) {
+		return pkt.NewError(pkt.DN_IN_BLACKLIST)
+	}
 	shardcount := len(h.m.Oklist)
 	vbi := dao.GenerateBlockID(shardcount)
 	meta, err := dao.GetBlockByVHP_VHB(h.m.VHP, h.m.VHB)
@@ -342,12 +352,14 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	*saveObjectMetaReq.Mode = false
 	res, perr := SaveObjectMeta(saveObjectMetaReq, ref, h.vnu)
 	if perr != nil {
-		logrus.Infof("Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
+		logrus.Errorf("[UploadBLK]Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
 		return perr
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-				logrus.Warnf("Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
+			} else {
+				logrus.Errorf("[UploadBLK]Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 			}
 		}
 	}
@@ -363,7 +375,7 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 		}
 		v.VFI = vbi + v.VFI
 	}
-	nodes, err := net.NodeMgr.GetNodes(nodeidsls)
+	nodes, err := GetNodes(nodeidsls)
 	if err != nil {
 		logrus.Errorf("[UploadBLK]GetNodes ERR:%s\n", err)
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
@@ -404,7 +416,7 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	return nil
 }
 
-func verifySign(meta *dao.ShardMeta, node []*YTDNMgmt.Node) bool {
+func verifySign(meta *dao.ShardMeta, node []*net.Node) bool {
 	return true
 }
 

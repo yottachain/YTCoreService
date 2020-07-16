@@ -163,7 +163,8 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 			} else {
 				logrus.Debugf("[UploadOBJInit]UID:%d,Uploading...\n", h.user.UserID)
 			}
-			resp.Blocks = nums
+			count := uint32(len(nums))
+			resp.Blocks = &pkt.UploadObjectInitResp_Blocks{Count: &count, Blocks: nums}
 		} else {
 			err = meta.INCObjectNLINK()
 			if err != nil {
@@ -225,7 +226,7 @@ func SaveObjectMeta(req *pkt.SaveObjectMetaReq, refer *pkt.Refer, v primitive.Ob
 			return msg, nil
 		}
 	} else {
-		msg, err := net.RequestSN(req, sn, "", 0)
+		msg, err := net.RequestSN(req, sn, "", 0, true)
 		if err != nil {
 			return nil, err
 		} else {
@@ -258,7 +259,7 @@ func (h *SaveObjectMetaHandler) SetMessage(pubkey string, msg proto.Message) (*p
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Invalid VNU"), nil, nil
 		}
 		h.vnu = v
-		return nil, WRITE_ROUTINE_NUM, nil
+		return nil, SYNC_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
@@ -387,7 +388,6 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	if err != nil {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 0)
 		logrus.Errorf("[UploadOBJEnd][%d] Add usedSpace ERR:%s\n", h.user.UserID, err)
-		logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 		DelUploadObject(meta.VNU)
 		return &pkt.VoidResp{}
 	}
@@ -398,7 +398,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
 		logrus.Errorf("[UploadOBJEnd][%d] Sub Balance ERR:%s\n", h.user.UserID, err)
 	}
-	logrus.Infof("[UploadOBJEnd]User [%d] sub balance:%d\n", h.user.UserID, firstCost)
+	logrus.Infof("[UploadOBJEnd]User [%d] Sub balance:%d\n", h.user.UserID, firstCost)
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 	DelUploadObject(meta.VNU)
 	return &pkt.VoidResp{}
