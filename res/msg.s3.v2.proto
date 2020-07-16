@@ -1,0 +1,113 @@
+syntax = "proto2";
+
+package pkt;
+
+message CopyObjectReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string srcBucket=4;
+    optional string srcObjectKey=5;
+    optional string  destBucket=6;
+    optional string destObjectKey=7;
+    optional bytes meta=8;
+}
+
+message CreateBucketReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+    optional bytes meta=5;
+}
+
+message DeleteBucketReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+}
+
+message DeleteFileReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+    optional string fileName=5;
+    optional group VNU=6{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;
+    }
+    optional bytes meta=7;
+}
+
+message GetBucketReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+}
+
+message GetObjectReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+    optional string fileName=5;
+}
+
+message ListBucketReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional bool b=4;
+}
+
+message ListObjectReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+    optional group StartId=5{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;
+    }
+    optional uint32 limit=6;
+    optional string fileName=7;
+    optional string prefix=8;
+    optional bool version=9;
+    optional group NextVersionId=10{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;
+    }
+    optional bool compress=11;
+}
+
+message UpdateBucketReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketName=4;
+    optional bytes meta=5;
+}
+
+message UploadFileReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketname=4;
+    optional string fileName=5;
+    optional group VNU=6{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;           
+    }
+    optional bytes meta=7;
+}

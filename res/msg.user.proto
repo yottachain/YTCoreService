@@ -1,0 +1,279 @@
+syntax = "proto2";
+ 
+package pkt;
+
+message DownloadBlockDBResp{
+    optional bytes data=1;
+}
+
+message DownloadBlockInitReq{
+    optional uint64 VBI=1;
+}
+
+message DownloadObjectInitResp{
+    optional group RefList=1{
+        optional uint32 count=1;
+        repeated bytes refers=2;
+    }
+    optional uint64 length=2;
+}
+
+message DownloadBlockInitResp{
+    optional group NList=1{
+        optional uint32 count=1;
+        repeated group Ns=2{
+            optional int32 id=1;
+            optional string nodeid=2;
+            optional string pubkey=3;
+            optional string owner=4;
+            optional string profitAcc=5;
+            optional string poolID=6;
+            optional string poolOwner=7;
+            optional uint64 quota=8;
+            repeated string addrs=9;
+            optional int32 cpu=10;
+            optional int32 memory=11;
+            optional int32 bandwidth=12;
+            optional int64 maxDataSpace=13;
+            optional int64 assignedSpace=14;
+            optional int64 productiveSpace=15;
+            optional int64 usedSpace=16;
+            optional double weight=17;
+            optional int32 valid=18;
+            optional int32 relay=19;
+            optional int32 status=20;
+            optional int64 timestamp=21;
+            optional int32 version=22;
+            optional int32 rebuilding=23;
+            optional int64 realSpace=24;
+            optional int64 tx=25;
+            optional int64 rx=26;
+            optional string other=27;          
+        }
+    }
+    optional int32 VNF=2;
+    optional group VHFS=3{
+        optional uint32 count=1;
+        repeated bytes VHF=2;
+    }
+    optional group Nids=4{
+        optional uint32 count=1;
+        repeated int32 nodeids=2;
+    }
+    optional int32 AR=5;
+}
+
+message DownloadObjectInitReq{
+    optional bytes VHW=1;
+}
+
+message ListSuperNodeReq{
+    optional bool b=1;
+}
+
+message ListSuperNodeResp{
+    optional group SuperNodes=1{
+        optional uint32 count=1;
+        repeated group SuperNode=2{
+            optional int32 id=1;
+            optional string nodeid=2;
+            optional string pubkey=3;
+            optional string privkey=4;
+            repeated string addrs=5;              
+        }
+    }
+}
+
+message LoginReq{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+}
+
+message PreAllocNodeReq{
+    optional uint32 count=1;
+    repeated uint32 excludes=2;
+}
+
+message PreAllocNodeResp{
+    repeated group PreAllocNode=1{
+        optional int32 id=1;
+        optional string nodeid=2;
+        optional string pubkey=3;
+        repeated string addrs=4;
+        optional int64 timestamp=5;
+        optional string sign=6;
+    }
+}
+
+message QueryUserReq{
+    optional string pubkey=1;
+    optional string username=2;
+    optional string cacheKey=3;
+    optional int32 UserId = 4;
+}
+
+message QueryUserResp{
+    optional int32 userId=1;
+    optional uint32 keyNumber=2;
+}
+
+message RegUserReq{
+    optional string pubKey=1;
+    optional string username=2;
+}
+
+message RegUserResp{
+    optional uint32 superNodeNum=1;
+    optional string superNodeID=2;
+    repeated string superNodeAddrs=3;
+    optional uint32 userId=4;
+    optional uint32 keyNumber=5;
+}
+
+message UploadBlockDBReq{
+    optional uint32 id=1;
+    optional group VNU=2{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;     
+    }
+    optional bytes VHP=3;
+    optional bytes VHB=4;
+    optional bytes KEU=5;
+    optional bytes KED=6;
+    optional uint64 originalSize=7;   
+    optional bytes data=8;
+}
+
+message UploadBlockDupReq{
+    optional uint32 id=1;
+    optional group VNU=2{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;     
+    }
+    optional bytes VHP=3;
+    optional bytes VHB=4;
+    optional bytes KEU=5;
+    optional uint64 originalSize=6;   
+    optional uint32 realSize=7;   
+}
+
+message UploadBlockDupResp{
+    optional group VHBS=1{
+        optional uint32 count=1;
+        repeated bytes VHB=2;
+    }
+    optional group KEDS=2{
+        optional uint32 count=1;
+        repeated bytes KED=2;
+    }
+    optional group ARS=3{
+        optional uint32 count=1;
+        repeated int32 AR=2;
+    }
+    optional uint64 startTime=4;
+}
+
+message UploadBlockEndReq{
+    optional uint32 id=1;
+    optional bytes VHP=2;
+    optional bytes VHB=3;
+    optional bytes KEU=4;
+    optional bytes KED=5;
+    optional uint64 originalSize=6;   
+    optional uint32 realSize=7;   
+    optional group VNU=8{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;     
+    }
+    optional uint32 AR=9;
+    repeated group OkList=10{
+        optional uint32 SHARDID=1;
+        optional uint32 NODEID=2;
+        optional bytes VHF=3;
+        optional string DNSIGN=4;
+    }
+}
+
+message UploadBlockEndResp{
+    optional string host=1;
+    optional int64 VBI=2;
+}
+
+message UploadBlockEndSyncReq{
+    optional uint32 id=1;
+    optional bytes VHP=2;
+    optional bytes VHB=3;
+    optional bytes KEU=4;
+    optional bytes KED=5;
+    optional uint64 originalSize=6;   
+    optional uint32 realSize=7;   
+    optional group VNU=8{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;     
+    }
+    optional uint32 AR=9;
+    repeated group OkList=10{
+        optional uint32 SHARDID=1;
+        optional uint32 NODEID=2;
+        optional bytes VHF=3;
+        optional string DNSIGN=4;
+    }
+    optional uint64 VBI=11;
+}
+
+message UploadBlockInitReq{
+    optional bytes VHP=1;
+    optional group VNU=2{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;   
+    } 
+    optional uint32 id=3;
+}
+
+message UploadBlockInitResp{
+    optional uint64 startTime=1;
+}
+
+message UploadObjectEndReq{
+    optional group VNU=1{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;   
+    } 
+    optional bytes VHW=2;
+    optional bytes signData=3;
+}
+
+message UploadObjectInitReq{
+    optional bytes VHW=1;
+    optional uint64 length=2;
+}
+
+message UploadObjectInitResp{
+    optional bool repeat=1;
+    optional group VNU=2{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;   
+    }
+    optional group Blocks=3{
+        optional uint32 count=1;
+        repeated uint32 blocks=2;
+    }
+    optional string signArg=4;
+    optional uint64 stamp=5;
+}
+
