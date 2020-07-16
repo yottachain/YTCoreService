@@ -20,9 +20,15 @@ import (
 )
 
 var Conntimeout = readTimeout("P2PHOST_CONNECTTIMEOUT")
+<<<<<<< HEAD
 var DirectConntimeout = env.CheckInt(Conntimeout/10, 500, 5000)
 var Writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
 var DirectWritetimeout = env.CheckInt(Writetimeout/10, 500, 5000)
+=======
+var DirectConntimeout = 200
+var Writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
+var DirectWritetimeout = 300
+>>>>>>> 2b2cf5be6901dec4355a317ae048accecdb6237d
 
 func readTimeout(key string) int {
 	ct := os.Getenv(key)
@@ -137,9 +143,15 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	if err != nil {
 		return nil, err
 	}
+<<<<<<< HEAD
 	timeout := time.Millisecond * time.Duration(Writetimeout)
 	if client.nowait {
 		timeout = time.Millisecond * time.Duration(DirectWritetimeout)
+=======
+	timeout := time.Second * time.Duration(Writetimeout)
+	if client.nowait {
+		timeout = time.Microsecond * time.Duration(DirectWritetimeout)
+>>>>>>> 2b2cf5be6901dec4355a317ae048accecdb6237d
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -182,9 +194,15 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 					logrus.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
+<<<<<<< HEAD
 				timeout := time.Millisecond * time.Duration(Conntimeout)
 				if client.nowait {
 					timeout = time.Millisecond * time.Duration(DirectConntimeout)
+=======
+				timeout := time.Second * time.Duration(Conntimeout)
+				if client.nowait {
+					timeout = time.Microsecond * time.Duration(DirectConntimeout)
+>>>>>>> 2b2cf5be6901dec4355a317ae048accecdb6237d
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				defer cancel()

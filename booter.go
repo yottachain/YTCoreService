@@ -35,6 +35,11 @@ func (p *Program) run() {
 	StartServer()
 }
 
+func maintest() {
+
+	//test.TestLRC()
+}
+
 func main() {
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)

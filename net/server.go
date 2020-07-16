@@ -7,16 +7,23 @@ import (
 
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/mr-tron/base58"
+	"github.com/multiformats/go-multiaddr"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
-	hst "github.com/yottachain/YTHost"
-	host "github.com/yottachain/YTHost/hostInterface"
+	host "github.com/yottachain/YTHost"
+	YTinterface "github.com/yottachain/YTHost/interface"
+	"github.com/yottachain/YTHost/newHost"
 	"github.com/yottachain/YTHost/option"
 	"github.com/yottachain/YTHost/service"
 	"golang.org/x/crypto/ripemd160"
 )
 
+<<<<<<< HEAD
 var p2phst host.Host
+=======
+var serverhost *newHost.HostPool
+var p2phst YTinterface.Host
+>>>>>>> 2b2cf5be6901dec4355a317ae048accecdb6237d
 
 func Stop() {
 
@@ -31,18 +38,23 @@ func Start(port int32, port2 int32, privatekey string) error {
 	if err != nil {
 		return errors.New("bad format of private key")
 	}
-	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
-	p2phst, err = hst.NewHost(option.ListenAddr(ma), option.Identity(pk))
-	if err != nil {
-		return err
+	addrs := []multiaddr.Multiaddr{}
+	if port > 0 {
+		add1 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
+		logrus.Infof("[Booter]P2P initializing..., binding %s\n", add1)
+		ma1, _ := ma.NewMultiaddr(add1)
+		addrs = append(addrs, ma1)
 	}
-	go p2phst.Accept()
-	logrus.Infof("[Booter]P2P initialization completed, port %d\n", port)
-	logrus.Infof("[Booter]NodeID:%s\n", p2phst.Config().ID.String())
-	maddrs := p2phst.Addrs()
-	for k, m := range maddrs {
-		logrus.Infof("[Booter]Node Addrs %d:%s\n", k, m.String())
+	if port2 > 0 {
+		add2 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d/http", port2)
+		logrus.Infof("[Booter]P2P initializing..., binding %s\n", add2)
+		ma2, _ := ma.NewMultiaddr(add2)
+		addrs = append(addrs, ma2)
 	}
+	serverhost = newHost.NewHost(addrs, option.Identity(pk))
+	hst, _ := host.NewHost()
+	p2phst = hst
+	go serverhost.Accept()
 	go Clear()
 	return nil
 }
@@ -72,6 +84,10 @@ var callback OnMessageFunc
 
 func RegisterGlobalMsgHandler(call OnMessageFunc) {
 	callback = call
+<<<<<<< HEAD
 	p2phst.RegisterGlobalMsgHandler(MessageHandler)
 	//serverhost.RegisterHandler(0x1c, MessageHandler)
+=======
+	serverhost.RegisterHandler(0x1c, MessageHandler)
+>>>>>>> 2b2cf5be6901dec4355a317ae048accecdb6237d
 }

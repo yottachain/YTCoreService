@@ -166,6 +166,31 @@ func newHook(logName string, format *Formatter) (logrus.Hook, error) {
 	return lfsHook, nil
 }
 
+<<<<<<< HEAD
+=======
+func SetLimit() {
+	/*
+		var rLimit syscall.Rlimit
+		err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			logrus.Errorf("[SetLimit]Error Getting Rlimit%s\n ", err)
+		}
+		logrus.Infof("[SetLimit]Rlimit %d\n", rLimit)
+		rLimit.Max = 655350
+		rLimit.Cur = 655350
+		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			logrus.Errorf("[SetLimit]Error Setting Rlimit %s\n", err)
+		}
+		err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			logrus.Errorf("[SetLimit]Error Getting Rlimit %s\n", err)
+		}
+		logrus.Infof("[SetLimit]Rlimit Final%d\n", rLimit)
+	*/
+}
+
+>>>>>>> 2b2cf5be6901dec4355a317ae048accecdb6237d
 func ReadExport(path string) {
 	f, err := os.Open(path)
 	defer f.Close()
