@@ -1,0 +1,177 @@
+syntax = "proto3";
+ 
+package pkt;
+
+message DownloadShardReq{
+   bytes VHF=1;
+}
+
+message DownloadShardResp{
+   bytes data=1;
+}
+
+message ErrorMessage{
+   int32 code=1;
+   string msg=2;
+}
+
+message LongResp{
+   int64 value=1;
+}
+
+message NodeRegReq{
+   string nodeid= 1;                           
+   string owner=2;                              
+   uint64 maxDataSpace=3;                 
+   repeated string addrs=4;     
+   bool relay=5;     
+   uint32 id=6;
+}
+
+message NodeRegResp{
+   uint32 id= 1;                                    
+   uint64 assignedSpace=2;    
+   string relayUrl=3;   
+}
+
+message ObjectRefer{
+    uint64 VBI=1; 
+    uint32 superID=2;  
+    uint64 originalSize=3;   
+    uint32 realSize=4;  
+    bytes KEU=5;
+    int32 keyNumber=6;
+    uint32 id=7;
+}
+
+message P2PLocation{
+    string nodeId=1;
+    repeated string addrs=2;
+}
+
+message ShardNode{
+    uint32 nodeId=1;
+    repeated string addr=2;
+    string key=3;
+    bytes sign=4;
+}
+
+message SpotCheckStatus{
+   string taskId=1;
+   repeated uint32 invalidNodeList=2;
+}
+
+message SpotCheckTask{
+    int32 id = 1; 
+    string nodeId=2;
+    string addr=3;
+    bytes VHF=4;
+}
+
+message SpotCheckTaskList{
+    string taskId = 1; 
+    int32 snid=2;
+    repeated SpotCheckTask taskList=3;
+}
+
+message StatusRepReq {   
+   int32 id=1;                                   
+   int32 cpu=2;                          
+   int32 memory=3;                          
+   int32 bandwidth=4;                        
+   int64 maxDataSpace=5;                   
+   int64 assignedSpace=6;                   
+   int64 usedSpace=7;                       
+   repeated string addrs=8;  
+   bool relay=9;        
+   int32 version=10;     
+   int32 rebuilding=11;    
+   int64 realSpace=12;  
+   int64 tx=13;  
+   int64 rx=14;   
+   string other=15;                   
+}
+
+message StatusRepResp {
+   uint64 productiveSpace=1; 
+   string relayUrl=2;                   
+}
+
+message TaskDescription{
+    bytes id = 1; 
+    repeated bytes hashs=2;
+    repeated P2PLocation locations=3;
+    int32 parityShardCount=4;
+    int32 recoverId=5;
+}
+
+message TaskDescriptionCP{
+    bytes id = 1; 
+    bytes dataHash=2;
+    repeated P2PLocation locations=3;
+}
+
+message TaskDescriptionLRC{
+    bytes id = 1; 
+    repeated bytes hashs=2;
+    repeated P2PLocation locations=3;
+    int32 parityShardCount=4;
+    int32 recoverId=5;
+}
+
+message TaskList{
+    int32 snid=1; 
+    repeated bytes tasklist=2;
+}
+
+message TaskDispatchList{
+   repeated bytes DNI=1;
+   uint32 nodeId=2;
+   uint32 execNodeId=3;
+}
+
+message TaskOpResult{
+    bytes id = 1; 
+    int32 RES=2;
+}
+
+message TaskOpResultList{
+    repeated bytes id = 1; 
+    repeated int32 RES=2;
+}
+
+message UploadFackShardReq{ 
+   int32 SHARDID=1;
+   int32 BPDID = 2; 
+   int64 VBI = 3; 
+   bytes BPDSIGN=4; 
+   bytes DAT=5; 
+   bytes VHF=6; 
+   bytes USERSIGN=7; 
+   string allocId=8;
+   uint32 Sleep=9;
+}
+
+message UploadShard2CResp{
+   int32 RES= 1; 
+   string DNSIGN =2;
+}
+
+message UploadShardReq{ 
+   int32 SHARDID=1;
+   int32 BPDID = 2; 
+   int64 VBI = 3; 
+   bytes BPDSIGN=4; 
+   bytes DAT=5; 
+   bytes VHF=6; 
+   bytes USERSIGN=7; 
+   string allocId=8;
+}
+
+message VoidResp {
+}
+
+message StringMap{
+   repeated string keys=1;
+   repeated string values=2;
+}
