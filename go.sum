@@ -474,6 +474,8 @@ github.com/yottachain/YTDNMgmt v0.0.0-20200709051326-a536030bcb01 h1:hCmcBStzfRQ
 github.com/yottachain/YTDNMgmt v0.0.0-20200709051326-a536030bcb01/go.mod h1:54ncBoypTn1yxf7rQShg50gqRYrPeN81z9e08afPet0=
 github.com/yottachain/YTDNMgmt v0.0.0-20200709091916-049f94dc58df h1:Mv5siXPyt43BW6nC7z27hopCx+NOeUTSUubaSb5TIcE=
 github.com/yottachain/YTDNMgmt v0.0.0-20200709091916-049f94dc58df/go.mod h1:8YvqnVvx8VQG4u4GNVAL77uwOY1wSTtGvQ/6tOO/eG8=
+github.com/yottachain/YTDNMgmt v0.0.0-20200714051939-25073c39ce8b h1:UjleFQmBwk0cybq5OWVrB+DKbsK4Gws2CwIC6FOddNk=
+github.com/yottachain/YTDNMgmt v0.0.0-20200714051939-25073c39ce8b/go.mod h1:54ncBoypTn1yxf7rQShg50gqRYrPeN81z9e08afPet0=
 github.com/yottachain/YTHost v1.0.1 h1:YiRD78wa2ZLKdWp5D6Y3IYq5Dv5dge4bHsg0ddKGt4o=
 github.com/yottachain/YTHost v1.0.2-0.20200226042847-daa6072b6384/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb h1:dcRKjMvVYkYS5y2r+tXkU+eKTXWN5vHTLXdwC72JKQU=
@@ -489,6 +491,8 @@ github.com/yottachain/yotta-analysis v0.0.0-20200709062516-907c89f8effa h1:oKfqX
 github.com/yottachain/yotta-analysis v0.0.0-20200709062516-907c89f8effa/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152426-cbcb77d85d3e h1:8NSeu5TF/YB4vgIjvtFNepwby8hEnw0g7uwrv/DHmUc=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152426-cbcb77d85d3e/go.mod h1:W8tWsvUGE2LBo3qJLu2fEzPG281ODd9XKpfgUuW63qA=
+github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849 h1:rDnUFBmO2O8+ESvw6V733PiOLzKcEGiDoGdtOrr6HGQ=
+github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=
 github.com/yottachain/yotta-rebuilder v0.0.0-20200628094122-6334751bff53 h1:5g8WMQJO7lD3e6gJUklT7PToIAH5bqkL8MM8X7tVieg=
 github.com/yottachain/yotta-rebuilder v0.0.0-20200628094122-6334751bff53/go.mod h1:c/vvujj86i/czpGHcnGJGEq1TY4Aa5xhpwNSxD9BCdc=
 github.com/yottachain/yotta-rebuilder v0.0.0-20200630160153-391556db843a h1:b9AYdsWgS63fYtRnYQX64+7rv2kjLCXhrCerPxpcNpw=
