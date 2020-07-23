@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/mr-tron/base58"
 	"github.com/multiformats/go-multiaddr"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
-	host "github.com/yottachain/YTHost"
 	YTinterface "github.com/yottachain/YTHost/interface"
 	"github.com/yottachain/YTHost/newHost"
 	"github.com/yottachain/YTHost/option"
@@ -35,12 +34,10 @@ func Start(port int32, port2 int32, privatekey string) error {
 		return errors.New("bad format of private key")
 	}
 	addrs := []multiaddr.Multiaddr{}
-	if port > 0 {
-		add1 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
-		logrus.Infof("[Booter]P2P initializing..., binding %s\n", add1)
-		ma1, _ := ma.NewMultiaddr(add1)
-		addrs = append(addrs, ma1)
-	}
+	add1 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
+	logrus.Infof("[Booter]P2P initializing..., binding %s\n", add1)
+	ma1, _ := ma.NewMultiaddr(add1)
+	addrs = append(addrs, ma1)
 	if port2 > 0 {
 		add2 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d/http", port2)
 		logrus.Infof("[Booter]P2P initializing..., binding %s\n", add2)
@@ -48,8 +45,9 @@ func Start(port int32, port2 int32, privatekey string) error {
 		addrs = append(addrs, ma2)
 	}
 	serverhost = newHost.NewHost(addrs, option.Identity(pk))
-	hst, _ := host.NewHost()
-	p2phst = hst
+	//serverhost = newHost.NewHost(addrs)
+
+	p2phst = serverhost.Hosts[0]
 	go serverhost.Accept()
 	go Clear()
 	return nil
@@ -80,5 +78,5 @@ var callback OnMessageFunc
 
 func RegisterGlobalMsgHandler(call OnMessageFunc) {
 	callback = call
-	serverhost.RegisterHandler(0x1c, MessageHandler)
+	serverhost.RegisterGlobalMsgHandler(MessageHandler)
 }

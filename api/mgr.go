@@ -51,12 +51,35 @@ func NewClient(uname string, privkey string) (*Client, error) {
 	return c, nil
 }
 
+func GetClients() []*Client {
+	clients.RLock()
+	defer clients.RUnlock()
+	ls := []*Client{}
+	for _, v := range clients.clientlist {
+		ls = append(ls, v)
+	}
+	return ls
+}
+
+func GetClient(key string) *Client {
+	clients.RLock()
+	defer clients.RUnlock()
+	return clients.clientlist[key]
+}
+
+func DistoryClient(key string) {
+	clients.Lock()
+	defer clients.Unlock()
+	delete(clients.clientlist, key)
+}
+
 func StartApi() {
 	env.InitClient()
 	codec.InitLRC()
 	priv, _ := ytcrypto.CreateKey()
 	net.Start(0, 0, priv)
 	InitSuperList()
+	go StartPreAllocNode()
 }
 
 func InitSuperList() {

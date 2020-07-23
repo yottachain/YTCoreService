@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -197,7 +198,7 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 	}
 	v, found := USER_LIST_CACHE.Get(key)
 	if found {
-		logrus.Infof("[ListUsers]From Cache\n")
+		logrus.Infof("[ListUserHandle]From Cache\n")
 		WriteJson(w, v.(string))
 		return
 	}
@@ -205,12 +206,12 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 	users := []*pkt.UserListResp_UserSpace{}
 	var errmsg string = ""
 	if err != nil {
-		errmsg = "ListHandle Err:" + err.Error()
+		errmsg = "ListUserHandle Err:" + err.Error()
 	} else {
 		for _, res := range data {
 			if res != nil {
 				if res.Error() != nil {
-					errmsg = "ListHandle err:" + res.Error().Msg
+					errmsg = "ListUserHandle err:" + res.Error().Msg
 					break
 				} else {
 					u, _ := res.Response().(*pkt.UserListResp)
@@ -220,7 +221,8 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 		}
 		if errmsg == "" {
 			sortusers := &UserListSort{Users: users}
-			logrus.Infof("[ListUsers]Return %d\n", len(users))
+			sort.Sort(sortusers)
+			logrus.Infof("[ListUserHandle]Return %d\n", len(users))
 			ss := sortusers.ToJson()
 			USER_LIST_CACHE.Set(key, ss, DEFAULT_EXPIRE_TIME)
 			WriteJson(w, ss)

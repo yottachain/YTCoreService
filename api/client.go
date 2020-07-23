@@ -10,6 +10,7 @@ import (
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCrypto"
 	ytcrypto "github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTDNMgmt"
 )
@@ -19,10 +20,11 @@ type Client struct {
 	PrivateKey  string
 	KUSp        []byte
 	AESKey      []byte
-	UserId      int32
-	KeyNumber   int32
+	UserId      uint32
+	KeyNumber   uint32
 	SuperNode   *YTDNMgmt.SuperNode
 	AccessorKey string
+	Sign        string
 }
 
 func newClient(uname string, privkey string) (*Client, error) {
@@ -54,14 +56,26 @@ func (c *Client) Regist() error {
 			if resp.SuperNodeNum != nil && resp.UserId != nil && resp.KeyNumber != nil {
 				if *resp.SuperNodeNum > 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) {
 					c.SuperNode = net.GetSuperNode(int(*resp.SuperNodeNum))
-					c.UserId = int32(*resp.UserId)
-					c.KeyNumber = int32(*resp.KeyNumber)
+					c.UserId = *resp.UserId
+					c.KeyNumber = *resp.KeyNumber
 					logrus.Infof("[Regist]User '%s' Registration Successful,ID-KeyNumber:%d-%d\n", c.Username, c.UserId, c.KeyNumber)
-					return nil
+					return c.MakeSign()
 				}
 			}
 		}
 		logrus.Errorf("[Regist]Return err msg.\n")
 		return errors.New("Return err msg")
+	}
+}
+
+func (c *Client) MakeSign() error {
+	data := fmt.Sprintf("%d%d", c.UserId, c.KeyNumber)
+	s, err := YTCrypto.Sign(c.PrivateKey, []byte(data))
+	if err != nil {
+		logrus.Errorf("[Regist]Sign ERR:%s\n", err)
+		return err
+	} else {
+		c.Sign = s
+		return nil
 	}
 }

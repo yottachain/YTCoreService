@@ -315,7 +315,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 		return
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
-	req := &pkt.TaskList{Tasklist: ls.Tasklist, Snid: ls.SnID}
+	req := &pkt.TaskList{Tasklist: ls.Tasklist}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)

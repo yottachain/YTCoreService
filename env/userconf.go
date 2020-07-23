@@ -10,6 +10,8 @@ var PNN int = 328 * 2
 var PTR int = 2
 var RETRYTIMES int = 500
 
+var ALLOC_MODE int = 0
+
 var uploadFileMaxMemory int = 10
 var uploadBlockThreadNum int = 50
 var uploadShardThreadNum int = 1500
@@ -32,6 +34,8 @@ func readClientProperties() {
 	uploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 1500, 3000, 1500)
 
 	downloadThread = config.GetRangeInt("downloadThread", 328, 328*4, 328*2)
+
+	ALLOC_MODE = config.GetRangeInt("ALLOC_MODE", -1, 2000, 0)
 
 	P2PHOST_CONNECTTIMEOUT := config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 15000)
 	os.Setenv("P2PHOST_CONNECTTIMEOUT", strconv.Itoa(P2PHOST_CONNECTTIMEOUT))

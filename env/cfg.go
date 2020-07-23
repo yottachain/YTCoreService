@@ -135,9 +135,12 @@ func (c *Config) SaveValue(key string, value string) error {
 	var findkey bool = false
 	reader := bufio.NewReader(file)
 	for {
-		bytes, _, _ := reader.ReadLine()
-		if len(bytes) == 0 {
+		bytes, _, ioerr := reader.ReadLine()
+		if ioerr != nil {
 			break
+		}
+		if len(bytes) == 0 {
+			continue
 		}
 		lineString := string(bytes)
 		if strings.HasPrefix(lineString, key) {

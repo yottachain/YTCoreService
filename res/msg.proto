@@ -120,8 +120,7 @@ message TaskDescriptionLRC{
 }
 
 message TaskList{
-    int32 snid=1; 
-    repeated bytes tasklist=2;
+    repeated bytes tasklist=1;
 }
 
 message TaskDispatchList{

@@ -20,7 +20,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}",
             "env": {},
-            "args": []
+            "args": ["console"]
         }
     ]
 }
