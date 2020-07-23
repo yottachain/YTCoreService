@@ -45,8 +45,9 @@ func Start(port int32, port2 int32, privatekey string) error {
 		addrs = append(addrs, ma2)
 	}
 	serverhost = newHost.NewHost(addrs, option.Identity(pk))
-	//serverhost = newHost.NewHost(addrs)
-
+	if len(serverhost.Hosts) < 1 {
+		logrus.Panicf("[Booter]Init ERR.\n")
+	}
 	p2phst = serverhost.Hosts[0]
 	go serverhost.Accept()
 	go Clear()

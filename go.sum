@@ -473,8 +473,8 @@ github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb h1:dcRKjMvVYkY
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200703084155-b2658f82b387 h1:R/97SeDbNjZ2iYCNeGr/ZH2OQgTwNGqlh4PGcZkqR7I=
 github.com/yottachain/YTHost v1.0.2-0.20200703084155-b2658f82b387/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
-github.com/yottachain/YTHost v1.0.2-0.20200723075746-6489b67299e9 h1:GwjIQEA7we1B0+v5umXjNFIKwIsRmzo56EPVsWFQDCw=
-github.com/yottachain/YTHost v1.0.2-0.20200723075746-6489b67299e9/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
+github.com/yottachain/YTHost v1.0.2-0.20200723084028-d7759ba6b766 h1:OzWKFWWP72Le1EIaOIaakx1K2YYpol9AxFH/b6WcSSk=
+github.com/yottachain/YTHost v1.0.2-0.20200723084028-d7759ba6b766/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/yotta-analysis v0.0.0-20200427065413-d4b83ac9a92f/go.mod h1:WBAiITvR+7h/fwyUYkybMjaBb812On6Td7sMc/nAqKE=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849 h1:rDnUFBmO2O8+ESvw6V733PiOLzKcEGiDoGdtOrr6HGQ=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=
