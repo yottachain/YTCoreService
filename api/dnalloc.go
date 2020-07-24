@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -17,8 +19,10 @@ import (
 var cond = sync.NewCond(new(sync.Mutex))
 var NODE_LIST *NodeList
 
-func NotifyAllocNode() {
-	atomic.StoreInt32(NODE_LIST.resetSign, 1)
+func NotifyAllocNode(reset bool) {
+	if reset {
+		atomic.StoreInt32(NODE_LIST.resetSign, 1)
+	}
 	cond.Signal()
 }
 
@@ -88,4 +92,33 @@ func PreAllocNode(c *Client) error {
 	}
 	logrus.Errorf("[PreAllocNode]Return err msg.\n")
 	return errors.New("Return err msg")
+}
+
+var ERR_LIST_CACHE = cache.New(time.Duration(180)*time.Second, time.Duration(5)*time.Second)
+
+func GetExpiredTime() time.Duration {
+	if env.PTR == 0 {
+		return time.Duration(180) * time.Second
+	} else {
+		return time.Duration(env.PTR*60*2) * time.Second
+	}
+}
+
+func AddError(id int32) {
+	ERR_LIST_CACHE.Set(strconv.Itoa(int(id)), "", GetExpiredTime())
+}
+
+func ErrorList() []int32 {
+	var ids []int32
+	ls := ERR_LIST_CACHE.Items()
+	for idstr := range ls {
+		id, err := strconv.Atoi(idstr)
+		if err == nil {
+			ids = append(ids, int32(id))
+			if len(ids) >= 300 {
+				break
+			}
+		}
+	}
+	return ids
 }

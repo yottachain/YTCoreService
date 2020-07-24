@@ -1,7 +1,6 @@
 package net
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -27,11 +26,11 @@ func Stop() {
 func Start(port int32, port2 int32, privatekey string) error {
 	privbytes, err := base58.Decode(privatekey)
 	if err != nil {
-		return errors.New("bad format of private key,Base58 format needed")
+		logrus.Panicf("[Booter]Bad format of private key,Base58 format needed")
 	}
 	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
 	if err != nil {
-		return errors.New("bad format of private key")
+		logrus.Panicf("[Booter]Bad format of private key")
 	}
 	addrs := []multiaddr.Multiaddr{}
 	add1 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)

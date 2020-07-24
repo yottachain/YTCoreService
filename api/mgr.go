@@ -48,6 +48,7 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return nil, err
 	}
 	clients.clientlist[c.AccessorKey] = c
+	NotifyAllocNode(false)
 	return c, nil
 }
 

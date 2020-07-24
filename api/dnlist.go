@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 )
 
@@ -19,16 +20,39 @@ type NodeList struct {
 }
 
 func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
+	reset := atomic.LoadInt32(n.resetSign)
+	if reset == 0 {
+		if time.Now().Unix()-n.updateTime > int64(30*60) {
+			reset = 1
+		}
+	}
 	n.Lock()
-	/*
+	if reset == 0 {
 		for k, v := range n.list {
 			if len(ns) >= env.PNN {
 				break
 			}
+			_, ok := ns[k]
+			if !ok {
+				ns[k] = v
+			}
 		}
-	*/
+	} else {
+		atomic.StoreInt32(n.resetSign, 0)
+		n.updateTime = time.Now().Unix()
+	}
 	n.list = ns
 	n.Unlock()
+}
+
+func (n *NodeList) OrderNodeList() []*NodeStat {
+	if env.ALLOC_MODE == 0 {
+		return n.SortNodeList()
+	} else if env.ALLOC_MODE == -1 {
+		return n.ShuffleNodeList()
+	} else {
+		return n.P2pOrderNodeList()
+	}
 }
 
 func (n *NodeList) GetNodeList() []*NodeStat {
