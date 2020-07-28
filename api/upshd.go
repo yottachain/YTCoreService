@@ -156,7 +156,7 @@ func (self *UploadShard) DoSend() {
 		self.res.NODEID = node.Id
 		logrus.Infof("%sUpload.SendShard:RETURN OK %d,%s to %d,take times %d ms\n",
 			self.logPrefix, resp.RES, base58.Encode(req.VHF), node.Id, times)
-		DecMem(self.shard)
+		DecShardMem(self.shard)
 		break
 	}
 }
