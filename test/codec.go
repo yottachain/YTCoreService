@@ -89,7 +89,7 @@ func TestCodec() {
 		}
 		if has {
 			block := enc.Next()
-			aes := codec.NewBlockAESEncryptor(*block, key)
+			aes := codec.NewBlockAESEncryptor(block, key)
 			eb, err := aes.Encrypt()
 			if err != nil {
 				panic(err)
@@ -97,7 +97,7 @@ func TestCodec() {
 			eb.Save(filepath + strconv.Itoa(I))
 			eb.Clear()
 			logrus.Infof("Save %s%d ok\n", filepath, I)
-			dec.AddEncryptedBlock(*eb)
+			dec.AddEncryptedBlock(eb)
 			I++
 		} else {
 			break

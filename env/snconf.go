@@ -25,8 +25,6 @@ var Space_factor int
 var IsBackup int
 var SelfIp string
 
-var ShardNumPerNode int
-
 var S3Version string
 var LsCacheExpireTime int
 var LsCachePageNum int

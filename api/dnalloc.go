@@ -17,19 +17,22 @@ import (
 )
 
 var cond = sync.NewCond(new(sync.Mutex))
-var NODE_LIST *NodeList
+var DNList *NodeList
 
 func NotifyAllocNode(reset bool) {
 	if reset {
-		atomic.StoreInt32(NODE_LIST.resetSign, 1)
+		atomic.StoreInt32(DNList.resetSign, 1)
+		cond.Signal()
+		time.Sleep(time.Duration(15) * time.Second)
+	} else {
+		cond.Signal()
 	}
-	cond.Signal()
 }
 
 func StartPreAllocNode() {
 	rand.Seed(time.Now().UnixNano())
-	NODE_LIST = &NodeList{list: make(map[int32]*NodeStat), updateTime: 0, resetSign: new(int32)}
-	*NODE_LIST.resetSign = 0
+	DNList = &NodeList{list: make(map[int32]*NodeStat), updateTime: 0, resetSign: new(int32)}
+	*DNList.resetSign = 0
 	go func() {
 		for {
 			time.Sleep(time.Duration(env.PTR*60-15) * time.Second)
@@ -85,12 +88,17 @@ func PreAllocNode(c *Client) error {
 				ns.snid = c.SuperNode.ID
 				nodemap[ns.Id] = ns
 			}
-			NODE_LIST.UpdateNodeList(nodemap)
-			logrus.Infof("[PreAllocNode]Return %d items,Excludes %d items.\n", len(nodemap), len(req.Excludes))
-			return nil
+			nlen := len(nodemap)
+			if nlen > 0 {
+				DNList.UpdateNodeList(nodemap)
+				logrus.Infof("[PreAllocNode]Return to %d nodes,Excludes %d nodes.\n", nlen, len(req.Excludes))
+				return nil
+			}
 		}
+		logrus.Errorf("[PreAllocNode]Return to 0 nodes.\n")
+	} else {
+		logrus.Errorf("[PreAllocNode]Return err msg.\n")
 	}
-	logrus.Errorf("[PreAllocNode]Return err msg.\n")
 	return errors.New("Return err msg")
 }
 

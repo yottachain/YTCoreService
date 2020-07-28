@@ -27,3 +27,5 @@ const Compress_Reserve_Size = 16 * 1024
 const CONN_EXPIRED int64 = 60 * 3
 
 const LRCMAXHANDLERS = 50
+
+var ShardNumPerNode int

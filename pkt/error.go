@@ -3,6 +3,7 @@ package pkt
 import (
 	"bytes"
 	"encoding/binary"
+	"strings"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -47,7 +48,7 @@ var BUSY_ERROR = NewErrorMsg(SERVER_ERROR, "Too many routines")
 func NewErrorMsg(code int32, msg string) *ErrorMessage {
 	err := &ErrorMessage{}
 	err.Code = code
-	err.Msg = msg
+	err.Msg = strings.TrimSpace(msg)
 	return err
 }
 

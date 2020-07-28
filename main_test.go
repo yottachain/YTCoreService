@@ -21,7 +21,6 @@ func CatchError(name string) {
 
 func Test(t *testing.T) {
 	defer CatchError("Test")
-
 	test.Test()
 	//test.TestLRC()
 }

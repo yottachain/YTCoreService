@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "test",
-            "program": "${workspaceRoot}/yt_test.go",
+            "program": "${workspaceRoot}/main_test.go",
             "args": []
         },
         

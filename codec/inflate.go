@@ -3,7 +3,6 @@ package codec
 import (
 	"bytes"
 	"compress/flate"
-	"container/list"
 	"crypto/sha256"
 	"hash"
 	"io"
@@ -13,12 +12,12 @@ import (
 )
 
 type BlockReader struct {
-	block  PlainBlock
+	block  *PlainBlock
 	head   int
 	reader io.Reader
 }
 
-func NewBlockReader(b PlainBlock) (*BlockReader, error) {
+func NewBlockReader(b *PlainBlock) (*BlockReader, error) {
 	var ret int16 = 0
 	ret <<= 8
 	ret |= int16(b.Data[0] & 0xFF)
@@ -55,7 +54,7 @@ func (br *BlockReader) Read(p []byte) (n int, err error) {
 }
 
 type FileDecoder struct {
-	blocks *list.List
+	blocks []interface{}
 	path   string
 	length int64
 	vhw    []byte
@@ -63,17 +62,17 @@ type FileDecoder struct {
 
 func NewFileDecoder(p string) *FileDecoder {
 	f := new(FileDecoder)
-	f.blocks = list.New()
+	f.blocks = []interface{}{}
 	f.path = p
 	return f
 }
 
-func (decoder *FileDecoder) AddPlainBlock(b PlainBlock) {
-	decoder.blocks.PushBack(b)
+func (decoder *FileDecoder) AddPlainBlock(b *PlainBlock) {
+	decoder.blocks = append(decoder.blocks, b)
 }
 
-func (decoder *FileDecoder) AddEncryptedBlock(b EncryptedBlock) {
-	decoder.blocks.PushBack(b)
+func (decoder *FileDecoder) AddEncryptedBlock(b *EncryptedBlock) {
+	decoder.blocks = append(decoder.blocks, b)
 }
 
 func (decoder *FileDecoder) Handle() error {
@@ -84,20 +83,20 @@ func (decoder *FileDecoder) Handle() error {
 	defer f.Close()
 	sha256Digest := sha256.New()
 	var size int64 = 0
-	for item := decoder.blocks.Front(); nil != item; item = item.Next() {
-		var value PlainBlock
-		if r, ok := item.Value.(PlainBlock); ok {
+	for _, item := range decoder.blocks {
+		var value *PlainBlock
+		if r, ok := item.(*PlainBlock); ok {
 			value = r
 			value.Load()
 		} else {
-			r := item.Value.(EncryptedBlock)
+			r := item.(*EncryptedBlock)
 			r.Load()
 			baes := NewBlockAESDecryptor(r)
 			v, err := baes.Decrypt()
 			if err != nil {
 				return err
 			}
-			value = *v
+			value = v
 		}
 		br, err := NewBlockReader(value)
 		if err != nil {

@@ -1,7 +1,6 @@
 package net
 
 import (
-	"container/list"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,7 +40,7 @@ func loadBpList() []string {
 
 var firstEosURI *EOSURI
 var backupEosURI atomic.Value
-var eosURIList *list.List
+var eosURIList []*EOSURI
 
 func SetBakURI(eos *EOSURI) {
 	bakeos := backupEosURI.Load()
@@ -65,8 +64,7 @@ func GetEOSURI() *EOSURI {
 			return firstEosURI
 		}
 	}
-	for e := eosURIList.Front(); e != nil; e = e.Next() {
-		eos, _ := e.Value.(*EOSURI)
+	for _, eos := range eosURIList {
 		if atomic.LoadInt32(eos.ErrStatu) == 0 {
 			SetBakURI(eos)
 			return eos
@@ -90,7 +88,7 @@ func EOSInit() {
 	}
 	backupEosURI.Store(firstEosURI)
 	ls := loadBpList()
-	eosURIList = list.New()
+	eosURIList = []*EOSURI{}
 	if ls != nil {
 		newUrl, err := url.Parse(env.EOSURI)
 		if err != nil {
@@ -100,7 +98,7 @@ func EOSInit() {
 		localIp := newUrl.Hostname()
 		for _, str := range ls {
 			nurl := strings.ReplaceAll(env.EOSURI, localIp, str)
-			eosURIList.PushBack(NewEOSURI(nurl))
+			eosURIList = append(eosURIList, NewEOSURI(nurl))
 		}
 	}
 }

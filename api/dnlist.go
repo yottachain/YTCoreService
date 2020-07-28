@@ -12,6 +12,94 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 )
 
+type DNQueue struct {
+	sync.RWMutex
+	nodes   chan *NodeStat
+	closing *int32
+	oklist  map[int32]int32
+}
+
+func NewDNQueue() *DNQueue {
+	queue := &DNQueue{closing: new(int32), oklist: make(map[int32]int32)}
+	queue.nodes = make(chan *NodeStat, env.PNN)
+	go queue.PutNodeStatLoop()
+	return queue
+}
+
+func (q *DNQueue) AddCount(n *NodeStat) bool {
+	q.Lock()
+	defer q.Unlock()
+	count, ok := q.oklist[n.Id]
+	if ok {
+		if count >= int32(env.ShardNumPerNode) {
+			return false
+		} else {
+			q.oklist[n.Id] = count + 1
+		}
+	} else {
+		q.oklist[n.Id] = 1
+	}
+	return true
+}
+
+func (q *DNQueue) DecCount(n *NodeStat) {
+	q.Lock()
+	count, ok := q.oklist[n.Id]
+	if ok {
+		q.oklist[n.Id] = count - 1
+	}
+	q.Unlock()
+}
+
+func (q *DNQueue) Close() {
+	atomic.StoreInt32(q.closing, 1)
+}
+
+func (q *DNQueue) PutNodeStatLoop() {
+	for {
+		sign := q.PutNodeStat()
+		if sign == -1 {
+			break
+		} else if sign == 0 {
+			logrus.Warnf("[PutNodeStat]Number of DN not enough,size:%d\n", DNList.Len())
+			time.Sleep(time.Duration(15) * time.Second)
+		}
+	}
+}
+
+func (q *DNQueue) PutNodeStat() int {
+	sign := 0
+	nodes := DNList.OrderNodeList()
+	for _, n := range nodes {
+		if !q.AddCount(n) {
+			continue
+		}
+		timeout := time.After(time.Second * 1)
+		select {
+		case q.nodes <- n:
+			sign++
+			break
+		case <-timeout:
+			if atomic.LoadInt32(q.closing) == 1 {
+				goto lable
+			}
+		}
+	}
+	return sign
+lable:
+	close(q.nodes)
+	return -1
+}
+
+func (q *DNQueue) GetNodeStat() *NodeStat {
+	for {
+		n := <-q.nodes
+		if q.AddCount(n) {
+			return n
+		}
+	}
+}
+
 type NodeList struct {
 	sync.RWMutex
 	list       map[int32]*NodeStat
@@ -40,18 +128,34 @@ func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 	} else {
 		atomic.StoreInt32(n.resetSign, 0)
 		n.updateTime = time.Now().Unix()
+		logrus.Infof("[UpdateNodeList]Finish clearing old nodes,Number of current nodes: %d\n", len(ns))
 	}
 	n.list = ns
 	n.Unlock()
 }
 
+func (n *NodeList) Len() int {
+	n.RLock()
+	defer n.RUnlock()
+	return len(n.list)
+}
+
 func (n *NodeList) OrderNodeList() []*NodeStat {
-	if env.ALLOC_MODE == 0 {
-		return n.SortNodeList()
-	} else if env.ALLOC_MODE == -1 {
-		return n.ShuffleNodeList()
-	} else {
-		return n.P2pOrderNodeList()
+	for {
+		var ls []*NodeStat
+		if env.ALLOC_MODE == 0 {
+			ls = n.SortNodeList()
+		} else if env.ALLOC_MODE == -1 {
+			ls = n.ShuffleNodeList()
+		} else {
+			ls = n.P2pOrderNodeList()
+		}
+		if ls == nil || len(ls) == 0 {
+			logrus.Warnf("[OrderNodeList]DN list is empty.\n")
+			time.Sleep(time.Duration(15) * time.Second)
+		} else {
+			return ls
+		}
 	}
 }
 

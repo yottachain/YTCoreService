@@ -151,6 +151,9 @@ func GetSnIp(snid int) string {
 }
 
 func IsMaster() bool {
+	if !env.STAT_SERVICE {
+		return false
+	}
 	ip := GetSelfIp()
 	if strings.Contains(LocalIp, ip+";") {
 		return true

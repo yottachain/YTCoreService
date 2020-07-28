@@ -16,8 +16,6 @@ import (
 	"github.com/yottachain/YTDNMgmt"
 )
 
-var VersionID string
-
 const MAX_CLIENT_NUM = 2000
 
 var clients = struct {

@@ -134,7 +134,7 @@ func (me *UserObjectSum) IterateObjects() {
 func (me *UserObjectSum) SetCycleFee() {
 	uspace := me.GetUsedSapce()
 	cost := env.UnitCycleCost * uint64(uspace) / env.UnitSpace
-	logrus.Infof("[SumFileUsedSpace]File statistics completed,UserID:%d\n,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
+	logrus.Infof("[SumFileUsedSpace]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
 	var err error
 	if cost > 0 {
 		if me.CostPerCycle == cost {
@@ -142,7 +142,7 @@ func (me *UserObjectSum) SetCycleFee() {
 		} else {
 			err = net.SetHfee(me.UserName, cost)
 			if err == nil {
-				logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+				logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
 			}
 			dao.UpdateUserCost(me.UserID, cost)
 		}

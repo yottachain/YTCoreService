@@ -18,10 +18,10 @@ func init() {
 	md5Digest := md5.New()
 	md5Digest.Write(bs)
 	IVParameter = md5Digest.Sum(nil)
+	rand.Seed(time.Now().UnixNano())
 }
 
 func GenerateRandomKey() []byte {
-	rand.Seed(time.Now().UnixNano())
 	h := rand.Uint64()
 	l := rand.Uint64()
 	var buf = make([]byte, 16)
@@ -44,11 +44,11 @@ func GenerateUserKey(bs []byte) []byte {
 }
 
 type BlockAESEncryptor struct {
-	plainBlock PlainBlock
+	plainBlock *PlainBlock
 	secretKey  []byte
 }
 
-func NewBlockAESEncryptor(b PlainBlock, key []byte) *BlockAESEncryptor {
+func NewBlockAESEncryptor(b *PlainBlock, key []byte) *BlockAESEncryptor {
 	bae := new(BlockAESEncryptor)
 	bae.plainBlock = b
 	bae.secretKey = key
@@ -74,10 +74,10 @@ func (bae *BlockAESEncryptor) Encrypt() (*EncryptedBlock, error) {
 }
 
 type BlockAESDecryptor struct {
-	encryptedBlock EncryptedBlock
+	encryptedBlock *EncryptedBlock
 }
 
-func NewBlockAESDecryptor(b EncryptedBlock) *BlockAESDecryptor {
+func NewBlockAESDecryptor(b *EncryptedBlock) *BlockAESDecryptor {
 	bae := new(BlockAESDecryptor)
 	bae.encryptedBlock = b
 	return bae
