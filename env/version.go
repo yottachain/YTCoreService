@@ -1,6 +1,6 @@
-package api
+package env
 
-var VersionID string = "1.0.1.15"
+var VersionID string = "2.0.0.1"
 
 func SetVersionID(id string) {
 	VersionID = id

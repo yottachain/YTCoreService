@@ -6,14 +6,14 @@ import (
 	"strconv"
 )
 
+const SN_RETRYTIMES = 2 * 10
+
 var PNN int = 328 * 2
 var PTR int = 2
-var RETRYTIMES int = 500
-var TokenRetryTimes int = 1
 
 var ALLOC_MODE int = 0
 
-var UploadFileMaxMemory int = 10
+var UploadFileMaxMemory int = 10 * 1024 * 1024
 var UploadBlockThreadNum int = 50
 var UploadShardThreadNum int = 1500
 
@@ -28,10 +28,9 @@ func readClientProperties() {
 	LogLevel = config.GetString("logLevel", "trace,stdout")
 	PNN = config.GetRangeInt("PNN", 328, 328*4, 328*2)
 	PTR = config.GetRangeInt("PTR", 1, 60, 2)
-	RETRYTIMES = config.GetRangeInt("RETRYTIMES", 50, 500, 50)
-	TokenRetryTimes = config.GetRangeInt("TokenRetryTimes", 1, 500, 1)
 
 	UploadFileMaxMemory = config.GetRangeInt("uploadFileMaxMemory", 5, 300, 30)
+	UploadFileMaxMemory = UploadFileMaxMemory * 1024 * 1024
 	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 300, 30)
 	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 1500, 3000, 1500)
 

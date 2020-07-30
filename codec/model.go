@@ -118,6 +118,18 @@ func (self *PlainBlock) Sum() error {
 	return nil
 }
 
+func (self *PlainBlock) InMemory() bool {
+	var encryptedBlockSize int
+	bsize := len(self.Data)
+	remain := bsize % 16
+	if remain == 0 {
+		encryptedBlockSize = bsize + 16
+	} else {
+		encryptedBlockSize = bsize + (16 - remain)
+	}
+	return encryptedBlockSize < env.PL2
+}
+
 func (self *PlainBlock) ToJson() string {
 	hash := make(map[string]string)
 	hash["Path"] = self.Path

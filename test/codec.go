@@ -1,54 +1,76 @@
 package test
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"strconv"
+	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 )
 
-func TestLRC() {
-	codec.InitLRC()
-	bs, _ := ioutil.ReadFile("d://test.dat")
+func TestAES() {
+	data := []byte("abcdefg")
+	sha256Digest := sha256.New()
+	sha256Digest.Write(data)
+	newdata := sha256Digest.Sum(nil)
+	fmt.Printf("data:%s\n", base58.Encode(newdata))
+	key := []byte("123456789")
+	sha256Digest = sha256.New()
+	sha256Digest.Write(key)
+	newkey := sha256Digest.Sum(nil)
 
-	b := new(codec.EncryptedBlock)
+	bs := codec.ECBEncryptNoPad(newdata, newkey)
+	ss := base58.Encode(bs)
+	fmt.Printf("Encode:%s\n", ss)
+
+	d := codec.ECBDecryptNoPad(bs, newkey)
+	fmt.Printf("data:%s\n", base58.Encode(d))
+}
+
+func TestLRC() {
+	//execute only once when process starts
+	codec.InitLRC()
+	//input: <2M file
+	bs, _ := ioutil.ReadFile("d://test.docx")
+	b := &codec.EncryptedBlock{}
 	b.Data = bs
 	b.MakeVHB()
 	fmt.Printf("HASH:%s\n", base58.Encode(b.VHB))
+	//remember original size
 	size := b.Length()
+
 	encoder := codec.NewLRCEncoder(b)
 	encoder.Encode()
+	//encode result
 	shards := encoder.Shards
 
+	//decode:input original size
 	decoder, _ := codec.NewLRCDecoder(size)
-	var ok bool
-	ok, _ = decoder.AddShard(shards[0].Data)
-	ok, _ = decoder.AddShard(shards[3].Data)
-	ok, _ = decoder.AddShard(shards[5].Data)
-	ok, _ = decoder.AddShard(shards[6].Data)
-	ok, _ = decoder.AddShard(shards[7].Data)
-	ok, _ = decoder.AddShard(shards[8].Data)
-	ok, _ = decoder.AddShard(shards[9].Data)
-	ok, _ = decoder.AddShard(shards[10].Data)
-	ok, _ = decoder.AddShard(shards[11].Data)
-	ok, _ = decoder.AddShard(shards[12].Data)
-	ok, _ = decoder.AddShard(shards[13].Data)
-	ok, _ = decoder.AddShard(shards[14].Data)
-	ok, _ = decoder.AddShard(shards[15].Data)
-	ok, _ = decoder.AddShard(shards[16].Data)
-	ok, _ = decoder.AddShard(shards[17].Data)
-	ok, _ = decoder.AddShard(shards[18].Data)
-	if ok {
-		b = decoder.GetEncryptedBlock()
-		b.MakeVHB()
-		fmt.Printf("HASH:%s\n", base58.Encode(b.VHB))
-		ioutil.WriteFile("d://test.0.dat", b.Data, 0777)
+
+	//Random input shard
+	count := 0
+	for {
+		ii := time.Now().UnixNano() % int64(len(shards))
+		shard := shards[ii]
+		ok, _ := decoder.AddShard(shard.Data)
+		shards = append(shards[:ii], shards[ii+1:]...)
+		count++
+		fmt.Printf("Add index:%d,total:%d\n", uint16(shard.Data[0]), count)
+		if ok {
+			break
+		}
 	}
 
+	//decode result
+	b = decoder.GetEncryptedBlock()
+	b.MakeVHB()
+	fmt.Printf("HASH:%s\n", base58.Encode(b.VHB))
+	ioutil.WriteFile("d://test.0.docx", b.Data, 0777)
 }
 
 var filepath = "D:/yts3_linux_1.0.0.14.tar.gz"

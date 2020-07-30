@@ -34,12 +34,10 @@ func Start(port int32, port2 int32, privatekey string) error {
 	}
 	addrs := []multiaddr.Multiaddr{}
 	add1 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
-	logrus.Infof("[Booter]P2P initializing..., binding %s\n", add1)
 	ma1, _ := ma.NewMultiaddr(add1)
 	addrs = append(addrs, ma1)
 	if port2 > 0 {
 		add2 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d/http", port2)
-		logrus.Infof("[Booter]P2P initializing..., binding %s\n", add2)
 		ma2, _ := ma.NewMultiaddr(add2)
 		addrs = append(addrs, ma2)
 	}
@@ -48,6 +46,13 @@ func Start(port int32, port2 int32, privatekey string) error {
 		logrus.Panicf("[Booter]Init ERR.\n")
 	}
 	p2phst = serverhost.Hosts[0]
+	for _, hst := range serverhost.Hosts {
+		logrus.Infof("[Booter]P2P initializing...NodeID:%s\n", hst.Config().ID.String())
+		maddrs := hst.Addrs()
+		for k, m := range maddrs {
+			logrus.Infof("[Booter]Node Addrs %d:%s\n", k, m.String())
+		}
+	}
 	go serverhost.Accept()
 	go Clear()
 	return nil

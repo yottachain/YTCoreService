@@ -128,7 +128,6 @@ func (decoder *FileDecoder) readBlock(sha256 hash.Hash, file *os.File, br *Block
 			return size, err
 		}
 	}
-
 }
 
 func (decoder *FileDecoder) GetLength() int64 {

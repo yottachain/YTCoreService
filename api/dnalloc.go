@@ -23,7 +23,7 @@ func NotifyAllocNode(reset bool) {
 	if reset {
 		atomic.StoreInt32(DNList.resetSign, 1)
 		cond.Signal()
-		time.Sleep(time.Duration(15) * time.Second)
+		time.Sleep(time.Duration(60) * time.Second)
 	} else {
 		cond.Signal()
 	}
@@ -48,7 +48,7 @@ func StartPreAllocNode() {
 			cond.L.Unlock()
 			continue
 		}
-		ii := int(time.Now().Unix() % int64(size))
+		ii := int(time.Now().UnixNano() % int64(size))
 		err := PreAllocNode(clients[ii])
 		if err != nil {
 			time.Sleep(time.Duration(15) * time.Second)
@@ -78,14 +78,11 @@ func PreAllocNode(c *Client) error {
 				if n.Id == nil || n.Nodeid == nil || n.Pubkey == nil || n.Timestamp == nil || n.Sign == nil || n.Addrs == nil {
 					continue
 				}
-				ns := &NodeStat{}
+				ns := NewNodeStat(c.SuperNode.ID, *n.Timestamp, *n.Sign)
 				ns.Id = *n.Id
 				ns.Nodeid = *n.Nodeid
 				ns.Pubkey = *n.Pubkey
 				ns.Addrs = n.Addrs
-				ns.timestamp = *n.Timestamp
-				ns.sign = *n.Sign
-				ns.snid = c.SuperNode.ID
 				nodemap[ns.Id] = ns
 			}
 			nlen := len(nodemap)

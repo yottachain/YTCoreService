@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"os"
 	"sync"
 	"time"
 
@@ -75,6 +76,8 @@ func DistoryClient(key string) {
 func StartApi() {
 	env.InitClient()
 	codec.InitLRC()
+	InitBlockRoutinePool()
+	InitShardRoutinePool()
 	priv, _ := ytcrypto.CreateKey()
 	net.Start(0, 0, priv)
 	InitSuperList()
@@ -82,7 +85,12 @@ func StartApi() {
 }
 
 func InitSuperList() {
-	path := env.YTFS_HOME + "conf/snlist.properties"
+	path := os.Getenv("YTFS.snlist")
+	if path == "" {
+		path = env.YTFS_HOME + "conf/snlist.properties"
+	} else {
+		path = env.YTFS_HOME + path
+	}
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		logrus.Panicf("Failed to read snlist.properties:%s\n", err)
@@ -108,7 +116,7 @@ func InitSuperList() {
 func GetSuperList(ls []*YTDNMgmt.SuperNode) {
 	size := len(ls)
 	for {
-		ii := int(time.Now().Unix() % int64(size))
+		ii := int(time.Now().UnixNano() % int64(size))
 		sn := ls[ii]
 		req := &pkt.ListSuperNodeReq{}
 		res, err := net.RequestSN(req, sn, "", 0, false)

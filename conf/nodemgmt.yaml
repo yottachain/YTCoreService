@@ -30,7 +30,6 @@ auramq:
   all-sn-urls:
   - "ws://127.0.0.1:8787/ws"
   
-
   #用于鉴权的BP账号，需配置为全部SN的shadow账号
   allowed-accounts:
   - shadow1

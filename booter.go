@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kardianos/service"
@@ -47,6 +48,10 @@ func main() {
 	}
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
+		if cmd == "version" {
+			fmt.Println(env.VersionID)
+			return
+		}
 		if cmd == "init" {
 			handle.InitSN()
 			return
@@ -57,6 +62,7 @@ func main() {
 			if err != nil {
 				logger.Info("Run err:", err.Error())
 			}
+			return
 		}
 		if cmd == "start" {
 			err = s.Start()
@@ -104,7 +110,8 @@ func main() {
 			return
 		}
 		logger.Info("Commands:")
-		logger.Info("init         Create  yotta.SuperNode table.")
+		logger.Info("version      Show versionid.")
+		logger.Info("init         Create yotta.SuperNode table.")
 		logger.Info("console      Launch in the current console.")
 		logger.Info("start        Start in the background as a daemon process.")
 		logger.Info("stop         Stop if running as a daemon or in another console.")

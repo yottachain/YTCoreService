@@ -66,6 +66,18 @@ func (fileEncoder *FileEncoder) Close() {
 	}
 }
 
+func (fileEncoder *FileEncoder) ReadNext() (*PlainBlock, error) {
+	has, err := fileEncoder.HasNext()
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return fileEncoder.curBlock, nil
+	} else {
+		return nil, nil
+	}
+}
+
 func (fileEncoder *FileEncoder) Next() *PlainBlock {
 	return fileEncoder.curBlock
 }

@@ -99,7 +99,7 @@ func GetBalance(username string) (uint64, error) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Tracef("[EOS]GetBalance ERR:%s\n", r)
+			logrus.Errorf("[EOS]GetBalance ERR:%s\n", r)
 		}
 	}()
 	obj := GetBalanceReq{Owner: eos.AN(username),

@@ -8,6 +8,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTCrypto"
@@ -42,9 +43,9 @@ func newClient(uname string, privkey string) (*Client, error) {
 }
 
 func (c *Client) Regist() error {
-	ii := int(time.Now().Unix() % int64(net.GetSuperNodeCount()))
+	ii := int(time.Now().UnixNano() % int64(net.GetSuperNodeCount()))
 	sn := net.GetSuperNode(ii)
-	req := &pkt.RegUserReqV2{Username: &c.Username, PubKey: &c.AccessorKey, VersionId: &VersionID}
+	req := &pkt.RegUserReqV2{Username: &c.Username, PubKey: &c.AccessorKey, VersionId: &env.VersionID}
 	res, err := net.RequestSN(req, sn, "", 0, false)
 	if err != nil {
 		emsg := fmt.Sprintf("User '%s' registration failed:%d-%s", c.Username, err.GetCode(), err.GetMsg())
@@ -54,11 +55,12 @@ func (c *Client) Regist() error {
 		resp, ok := res.(*pkt.RegUserResp)
 		if ok {
 			if resp.SuperNodeNum != nil && resp.UserId != nil && resp.KeyNumber != nil {
-				if *resp.SuperNodeNum > 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) {
+				if *resp.SuperNodeNum >= 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) {
 					c.SuperNode = net.GetSuperNode(int(*resp.SuperNodeNum))
 					c.UserId = *resp.UserId
 					c.KeyNumber = *resp.KeyNumber
-					logrus.Infof("[Regist]User '%s' Registration Successful,ID-KeyNumber:%d-%d\n", c.Username, c.UserId, c.KeyNumber)
+					logrus.Infof("[Regist]User '%s' registration successful,ID-KeyNumber:%d/%d,at sn %d\n",
+						c.Username, c.UserId, c.KeyNumber, c.SuperNode.ID)
 					return c.MakeSign()
 				}
 			}
@@ -78,4 +80,8 @@ func (c *Client) MakeSign() error {
 		c.Sign = s
 		return nil
 	}
+}
+
+func (c *Client) UploadObject() *UploadObject {
+	return NewUploadObject(c)
 }

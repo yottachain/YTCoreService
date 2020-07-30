@@ -8,8 +8,9 @@ import (
 )
 
 type LRCEncoder struct {
-	EncBlock *EncryptedBlock
-	Shards   []*Shard
+	EncBlock  *EncryptedBlock
+	Shards    []*Shard
+	DataCount int32
 }
 
 func NewLRCEncoder(block *EncryptedBlock) *LRCEncoder {
@@ -30,6 +31,10 @@ func (me *LRCEncoder) MakeVHBLRCMode() {
 		md5Digest.Write(s.VHF)
 	}
 	me.EncBlock.VHB = md5Digest.Sum(nil)
+}
+
+func (me *LRCEncoder) IsCopyShard() bool {
+	return me.Shards[0].IsCopyShard()
 }
 
 func (me *LRCEncoder) Encode() error {
@@ -59,6 +64,7 @@ func (me *LRCEncoder) Encode() error {
 			me.Shards[ii] = shard
 		}
 		me.MakeVHBCopyMode()
+		me.DataCount = 1
 	} else {
 		shards := [][]byte{}
 		for ii := 0; ii < int(shardCount); ii++ {
@@ -75,6 +81,7 @@ func (me *LRCEncoder) Encode() error {
 			sdata := bytes.Join([][]byte{fbs, me.EncBlock.Data[spos:], make([]byte, rlen)}, []byte{})
 			shards = append(shards, sdata)
 		}
+		me.DataCount = int32(len(shards))
 		pdata, err := LRC_Encode(shards)
 		if err != nil {
 			return err
@@ -88,6 +95,7 @@ func (me *LRCEncoder) Encode() error {
 			me.Shards[index] = shard
 		}
 		me.MakeVHBLRCMode()
+
 	}
 	return nil
 }

@@ -21,7 +21,7 @@ type DNQueue struct {
 
 func NewDNQueue() *DNQueue {
 	queue := &DNQueue{closing: new(int32), oklist: make(map[int32]int32)}
-	queue.nodes = make(chan *NodeStat, env.PNN)
+	queue.nodes = make(chan *NodeStat, env.Max_Shard_Count)
 	go queue.PutNodeStatLoop()
 	return queue
 }
@@ -81,14 +81,12 @@ func (q *DNQueue) PutNodeStat() int {
 			break
 		case <-timeout:
 			if atomic.LoadInt32(q.closing) == 1 {
-				goto lable
+				close(q.nodes)
+				return -1
 			}
 		}
 	}
 	return sign
-lable:
-	close(q.nodes)
-	return -1
 }
 
 func (q *DNQueue) GetNodeStat() *NodeStat {
@@ -110,7 +108,7 @@ type NodeList struct {
 func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 	reset := atomic.LoadInt32(n.resetSign)
 	if reset == 0 {
-		if time.Now().Unix()-n.updateTime > int64(30*60) {
+		if time.Now().Unix()-n.updateTime > int64(30*60) && n.updateTime > 0 {
 			reset = 1
 		}
 	}

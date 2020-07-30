@@ -108,7 +108,7 @@ func (h *NodeSyncHandler) Handle() proto.Message {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Tracef("[NodeStatSync]ERR:%s\n", r)
+			logrus.Errorf("[NodeStatSync]ERR:%s\n", r)
 		}
 	}()
 	startTime := time.Now()

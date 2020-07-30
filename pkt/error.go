@@ -3,6 +3,7 @@ package pkt
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"strings"
 
 	proto "github.com/golang/protobuf/proto"
@@ -50,6 +51,10 @@ func NewErrorMsg(code int32, msg string) *ErrorMessage {
 	err.Code = code
 	err.Msg = strings.TrimSpace(msg)
 	return err
+}
+
+func ToError(err *ErrorMessage) error {
+	return fmt.Errorf("ServiceError:%d,%s", err.Code, err.Msg)
 }
 
 func NewError(code int32) *ErrorMessage {

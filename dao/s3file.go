@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"strings"
@@ -185,7 +184,7 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 		} else {
 			for index, ver := range res.Version {
 				if toFindNextVersionId {
-					if bytes.Equal(ver.VersionId[:], nversion[:]) {
+					if ver.VersionId == nversion {
 						toFindNextVersionId = false
 					}
 				} else {

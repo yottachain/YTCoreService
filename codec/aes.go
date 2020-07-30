@@ -134,3 +134,28 @@ func ECBEncrypt(data, key []byte) []byte {
 	}
 	return decrypted
 }
+
+func ECBDecryptNoPad(data, key []byte) []byte {
+	block, _ := aes.NewCipher(key)
+	decrypted := make([]byte, len(data))
+	size := block.BlockSize()
+	for bs, be := 0, size; bs < len(data); bs, be = bs+size, be+size {
+		block.Decrypt(decrypted[bs:be], data[bs:be])
+	}
+	return decrypted
+}
+
+func ECBEncryptNoPad(data, key []byte) []byte {
+	length := len(data)
+	block, _ := aes.NewCipher(key)
+	if length%16 > 0 {
+		data = PKCS7Padding(data, block.BlockSize())
+		length = len(data)
+	}
+	decrypted := make([]byte, length)
+	size := block.BlockSize()
+	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
+		block.Encrypt(decrypted[bs:be], data[bs:be])
+	}
+	return decrypted
+}

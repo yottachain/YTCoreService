@@ -70,13 +70,13 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 
 func CatchError(name string) {
 	if r := recover(); r != nil {
-		logrus.Tracef("[%s]ERR:%s\n", name, r)
+		logrus.Errorf("[%s]ERR:%s\n", name, r)
 	}
 }
 
 func OnError(msg proto.Message, name string) {
 	if r := recover(); r != nil {
-		logrus.Tracef("[OnMessage] %s ERR:%s\n", name, r)
+		logrus.Errorf("[OnMessage] %s ERR:%s\n", name, r)
 	}
 }
 
