@@ -24,10 +24,11 @@ type UploadObject struct {
 	Exist      bool
 	ActiveTime *int64
 	ERR        atomic.Value
+	activesign chan int
 }
 
 func NewUploadObject(c *Client) *UploadObject {
-	return &UploadObject{UClient: c, ActiveTime: new(int64)}
+	return &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int)}
 }
 
 func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
@@ -78,8 +79,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 	} else {
 		wgroup := sync.WaitGroup{}
 		atomic.StoreInt64(self.ActiveTime, time.Now().Unix())
-		activesign := make(chan int)
-		go self.waitcheck(activesign)
+		go self.waitcheck()
 		var id uint32 = 0
 		for {
 			b, err := self.Encoder.ReadNext()
@@ -101,7 +101,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 			id++
 		}
 		wgroup.Wait()
-		<-activesign
+		<-self.activesign
 		var errmsg *pkt.ErrorMessage
 		v := self.ERR.Load()
 		if v != nil {
@@ -113,18 +113,18 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 			logrus.Errorf("[UploadObject][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
 			return nil, errmsg
 		} else {
-			logrus.Infof("[UploadObject][%s]Upload object 100%\n", self.VNU.Hex())
+			logrus.Infof("[UploadObject][%s]Upload object OK.\n", self.VNU.Hex())
 		}
 	}
 	return self.Encoder.GetVHW(), nil
 }
 
-func (self *UploadObject) waitcheck(sign chan int) {
+func (self *UploadObject) waitcheck() {
 	for {
 		timeout := time.After(time.Second * 15)
 		select {
-		case sign <- 1:
-			close(sign)
+		case self.activesign <- 1:
+			close(self.activesign)
 			return
 		case <-timeout:
 			self.active()

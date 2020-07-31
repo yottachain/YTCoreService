@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"math/rand"
@@ -27,7 +28,9 @@ func GenerateRandomKey() []byte {
 	var buf = make([]byte, 16)
 	binary.BigEndian.PutUint64(buf, h)
 	binary.BigEndian.PutUint64(buf[8:16], l)
-	return buf
+	sha256Digest := sha256.New()
+	sha256Digest.Write(buf)
+	return sha256Digest.Sum(nil)
 }
 
 func GenerateUserKey(bs []byte) []byte {

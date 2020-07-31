@@ -2,8 +2,6 @@ package env
 
 import (
 	"log"
-	"os"
-	"strconv"
 )
 
 const SN_RETRYTIMES = 2 * 10
@@ -40,8 +38,8 @@ func readClientProperties() {
 
 	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 8)
 
-	P2PHOST_CONNECTTIMEOUT := config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 15000)
-	os.Setenv("P2PHOST_CONNECTTIMEOUT", strconv.Itoa(P2PHOST_CONNECTTIMEOUT))
-	P2PHOST_WRITETIMEOUT := config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
-	os.Setenv("P2PHOST_WRITETIMEOUT", strconv.Itoa(P2PHOST_WRITETIMEOUT))
+	Conntimeout = config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 15000)
+	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
+	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
+	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
 }

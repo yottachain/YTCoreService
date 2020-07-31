@@ -73,7 +73,7 @@ func TestLRC() {
 	ioutil.WriteFile("d://test.0.docx", b.Data, 0777)
 }
 
-var filepath = "D:/yts3_linux_1.0.0.14.tar.gz"
+var filepath = "D:/test.rar"
 
 func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 	if !readinmemory {
@@ -111,6 +111,7 @@ func TestCodec() {
 		}
 		if has {
 			block := enc.Next()
+			logrus.Infof("b%d osize:%d,rsize:%d \n", I, block.OriginalSize, len(block.Data))
 			aes := codec.NewBlockAESEncryptor(block, key)
 			eb, err := aes.Encrypt()
 			if err != nil {

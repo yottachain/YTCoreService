@@ -10,7 +10,7 @@ import (
 
 func init() {
 	env.Console = true
-	env.InitServer()
+
 }
 
 func CatchError(name string) {
@@ -21,6 +21,11 @@ func CatchError(name string) {
 
 func Test(t *testing.T) {
 	defer CatchError("Test")
+	//env.InitServer()
+
+	env.InitClient()
+
 	test.Upload()
-	//test.TestLRC()
+	//test.TestCodec()
+	select {}
 }

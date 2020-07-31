@@ -74,11 +74,13 @@ func PreAllocNode(c *Client) error {
 	if ok {
 		if resp.Preallocnode != nil && len(resp.Preallocnode) > 0 {
 			nodemap := make(map[int32]*NodeStat)
-			for _, n := range resp.Preallocnode {
+			for index, n := range resp.Preallocnode {
 				if n.Id == nil || n.Nodeid == nil || n.Pubkey == nil || n.Timestamp == nil || n.Sign == nil || n.Addrs == nil {
 					continue
 				}
 				ns := NewNodeStat(c.SuperNode.ID, *n.Timestamp, *n.Sign)
+				*ns.okDelayTimes = int64(index)
+				*ns.okTimes = 1
 				ns.Id = *n.Id
 				ns.Nodeid = *n.Nodeid
 				ns.Pubkey = *n.Pubkey

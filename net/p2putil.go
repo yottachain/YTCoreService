@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
 )
@@ -48,7 +49,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 	}
 	retryTimes := 0
 	for {
-		if retryTimes > 0 {
+		if retryTimes > 1 {
 			logrus.Infof("[P2P]%sRetry...\n", log_pre)
 		}
 		client, err := NewClient(sn.NodeID, nowait)
@@ -64,7 +65,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 				return nil, err
 			}
 			if retryTimes != 0 {
-				time.Sleep(time.Duration(30) * time.Second)
+				time.Sleep(time.Duration(env.SN_RETRY_WAIT) * time.Second)
 			}
 			retryTimes++
 		} else {

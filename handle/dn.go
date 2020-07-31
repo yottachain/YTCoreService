@@ -141,7 +141,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	//NodeStatSync(newnode)
 	SendSpotCheck(newnode)
 	SendRebuildTask(newnode)
-	logrus.Debugf("[DNStatusRep]Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	logrus.Infof("[DNStatusRep]Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	return statusRepResp
 }
 
@@ -187,7 +187,7 @@ func SendSpotCheck(node *YTDNMgmt.Node) {
 func ExecSendSpotCheck() {
 	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
 	defer CatchError("SendSpotCheck")
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
@@ -196,7 +196,7 @@ func ExecSendSpotCheck() {
 		return
 	}
 	if ischeck {
-		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 		defer cancel2()
 		list, err := SPOTCHECK_SERVICE.GetSpotCheckList(ctx2)
 		if err != nil {
@@ -263,7 +263,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 		logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Not err.\n", myid, h.m.TaskId)
 	} else {
 		for _, res := range h.m.InvalidNodeList {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 			defer cancel()
 			err := SPOTCHECK_SERVICE.UpdateTaskStatus(ctx, h.m.TaskId, int32(res))
 			if err != nil {
@@ -305,7 +305,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	defer CatchError("SendRebuildTask")
 	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
 	ls, err := REBUILDER_SERVICE.GetRebuildTasks(ctx, n.ID)
 	stime := time.Now().Sub(startTime).Milliseconds()
@@ -372,7 +372,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		m.ID = vbi + int64(index)
 		m.NewNodeId = newid
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(net.Writetimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
 	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
 	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)

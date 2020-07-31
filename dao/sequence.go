@@ -82,9 +82,7 @@ func GenerateBlockID(shardCount int) int64 {
 }
 
 func GenerateZeroID(timestamp int64) int64 {
-	high := (time.Now().Unix() & 0x000000ffffffff) << 32
-	low := int64(0) & 0x00000000ffffffff
-	return high | low
+	return (timestamp & 0x00000000ffffffff) << 32
 }
 
 func BytesToId(bs []byte) int64 {

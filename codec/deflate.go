@@ -116,9 +116,9 @@ func (fileEncoder *FileEncoder) HasNext() (bool, error) {
 
 func (fileEncoder *FileEncoder) pack() error {
 	buf := bytes.NewBuffer(nil)
-	data := make([]byte, env.Default_Block_Size)
 	size := -1
 	buf.Write([]byte{uint8(size >> 8), uint8(size)})
+	data := make([]byte, env.Default_Block_Size-2)
 	num, err := fileEncoder.reader.Read(data)
 	if err != nil && err != io.EOF {
 		return err

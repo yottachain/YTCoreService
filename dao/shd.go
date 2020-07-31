@@ -135,9 +135,9 @@ func ListRebuildShardCount(firstid int64, lastid int64) (map[int32]int64, map[in
 		}
 		num, ok = count[res.OldNodeId]
 		if ok {
-			count[res.NewNodeId] = num - 1
+			count[res.OldNodeId] = num - 1
 		} else {
-			count[res.NewNodeId] = -1
+			count[res.OldNodeId] = -1
 		}
 		upmetas[res.VFI] = res.NewNodeId
 		ii++
@@ -155,7 +155,7 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 	for k, v := range hash {
 		b1 := bson.M{"_id": k}
 		or1 := bson.M{"lstid": nil}
-		or2 := bson.M{"lstid": bson.M{"$lt": firstid}}
+		or2 := bson.M{"lstid": bson.M{"$lte": firstid}}
 		b2 := bson.M{"$or": []bson.M{or1, or2}}
 		filter := bson.M{"$and": []bson.M{b1, b2}}
 		mode := &mongo.UpdateOneModel{Filter: filter, Update: bson.M{"$inc": bson.M{f1: v}, "$set": bson.M{"lstid": lastid}}}

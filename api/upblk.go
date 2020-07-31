@@ -36,7 +36,7 @@ func StartUploadBlock(id int16, b *codec.PlainBlock, up *UploadObject, wg *sync.
 	}
 	ub.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
 	<-BLOCK_ROUTINE_CH
-	ub.upload()
+	go ub.upload()
 }
 
 type UploadBlock struct {
@@ -55,9 +55,6 @@ func (self *UploadBlock) DoFinish() {
 	self.WG.Done()
 	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
 	DecBlockMen(&self.BLK.Block)
-	if self.Queue != nil {
-		self.Queue.Close()
-	}
 	if r := recover(); r != nil {
 		logrus.Errorf("[UploadBlock]%sERR:%s\n", self.logPrefix, r)
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
@@ -300,7 +297,7 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.LRCEncod
 	if errmsg != nil {
 		return errmsg
 	} else {
-		logrus.Infof("[UploadBlock]%sWrite shardmetas OK,take times %d ms.\n", self.logPrefix, size, time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[UploadBlock]%sWrite shardmetas OK,take times %d ms.\n", self.logPrefix, time.Now().Sub(startTime).Milliseconds())
 		return nil
 	}
 }

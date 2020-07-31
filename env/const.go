@@ -24,8 +24,14 @@ const Default_Block_Size = 1024*1024*2 - 1 - 128
 
 const Compress_Reserve_Size = 16 * 1024
 
-const CONN_EXPIRED int64 = 60 * 3
+const SN_RETRY_WAIT = 10
+const CONN_EXPIRED int64 = 6 * 5
 
 const LRCMAXHANDLERS = 50
 
 var ShardNumPerNode int
+
+var Conntimeout = 30000
+var DirectConntimeout = 1000
+var Writetimeout = 60000
+var DirectWritetimeout = 1000

@@ -12,90 +12,79 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 )
 
+type NodeStatWOK struct {
+	NodeInfo *NodeStat
+	OKTimes  *int32
+}
+
+func (q *NodeStatWOK) AddCount() {
+	atomic.AddInt32(q.OKTimes, 1)
+}
+
+func (q *NodeStatWOK) DecCount() {
+	atomic.AddInt32(q.OKTimes, -1)
+}
+
 type DNQueue struct {
 	sync.RWMutex
-	nodes   chan *NodeStat
-	closing *int32
-	oklist  map[int32]int32
+	nodemap map[int32]*NodeStatWOK
+	queue   []*NodeStatWOK
+	limit   int
+	pos     int
 }
 
 func NewDNQueue() *DNQueue {
-	queue := &DNQueue{closing: new(int32), oklist: make(map[int32]int32)}
-	queue.nodes = make(chan *NodeStat, env.Max_Shard_Count)
-	go queue.PutNodeStatLoop()
+	queue := &DNQueue{nodemap: make(map[int32]*NodeStatWOK), limit: 0, pos: 0}
 	return queue
 }
 
-func (q *DNQueue) AddCount(n *NodeStat) bool {
-	q.Lock()
-	defer q.Unlock()
-	count, ok := q.oklist[n.Id]
-	if ok {
-		if count >= int32(env.ShardNumPerNode) {
-			return false
+func (q *DNQueue) order() bool {
+	ls := []*NodeStatWOK{}
+	nodes := DNList.GetNodeList()
+	for _, n := range nodes {
+		nw, ok := q.nodemap[n.Id]
+		if ok {
+			if nw.NodeInfo != n {
+				nw.NodeInfo = n
+			}
 		} else {
-			q.oklist[n.Id] = count + 1
+			nw = &NodeStatWOK{NodeInfo: n, OKTimes: new(int32)}
+			*nw.OKTimes = 0
+			q.nodemap[n.Id] = nw
 		}
-	} else {
-		q.oklist[n.Id] = 1
+		if atomic.LoadInt32(nw.OKTimes) < int32(env.ShardNumPerNode) {
+			ls = append(ls, nw)
+		}
 	}
+	size := len(ls)
+	if size == 0 {
+		return false
+	}
+	q.queue = OrderNodeList(ls)
+	q.pos = 0
+	q.limit = len(ls)
 	return true
 }
 
-func (q *DNQueue) DecCount(n *NodeStat) {
+func (q *DNQueue) GetNodeStat() *NodeStatWOK {
 	q.Lock()
-	count, ok := q.oklist[n.Id]
-	if ok {
-		q.oklist[n.Id] = count - 1
-	}
-	q.Unlock()
-}
-
-func (q *DNQueue) Close() {
-	atomic.StoreInt32(q.closing, 1)
-}
-
-func (q *DNQueue) PutNodeStatLoop() {
+	defer q.Unlock()
+	q.pos++
 	for {
-		sign := q.PutNodeStat()
-		if sign == -1 {
-			break
-		} else if sign == 0 {
-			logrus.Warnf("[PutNodeStat]Number of DN not enough,size:%d\n", DNList.Len())
-			time.Sleep(time.Duration(15) * time.Second)
-		}
-	}
-}
-
-func (q *DNQueue) PutNodeStat() int {
-	sign := 0
-	nodes := DNList.OrderNodeList()
-	for _, n := range nodes {
-		if !q.AddCount(n) {
-			continue
-		}
-		timeout := time.After(time.Second * 1)
-		select {
-		case q.nodes <- n:
-			sign++
-			break
-		case <-timeout:
-			if atomic.LoadInt32(q.closing) == 1 {
-				close(q.nodes)
-				return -1
+		if q.pos >= q.limit {
+			if q.order() {
+				break
+			} else {
+				logrus.Errorf("[GetNodeStat]Not enough nodes to upload shards,waiting...")
+				time.Sleep(time.Duration(60) * time.Second)
 			}
+		} else {
+			break
 		}
 	}
-	return sign
-}
-
-func (q *DNQueue) GetNodeStat() *NodeStat {
-	for {
-		n := <-q.nodes
-		if q.AddCount(n) {
-			return n
-		}
-	}
+	node := q.queue[q.pos]
+	node.AddCount()
+	return node
 }
 
 type NodeList struct {
@@ -118,9 +107,11 @@ func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 			if len(ns) >= env.PNN {
 				break
 			}
-			_, ok := ns[k]
+			newn, ok := ns[k]
 			if !ok {
 				ns[k] = v
+			} else {
+				newn.UpdateState(v)
 			}
 		}
 	} else {
@@ -138,25 +129,6 @@ func (n *NodeList) Len() int {
 	return len(n.list)
 }
 
-func (n *NodeList) OrderNodeList() []*NodeStat {
-	for {
-		var ls []*NodeStat
-		if env.ALLOC_MODE == 0 {
-			ls = n.SortNodeList()
-		} else if env.ALLOC_MODE == -1 {
-			ls = n.ShuffleNodeList()
-		} else {
-			ls = n.P2pOrderNodeList()
-		}
-		if ls == nil || len(ls) == 0 {
-			logrus.Warnf("[OrderNodeList]DN list is empty.\n")
-			time.Sleep(time.Duration(15) * time.Second)
-		} else {
-			return ls
-		}
-	}
-}
-
 func (n *NodeList) GetNodeList() []*NodeStat {
 	var nodes []*NodeStat
 	n.RLock()
@@ -164,58 +136,6 @@ func (n *NodeList) GetNodeList() []*NodeStat {
 		nodes = append(nodes, n)
 	}
 	n.RUnlock()
-	return nodes
-}
-
-func (n *NodeList) P2pOrderNodeList() []*NodeStat {
-	nodes := n.GetNodeList()
-	nmap := make(map[string]*NodeStat)
-	var iids []string
-	for _, n := range nodes {
-		nmap[n.Nodeid] = n
-		iids = append(iids, n.Nodeid)
-	}
-	oids := iids
-	//cliM "github.com/yottachain/YTHost/ClientManage"
-	/*
-		startTime := time.Now()
-		randlen := int(float32(3*env.ALLOC_MODE) / 17)
-		peerAddrs,err := cliM.Manager.GetOptNodes(iids, env.ALLOC_MODE, randlen)
-		interval := time.Now().Sub(startTime).Milliseconds()
-		if err!=nil{
-			logrus.Errorf("[GetOptNodes]Err:%s,take times %d ms\n",err,interval)
-		}
-		oids= cliM.PA2ids(peerAddrs...)
-		logrus.Infof("[GetOptNodes]OK,%d/%d,take times %d ms\n",len(oids),len(iids),interval)
-	*/
-	nnodes := []*NodeStat{}
-	for _, id := range oids {
-		n, ok := nmap[id]
-		if ok {
-			nnodes = append(nnodes, n)
-		}
-	}
-	if len(nnodes) == 0 {
-		logrus.Errorf("[GetOptNodes]Return 0 nodes\n")
-		s := &NodeStatOrder{Nodes: nodes, RandMode: false}
-		sort.Sort(s)
-		return nodes
-	} else {
-		return nnodes
-	}
-}
-
-func (n *NodeList) ShuffleNodeList() []*NodeStat {
-	nodes := n.GetNodeList()
-	s := &NodeStatOrder{Nodes: nodes, RandMode: true}
-	sort.Sort(s)
-	return nodes
-}
-
-func (n *NodeList) SortNodeList() []*NodeStat {
-	nodes := n.GetNodeList()
-	s := &NodeStatOrder{Nodes: nodes, RandMode: false}
-	sort.Sort(s)
 	return nodes
 }
 
@@ -229,10 +149,9 @@ type NodeStat struct {
 	snid         int32
 	timestamp    int64
 	sign         string
+	BUSYTIMES    int64
+	ERRTIMES     int64
 }
-
-var BUSYTIMES int64 = int64(net.Writetimeout)
-var ERRTIMES int64 = BUSYTIMES + 10000
 
 func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {
 	ns := &NodeStat{okDelayTimes: new(int64), okTimes: new(int64), errTimes: new(int64), busyTimes: new(int64)}
@@ -244,6 +163,8 @@ func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {
 	ns.snid = id
 	ns.timestamp = timestamp
 	ns.sign = sign
+	ns.BUSYTIMES = int64(env.Writetimeout) * int64(time.Millisecond)
+	ns.ERRTIMES = (ns.BUSYTIMES + 10000) * int64(time.Millisecond)
 	return ns
 }
 
@@ -268,11 +189,18 @@ func (n *NodeStat) SetBusy() {
 
 func (n *NodeStat) SetOK(t int64) {
 	atomic.AddInt64(n.okTimes, 1)
-	atomic.AddInt64(n.okDelayTimes, t)
+	atomic.AddInt64(n.okDelayTimes, t*time.Hour.Microseconds())
 }
 
 func (n *NodeStat) RandDelayTimes(size int) int {
 	return rand.Intn(size * 100)
+}
+
+func (n *NodeStat) UpdateState(oldn *NodeStat) {
+	*n.okDelayTimes = atomic.LoadInt64(oldn.okDelayTimes)
+	*n.okTimes = atomic.LoadInt64(oldn.okTimes)
+	*n.errTimes = atomic.LoadInt64(oldn.errTimes)
+	*n.busyTimes = atomic.LoadInt64(oldn.busyTimes)
 }
 
 func (n *NodeStat) GetDelayTimes() int64 {
@@ -284,20 +212,20 @@ func (n *NodeStat) GetDelayTimes() int64 {
 		if errcount == 0 && busycount == 0 {
 			return 0
 		} else {
-			return (BUSYTIMES*busycount + ERRTIMES*errcount) / (busycount + errcount)
+			return (n.BUSYTIMES*busycount + n.ERRTIMES*errcount) / (busycount + errcount)
 		}
 	} else {
 		times := oktimes / count
-		if times > ERRTIMES {
+		if times > n.ERRTIMES {
 			return times
 		} else {
-			return (oktimes + ERRTIMES*errcount + BUSYTIMES*busycount) / (count + errcount + busycount)
+			return (oktimes + n.ERRTIMES*errcount + n.BUSYTIMES*busycount) / (count + errcount + busycount)
 		}
 	}
 }
 
 type NodeStatOrder struct {
-	Nodes    []*NodeStat
+	Nodes    []*NodeStatWOK
 	RandMode bool
 }
 
@@ -312,10 +240,71 @@ func (ns NodeStatOrder) Swap(i, j int) {
 func (ns NodeStatOrder) Less(i, j int) bool {
 	if ns.RandMode {
 		size := ns.Len()
-		i1 := ns.Nodes[i].RandDelayTimes(size)
-		i2 := ns.Nodes[j].RandDelayTimes(size)
+		i1 := ns.Nodes[i].NodeInfo.RandDelayTimes(size)
+		i2 := ns.Nodes[j].NodeInfo.RandDelayTimes(size)
 		return i1 < i2
 	} else {
-		return ns.Nodes[i].GetDelayTimes() < ns.Nodes[j].GetDelayTimes()
+		return ns.Nodes[i].NodeInfo.GetDelayTimes() < ns.Nodes[j].NodeInfo.GetDelayTimes()
 	}
+}
+
+func OrderNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {
+	var ls []*NodeStatWOK
+	if env.ALLOC_MODE == 0 {
+		ls = SortNodeList(nodes)
+	} else if env.ALLOC_MODE == -1 {
+		ls = ShuffleNodeList(nodes)
+	} else {
+		ls = P2pOrderNodeList(nodes)
+	}
+	return ls
+}
+
+func P2pOrderNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {
+	nmap := make(map[string]*NodeStatWOK)
+	var iids []string
+	for _, n := range nodes {
+		nmap[n.NodeInfo.Nodeid] = n
+		iids = append(iids, n.NodeInfo.Nodeid)
+	}
+	oids := iids
+	//cliM "github.com/yottachain/YTHost/ClientManage"
+	/*
+		startTime := time.Now()
+		randlen := int(float32(3*env.ALLOC_MODE) / 17)
+		peerAddrs,err := cliM.Manager.GetOptNodes(iids, env.ALLOC_MODE, randlen)
+		interval := time.Now().Sub(startTime).Milliseconds()
+		if err!=nil{
+			logrus.Errorf("[GetOptNodes]Err:%s,take times %d ms\n",err,interval)
+		}
+		oids= cliM.PA2ids(peerAddrs...)
+		logrus.Infof("[GetOptNodes]OK,%d/%d,take times %d ms\n",len(oids),len(iids),interval)
+	*/
+	nnodes := []*NodeStatWOK{}
+	for _, id := range oids {
+		n, ok := nmap[id]
+		if ok {
+			nnodes = append(nnodes, n)
+		}
+	}
+	if len(nnodes) == 0 {
+		logrus.Errorf("[GetOptNodes]Return 0 nodes\n")
+		s := &NodeStatOrder{Nodes: nodes, RandMode: false}
+		sort.Sort(s)
+		return nodes
+	} else {
+		return nnodes
+	}
+}
+
+func ShuffleNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {
+	s := &NodeStatOrder{Nodes: nodes, RandMode: true}
+	sort.Sort(s)
+	return nodes
+}
+
+func SortNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {
+	s := &NodeStatOrder{Nodes: nodes, RandMode: false}
+	sort.Sort(s)
+	return nodes
 }

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -18,23 +16,6 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 )
-
-var Conntimeout = readTimeout("P2PHOST_CONNECTTIMEOUT")
-var DirectConntimeout = env.CheckInt(Conntimeout/10, 500, 5000)
-var Writetimeout = readTimeout("P2PHOST_WRITETIMEOUT")
-var DirectWritetimeout = env.CheckInt(Writetimeout/10, 500, 5000)
-
-func readTimeout(key string) int {
-	ct := os.Getenv(key)
-	timeout := 60
-	if ct != "" {
-		ii, err := strconv.Atoi(ct)
-		if err == nil {
-			timeout = ii
-		}
-	}
-	return timeout
-}
 
 var connects = struct {
 	sync.RWMutex
@@ -137,9 +118,9 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	if err != nil {
 		return nil, err
 	}
-	timeout := time.Millisecond * time.Duration(Writetimeout)
+	timeout := time.Millisecond * time.Duration(env.Writetimeout)
 	if client.nowait {
-		timeout = time.Millisecond * time.Duration(DirectWritetimeout)
+		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -182,9 +163,9 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 					logrus.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
-				timeout := time.Millisecond * time.Duration(Conntimeout)
+				timeout := time.Millisecond * time.Duration(env.Conntimeout)
 				if client.nowait {
-					timeout = time.Millisecond * time.Duration(DirectConntimeout)
+					timeout = time.Millisecond * time.Duration(env.DirectConntimeout)
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				defer cancel()
