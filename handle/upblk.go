@@ -157,7 +157,7 @@ func (h *UploadBlockDBHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	if meta == nil {
-		meta = &dao.BlockMeta{VBI: vbi, VHP: h.m.VHP, VHB: h.m.VHB, KED: h.m.KED, VNF: 0, NLINK: 1, AR: dao.AR_DB_MODE}
+		meta = &dao.BlockMeta{VBI: vbi, VHP: h.m.VHP, VHB: h.m.VHB, KED: h.m.KED, VNF: 0, NLINK: 1, AR: codec.AR_DB_MODE}
 		err = dao.SaveBlockMeta(meta)
 		if err != nil {
 			return pkt.NewError(pkt.SERVER_ERROR)
@@ -231,7 +231,7 @@ func (h *UploadBlockDupHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.NO_SUCH_BLOCK)
 	}
 	usedSpace := env.PCM
-	if meta.AR != dao.AR_DB_MODE {
+	if meta.AR != codec.AR_DB_MODE {
 		usedSpace = env.PFL * uint64(meta.VNF) * uint64(env.Space_factor) / 100
 	}
 	vnustr := h.vnu.Hex()
@@ -392,7 +392,7 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	}
 	md5Digest := md5.New()
 	for index, m := range shardMetas {
-		if AR != dao.AR_COPY_MODE {
+		if AR != codec.AR_COPY_MODE {
 			md5Digest.Write(m.VHF)
 		} else {
 			if index == 0 {

@@ -11,10 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const AR_DB_MODE = 0
-const AR_COPY_MODE = -2
-const AR_RS_MODE = -1
-
 type BlockMeta struct {
 	VBI   int64  `bson:"_id"`
 	VHP   []byte `bson:"VHP"`

@@ -186,6 +186,9 @@ func GetLocalSuperNode() *YTDNMgmt.SuperNode {
 }
 
 func GetSuperNode(id int) *YTDNMgmt.SuperNode {
+	if id < 0 || id >= GetSuperNodeCount() {
+		return nil
+	}
 	return superNodeList[id]
 }
 

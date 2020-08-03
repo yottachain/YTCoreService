@@ -12,6 +12,10 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
+const AR_DB_MODE = 0
+const AR_COPY_MODE = -2
+const AR_RS_MODE = -1
+
 type Shard struct {
 	Data []byte
 	VHF  []byte
@@ -38,6 +42,10 @@ func (self *Shard) Clear() {
 type Block struct {
 	Data []byte
 	Path string
+}
+
+func (self *Block) Length() int64 {
+	return int64(len(self.Data))
 }
 
 func (self *Block) Clear() {
@@ -155,10 +163,6 @@ type EncryptedBlock struct {
 	Block
 	VHB       []byte
 	SecretKey []byte
-}
-
-func (self *EncryptedBlock) Length() int64 {
-	return int64(len(self.Data))
 }
 
 func (self *EncryptedBlock) MakeVHB() error {

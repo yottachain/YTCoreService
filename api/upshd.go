@@ -14,12 +14,12 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
-var SHARD_ROUTINE_CH chan int
+var SHARD_UP_CH chan int
 
-func InitShardRoutinePool() {
-	SHARD_ROUTINE_CH = make(chan int, env.UploadShardThreadNum)
+func InitShardUpPool() {
+	SHARD_UP_CH = make(chan int, env.UploadShardThreadNum)
 	for ii := 0; ii < env.UploadShardThreadNum; ii++ {
-		SHARD_ROUTINE_CH <- 1
+		SHARD_UP_CH <- 1
 	}
 }
 
@@ -27,7 +27,7 @@ func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *syn
 	upshd := &UploadShard{uploadBlock: upblk, shard: shd, shardId: shdid, retrytimes: 0, WG: wg}
 	upshd.logPrefix = fmt.Sprintf("[%s][%d][%d]", upblk.UPOBJ.VNU.Hex(), upblk.ID, shdid)
 	upshd.res = &UploadShardResult{SHARDID: shdid, VHF: shd.VHF}
-	<-SHARD_ROUTINE_CH
+	<-SHARD_UP_CH
 	go upshd.DoSend()
 	return upshd.res
 }
@@ -57,7 +57,7 @@ type UploadShard struct {
 }
 
 func (self *UploadShard) DoFinish() {
-	SHARD_ROUTINE_CH <- 1
+	SHARD_UP_CH <- 1
 	self.WG.Done()
 	if r := recover(); r != nil {
 		logrus.Errorf("[UploadShard]%sERR:%s\n", self.logPrefix, r)

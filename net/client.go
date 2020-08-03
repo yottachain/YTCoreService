@@ -151,8 +151,8 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 		contime := atomic.LoadInt64(client.connectedTime)
 		if contime >= 0 {
 			addrString := AddrsToString(addrs)
-			if time.Now().Unix()-contime < 5 {
-				logmsg := fmt.Sprintf("[P2P]%s%s did not connect successfully 5 seconds ago\n", log_pre, addrString)
+			if time.Now().Unix()-contime < env.DN_RETRY_WAIT {
+				logmsg := fmt.Sprintf("[P2P]%s%s did not connect successfully %d seconds ago\n", log_pre, addrString, env.DN_RETRY_WAIT)
 				logrus.Errorf(logmsg)
 				return pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 			} else {

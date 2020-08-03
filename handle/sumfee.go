@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -173,6 +174,9 @@ type BlockSpaceSum struct {
 
 func (bss *BlockSpaceSum) ReqBlockUsedSpace() (int64, *pkt.ErrorMessage) {
 	sn := net.GetSuperNode(int(bss.SuperID))
+	if sn == nil {
+		logrus.Errorf("[SumBlockUsedSpace]ERR SNID:%d\n", bss.SuperID)
+	}
 	msg := &pkt.GetBlockUsedSpace{Id: bss.VBIS}
 	if sn.ID == int32(env.SuperNodeID) {
 		handler := &BlockUsedSpaceHandler{pkey: sn.PubKey, m: msg}
@@ -252,7 +256,7 @@ func (h *BlockUsedSpaceHandler) GetUsedSpaceByMap(metas map[int64]*dao.BlockMeta
 		if m == nil {
 			continue
 		}
-		if m.AR != dao.AR_DB_MODE {
+		if m.AR != codec.AR_DB_MODE {
 			if m.NLINK > 0 {
 				space = space + env.PFL*int64(m.VNF)*int64(env.Space_factor)/100
 			} else {
@@ -286,7 +290,7 @@ func (h *BlockUsedSpaceHandler) GetUsedSpace(metas map[int64]*dao.BlockMeta) int
 	for _, id := range h.m.Id {
 		m, ok := metas[id]
 		if ok {
-			if m.AR != dao.AR_DB_MODE {
+			if m.AR != codec.AR_DB_MODE {
 				if m.NLINK > 0 {
 					space = space + env.PFL*int64(m.VNF)*int64(env.Space_factor)/100
 				} else {

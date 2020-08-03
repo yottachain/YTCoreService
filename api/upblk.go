@@ -10,7 +10,6 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
-	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -55,6 +54,7 @@ func (self *UploadBlock) DoFinish() {
 	self.WG.Done()
 	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
 	DecBlockMen(&self.BLK.Block)
+	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, self.BLK.Length())
 	if r := recover(); r != nil {
 		logrus.Errorf("[UploadBlock]%sERR:%s\n", self.logPrefix, r)
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
@@ -182,7 +182,7 @@ func (self *UploadBlock) CheckBlockDup(resp *pkt.UploadBlockDupResp) *pkt.Upload
 		}
 		var vhb []byte
 		if eblk.NeedEncode() {
-			if ars[index] == dao.AR_RS_MODE {
+			if ars[index] == codec.AR_RS_MODE {
 				logrus.Warnf("[UploadBlock]%sCheckBlockDup ERR:RS Not supported\n", self.logPrefix)
 				return nil
 			} else {
@@ -274,7 +274,7 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.LRCEncod
 	vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	var ar int32 = 0
 	if enc.IsCopyShard() {
-		ar = dao.AR_COPY_MODE
+		ar = codec.AR_COPY_MODE
 	} else {
 		ar = enc.DataCount
 	}

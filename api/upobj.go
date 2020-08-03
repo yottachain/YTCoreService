@@ -25,10 +25,20 @@ type UploadObject struct {
 	ActiveTime *int64
 	ERR        atomic.Value
 	activesign chan int
+	PRO        *Progress
+}
+
+type Progress struct {
+	Length        *int64
+	ReadinLength  *int64
+	ReadOutLength *int64
+	WriteLength   *int64
 }
 
 func NewUploadObject(c *Client) *UploadObject {
-	return &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int)}
+	p := &Progress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
+	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p}
+	return o
 }
 
 func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
@@ -65,7 +75,21 @@ func (self *UploadObject) IdExist(id uint32) bool {
 	return false
 }
 
+func (self *UploadObject) GetProgress() int32 {
+	l1 := atomic.LoadInt64(self.PRO.Length)
+	l2 := atomic.LoadInt64(self.PRO.ReadinLength)
+	l3 := atomic.LoadInt64(self.PRO.ReadOutLength)
+	l4 := atomic.LoadInt64(self.PRO.WriteLength)
+	if l1 == 0 || l3 == 0 {
+		return 0
+	}
+	p1 := l2 * 100 / l1
+	p2 := l4 * 100 / l3
+	return int32(p1 * p2 / 100)
+}
+
 func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
+	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	err := self.initUpload()
 	if err != nil {
 		return nil, err
@@ -75,6 +99,9 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 	}
 	logrus.Infof("[UploadObject][%s]Start upload object...\n", self.VNU.Hex())
 	if self.Exist {
+		atomic.StoreInt64(self.PRO.ReadinLength, self.Encoder.GetLength())
+		atomic.StoreInt64(self.PRO.ReadOutLength, self.Encoder.GetLength())
+		atomic.StoreInt64(self.PRO.WriteLength, self.Encoder.GetLength())
 		logrus.Infof("[UploadObject][%s]Already exists.\n", self.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
@@ -92,7 +119,10 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 			if self.ERR.Load() != nil {
 				break
 			}
+			atomic.StoreInt64(self.PRO.ReadinLength, self.Encoder.GetReadinTotal())
+			atomic.StoreInt64(self.PRO.ReadOutLength, self.Encoder.GetReadoutTotal())
 			if self.IdExist(id) {
+				atomic.AddInt64(self.PRO.WriteLength, b.Length())
 				logrus.Infof("[UploadObject][%s][%d]Block has been uploaded.\n", self.VNU.Hex(), id)
 			} else {
 				wgroup.Add(1)
@@ -185,12 +215,12 @@ func (self *UploadObject) initUpload() *pkt.ErrorMessage {
 	var initresp *pkt.UploadObjectInitResp
 	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
 	if errmsg != nil {
-		logrus.Errorf("[UploadObject][%s]Init err:%s\n", base58.Encode(self.Encoder.GetVHW()), pkt.ToError(errmsg))
+		logrus.Errorf("[UploadObject][%s]Init ERR:%s\n", base58.Encode(self.Encoder.GetVHW()), pkt.ToError(errmsg))
 		return errmsg
 	} else {
 		res, OK := resp.(*pkt.UploadObjectInitResp)
 		if !OK {
-			logrus.Errorf("[UploadObject][%s]Init err:RETURN_ERR_MSG\n", base58.Encode(self.Encoder.GetVHW()))
+			logrus.Errorf("[UploadObject][%s]Init ERR:RETURN_ERR_MSG\n", base58.Encode(self.Encoder.GetVHW()))
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Return err msg type")
 		}
 		initresp = res

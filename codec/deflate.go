@@ -12,12 +12,13 @@ import (
 )
 
 type FileEncoder struct {
-	finished    bool
-	length      int64
-	readinTotal int64
-	vhw         []byte
-	reader      io.ReadSeeker
-	curBlock    *PlainBlock
+	finished     bool
+	length       int64
+	readinTotal  int64
+	readoutTotal int64
+	vhw          []byte
+	reader       io.ReadSeeker
+	curBlock     *PlainBlock
 }
 
 func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
@@ -72,6 +73,7 @@ func (fileEncoder *FileEncoder) ReadNext() (*PlainBlock, error) {
 		return nil, err
 	}
 	if has {
+		fileEncoder.readoutTotal = fileEncoder.readoutTotal + fileEncoder.curBlock.Length()
 		return fileEncoder.curBlock, nil
 	} else {
 		return nil, nil
@@ -79,6 +81,9 @@ func (fileEncoder *FileEncoder) ReadNext() (*PlainBlock, error) {
 }
 
 func (fileEncoder *FileEncoder) Next() *PlainBlock {
+	if fileEncoder.curBlock != nil {
+		fileEncoder.readoutTotal = fileEncoder.readoutTotal + fileEncoder.curBlock.Length()
+	}
 	return fileEncoder.curBlock
 }
 
@@ -223,6 +228,10 @@ func (fileEncoder *FileEncoder) IsFinished() bool {
 
 func (fileEncoder *FileEncoder) GetReadinTotal() int64 {
 	return fileEncoder.readinTotal
+}
+
+func (fileEncoder *FileEncoder) GetReadoutTotal() int64 {
+	return fileEncoder.readoutTotal
 }
 
 type BufferReader struct {
