@@ -78,11 +78,9 @@ func (me *DownLoadReader) ReadCaller(err error) error {
 	startpos := me.readpos / 16
 	skipn := me.readpos % 16
 	aes := NewAESDecodeReader(me.BkCall, startpos*16)
-	if skipn > 0 {
-		err := aes.Skip(skipn)
-		if err != nil {
-			return err
-		}
+	err1 := aes.Skip(skipn)
+	if err1 != nil {
+		return err1
 	}
 	me.bin = aes
 	return nil
