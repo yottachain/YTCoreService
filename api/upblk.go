@@ -186,7 +186,7 @@ func (self *UploadBlock) CheckBlockDup(resp *pkt.UploadBlockDupResp) *pkt.Upload
 				logrus.Warnf("[UploadBlock]%sCheckBlockDup ERR:RS Not supported\n", self.logPrefix)
 				return nil
 			} else {
-				enc := codec.NewLRCEncoder(eblk)
+				enc := codec.NewErasureEncoder(eblk)
 				err = enc.Encode()
 				if err != nil {
 					logrus.Warnf("[UploadBlock]%sCheckBlockDup ERR:%s\n", self.logPrefix, err)
@@ -226,7 +226,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
 		return
 	}
-	enc := codec.NewLRCEncoder(eblk)
+	enc := codec.NewErasureEncoder(eblk)
 	err = enc.Encode()
 	if err != nil {
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
@@ -254,7 +254,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	}
 }
 
-func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.LRCEncoder, rsize *int32) *pkt.ErrorMessage {
+func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureEncoder, rsize *int32) *pkt.ErrorMessage {
 	size := len(enc.Shards)
 	ress := make([]*UploadShardResult, size)
 	startTime := time.Now()

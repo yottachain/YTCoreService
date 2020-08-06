@@ -320,7 +320,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
 	} else {
-		logrus.Infof("[SendRebuildTask][%d]Send rebuild task OK,count \n", node.Id, len(ls.Tasklist))
+		logrus.Infof("[SendRebuildTask][%d]Send rebuild task OK,count %d\n", node.Id, len(ls.Tasklist))
 	}
 }
 
@@ -367,25 +367,29 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		return &pkt.VoidResp{}
 	}
 	size := len(metas)
-	vbi := dao.GenerateShardID(size)
-	for index, m := range metas {
-		m.ID = vbi + int64(index)
-		m.NewNodeId = newid
+	if size > 0 {
+		vbi := dao.GenerateShardID(size)
+		for index, m := range metas {
+			m.ID = vbi + int64(index)
+			m.NewNodeId = newid
+		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
 	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
 	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 	if err != nil {
-		logrus.Errorf("[DNRebuidRep][%d]Update rebuid TaskStatus, count=%d,ERR:%s\n", newid, len(h.m.Id), err)
+		logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)
 	} else {
-		logrus.Infof("[DNRebuidRep][%d]Update rebuid TaskStatus OK,count=%d\n", newid, len(h.m.Id))
+		logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, size, len(h.m.Id))
 	}
-	err = dao.SaveShardRebuildMetas(metas)
-	if err != nil {
-		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
-	} else {
-		logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
+	if size > 0 {
+		err = dao.SaveShardRebuildMetas(metas)
+		if err != nil {
+			logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
+		} else {
+			logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
+		}
 	}
 	return &pkt.VoidResp{}
 }

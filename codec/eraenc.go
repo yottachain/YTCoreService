@@ -7,25 +7,25 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-type LRCEncoder struct {
+type ErasureEncoder struct {
 	EncBlock  *EncryptedBlock
 	Shards    []*Shard
 	DataCount int32
 }
 
-func NewLRCEncoder(block *EncryptedBlock) *LRCEncoder {
-	me := &LRCEncoder{}
+func NewErasureEncoder(block *EncryptedBlock) *ErasureEncoder {
+	me := &ErasureEncoder{}
 	me.EncBlock = block
 	return me
 }
 
-func (me *LRCEncoder) MakeVHBCopyMode() {
+func (me *ErasureEncoder) MakeVHBCopyMode() {
 	md5Digest := md5.New()
 	md5Digest.Write(me.Shards[0].VHF)
 	me.EncBlock.VHB = md5Digest.Sum(nil)
 }
 
-func (me *LRCEncoder) MakeVHBLRCMode() {
+func (me *ErasureEncoder) MakeVHBLRCMode() {
 	md5Digest := md5.New()
 	for _, s := range me.Shards {
 		md5Digest.Write(s.VHF)
@@ -33,11 +33,11 @@ func (me *LRCEncoder) MakeVHBLRCMode() {
 	me.EncBlock.VHB = md5Digest.Sum(nil)
 }
 
-func (me *LRCEncoder) IsCopyShard() bool {
+func (me *ErasureEncoder) IsCopyShard() bool {
 	return me.Shards[0].IsCopyShard()
 }
 
-func (me *LRCEncoder) Encode() error {
+func (me *ErasureEncoder) Encode() error {
 	if !me.EncBlock.NeedEncode() {
 		err := me.EncBlock.MakeVHB()
 		if err != nil {

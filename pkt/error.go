@@ -54,7 +54,7 @@ func NewErrorMsg(code int32, msg string) *ErrorMessage {
 }
 
 func ToError(err *ErrorMessage) error {
-	return fmt.Errorf("ServiceError:%d,%s", err.Code, err.Msg)
+	return fmt.Errorf("ServiceError %d:%s", err.Code, strings.TrimSpace(err.Msg))
 }
 
 func NewError(code int32) *ErrorMessage {
@@ -76,7 +76,7 @@ func NewErrorMessage(bs []byte) *ErrorMessage {
 func ErrorMsg(code int32, msg string) []byte {
 	err := &ErrorMessage{}
 	err.Code = code
-	err.Msg = msg
+	err.Msg = strings.TrimSpace(msg)
 	return MarshalError(err)
 }
 

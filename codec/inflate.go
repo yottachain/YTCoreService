@@ -17,7 +17,7 @@ type BlockReader struct {
 	reader io.Reader
 }
 
-func NewBlockReader(b *PlainBlock) (*BlockReader, error) {
+func NewBlockReader(b *PlainBlock) *BlockReader {
 	var ret int16 = 0
 	ret <<= 8
 	ret |= int16(b.Data[0] & 0xFF)
@@ -33,7 +33,25 @@ func NewBlockReader(b *PlainBlock) (*BlockReader, error) {
 	} else {
 		r.reader = flate.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
 	}
-	return r, nil
+	return r
+}
+
+func (br *BlockReader) Skip(n int64) error {
+	if n <= 0 {
+		return nil
+	}
+	remain := n
+	for {
+		out := make([]byte, remain)
+		reasn, err := br.Read(out)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		remain = remain - int64(reasn)
+		if remain == 0 {
+			return nil
+		}
+	}
 }
 
 func (br *BlockReader) Read(p []byte) (n int, err error) {
@@ -98,10 +116,7 @@ func (decoder *FileDecoder) Handle() error {
 			}
 			value = v
 		}
-		br, err := NewBlockReader(value)
-		if err != nil {
-			return err
-		}
+		br := NewBlockReader(value)
 		num, err := decoder.readBlock(sha256Digest, f, br)
 		if err == io.EOF {
 			continue

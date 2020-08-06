@@ -23,7 +23,7 @@ type FileEncoder struct {
 
 func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
 	if len(bs) >= env.Max_Memory_Usage {
-		return nil, errors.New("Length over 6M")
+		return nil, errors.New("Length over 10M")
 	}
 	size := int64(len(bs))
 	if size <= 0 {

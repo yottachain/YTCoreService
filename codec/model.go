@@ -159,6 +159,15 @@ func (self *PlainBlock) GetEncryptedBlockSize() int64 {
 	}
 }
 
+func GetEncryptedBlockSize(orgsize int64) int64 {
+	remain := orgsize % 16
+	if remain == 0 {
+		return orgsize + 16
+	} else {
+		return orgsize + (16 - remain)
+	}
+}
+
 type EncryptedBlock struct {
 	Block
 	VHB       []byte
@@ -181,6 +190,15 @@ func (self *EncryptedBlock) MakeVHB() error {
 
 func (self *EncryptedBlock) NeedLRCEncode() bool {
 	size := len(self.Data)
+	return NeedLRCEncode(size)
+}
+
+func (self *EncryptedBlock) NeedEncode() bool {
+	size := len(self.Data)
+	return size >= env.PL2
+}
+
+func NeedLRCEncode(size int) bool {
 	if size >= env.PL2 {
 		shardsize := env.PFL - 1
 		dataShardCount := size / shardsize
@@ -189,9 +207,4 @@ func (self *EncryptedBlock) NeedLRCEncode() bool {
 		}
 	}
 	return false
-}
-
-func (self *EncryptedBlock) NeedEncode() bool {
-	size := len(self.Data)
-	return size >= env.PL2
 }

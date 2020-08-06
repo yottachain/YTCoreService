@@ -34,7 +34,7 @@ func AddMem(length int64) {
 	}
 }
 
-func AddEncoderMem(enc *codec.LRCEncoder) int64 {
+func AddEncoderMem(enc *codec.ErasureEncoder) int64 {
 	var size int
 	if enc.IsCopyShard() {
 		size = env.PFL + 16

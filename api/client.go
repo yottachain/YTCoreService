@@ -48,7 +48,7 @@ func (c *Client) Regist() error {
 	req := &pkt.RegUserReqV2{Username: &c.Username, PubKey: &c.AccessorKey, VersionId: &env.VersionID}
 	res, err := net.RequestSN(req, sn, "", 0, false)
 	if err != nil {
-		emsg := fmt.Sprintf("User '%s' registration failed:%d-%s", c.Username, err.GetCode(), err.GetMsg())
+		emsg := fmt.Sprintf("User '%s' registration failed!%s", c.Username, pkt.ToError(err))
 		logrus.Errorf("[Regist]%s\n", emsg)
 		return errors.New(emsg)
 	} else {
@@ -82,6 +82,10 @@ func (c *Client) MakeSign() error {
 	}
 }
 
-func (c *Client) UploadObject() *UploadObject {
+func (c *Client) NewUploadObject() *UploadObject {
 	return NewUploadObject(c)
+}
+
+func (c *Client) NewDownloadObject() *DownloadObject {
+	return &DownloadObject{UClient: c}
 }

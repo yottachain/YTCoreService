@@ -19,7 +19,7 @@ const Max_Shard_Count = 128
 const Default_PND = 36
 
 const READFILE_BUF_SIZE = 64 * 1024
-const Max_Memory_Usage = 1024 * 1024 * 6
+const Max_Memory_Usage = 1024 * 1024 * 10
 const Default_Block_Size = 1024*1024*2 - 1 - 128
 
 const Compress_Reserve_Size = 16 * 1024

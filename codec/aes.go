@@ -93,12 +93,16 @@ func (bae *BlockAESDecryptor) Decrypt() (*PlainBlock, error) {
 	if bae.encryptedBlock.SecretKey == nil {
 		return nil, errors.New("SecretKey is null")
 	}
+	length := len(bae.encryptedBlock.Data)
+	if length%16 > 0 {
+		return nil, errors.New("data err")
+	}
 	block, err := aes.NewCipher(bae.encryptedBlock.SecretKey)
 	if err != nil {
 		return nil, err
 	}
 	blockMode := cipher.NewCBCDecrypter(block, IVParameter)
-	dstData := make([]byte, len(bae.encryptedBlock.Data))
+	dstData := make([]byte, length)
 	blockMode.CryptBlocks(dstData, bae.encryptedBlock.Data)
 	plainBlock := new(PlainBlock)
 	plainBlock.Data = PKCS7UnPadding(dstData)
@@ -119,9 +123,13 @@ func PKCS7UnPadding(origData []byte) []byte {
 
 func ECBDecrypt(data, key []byte) []byte {
 	block, _ := aes.NewCipher(key)
-	decrypted := make([]byte, len(data))
+	length := len(data)
+	if length%16 > 0 {
+		return data
+	}
+	decrypted := make([]byte, length)
 	size := block.BlockSize()
-	for bs, be := 0, size; bs < len(data); bs, be = bs+size, be+size {
+	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
 		block.Decrypt(decrypted[bs:be], data[bs:be])
 	}
 	return PKCS7UnPadding(decrypted)
@@ -130,9 +138,13 @@ func ECBDecrypt(data, key []byte) []byte {
 func ECBEncrypt(data, key []byte) []byte {
 	block, _ := aes.NewCipher(key)
 	data = PKCS7Padding(data, block.BlockSize())
-	decrypted := make([]byte, len(data))
+	length := len(data)
+	if length%16 > 0 {
+		return data
+	}
+	decrypted := make([]byte, length)
 	size := block.BlockSize()
-	for bs, be := 0, size; bs < len(data); bs, be = bs+size, be+size {
+	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
 		block.Encrypt(decrypted[bs:be], data[bs:be])
 	}
 	return decrypted
@@ -140,9 +152,13 @@ func ECBEncrypt(data, key []byte) []byte {
 
 func ECBDecryptNoPad(data, key []byte) []byte {
 	block, _ := aes.NewCipher(key)
-	decrypted := make([]byte, len(data))
+	length := len(data)
+	if length%16 > 0 {
+		return data
+	}
+	decrypted := make([]byte, length)
 	size := block.BlockSize()
-	for bs, be := 0, size; bs < len(data); bs, be = bs+size, be+size {
+	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
 		block.Decrypt(decrypted[bs:be], data[bs:be])
 	}
 	return decrypted

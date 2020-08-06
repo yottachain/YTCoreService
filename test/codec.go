@@ -44,13 +44,13 @@ func TestLRC() {
 	//remember original size
 	size := b.Length()
 
-	encoder := codec.NewLRCEncoder(b)
+	encoder := codec.NewErasureEncoder(b)
 	encoder.Encode()
 	//encode result
 	shards := encoder.Shards
 
 	//decode:input original size
-	decoder, _ := codec.NewLRCDecoder(size)
+	decoder, _ := codec.NewErasureDecoder(size)
 
 	//Random input shard
 	count := 0
