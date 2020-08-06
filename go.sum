@@ -467,8 +467,8 @@ github.com/yottachain/P2PHost v1.0.1-0.20200330065720-69572fdc7d92 h1:NG1tqZYyp+
 github.com/yottachain/P2PHost v1.0.1-0.20200330065720-69572fdc7d92/go.mod h1:V7g0oufx1cRzGw+1aUsMPkmD/+Uvdiax7dZiiC+afoM=
 github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812 h1:XG9TtLosanLdwqSoporMr8OASUOjxuaj6cJDlut1c9s=
 github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812/go.mod h1:jDJUVGeQ1clW7k9OTRBAFtCMwGs9B9fGQ9QY64SKqlk=
-github.com/yottachain/YTDNMgmt v0.0.0-20200717085945-ae1dfd8009ad h1:/QTnXya++PZNa92IUWthUOn4dVBBfmD4NqHo/FgNpSw=
-github.com/yottachain/YTDNMgmt v0.0.0-20200717085945-ae1dfd8009ad/go.mod h1:54ncBoypTn1yxf7rQShg50gqRYrPeN81z9e08afPet0=
+github.com/yottachain/YTDNMgmt v0.0.0-20200805025457-dfe292c75384 h1:eqi9Vyx3tuuVGpBGd70huOcUcmW8NWK2rOvC4ktjOok=
+github.com/yottachain/YTDNMgmt v0.0.0-20200805025457-dfe292c75384/go.mod h1:54ncBoypTn1yxf7rQShg50gqRYrPeN81z9e08afPet0=
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb h1:dcRKjMvVYkYS5y2r+tXkU+eKTXWN5vHTLXdwC72JKQU=
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200703084155-b2658f82b387 h1:R/97SeDbNjZ2iYCNeGr/ZH2OQgTwNGqlh4PGcZkqR7I=
@@ -478,8 +478,8 @@ github.com/yottachain/YTHost v1.0.2-0.20200723084028-d7759ba6b766/go.mod h1:PMIX
 github.com/yottachain/yotta-analysis v0.0.0-20200427065413-d4b83ac9a92f/go.mod h1:WBAiITvR+7h/fwyUYkybMjaBb812On6Td7sMc/nAqKE=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849 h1:rDnUFBmO2O8+ESvw6V733PiOLzKcEGiDoGdtOrr6HGQ=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=
-github.com/yottachain/yotta-rebuilder v0.0.0-20200717072216-896775c13b91 h1:Baqv+5avdioSldrFTpPFZtNHg8a+SgLU5JlQMhr12vI=
-github.com/yottachain/yotta-rebuilder v0.0.0-20200717072216-896775c13b91/go.mod h1:c/vvujj86i/czpGHcnGJGEq1TY4Aa5xhpwNSxD9BCdc=
+github.com/yottachain/yotta-rebuilder v0.0.0-20200803032758-12532c94c4d6 h1:L2i4SwkivV2PXx//jJf82cAUxYtETnZzq0A8usijvn8=
+github.com/yottachain/yotta-rebuilder v0.0.0-20200803032758-12532c94c4d6/go.mod h1:c/vvujj86i/czpGHcnGJGEq1TY4Aa5xhpwNSxD9BCdc=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=

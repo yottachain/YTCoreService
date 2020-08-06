@@ -201,7 +201,7 @@ func SaveShardMetas(ls []*ShardMeta) error {
 	_, err := source.GetShardColl().InsertMany(ctx, obs)
 	if err != nil {
 		errstr := err.Error()
-		if !strings.Contains(errstr, "duplicate key error") {
+		if !strings.ContainsAny(errstr, "duplicate key error") {
 			logrus.Errorf("[SaveShardMetas]ERR:%s\n", err)
 			return err
 		}

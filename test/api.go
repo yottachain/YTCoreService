@@ -3,9 +3,11 @@ package test
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -14,8 +16,18 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
-var istest bool = false
-var testsize int64 = 1024 * 1024 * 9
+var istest bool = true
+var testsize int64 = 1024 * 1024 * 1
+
+func Test() {
+	//if !strings.ContainsAny(errstr, "duplicate key error") {
+	errstr := "sds{gs;ge[duplicate key errorrhgages[[]];]]]]r"
+	if strings.Contains(errstr, "duplicate key error") {
+		fmt.Println("true")
+	} else {
+		fmt.Println("false")
+	}
+}
 
 func UpAndDown() {
 	var user string

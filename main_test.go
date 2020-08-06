@@ -13,8 +13,9 @@ func init() {
 func Test(t *testing.T) {
 
 	//***********api test*********
-	test.UpAndDown()
+	//test.UpAndDown()
 
+	test.Test()
 	//**********code test**********
 	//env.InitClient()
 	//test.TestCut

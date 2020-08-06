@@ -159,7 +159,7 @@ func (self *EOSURI) SetErr(err error) bool {
 	if msg == "" {
 		return false
 	}
-	if strings.Contains(msg, "Duplicate transaction") {
+	if strings.ContainsAny(msg, "Duplicate transaction") {
 		time.Sleep(time.Duration(10) * time.Millisecond)
 	} else {
 		atomic.StoreInt32(self.ErrStatu, 1)

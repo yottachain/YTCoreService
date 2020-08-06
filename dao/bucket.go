@@ -167,7 +167,7 @@ func SaveBucketMeta(meta *BucketMeta) error {
 	_, err := source.GetBucketColl().InsertOne(ctx, meta)
 	if err != nil {
 		errstr := err.Error()
-		if !strings.Contains(errstr, "duplicate key error") {
+		if !strings.ContainsAny(errstr, "duplicate key error") {
 			logrus.Errorf("[SaveBucketMeta]UserID:%d,Name:%s,ERR:%s\n", meta.UserId, meta.BucketName, err)
 			return err
 		}

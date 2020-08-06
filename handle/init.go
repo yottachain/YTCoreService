@@ -91,7 +91,7 @@ func insertSuperNode() {
 		_, err := collection.InsertOne(ctx, n)
 		if err != nil {
 			errstr := err.Error()
-			if !strings.Contains(errstr, "duplicate key error") {
+			if !strings.ContainsAny(errstr, "duplicate key error") {
 				logrus.Panicf("Save superNode ERR:%s\n", err)
 			} else {
 				logrus.Errorf("Save superNode ERR:%s\n", err)

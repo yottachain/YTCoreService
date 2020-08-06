@@ -95,7 +95,7 @@ func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 	}
 }
 
-func TestZip() {
+func TestCut() {
 	key := codec.GenerateRandomKey()
 	logrus.Infof("key:%s\n", hex.EncodeToString(key))
 

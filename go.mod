@@ -17,10 +17,10 @@ require (
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20200717085945-ae1dfd8009ad
+	github.com/yottachain/YTDNMgmt v0.0.0-20200805025457-dfe292c75384
 	github.com/yottachain/YTHost v1.0.2-0.20200723084028-d7759ba6b766
 	github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849
-	github.com/yottachain/yotta-rebuilder v0.0.0-20200717072216-896775c13b91
+	github.com/yottachain/yotta-rebuilder v0.0.0-20200803032758-12532c94c4d6
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	golang.org/x/mod v0.3.0 // indirect

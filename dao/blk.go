@@ -114,7 +114,7 @@ func SaveBlockMeta(meta *BlockMeta) error {
 	_, err := source.GetBlockColl().InsertOne(ctx, meta)
 	if err != nil {
 		errstr := err.Error()
-		if !strings.Contains(errstr, "duplicate key error") {
+		if !strings.ContainsAny(errstr, "duplicate key error") {
 			logrus.Errorf("[SaveBlockMeta]ERR:%s\n", err)
 			return err
 		}
@@ -133,7 +133,7 @@ func SaveBlockData(id int64, data []byte) error {
 	_, err := source.GetBlockDataColl().InsertOne(ctx, result)
 	if err != nil {
 		errstr := err.Error()
-		if !strings.Contains(errstr, "duplicate key error") {
+		if !strings.ContainsAny(errstr, "duplicate key error") {
 			logrus.Errorf("[SaveBlockData]ERR:%s\n", err)
 			return err
 		}
