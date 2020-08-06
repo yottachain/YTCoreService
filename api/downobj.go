@@ -2,6 +2,7 @@ package api
 
 import (
 	"io"
+	"os"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -90,4 +91,28 @@ func (self *DownloadObject) Load() io.Reader {
 func (self *DownloadObject) LoadRange(start, end int64) io.Reader {
 	rd := NewDownLoadReader(self, start, end)
 	return rd
+}
+
+func (self *DownloadObject) SaveToFile(path string) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	read := NewDownLoadReader(self, 0, self.Length)
+	readbuf := make([]byte, 8192)
+	for {
+		num, err := read.Read(readbuf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if num > 0 {
+			bs := readbuf[0:num]
+			f.Write(bs)
+		}
+		if err != nil && err == io.EOF {
+			break
+		}
+	}
+	return nil
 }

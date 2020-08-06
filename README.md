@@ -16,7 +16,7 @@ api.StartApi()
 user：用户名
 pkey：用户存储私钥
 c, err := api.NewClient(user, pkey)
-err:当sn通讯或其他服务故障造成实例化失败，caller可间隔n秒重试
+err:当SN通讯或其他服务故障造成实例化失败，caller可间隔n秒重试
 c：用户端实例
 
 c.UserId:注册成功后sn返回的用户ID
@@ -40,5 +40,20 @@ hash,err:=upload.UploadBytes(bytes)
 ii:=upload.GetProgress()
 
 6.下载文件
+hash:要下载的文件sha256摘要
+download,err:=c.NewDownloadObject(hash)
+download：下载实例
+err:下载实例化出错，可能SN通讯或其他服务故障
+
+获取输出流,可按字节范围下载
+reader:=download.Load()
+reader:=download.LoadRange(startpos,endpos)
+reader：返回标准库io.Reader类型实例
+
+下载文件到磁盘指定位置
+err:=download.SaveToFile(path)
+
+
+
 
 

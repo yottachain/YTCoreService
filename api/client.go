@@ -14,6 +14,7 @@ import (
 	"github.com/yottachain/YTCrypto"
 	ytcrypto "github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTDNMgmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Client struct {
@@ -89,6 +90,16 @@ func (c *Client) NewUploadObject() *UploadObject {
 func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessage) {
 	do := &DownloadObject{UClient: c}
 	err := do.InitByVHW(vhw)
+	if err != nil {
+		return nil, err
+	} else {
+		return do, nil
+	}
+}
+
+func (c *Client) NewDownloadBytes(bucketName, filename string, version primitive.ObjectID) (*DownloadObject, *pkt.ErrorMessage) {
+	do := &DownloadObject{UClient: c}
+	err := do.InitByKey(bucketName, filename, version)
 	if err != nil {
 		return nil, err
 	} else {
