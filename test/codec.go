@@ -11,6 +11,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
+	"github.com/yottachain/YTCoreService/env"
 )
 
 func TestAES() {
@@ -33,6 +34,7 @@ func TestAES() {
 }
 
 func TestLRC() {
+	env.InitClient()
 	//execute only once when process starts
 	codec.InitLRC()
 	//input: <2M file

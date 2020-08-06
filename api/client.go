@@ -106,3 +106,11 @@ func (c *Client) NewDownloadBytes(bucketName, filename string, version primitive
 		return do, nil
 	}
 }
+
+func (c *Client) NewBucketAccessor() *BucketAccessor {
+	return &BucketAccessor{UClient: c}
+}
+
+func (c *Client) NewObjectAccessor() *ObjectAccessor {
+	return &ObjectAccessor{UClient: c}
+}

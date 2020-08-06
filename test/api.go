@@ -14,7 +14,7 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
-var istest bool = true
+var istest bool = false
 var testsize int64 = 1024 * 1024 * 9
 
 func UpDnLoad() {

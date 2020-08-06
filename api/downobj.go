@@ -77,6 +77,9 @@ func (self *DownloadObject) init(req proto.Message, key string) *pkt.ErrorMessag
 			refs = append(refs, r)
 		}
 		self.REFS = refs
+	} else {
+		logrus.Errorf("[DownloadOBJ][%s]Init ERR:RETURN_ERR_MSG\n", key)
+		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
 	}
 	logrus.Infof("[DownloadOBJ][%s]Init OK, length %d,num of blocks %d,take times %d ms.\n", key, self.Length,
 		len(self.REFS), time.Now().Sub(startTime).Milliseconds())

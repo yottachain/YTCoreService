@@ -3,21 +3,15 @@ package main
 import (
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
 )
 
-func CatchError(name string) {
-	if r := recover(); r != nil {
-		logrus.Errorf("[%s]ERR:%s\n", name, r)
-	}
-}
-
-func Test(t *testing.T) {
-	//defer CatchError("Test")
+func init() {
 	env.Console = true
+}
+func Test(t *testing.T) {
+
 	test.UpDnLoad()
-	//test.TestCodec()
-	select {}
+	//test.TestLRC()
 }
