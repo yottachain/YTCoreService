@@ -58,7 +58,7 @@ func (me *DownLoadReader) readBlock() error {
 			}
 			if plainblock != nil {
 				rd := codec.NewBlockReader(plainblock)
-				er := rd.Skip(me.pos - me.readpos)
+				er := rd.Skip(me.readpos - me.pos)
 				if er != nil {
 					return me.ReadCaller(er)
 				}

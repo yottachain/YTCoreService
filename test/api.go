@@ -42,8 +42,7 @@ func UpDnLoad() {
 	}
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
 
-	dn := c.NewDownloadObject()
-	errmsg = dn.InitByVHW(vhw)
+	dn, errmsg := c.NewDownloadObject(vhw)
 	if errmsg != nil {
 		return
 	}
@@ -100,7 +99,6 @@ func UpDnLoad() {
 			break
 		}
 	}
-
 	newvhw = sha256Digest.Sum(nil)
 	logrus.Infof("[DownloadFile]Download %d--%d OK,hash:%s,size:%d\n", spos, epos, base58.Encode(newvhw), count)
 

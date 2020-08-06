@@ -86,6 +86,12 @@ func (c *Client) NewUploadObject() *UploadObject {
 	return NewUploadObject(c)
 }
 
-func (c *Client) NewDownloadObject() *DownloadObject {
-	return &DownloadObject{UClient: c}
+func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessage) {
+	do := &DownloadObject{UClient: c}
+	err := do.InitByVHW(vhw)
+	if err != nil {
+		return nil, err
+	} else {
+		return do, nil
+	}
 }
