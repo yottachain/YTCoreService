@@ -17,7 +17,7 @@ import (
 var istest bool = false
 var testsize int64 = 1024 * 1024 * 9
 
-func UpDnLoad() {
+func UpAndDown() {
 	var user string
 	var pkey string
 	if istest {

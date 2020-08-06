@@ -12,6 +12,11 @@ func init() {
 }
 func Test(t *testing.T) {
 
-	test.UpDnLoad()
+	//***********api test*********
+	test.UpAndDown()
+
+	//**********code test**********
+	//env.InitClient()
+	//test.TestCut
 	//test.TestLRC()
 }
