@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 )
@@ -22,7 +23,7 @@ func StartSumUsedSpace() {
 }
 
 func SumUsedSpace() {
-	defer CatchError("RelationshipSum")
+	defer env.TracePanic()
 	m, err := dao.SumRelationship()
 	if err == nil {
 		if len(m) > 0 {

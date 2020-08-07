@@ -97,11 +97,7 @@ func GetBalance(username string) (uint64, error) {
 	if !env.BP_ENABLE {
 		return 10000000, nil
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.Errorf("[EOS]GetBalance ERR:%s\n", r)
-		}
-	}()
+	defer env.TracePanic()
 	obj := GetBalanceReq{Owner: eos.AN(username),
 		UType: 2, Caller: eos.AN(env.BPAccount)}
 	res, err := RequestWRetry("getbalance", obj, 3)

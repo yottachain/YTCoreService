@@ -15,7 +15,7 @@ import (
 )
 
 var istest bool = true
-var testsize int64 = 1024 * 1024 * 1
+var testsize int64 = 1024 * 1024 * 9
 
 func UpAndDown() {
 	var user string

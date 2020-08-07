@@ -59,9 +59,7 @@ type UploadShard struct {
 func (self *UploadShard) DoFinish() {
 	SHARD_UP_CH <- 1
 	self.WG.Done()
-	if r := recover(); r != nil {
-		logrus.Errorf("[UploadShard]%sERR:%s\n", self.logPrefix, r)
-	}
+	env.TracePanic()
 }
 
 func (self *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {

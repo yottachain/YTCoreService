@@ -19,7 +19,7 @@ func StartDoCacheFee() {
 }
 
 func DoCacheAction() bool {
-	defer CatchError("DoCacheFee")
+	defer env.TracePanic()
 	action := dao.FindOneNewObject()
 	if action == nil {
 		return false

@@ -32,7 +32,7 @@ func StartIterateShards() {
 	}
 }
 func FindFirstId() bool {
-	defer CatchError("IterateShard")
+	defer env.TracePanic()
 	id, err := dao.GetShardCountProgress()
 	if err != nil {
 		time.Sleep(time.Duration(30) * time.Second)
@@ -54,7 +54,7 @@ func FindFirstId() bool {
 }
 
 func Iterate() {
-	defer CatchError("IterateShard")
+	defer env.TracePanic()
 	lasttime := firstId>>32 + int64(env.LsShardInterval)
 	querylasttime := time.Now().Unix() - DELAY_TIMES
 	if lasttime > querylasttime {

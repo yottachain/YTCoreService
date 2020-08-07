@@ -18,12 +18,6 @@ type Node struct {
 	Addrs  []string
 }
 
-func OnError(name string) {
-	if r := recover(); r != nil {
-		logrus.Errorf("%s Unknown ERR:%s\n", name, r)
-	}
-}
-
 func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *pkt.ErrorMessage) {
 	data, name, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
@@ -39,7 +33,7 @@ func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *
 	if err != nil {
 		return nil, err
 	}
-	defer OnError(log_pre)
+	defer env.TracePanic()
 	return client.Request(int32(msgtype), data, dn.Addrs, log_pre)
 }
 
@@ -54,7 +48,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 	} else {
 		log_pre = fmt.Sprintf("[%s][%d]%s", name, sn.ID, log_prefix)
 	}
-	defer OnError(log_pre)
+	defer env.TracePanic()
 	retryTimes := 0
 	for {
 		if retryTimes > 1 {

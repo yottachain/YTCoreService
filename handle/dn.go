@@ -189,7 +189,7 @@ func ExecSendSpotCheck() {
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
-	defer CatchError("SendSpotCheck")
+	defer env.TracePanic()
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
 	if err != nil {
 		logrus.Errorf("[IsNodeSelected]ERR:%s\n", err)
@@ -303,7 +303,7 @@ func SendRebuildTask(node *YTDNMgmt.Node) {
 func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
-	defer CatchError("SendRebuildTask")
+	defer env.TracePanic()
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()

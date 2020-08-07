@@ -201,7 +201,7 @@ func (self *UploadObject) initUpload() *pkt.ErrorMessage {
 	defer func() {
 		if r := recover(); r != nil {
 			self.UClient = nil
-			logrus.Errorf("[UploadObject]Init ERR:%s\n", r)
+			env.TraceError()
 		}
 	}()
 	size := uint64(self.Encoder.GetLength())

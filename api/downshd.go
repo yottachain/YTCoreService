@@ -146,9 +146,7 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 func (self *DownLoadShardInfo) DoFinish() {
 	SHARD_DOWN_CH <- 1
 	self.DWNS.okSign <- 0
-	if r := recover(); r != nil {
-		logrus.Errorf("[DownloadShard]%sUnknown ERR:%s\n", self.DWNS.logPrefix, r)
-	}
+	env.TracePanic()
 }
 
 func (me *DownLoadShardInfo) Download() []byte {

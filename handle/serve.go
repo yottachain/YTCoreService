@@ -68,18 +68,6 @@ func findHandler(msg proto.Message, msgType uint16) (MessageEvent, *pkt.ErrorMes
 	return handfunc(), nil
 }
 
-func CatchError(name string) {
-	if r := recover(); r != nil {
-		logrus.Errorf("[%s]ERR:%s\n", name, r)
-	}
-}
-
-func OnError(msg proto.Message, name string) {
-	if r := recover(); r != nil {
-		logrus.Errorf("[OnMessage] %s ERR:%s\n", name, r)
-	}
-}
-
 func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	msgfunc, ok := pkt.ID_CLASS_MAP[msgType]
 	if !ok {
@@ -88,7 +76,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	msg := msgfunc()
 	name := reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
-	defer OnError(msg, name)
+	defer env.TracePanic()
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
 		logrus.Errorf("[OnMessage]Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())

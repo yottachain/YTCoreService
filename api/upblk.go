@@ -56,7 +56,7 @@ func (self *UploadBlock) DoFinish() {
 	DecBlockMen(&self.BLK.Block)
 	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, self.BLK.Length())
 	if r := recover(); r != nil {
-		logrus.Errorf("[UploadBlock]%sERR:%s\n", self.logPrefix, r)
+		env.TraceError()
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 	}
 }

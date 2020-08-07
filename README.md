@@ -106,11 +106,3 @@ err:=objectAccessor.DeleteObject(buck, fileName, Verid)
 item,err:=objectAccessor.GetObject(buck, fileName)
 返回
 item.FileId 文件ID，如果nil表示文件不存在
-
-
-
-
-
-
-
-

@@ -4,22 +4,18 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
 	env.Console = true
 }
 
-func test() {
-
-}
 func Test(t *testing.T) {
-	test()
-
+	defer env.TracePanic()
 	//***********api test*********
-	//test.UpAndDown()
+	test.UpAndDown()
 
-	//test.Test()
 	//**********code test**********
 	//env.InitClient()
 	//test.TestCut
