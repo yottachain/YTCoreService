@@ -202,6 +202,7 @@ func DoBlockSpaceSum() {
 		return
 	}
 	defer bss.WG.Done()
+	defer CatchError("SumBlockUsedSpace")
 	var space int64
 	for {
 		uspace, err := bss.ReqBlockUsedSpace()
