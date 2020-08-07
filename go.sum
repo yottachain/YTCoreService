@@ -478,8 +478,8 @@ github.com/yottachain/YTHost v1.0.2-0.20200723084028-d7759ba6b766/go.mod h1:PMIX
 github.com/yottachain/yotta-analysis v0.0.0-20200427065413-d4b83ac9a92f/go.mod h1:WBAiITvR+7h/fwyUYkybMjaBb812On6Td7sMc/nAqKE=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849 h1:rDnUFBmO2O8+ESvw6V733PiOLzKcEGiDoGdtOrr6HGQ=
 github.com/yottachain/yotta-analysis v0.0.0-20200710152633-00c1425fe849/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=
-github.com/yottachain/yotta-rebuilder v0.0.0-20200803032758-12532c94c4d6 h1:L2i4SwkivV2PXx//jJf82cAUxYtETnZzq0A8usijvn8=
-github.com/yottachain/yotta-rebuilder v0.0.0-20200803032758-12532c94c4d6/go.mod h1:c/vvujj86i/czpGHcnGJGEq1TY4Aa5xhpwNSxD9BCdc=
+github.com/yottachain/yotta-rebuilder v0.0.0-20200807082848-c40b87fb4f6f h1:76y+qp8zXT65D5J9jveIS3iliaGRVBg8+bBklCC47jY=
+github.com/yottachain/yotta-rebuilder v0.0.0-20200807082848-c40b87fb4f6f/go.mod h1:c/vvujj86i/czpGHcnGJGEq1TY4Aa5xhpwNSxD9BCdc=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=

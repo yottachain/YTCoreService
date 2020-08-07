@@ -48,7 +48,7 @@ func TestLRC() {
 	encoder.Encode()
 	//encode result
 	shards := encoder.Shards
-
+	fmt.Printf("Encode OK:%d\n", len(shards))
 	//decode:input original size
 	decoder, _ := codec.NewErasureDecoder(size)
 
@@ -65,7 +65,7 @@ func TestLRC() {
 			break
 		}
 	}
-
+	fmt.Printf("Decode OK:input %d\n", count)
 	//decode result
 	b = decoder.GetEncryptedBlock()
 	b.MakeVHB()

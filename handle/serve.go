@@ -35,6 +35,7 @@ func Start() {
 		go StartSumUsedSpace()
 		go StartIterateShards()
 		go StartIterateUser()
+		go StartDNBlackListCheck()
 	}
 }
 

@@ -376,19 +376,19 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
-	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES}
+	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid}
 	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 	if err != nil {
 		logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)
 	} else {
 		logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, size, len(h.m.Id))
-	}
-	if size > 0 {
-		err = dao.SaveShardRebuildMetas(metas)
-		if err != nil {
-			logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
-		} else {
-			logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
+		if size > 0 {
+			err = dao.SaveShardRebuildMetas(metas)
+			if err != nil {
+				logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
+			} else {
+				logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
+			}
 		}
 	}
 	return &pkt.VoidResp{}

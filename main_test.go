@@ -14,10 +14,10 @@ func init() {
 func Test(t *testing.T) {
 	defer env.TracePanic()
 	//***********api test*********
-	test.UpAndDown()
+	//test.UpAndDown()
 
 	//**********code test**********
-	//env.InitClient()
+	env.InitClient()
 	//test.TestCut
-	//test.TestLRC()
+	test.TestLRC()
 }

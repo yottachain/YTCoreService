@@ -3,6 +3,7 @@ package handle
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -305,8 +306,14 @@ func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*p
 func (h *UploadBlockEndHandler) Handle() proto.Message {
 	logrus.Debugf("[UploadBLK]Receive UploadBlockEnd request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
-	if !NotInBlackList(h.m.Oklist, h.user.UserID) {
-		return pkt.NewError(pkt.DN_IN_BLACKLIST)
+	inblkids := NotInBlackList(h.m.Oklist, h.user.UserID)
+	if inblkids != nil && len(inblkids) > 0 {
+		txt, _ := json.Marshal(inblkids)
+		if txt != nil {
+			return pkt.NewErrorMsg(pkt.DN_IN_BLACKLIST, string(txt))
+		} else {
+			return pkt.NewError(pkt.DN_IN_BLACKLIST)
+		}
 	}
 	shardcount := len(h.m.Oklist)
 	vbi := dao.GenerateBlockID(shardcount)
