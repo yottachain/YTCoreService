@@ -31,7 +31,7 @@ func GetShardCountProgress() (int64, error) {
 	source := NewBaseSource()
 	filter := bson.M{"_id": 0}
 	var result = struct {
-		lastid int64 `bson:"lastid"`
+		Lastid int64 `bson:"lastid"`
 	}{}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -44,7 +44,7 @@ func GetShardCountProgress() (int64, error) {
 			return 0, err
 		}
 	}
-	return result.lastid, nil
+	return result.Lastid, nil
 }
 
 func SetShardCountProgress(id int64) error {
@@ -220,7 +220,11 @@ func SaveShardRebuildMetas(ls []*ShardRebuidMeta) error {
 	defer cancel()
 	_, err := source.GetShardRebuildColl().InsertMany(ctx, obs)
 	if err != nil {
-		return err
+		errstr := err.Error()
+		if !strings.ContainsAny(errstr, "duplicate key error") {
+			logrus.Errorf("[SaveShardRebuildMetas]ERR:%s\n", err)
+			return err
+		}
 	}
 	return nil
 }

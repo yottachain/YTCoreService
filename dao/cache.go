@@ -79,7 +79,7 @@ func GetUserSumTime(userid int32) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var result = struct {
-		statTime int64 `bson:"statTime"`
+		StatTime int64 `bson:"statTime"`
 	}{}
 	err := source.GetSumColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
@@ -90,5 +90,5 @@ func GetUserSumTime(userid int32) (int64, error) {
 			return 0, err
 		}
 	}
-	return result.statTime, err
+	return result.StatTime, err
 }

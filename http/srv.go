@@ -32,7 +32,13 @@ func Start(port int) error {
 		return errors.New("Resource file 'statapi.html' read failure\n")
 	}
 	home_page = string(data)
-	ip_list = strings.Split(env.HttpRemoteIp, ";")
+	list := strings.Split(env.HttpRemoteIp, ";")
+	for _, ip := range list {
+		s := strings.TrimSpace(ip)
+		if s != "" {
+			ip_list = append(ip_list, s)
+		}
+	}
 	http.HandleFunc("/total", TotalHandle)
 	http.HandleFunc("/usertotal", UserTotalHandle)
 	http.HandleFunc("/list", ListHandle)
@@ -88,6 +94,9 @@ func checkPostMethod(req *http.Request) bool {
 }
 
 func checkIp(ip string) bool {
+	if ip_list == nil || len(ip_list) == 0 {
+		return true
+	}
 	index := strings.Index(ip, ":")
 	ip = ip[:index]
 	for _, v := range ip_list {
