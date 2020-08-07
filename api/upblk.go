@@ -294,7 +294,6 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 		Oklist:       ToUploadBlockEndReqV2_OkList(ress),
 	}
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
-	//_, errmsg = net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		return errmsg
 	} else {
