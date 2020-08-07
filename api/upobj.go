@@ -225,7 +225,7 @@ func (self *UploadObject) initUpload() *pkt.ErrorMessage {
 		}
 		initresp = res
 	}
-	if initresp.Vnu == nil {
+	if initresp.Vnu == nil || initresp.Vnu.Timestamp == nil || initresp.Vnu.MachineIdentifier == nil || initresp.Vnu.ProcessIdentifier == nil || initresp.Vnu.Counter == nil {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "VNU Return Nil")
 	}
 	self.VNU = pkt.NewObjectId(*initresp.Vnu.Timestamp, *initresp.Vnu.MachineIdentifier, *initresp.Vnu.ProcessIdentifier, *initresp.Vnu.Counter)
