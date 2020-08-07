@@ -106,3 +106,12 @@ err:=objectAccessor.DeleteObject(buck, fileName, Verid)
 item,err:=objectAccessor.GetObject(buck, fileName)
 返回
 item.FileId 文件ID，如果nil表示文件不存在
+
+8.Meta序列化反序列化
+bucket meta
+api.BucketMetaMapToBytes(map[string]string)([]byte,error)
+api.BytesToBucketMetaMap([]byte)(map[string]string,error)
+
+file meta
+api.BytesToFileMetaMap([]byte, versionid)(map[string]string, error)
+api.FileMetaMapTobytes(map[string]string)([]byte,error)

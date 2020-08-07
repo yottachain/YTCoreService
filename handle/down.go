@@ -4,6 +4,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -146,7 +147,7 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 	for index, v := range metas {
 		vhfs[index] = v.VHF
 		nodeids[index] = v.NodeId
-		if !IsExistInArray(v.NodeId, nodeidsls) {
+		if !env.IsExistInArray(v.NodeId, nodeidsls) {
 			nodeidsls = append(nodeidsls, v.NodeId)
 		}
 	}

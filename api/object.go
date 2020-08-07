@@ -1,7 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -25,6 +30,52 @@ type FileItem struct {
 	Latest    bool
 	Meta      []byte
 	Acl       []byte
+}
+
+const LengthKey = "contentLength"
+const ETagKey = "ETag"
+const DateKey = "x-amz-date"
+
+func BytesToFileMetaMap(meta []byte, versionid primitive.ObjectID) (map[string]string, error) {
+	if meta == nil {
+		return nil, errors.New("no data")
+	}
+	if len(meta) > 24 {
+		m, err := pkt.UnmarshalMap(meta)
+		if err == nil {
+			s, _ := m[ETagKey]
+			if s != "" {
+				return m, nil
+			}
+		}
+		id := env.BytesToId(meta)
+		hash := meta[8:]
+		m = make(map[string]string)
+		m[LengthKey] = strconv.Itoa(int(id))
+		m[ETagKey] = "\\" + hex.EncodeToString(hash) + "\\"
+		if versionid != primitive.NilObjectID {
+			m[DateKey] = versionid.Timestamp().String()
+		}
+		return m, nil
+	} else {
+		return nil, errors.New("err data")
+	}
+}
+
+func FileMetaMapTobytes(m map[string]string) ([]byte, error) {
+	s1, _ := m[ETagKey]
+	s1 = strings.ReplaceAll(s1, "\\", "")
+	bs2, err := hex.DecodeString(s1)
+	if err != nil {
+		return nil, errors.New(ETagKey + " value err.")
+	}
+	s2, _ := m[LengthKey]
+	size, err := strconv.Atoi(s2)
+	if err != nil {
+		return nil, errors.New(LengthKey + " value err.")
+	}
+	bs1 := env.IdToBytes(int64(size))
+	return bytes.Join([][]byte{bs1, bs2}, []byte{}), nil
 }
 
 func (self *ObjectAccessor) CreateObject(bucketname, filename string, VNU primitive.ObjectID, meta []byte) *pkt.ErrorMessage {

@@ -335,7 +335,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
 		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, VHF: v.VHF}
-		if !IsExistInArray(int32(*v.NODEID), nodeidsls) {
+		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
 	}
@@ -491,7 +491,7 @@ func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
 		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, VHF: v.VHF}
-		if !IsExistInArray(int32(*v.NODEID), nodeidsls) {
+		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
 	}

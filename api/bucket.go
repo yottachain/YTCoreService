@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -9,6 +11,17 @@ import (
 
 type BucketAccessor struct {
 	UClient *Client
+}
+
+func BytesToBucketMetaMap(meta []byte) (map[string]string, error) {
+	if meta == nil {
+		return nil, errors.New("no data")
+	}
+	return pkt.UnmarshalMap(meta)
+}
+
+func BucketMetaMapTobytes(m map[string]string) ([]byte, error) {
+	return pkt.MarshalMap(m)
 }
 
 func (self *BucketAccessor) CreateBucket(name string, meta []byte) *pkt.ErrorMessage {

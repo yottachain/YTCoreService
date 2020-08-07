@@ -84,15 +84,3 @@ func GenerateBlockID(shardCount int) int64 {
 func GenerateZeroID(timestamp int64) int64 {
 	return (timestamp & 0x00000000ffffffff) << 32
 }
-
-func BytesToId(bs []byte) int64 {
-	vbi := int64(bs[0] & 0xFF)
-	vbi = vbi<<8 | int64(bs[1]&0xFF)
-	vbi = vbi<<8 | int64(bs[2]&0xFF)
-	vbi = vbi<<8 | int64(bs[3]&0xFF)
-	vbi = vbi<<8 | int64(bs[4]&0xFF)
-	vbi = vbi<<8 | int64(bs[5]&0xFF)
-	vbi = vbi<<8 | int64(bs[6]&0xFF)
-	vbi = vbi<<8 | int64(bs[7]&0xFF)
-	return vbi
-}

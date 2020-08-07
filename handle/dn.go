@@ -358,7 +358,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	okList := []int64{}
 	for index, idbs := range h.m.Id {
 		if h.m.RES[index] == 0 {
-			id := dao.BytesToId(idbs)
+			id := env.BytesToId(idbs)
 			okList = append(okList, id)
 		}
 	}
