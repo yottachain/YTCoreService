@@ -20,7 +20,7 @@ func BytesToBucketMetaMap(meta []byte) (map[string]string, error) {
 	return pkt.UnmarshalMap(meta)
 }
 
-func BucketMetaMapTobytes(m map[string]string) ([]byte, error) {
+func BucketMetaMapToBytes(m map[string]string) ([]byte, error) {
 	return pkt.MarshalMap(m)
 }
 

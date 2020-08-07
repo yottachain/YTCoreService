@@ -142,12 +142,3 @@ func CheckRoutine(rnum *int32) error {
 	}
 	return nil
 }
-
-func IsExistInArray(id int32, array []int32) bool {
-	for _, arr := range array {
-		if id == arr {
-			return true
-		}
-	}
-	return false
-}
