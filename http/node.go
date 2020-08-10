@@ -37,6 +37,7 @@ func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
 			m["id"] = strconv.Itoa(int(n.ID))
 			m["ip"] = n.Addrs
 			m["nodeid"] = n.NodeID
+			m["weight"] = strconv.FormatFloat(n.Weight, 'f', -1, 64)
 			ns[index] = m
 		}
 		txt, err := json.Marshal(ns)

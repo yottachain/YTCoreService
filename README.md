@@ -66,7 +66,7 @@ err:=download.SaveToFile(path)
 
 指定文件名及版本号下载文件
 version:不指定版本号，下载最新版本
-download,err:=c.NewDownloadBytes(bucketName, filename , version)
+download,err:=c.NewDownloadFile(bucketName, filename , version)
 
 7.用户元数据接口
 创建bucket
