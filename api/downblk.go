@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
@@ -16,8 +17,7 @@ type DownloadBlock struct {
 	Ref     *pkt.Refer
 }
 
-func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
-	KS := codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.AESKey)
+func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 	vbi := uint64(self.Ref.VBI)
 	req := &pkt.DownloadBlockInitReqV2{
 		UserId:    &self.UClient.UserId,
@@ -25,7 +25,6 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 		KeyNumber: &self.UClient.KeyNumber,
 		VBI:       &vbi,
 	}
-	startTime := time.Now()
 	sn := net.GetSuperNode(int(self.Ref.SuperID))
 	if sn == nil {
 		logrus.Errorf("[DownloadBlock][%d][%d]Init ERR:SNID %d\n", self.Ref.Id, self.Ref.VBI, self.Ref.SuperID)
@@ -38,16 +37,11 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	} else {
 		dbresp, OK := resp.(*pkt.DownloadBlockDBResp)
 		if OK {
-			b := &codec.EncryptedBlock{SecretKey: KS}
-			b.Data = dbresp.Data
-			bp, errmsg := self.aesDecode(b)
-			if errmsg != nil {
-				return nil, errmsg
-			} else {
-				logrus.Infof("[DownloadBlock][%d][%d]Download Block from DB,at sn %d, take times %d ms.\n",
-					self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
-				return bp, nil
+			if dbresp.Data == nil || len(dbresp.Data) == 0 {
+				logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_NULL_DATA\n", self.Ref.Id, self.Ref.VBI)
+				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "DATA_ERR")
 			}
+			return dbresp, nil
 		}
 		initresp, OK := resp.(*pkt.DownloadBlockInitResp)
 		if OK {
@@ -63,35 +57,60 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 				logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_ERR_NODELIST\n", self.Ref.Id, self.Ref.VBI)
 				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Node_List_ERR")
 			}
-			logrus.Infof("[DownloadBlock][%d][%d]Init OK,at sn %d,take times %d ms.\n",
-				self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
-			startTime := time.Now()
-			m := initresp.GetAR()
-			if m == codec.AR_COPY_MODE {
-				bp, errmsg := self.loadCopyShard(KS, initresp)
-				if errmsg != nil {
-					return nil, errmsg
-				} else {
-					logrus.Infof("[DownloadBlock][%d][%d]Download CopyMode Block OK, take times %d ms.\n",
-						self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
-					return bp, nil
-				}
-			}
-			if m > 0 {
-				bp, errmsg := self.loadLRCShard(KS, initresp)
-				if errmsg != nil {
-					return nil, errmsg
-				} else {
-					logrus.Infof("[DownloadBlock][%d][%d]Download LRCMode Block OK, take times %d ms.\n",
-						self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
-					return bp, nil
-				}
-			}
-			logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:Not supported,AR:%d.\n", self.Ref.Id, self.Ref.VBI, m)
-			return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Not supported")
+			return initresp, nil
 		}
 		logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_ERR_MSG\n", self.Ref.Id, self.Ref.VBI)
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
+	}
+}
+
+func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
+	KS := codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.AESKey)
+	startTime := time.Now()
+	resp, errmsg := self.LoadMeta()
+	if errmsg != nil {
+		return nil, errmsg
+	} else {
+		dbresp, OK := resp.(*pkt.DownloadBlockDBResp)
+		if OK {
+			b := &codec.EncryptedBlock{SecretKey: KS}
+			b.Data = dbresp.Data
+			bp, errmsg := self.aesDecode(b)
+			if errmsg != nil {
+				return nil, errmsg
+			} else {
+				logrus.Infof("[DownloadBlock][%d][%d]Download Block from DB,at sn %d, take times %d ms.\n",
+					self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
+				return bp, nil
+			}
+		}
+		initresp, _ := resp.(*pkt.DownloadBlockInitResp)
+		logrus.Infof("[DownloadBlock][%d][%d]Init OK,at sn %d,take times %d ms.\n",
+			self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
+		startTime := time.Now()
+		m := initresp.GetAR()
+		if m == codec.AR_COPY_MODE {
+			bp, errmsg := self.loadCopyShard(KS, initresp)
+			if errmsg != nil {
+				return nil, errmsg
+			} else {
+				logrus.Infof("[DownloadBlock][%d][%d]Download CopyMode Block OK, take times %d ms.\n",
+					self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
+				return bp, nil
+			}
+		}
+		if m > 0 {
+			bp, errmsg := self.loadLRCShard(KS, initresp)
+			if errmsg != nil {
+				return nil, errmsg
+			} else {
+				logrus.Infof("[DownloadBlock][%d][%d]Download LRCMode Block OK, take times %d ms.\n",
+					self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
+				return bp, nil
+			}
+		}
+		logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:Not supported,AR:%d.\n", self.Ref.Id, self.Ref.VBI, m)
+		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Not supported")
 	}
 }
 

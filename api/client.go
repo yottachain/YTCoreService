@@ -107,6 +107,10 @@ func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.
 	}
 }
 
+func (c *Client) NewObjectMeta(bucketName, filename string, version primitive.ObjectID) (*ObjectInfo, *pkt.ErrorMessage) {
+	return NewObjectMeta(c, bucketName, filename, version)
+}
+
 func (c *Client) NewBucketAccessor() *BucketAccessor {
 	return &BucketAccessor{UClient: c}
 }
