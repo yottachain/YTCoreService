@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"errors"
 	"io"
 
@@ -167,9 +168,6 @@ func NewAESDecodeReader(BkCall BackupCaller, startpos int64) *AESDecodeReader {
 }
 
 func (me *AESDecodeReader) Read(p []byte) (n int, err error) {
-	//if me.eof {
-	//	return 0, io.EOF
-	//}
 	if me.pos < 0 {
 		err := me.Fill()
 		if err != nil {
@@ -183,10 +181,21 @@ func (me *AESDecodeReader) Read(p []byte) (n int, err error) {
 			}
 		}
 	}
-	//count := len(p)
-	//remain:=
-
-	return 0, nil
+	count := len(p)
+	remain := len(me.buf) - me.pos
+	if count >= remain {
+		for i := 0; i < remain; i++ {
+			p[i] = me.buf[me.pos+i]
+		}
+		me.pos = -1
+		return remain, nil
+	} else {
+		for i := 0; i < count; i++ {
+			p[i] = me.buf[me.pos+i]
+		}
+		me.pos = me.pos + count
+		return count, nil
+	}
 }
 
 func (me *AESDecodeReader) Fill() error {
@@ -194,26 +203,31 @@ func (me *AESDecodeReader) Fill() error {
 	if err != nil {
 		return err
 	}
-	count := len(bs)
-	if count == 0 {
+	if bs == nil || len(bs) == 0 {
 		if me.lastbs == nil {
-			return errors.New("no data")
+			return io.EOF
 		}
 		me.buf = codec.ECBDecrypt(me.lastbs, me.key)
+		me.lastbs = nil
 	} else {
+		count := len(bs)
+		if count%16 > 0 {
+			return errors.New("err data")
+		}
 		if me.eof {
 			if me.lastbs == nil {
 				me.buf = codec.ECBDecrypt(bs, me.key)
 			} else {
-				bss := append(me.lastbs, bs...)
+				bss := bytes.Join([][]byte{me.lastbs, bs}, []byte{})
 				me.buf = codec.ECBDecrypt(bss, me.key)
+				me.lastbs = nil
 			}
 		} else {
 			if me.lastbs == nil {
 				me.buf = codec.ECBDecryptNoPad(bs[0:count-16], me.key)
 				me.lastbs = bs[count-16:]
 			} else {
-				bss := append(me.lastbs, bs[0:count-16]...)
+				bss := bytes.Join([][]byte{me.lastbs, bs[0 : count-16]}, []byte{})
 				me.buf = codec.ECBDecryptNoPad(bss, me.key)
 				me.lastbs = bs[count-16:]
 			}
@@ -224,7 +238,10 @@ func (me *AESDecodeReader) Fill() error {
 }
 
 func (me *AESDecodeReader) ReadBuf() ([]byte, error) {
-	bs := []byte{}
+	var bs []byte
+	if me.eof {
+		return nil, nil
+	}
 	remain := bufLen
 	for {
 		out := make([]byte, remain)
@@ -234,14 +251,22 @@ func (me *AESDecodeReader) ReadBuf() ([]byte, error) {
 				return nil, err
 			} else {
 				if num > 0 {
-					bs = append(bs, out[0:num]...)
+					if bs == nil {
+						bs = out[0:num]
+					} else {
+						bs = bytes.Join([][]byte{bs, out[0:num]}, []byte{})
+					}
 				}
 				me.eof = true
 				return bs, nil
 			}
 		} else {
 			if num > 0 {
-				bs = append(bs, out[0:num]...)
+				if bs == nil {
+					bs = out[0:num]
+				} else {
+					bs = bytes.Join([][]byte{bs, out[0:num]}, []byte{})
+				}
 			}
 		}
 		remain = remain - num

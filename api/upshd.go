@@ -23,10 +23,11 @@ func InitShardUpPool() {
 	}
 }
 
-func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *sync.WaitGroup) *UploadShardResult {
+func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *sync.WaitGroup, ids []int32) *UploadShardResult {
 	upshd := &UploadShard{uploadBlock: upblk, shard: shd, shardId: shdid, retrytimes: 0, WG: wg}
 	upshd.logPrefix = fmt.Sprintf("[%s][%d][%d]", upblk.UPOBJ.VNU.Hex(), upblk.ID, shdid)
 	upshd.res = &UploadShardResult{SHARDID: shdid, VHF: shd.VHF}
+	upshd.blkList = ids
 	<-SHARD_UP_CH
 	go upshd.DoSend()
 	return upshd.res
@@ -53,6 +54,7 @@ type UploadShard struct {
 	logPrefix   string
 	res         *UploadShardResult
 	retrytimes  uint32
+	blkList     []int32
 	WG          *sync.WaitGroup
 }
 
@@ -121,7 +123,7 @@ func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (
 
 func (self *UploadShard) DoSend() {
 	defer self.DoFinish()
-	node := self.uploadBlock.Queue.GetNodeStat()
+	node := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
 	for {
 		startTime := time.Now()
 		req := self.MakeRequest(node)
@@ -130,7 +132,7 @@ func (self *UploadShard) DoSend() {
 		if err != nil {
 			self.retrytimes++
 			node.DecCount()
-			n := self.uploadBlock.Queue.GetNodeStat()
+			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
 			logrus.Debugf("[UploadShard]%sGetNodeCapacity:%s,%s to %d,take times %d ms,retry next node %d\n",
 				self.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, ctrtimes, n.NodeInfo.Id)
 			node = n
@@ -142,7 +144,7 @@ func (self *UploadShard) DoSend() {
 		if err1 != nil {
 			self.retrytimes++
 			node.DecCount()
-			n := self.uploadBlock.Queue.GetNodeStat()
+			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
 			logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,take times %d ms,retry next node %d\n",
 				self.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, times, n.NodeInfo.Id)
 			node = n

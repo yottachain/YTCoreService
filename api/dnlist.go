@@ -66,6 +66,15 @@ func (q *DNQueue) order() bool {
 	return true
 }
 
+func (q *DNQueue) GetNodeStatExcluld(blk []int32) *NodeStatWOK {
+	for {
+		n := q.GetNodeStat()
+		if !env.IsExistInArray(n.NodeInfo.Id, blk) {
+			return n
+		}
+	}
+}
+
 func (q *DNQueue) GetNodeStat() *NodeStatWOK {
 	q.Lock()
 	defer q.Unlock()

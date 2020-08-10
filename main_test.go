@@ -13,6 +13,7 @@ func init() {
 
 func Test(t *testing.T) {
 	defer env.TracePanic()
+
 	//***********api test*********
 	test.UpAndDown()
 

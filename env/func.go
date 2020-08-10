@@ -35,6 +35,9 @@ func IdToBytes(id int64) []byte {
 }
 
 func IsExistInArray(id int32, array []int32) bool {
+	if array == nil {
+		return false
+	}
 	for _, arr := range array {
 		if id == arr {
 			return true

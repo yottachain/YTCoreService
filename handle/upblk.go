@@ -309,11 +309,12 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	inblkids := NotInBlackList(h.m.Oklist, h.user.UserID)
 	if inblkids != nil && len(inblkids) > 0 {
 		txt, _ := json.Marshal(inblkids)
+		jsonstr := ""
 		if txt != nil {
-			return pkt.NewErrorMsg(pkt.DN_IN_BLACKLIST, string(txt))
-		} else {
-			return pkt.NewError(pkt.DN_IN_BLACKLIST)
+			jsonstr = string(txt)
 		}
+		logrus.Warnf("[UploadBLK][%d]DN_IN_BLACKLIST ERR:%s\n", h.user.UserID, jsonstr)
+		return pkt.NewErrorMsg(pkt.DN_IN_BLACKLIST, jsonstr)
 	}
 	shardcount := len(h.m.Oklist)
 	vbi := dao.GenerateBlockID(shardcount)

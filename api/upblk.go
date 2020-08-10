@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -239,10 +240,14 @@ func (self *UploadBlock) UploadBlockDedup() {
 	defer DecMen(length)
 	self.Queue = NewDNQueue()
 	retrytimes := 0
+	size := len(enc.Shards)
+	ress := make([]*UploadShardResult, size)
+	var ids []int32
 	for {
-		err := self.UploadShards(ks, eblk.VHB, enc, &rsize)
+		blkls, err := self.UploadShards(ks, eblk.VHB, enc, &rsize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
+				ids = blkls
 				logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
 				NotifyAllocNode(true)
 				retrytimes++
@@ -254,17 +259,20 @@ func (self *UploadBlock) UploadBlockDedup() {
 	}
 }
 
-func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureEncoder, rsize *int32) *pkt.ErrorMessage {
+func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureEncoder, rsize *int32, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
-	ress := make([]*UploadShardResult, size)
 	startTime := time.Now()
 	wgroup := sync.WaitGroup{}
-	wgroup.Add(size)
+	num := 0
 	for index, shd := range enc.Shards {
-		ress[index] = StartUploadShard(self, shd, int32(index), &wgroup)
+		if ress[index] == nil {
+			ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids)
+			wgroup.Add(1)
+			num++
+		}
 	}
 	wgroup.Wait()
-	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d,take times %d ms.\n", self.logPrefix, size, time.Now().Sub(startTime).Milliseconds())
+	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, num, size, time.Now().Sub(startTime).Milliseconds())
 	startTime = time.Now()
 	uid := int32(self.UPOBJ.UClient.UserId)
 	kn := int32(self.UPOBJ.UClient.KeyNumber)
@@ -295,11 +303,35 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 	}
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
-		return errmsg
+		var ids []int32
+		if errmsg.Code == pkt.DN_IN_BLACKLIST {
+			ids = self.CheckErrorMessage(ress, errmsg.Msg)
+		}
+		return ids, errmsg
 	} else {
 		logrus.Infof("[UploadBlock]%sWrite shardmetas OK,take times %d ms.\n", self.logPrefix, time.Now().Sub(startTime).Milliseconds())
-		return nil
+		return nil, nil
 	}
+}
+
+func (self *UploadBlock) CheckErrorMessage(ress []*UploadShardResult, jsonstr string) []int32 {
+	if jsonstr != "" {
+		ids := []int32{}
+		err := json.Unmarshal([]byte(jsonstr), &ids)
+		if err == nil {
+			for index, res := range ress {
+				if env.IsExistInArray(res.NODEID, ids) {
+					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODEID)
+					ress[index] = nil
+				}
+			}
+			return ids
+		}
+	}
+	for index := range ress {
+		ress[index] = nil
+	}
+	return nil
 }
 
 func ToUploadBlockEndReqV2_OkList(res []*UploadShardResult) []*pkt.UploadBlockEndReqV2_OkList {
