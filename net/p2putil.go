@@ -29,12 +29,12 @@ func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *
 	} else {
 		log_pre = fmt.Sprintf("[%s][%d]%s", name, dn.Id, log_prefix)
 	}
-	client, err := NewClient(dn.Nodeid, false)
+	client, err := NewClient(dn.Nodeid)
 	if err != nil {
 		return nil, err
 	}
 	defer env.TracePanic()
-	return client.Request(int32(msgtype), data, dn.Addrs, log_pre)
+	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false)
 }
 
 func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, retry int, nowait bool) (proto.Message, *pkt.ErrorMessage) {
@@ -54,11 +54,11 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		if retryTimes > 1 {
 			logrus.Infof("[P2P]%sRetry...\n", log_pre)
 		}
-		client, err := NewClient(sn.NodeID, nowait)
+		client, err := NewClient(sn.NodeID)
 		if err != nil {
 			return nil, err
 		}
-		resmsg, err := client.Request(int32(msgtype), data, sn.Addrs, log_pre)
+		resmsg, err := client.Request(int32(msgtype), data, sn.Addrs, log_pre, nowait)
 		if err != nil {
 			if nowait || retryTimes >= retry {
 				return nil, err

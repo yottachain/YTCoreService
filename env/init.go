@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -168,20 +167,4 @@ func (l LogWrite) Write(p []byte) (n int, err error) {
 		logrus.Printf(string(p))
 	}
 	return num, nil
-}
-
-func TracePanic() {
-	if r := recover(); r != nil {
-		TraceError()
-	}
-}
-
-func TraceError() {
-	stack := make([]byte, 4096)
-	length := runtime.Stack(stack, true)
-	ss := string(stack[0:length])
-	ls := strings.Split(ss, "\n")
-	for _, s := range ls {
-		logrus.Error("[Unkown]" + s + "\n")
-	}
 }

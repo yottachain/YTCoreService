@@ -1,5 +1,15 @@
 package env
 
+import (
+	"encoding/binary"
+	"math/rand"
+	"runtime"
+	"strings"
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
+
 func BytesToId(bs []byte) int64 {
 	vbi := int64(bs[0] & 0xFF)
 	vbi = vbi<<8 | int64(bs[1]&0xFF)
@@ -31,4 +41,30 @@ func IsExistInArray(id int32, array []int32) bool {
 		}
 	}
 	return false
+}
+
+func TracePanic() {
+	if r := recover(); r != nil {
+		TraceError()
+	}
+}
+
+func TraceError() {
+	stack := make([]byte, 4096)
+	length := runtime.Stack(stack, true)
+	ss := string(stack[0:length])
+	ls := strings.Split(ss, "\n")
+	for _, s := range ls {
+		logrus.Error("[Unkown]" + s + "\n")
+	}
+}
+
+func MakeRandData(size int64) []byte {
+	rand.Seed(time.Now().UnixNano())
+	loop := size / 8
+	buf := make([]byte, loop*8)
+	for ii := int64(0); ii < loop; ii++ {
+		binary.BigEndian.PutUint64(buf[ii*8:(ii+1)*8], rand.Uint64())
+	}
+	return buf
 }

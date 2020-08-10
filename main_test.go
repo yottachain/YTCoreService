@@ -18,6 +18,6 @@ func Test(t *testing.T) {
 
 	//**********code test**********
 	//env.InitClient()
-	//test.TestCut
+	//test.TestCutFile
 	//test.TestLRC()
 }

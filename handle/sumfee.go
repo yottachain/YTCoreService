@@ -98,7 +98,7 @@ func (me *UserObjectSum) IterateObjects() {
 		}
 		for _, bs := range ls {
 			supid := int32(bs[8])
-			vbi := GetVBI(bs)
+			vbi := env.BytesToId(bs)
 			ids, ok := m[supid]
 			if ok {
 				if len(ids) >= BLKID_LIMIT {
@@ -153,18 +153,6 @@ func (me *UserObjectSum) SetCycleFee() {
 	}
 }
 
-func GetVBI(bs []byte) int64 {
-	vbi := int64(bs[0] & 0xFF)
-	vbi = vbi<<8 | int64(bs[1]&0xFF)
-	vbi = vbi<<8 | int64(bs[2]&0xFF)
-	vbi = vbi<<8 | int64(bs[3]&0xFF)
-	vbi = vbi<<8 | int64(bs[4]&0xFF)
-	vbi = vbi<<8 | int64(bs[5]&0xFF)
-	vbi = vbi<<8 | int64(bs[6]&0xFF)
-	vbi = vbi<<8 | int64(bs[7]&0xFF)
-	return vbi
-}
-
 type BlockSpaceSum struct {
 	SuperID int32
 	VBIS    []int64
@@ -187,7 +175,7 @@ func (bss *BlockSpaceSum) ReqBlockUsedSpace() (int64, *pkt.ErrorMessage) {
 			return (res.(*pkt.LongResp)).Value, nil
 		}
 	} else {
-		res, err := net.RequestSN(msg, sn, "", 0, true)
+		res, err := net.RequestSN(msg, sn, "", 0, false)
 		if err != nil {
 			return 0, err
 		} else {
@@ -208,7 +196,7 @@ func DoBlockSpaceSum() {
 		uspace, err := bss.ReqBlockUsedSpace()
 		if err != nil {
 			logrus.Errorf("[SumBlockUsedSpace]ERR:%d,retry...\n", err.GetCode())
-			time.Sleep(time.Duration(15) * time.Second)
+			time.Sleep(time.Duration(60*5) * time.Second)
 		} else {
 			space = uspace
 			break

@@ -46,7 +46,7 @@ func ClearClient() bool {
 	}
 }
 
-func NewClient(pid string, nowait bool) (*TcpClient, *pkt.ErrorMessage) {
+func NewClient(pid string) (*TcpClient, *pkt.ErrorMessage) {
 	connects.RLock()
 	con := connects.cons[pid]
 	connects.RUnlock()
@@ -55,7 +55,7 @@ func NewClient(pid string, nowait bool) (*TcpClient, *pkt.ErrorMessage) {
 		connects.Lock()
 		con = connects.cons[pid]
 		if con == nil {
-			con, err = NewP2P(pid, nowait)
+			con, err = NewP2P(pid)
 			if err == nil {
 				connects.cons[pid] = con
 			}
@@ -80,14 +80,12 @@ type TcpClient struct {
 	connectedTime *int64
 	statu         *int32
 	PeerId        peer.ID
-	nowait        bool
 	sync.Mutex
 }
 
-func NewP2P(key string, nowait bool) (*TcpClient, *pkt.ErrorMessage) {
+func NewP2P(key string) (*TcpClient, *pkt.ErrorMessage) {
 	c := &TcpClient{}
 	c.lastTime = new(int64)
-	c.nowait = nowait
 	c.statu = new(int32)
 	atomic.StoreInt32(c.statu, 0)
 	c.connectedTime = new(int64)
@@ -106,7 +104,7 @@ func (client *TcpClient) IsActive() bool {
 	return time.Now().Unix()-atomic.LoadInt64(client.lastTime) <= env.CONN_EXPIRED
 }
 
-func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_pre string) (proto.Message, *pkt.ErrorMessage) {
+func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
 	if atomic.LoadInt32(client.statu) == 1 {
 		addrString := AddrsToString(addrs)
 		logmsg := fmt.Sprintf("[P2P]%s%s Connection destroyed!\n", log_pre, addrString)
@@ -114,12 +112,12 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
-	err := client.connect(addrs, log_pre)
+	err := client.connect(addrs, log_pre, nowait)
 	if err != nil {
 		return nil, err
 	}
 	timeout := time.Millisecond * time.Duration(env.Writetimeout)
-	if client.nowait {
+	if nowait {
 		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -142,7 +140,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	}
 }
 
-func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessage {
+func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool) *pkt.ErrorMessage {
 	if atomic.LoadInt64(client.connectedTime) >= 0 {
 		client.Lock()
 		defer client.Unlock()
@@ -164,7 +162,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string) *pkt.ErrorMessa
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
 				timeout := time.Millisecond * time.Duration(env.Conntimeout)
-				if client.nowait {
+				if nowait {
 					timeout = time.Millisecond * time.Duration(env.DirectConntimeout)
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), timeout)

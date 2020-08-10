@@ -4,8 +4,6 @@ import (
 	"log"
 )
 
-const SN_RETRYTIMES = 2 * 10
-
 var PNN int = 328 * 2
 var PTR int = 2
 
