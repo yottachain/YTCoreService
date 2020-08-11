@@ -15,7 +15,8 @@ func Test(t *testing.T) {
 	defer env.TracePanic()
 
 	//***********api test*********
-	test.UpAndDown()
+	test.ListObj()
+	//test.UpAndDown()
 
 	//**********code test**********
 	//env.InitClient()

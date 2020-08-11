@@ -2,9 +2,11 @@ package api
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
@@ -230,7 +232,15 @@ func (self *ObjectAccessor) GetListRespV2(resp *pkt.ListObjectRespV2) ([]*FileIt
 		return []*FileItem{}, nil
 	}
 	msg := &pkt.ListObjectResp{}
-	err := proto.Unmarshal(resp.Data, msg)
+	data := resp.Data
+	rd, err := gzip.NewReader(bytes.NewReader(data))
+	if err == nil {
+		d, err := ioutil.ReadAll(rd)
+		if err == nil {
+			data = d
+		}
+	}
+	err = proto.Unmarshal(data, msg)
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return ListObjectRespV2 ERR")
 	}

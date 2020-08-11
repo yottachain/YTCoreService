@@ -10,6 +10,7 @@ import (
 	"github.com/yottachain/YTCoreService/api"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const yfnet = true
@@ -19,6 +20,12 @@ const epos = 1024*1024*8 + 12
 
 var data []byte
 var client *api.Client
+
+func ListObj() {
+	initApi()
+	obj := client.NewObjectAccessor()
+	obj.ListObject("test", "", "", false, primitive.NilObjectID, 1000)
+}
 
 func UpAndDown() {
 	initApi()
