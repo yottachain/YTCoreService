@@ -175,6 +175,8 @@ message UploadFileReq{
 message StringMap{
    repeated string keys=1;
    repeated group Vals=2{
+       optional int32 ival=5;
+       optional int64 lval=6;
        optional string val=9;
    }
 }

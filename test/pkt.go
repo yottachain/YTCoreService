@@ -10,7 +10,7 @@ import (
 )
 
 func TestPkt() {
-	nameTag := 0x4a
+	nameTag := 0x30
 	field_number := nameTag >> 3
 	wire_type := nameTag & 3
 	fmt.Printf("%d-------------%d\n", field_number, wire_type)
