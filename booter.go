@@ -8,6 +8,7 @@ import (
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
+	"github.com/yottachain/YTCoreService/apisrv"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/handle"
@@ -18,7 +19,8 @@ import (
 //export StartAPI
 func StartAPI() C.int {
 	api.StartApi()
-	return C.int(0)
+	ii := apisrv.Start()
+	return C.int(ii)
 }
 
 var logger service.Logger

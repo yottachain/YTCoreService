@@ -14,9 +14,11 @@ func init() {
 func Test(t *testing.T) {
 	defer env.TracePanic()
 
+	//test.TestPkt()
+
 	//***********api test*********
-	test.ListObj()
-	//test.UpAndDown()
+	//test.ListObj()
+	test.UpAndDown()
 
 	//**********code test**********
 	//env.InitClient()

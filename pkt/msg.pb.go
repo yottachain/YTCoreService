@@ -1743,61 +1743,6 @@ func (*VoidResp) Descriptor() ([]byte, []int) {
 	return file_msg_proto_rawDescGZIP(), []int{24}
 }
 
-type StringMap struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Keys   []string `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
-	Values []string `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`
-}
-
-func (x *StringMap) Reset() {
-	*x = StringMap{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_proto_msgTypes[25]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *StringMap) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StringMap) ProtoMessage() {}
-
-func (x *StringMap) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_proto_msgTypes[25]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StringMap.ProtoReflect.Descriptor instead.
-func (*StringMap) Descriptor() ([]byte, []int) {
-	return file_msg_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *StringMap) GetKeys() []string {
-	if x != nil {
-		return x.Keys
-	}
-	return nil
-}
-
-func (x *StringMap) GetValues() []string {
-	if x != nil {
-		return x.Values
-	}
-	return nil
-}
-
 var File_msg_proto protoreflect.FileDescriptor
 
 var file_msg_proto_rawDesc = []byte{
@@ -1974,11 +1919,7 @@ var file_msg_proto_rawDesc = []byte{
 	0x07, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x55, 0x53, 0x45, 0x52, 0x53, 0x49, 0x47, 0x4e, 0x12,
 	0x18, 0x0a, 0x07, 0x61, 0x6c, 0x6c, 0x6f, 0x63, 0x49, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x07, 0x61, 0x6c, 0x6c, 0x6f, 0x63, 0x49, 0x64, 0x22, 0x0a, 0x0a, 0x08, 0x56, 0x6f, 0x69,
-	0x64, 0x52, 0x65, 0x73, 0x70, 0x22, 0x37, 0x0a, 0x09, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x4d,
-	0x61, 0x70, 0x12, 0x12, 0x0a, 0x04, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
-	0x52, 0x04, 0x6b, 0x65, 0x79, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73,
-	0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x52, 0x65, 0x73, 0x70, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1993,7 +1934,7 @@ func file_msg_proto_rawDescGZIP() []byte {
 	return file_msg_proto_rawDescData
 }
 
-var file_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_msg_proto_goTypes = []interface{}{
 	(*DownloadShardReq)(nil),   // 0: pkt.DownloadShardReq
 	(*DownloadShardResp)(nil),  // 1: pkt.DownloadShardResp
@@ -2020,7 +1961,6 @@ var file_msg_proto_goTypes = []interface{}{
 	(*UploadShard2CResp)(nil),  // 22: pkt.UploadShard2CResp
 	(*UploadShardReq)(nil),     // 23: pkt.UploadShardReq
 	(*VoidResp)(nil),           // 24: pkt.VoidResp
-	(*StringMap)(nil),          // 25: pkt.StringMap
 }
 var file_msg_proto_depIdxs = []int32{
 	10, // 0: pkt.SpotCheckTaskList.taskList:type_name -> pkt.SpotCheckTask
@@ -2340,18 +2280,6 @@ func file_msg_proto_init() {
 				return nil
 			}
 		}
-		file_msg_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StringMap); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2359,7 +2287,7 @@ func file_msg_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_msg_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

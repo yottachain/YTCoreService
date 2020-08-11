@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"io"
 	"os"
+	"pkg/fmt"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
@@ -24,7 +25,10 @@ var client *api.Client
 func ListObj() {
 	initApi()
 	obj := client.NewObjectAccessor()
-	obj.ListObject("test", "", "", false, primitive.NilObjectID, 1000)
+	items, _ := obj.ListObject("test", "", "", false, primitive.NilObjectID, 1000)
+	item := items[100]
+	m, _ := api.BytesToFileMetaMap(item.Meta, primitive.NilObjectID)
+	fmt.Println(api.LengthKey + ":" + m[api.LengthKey])
 }
 
 func UpAndDown() {

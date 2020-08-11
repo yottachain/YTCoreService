@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -25,7 +26,7 @@ type BlockInfo struct {
 }
 
 func NewObjectMeta(c *Client, bucketName, filename string, version primitive.ObjectID) (*ObjectInfo, *pkt.ErrorMessage) {
-	key := bucketName + "/" + filename + "/" + version.Hex()
+	key := fmt.Sprintf("%d/%s/%s/%s", c.UserId, bucketName, filename, version.Hex())
 	v, found := Object_Info_CACHE.Get(key)
 	if found {
 		return v.(*ObjectInfo), nil

@@ -1072,6 +1072,61 @@ func (x *UploadFileReq) GetMeta() []byte {
 	return nil
 }
 
+type StringMap struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Keys []string          `protobuf:"bytes,1,rep,name=keys" json:"keys,omitempty"`
+	Vals []*StringMap_Vals `protobuf:"group,2,rep,name=Vals,json=vals" json:"vals,omitempty"`
+}
+
+func (x *StringMap) Reset() {
+	*x = StringMap{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_msg_s3_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StringMap) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StringMap) ProtoMessage() {}
+
+func (x *StringMap) ProtoReflect() protoreflect.Message {
+	mi := &file_msg_s3_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StringMap.ProtoReflect.Descriptor instead.
+func (*StringMap) Descriptor() ([]byte, []int) {
+	return file_msg_s3_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *StringMap) GetKeys() []string {
+	if x != nil {
+		return x.Keys
+	}
+	return nil
+}
+
+func (x *StringMap) GetVals() []*StringMap_Vals {
+	if x != nil {
+		return x.Vals
+	}
+	return nil
+}
+
 type CopyObjectResp_BucketId struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1086,7 +1141,7 @@ type CopyObjectResp_BucketId struct {
 func (x *CopyObjectResp_BucketId) Reset() {
 	*x = CopyObjectResp_BucketId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[17]
+		mi := &file_msg_s3_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1099,7 +1154,7 @@ func (x *CopyObjectResp_BucketId) String() string {
 func (*CopyObjectResp_BucketId) ProtoMessage() {}
 
 func (x *CopyObjectResp_BucketId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[17]
+	mi := &file_msg_s3_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1157,7 +1212,7 @@ type CopyObjectResp_VersionId struct {
 func (x *CopyObjectResp_VersionId) Reset() {
 	*x = CopyObjectResp_VersionId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[18]
+		mi := &file_msg_s3_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1170,7 +1225,7 @@ func (x *CopyObjectResp_VersionId) String() string {
 func (*CopyObjectResp_VersionId) ProtoMessage() {}
 
 func (x *CopyObjectResp_VersionId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[18]
+	mi := &file_msg_s3_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1228,7 +1283,7 @@ type CopyObjectResp_FileId struct {
 func (x *CopyObjectResp_FileId) Reset() {
 	*x = CopyObjectResp_FileId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[19]
+		mi := &file_msg_s3_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1241,7 +1296,7 @@ func (x *CopyObjectResp_FileId) String() string {
 func (*CopyObjectResp_FileId) ProtoMessage() {}
 
 func (x *CopyObjectResp_FileId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[19]
+	mi := &file_msg_s3_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1299,7 +1354,7 @@ type DeleteFileReq_VNU struct {
 func (x *DeleteFileReq_VNU) Reset() {
 	*x = DeleteFileReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[20]
+		mi := &file_msg_s3_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1312,7 +1367,7 @@ func (x *DeleteFileReq_VNU) String() string {
 func (*DeleteFileReq_VNU) ProtoMessage() {}
 
 func (x *DeleteFileReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[20]
+	mi := &file_msg_s3_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1370,7 +1425,7 @@ type DownloadFileReq_VersionId struct {
 func (x *DownloadFileReq_VersionId) Reset() {
 	*x = DownloadFileReq_VersionId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[21]
+		mi := &file_msg_s3_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1383,7 +1438,7 @@ func (x *DownloadFileReq_VersionId) String() string {
 func (*DownloadFileReq_VersionId) ProtoMessage() {}
 
 func (x *DownloadFileReq_VersionId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[21]
+	mi := &file_msg_s3_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1441,7 +1496,7 @@ type GetObjectResp_Id struct {
 func (x *GetObjectResp_Id) Reset() {
 	*x = GetObjectResp_Id{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[22]
+		mi := &file_msg_s3_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1454,7 +1509,7 @@ func (x *GetObjectResp_Id) String() string {
 func (*GetObjectResp_Id) ProtoMessage() {}
 
 func (x *GetObjectResp_Id) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[22]
+	mi := &file_msg_s3_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1510,7 +1565,7 @@ type ListBucketResp_Buckets struct {
 func (x *ListBucketResp_Buckets) Reset() {
 	*x = ListBucketResp_Buckets{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[23]
+		mi := &file_msg_s3_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1523,7 +1578,7 @@ func (x *ListBucketResp_Buckets) String() string {
 func (*ListBucketResp_Buckets) ProtoMessage() {}
 
 func (x *ListBucketResp_Buckets) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[23]
+	mi := &file_msg_s3_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1567,7 +1622,7 @@ type ListObjectReq_StartId struct {
 func (x *ListObjectReq_StartId) Reset() {
 	*x = ListObjectReq_StartId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[24]
+		mi := &file_msg_s3_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1580,7 +1635,7 @@ func (x *ListObjectReq_StartId) String() string {
 func (*ListObjectReq_StartId) ProtoMessage() {}
 
 func (x *ListObjectReq_StartId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[24]
+	mi := &file_msg_s3_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1638,7 +1693,7 @@ type ListObjectReq_NextVersionId struct {
 func (x *ListObjectReq_NextVersionId) Reset() {
 	*x = ListObjectReq_NextVersionId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[25]
+		mi := &file_msg_s3_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1651,7 +1706,7 @@ func (x *ListObjectReq_NextVersionId) String() string {
 func (*ListObjectReq_NextVersionId) ProtoMessage() {}
 
 func (x *ListObjectReq_NextVersionId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[25]
+	mi := &file_msg_s3_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1712,7 +1767,7 @@ type ListObjectResp_FileMetaList struct {
 func (x *ListObjectResp_FileMetaList) Reset() {
 	*x = ListObjectResp_FileMetaList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[26]
+		mi := &file_msg_s3_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1725,7 +1780,7 @@ func (x *ListObjectResp_FileMetaList) String() string {
 func (*ListObjectResp_FileMetaList) ProtoMessage() {}
 
 func (x *ListObjectResp_FileMetaList) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[26]
+	mi := &file_msg_s3_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1804,7 +1859,7 @@ type ListObjectResp_FileMetaList_FileId struct {
 func (x *ListObjectResp_FileMetaList_FileId) Reset() {
 	*x = ListObjectResp_FileMetaList_FileId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[27]
+		mi := &file_msg_s3_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1817,7 +1872,7 @@ func (x *ListObjectResp_FileMetaList_FileId) String() string {
 func (*ListObjectResp_FileMetaList_FileId) ProtoMessage() {}
 
 func (x *ListObjectResp_FileMetaList_FileId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[27]
+	mi := &file_msg_s3_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1875,7 +1930,7 @@ type ListObjectResp_FileMetaList_BucketId struct {
 func (x *ListObjectResp_FileMetaList_BucketId) Reset() {
 	*x = ListObjectResp_FileMetaList_BucketId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[28]
+		mi := &file_msg_s3_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1888,7 +1943,7 @@ func (x *ListObjectResp_FileMetaList_BucketId) String() string {
 func (*ListObjectResp_FileMetaList_BucketId) ProtoMessage() {}
 
 func (x *ListObjectResp_FileMetaList_BucketId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[28]
+	mi := &file_msg_s3_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1946,7 +2001,7 @@ type ListObjectResp_FileMetaList_VersionId struct {
 func (x *ListObjectResp_FileMetaList_VersionId) Reset() {
 	*x = ListObjectResp_FileMetaList_VersionId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[29]
+		mi := &file_msg_s3_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1959,7 +2014,7 @@ func (x *ListObjectResp_FileMetaList_VersionId) String() string {
 func (*ListObjectResp_FileMetaList_VersionId) ProtoMessage() {}
 
 func (x *ListObjectResp_FileMetaList_VersionId) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[29]
+	mi := &file_msg_s3_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2017,7 +2072,7 @@ type UploadFileReq_VNU struct {
 func (x *UploadFileReq_VNU) Reset() {
 	*x = UploadFileReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_s3_proto_msgTypes[30]
+		mi := &file_msg_s3_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2030,7 +2085,7 @@ func (x *UploadFileReq_VNU) String() string {
 func (*UploadFileReq_VNU) ProtoMessage() {}
 
 func (x *UploadFileReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_s3_proto_msgTypes[30]
+	mi := &file_msg_s3_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2072,6 +2127,53 @@ func (x *UploadFileReq_VNU) GetCounter() int32 {
 		return *x.Counter
 	}
 	return 0
+}
+
+type StringMap_Vals struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Val *string `protobuf:"bytes,9,opt,name=val" json:"val,omitempty"`
+}
+
+func (x *StringMap_Vals) Reset() {
+	*x = StringMap_Vals{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_msg_s3_proto_msgTypes[32]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StringMap_Vals) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StringMap_Vals) ProtoMessage() {}
+
+func (x *StringMap_Vals) ProtoReflect() protoreflect.Message {
+	mi := &file_msg_s3_proto_msgTypes[32]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StringMap_Vals.ProtoReflect.Descriptor instead.
+func (*StringMap_Vals) Descriptor() ([]byte, []int) {
+	return file_msg_s3_proto_rawDescGZIP(), []int{17, 0}
+}
+
+func (x *StringMap_Vals) GetVal() string {
+	if x != nil && x.Val != nil {
+		return *x.Val
+	}
+	return ""
 }
 
 var File_msg_s3_proto protoreflect.FileDescriptor
@@ -2341,7 +2443,13 @@ var file_msg_s3_proto_rawDesc = []byte{
 	0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52,
 	0x11, 0x70, 0x72, 0x6f, 0x63, 0x65, 0x73, 0x73, 0x49, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69,
 	0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x07, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72,
+	0x01, 0x28, 0x05, 0x52, 0x07, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x22, 0x62, 0x0a, 0x09,
+	0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x4d, 0x61, 0x70, 0x12, 0x12, 0x0a, 0x04, 0x6b, 0x65, 0x79,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x65, 0x79, 0x73, 0x12, 0x27, 0x0a,
+	0x04, 0x76, 0x61, 0x6c, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0a, 0x32, 0x13, 0x2e, 0x70, 0x6b,
+	0x74, 0x2e, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x4d, 0x61, 0x70, 0x2e, 0x56, 0x61, 0x6c, 0x73,
+	0x52, 0x04, 0x76, 0x61, 0x6c, 0x73, 0x1a, 0x18, 0x0a, 0x04, 0x56, 0x61, 0x6c, 0x73, 0x12, 0x10,
+	0x0a, 0x03, 0x76, 0x61, 0x6c, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x76, 0x61, 0x6c,
 }
 
 var (
@@ -2356,7 +2464,7 @@ func file_msg_s3_proto_rawDescGZIP() []byte {
 	return file_msg_s3_proto_rawDescData
 }
 
-var file_msg_s3_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_msg_s3_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_msg_s3_proto_goTypes = []interface{}{
 	(*CopyObjectReq)(nil),                         // 0: pkt.CopyObjectReq
 	(*CopyObjectResp)(nil),                        // 1: pkt.CopyObjectResp
@@ -2375,41 +2483,44 @@ var file_msg_s3_proto_goTypes = []interface{}{
 	(*ListObjectRespV2)(nil),                      // 14: pkt.ListObjectRespV2
 	(*UpdateBucketReq)(nil),                       // 15: pkt.UpdateBucketReq
 	(*UploadFileReq)(nil),                         // 16: pkt.UploadFileReq
-	(*CopyObjectResp_BucketId)(nil),               // 17: pkt.CopyObjectResp.BucketId
-	(*CopyObjectResp_VersionId)(nil),              // 18: pkt.CopyObjectResp.VersionId
-	(*CopyObjectResp_FileId)(nil),                 // 19: pkt.CopyObjectResp.FileId
-	(*DeleteFileReq_VNU)(nil),                     // 20: pkt.DeleteFileReq.VNU
-	(*DownloadFileReq_VersionId)(nil),             // 21: pkt.DownloadFileReq.VersionId
-	(*GetObjectResp_Id)(nil),                      // 22: pkt.GetObjectResp.Id
-	(*ListBucketResp_Buckets)(nil),                // 23: pkt.ListBucketResp.Buckets
-	(*ListObjectReq_StartId)(nil),                 // 24: pkt.ListObjectReq.StartId
-	(*ListObjectReq_NextVersionId)(nil),           // 25: pkt.ListObjectReq.NextVersionId
-	(*ListObjectResp_FileMetaList)(nil),           // 26: pkt.ListObjectResp.FileMetaList
-	(*ListObjectResp_FileMetaList_FileId)(nil),    // 27: pkt.ListObjectResp.FileMetaList.FileId
-	(*ListObjectResp_FileMetaList_BucketId)(nil),  // 28: pkt.ListObjectResp.FileMetaList.BucketId
-	(*ListObjectResp_FileMetaList_VersionId)(nil), // 29: pkt.ListObjectResp.FileMetaList.VersionId
-	(*UploadFileReq_VNU)(nil),                     // 30: pkt.UploadFileReq.VNU
+	(*StringMap)(nil),                             // 17: pkt.StringMap
+	(*CopyObjectResp_BucketId)(nil),               // 18: pkt.CopyObjectResp.BucketId
+	(*CopyObjectResp_VersionId)(nil),              // 19: pkt.CopyObjectResp.VersionId
+	(*CopyObjectResp_FileId)(nil),                 // 20: pkt.CopyObjectResp.FileId
+	(*DeleteFileReq_VNU)(nil),                     // 21: pkt.DeleteFileReq.VNU
+	(*DownloadFileReq_VersionId)(nil),             // 22: pkt.DownloadFileReq.VersionId
+	(*GetObjectResp_Id)(nil),                      // 23: pkt.GetObjectResp.Id
+	(*ListBucketResp_Buckets)(nil),                // 24: pkt.ListBucketResp.Buckets
+	(*ListObjectReq_StartId)(nil),                 // 25: pkt.ListObjectReq.StartId
+	(*ListObjectReq_NextVersionId)(nil),           // 26: pkt.ListObjectReq.NextVersionId
+	(*ListObjectResp_FileMetaList)(nil),           // 27: pkt.ListObjectResp.FileMetaList
+	(*ListObjectResp_FileMetaList_FileId)(nil),    // 28: pkt.ListObjectResp.FileMetaList.FileId
+	(*ListObjectResp_FileMetaList_BucketId)(nil),  // 29: pkt.ListObjectResp.FileMetaList.BucketId
+	(*ListObjectResp_FileMetaList_VersionId)(nil), // 30: pkt.ListObjectResp.FileMetaList.VersionId
+	(*UploadFileReq_VNU)(nil),                     // 31: pkt.UploadFileReq.VNU
+	(*StringMap_Vals)(nil),                        // 32: pkt.StringMap.Vals
 }
 var file_msg_s3_proto_depIdxs = []int32{
-	17, // 0: pkt.CopyObjectResp.bucketid:type_name -> pkt.CopyObjectResp.BucketId
-	18, // 1: pkt.CopyObjectResp.versionid:type_name -> pkt.CopyObjectResp.VersionId
-	19, // 2: pkt.CopyObjectResp.fileid:type_name -> pkt.CopyObjectResp.FileId
-	20, // 3: pkt.DeleteFileReq.vnu:type_name -> pkt.DeleteFileReq.VNU
-	21, // 4: pkt.DownloadFileReq.versionid:type_name -> pkt.DownloadFileReq.VersionId
-	22, // 5: pkt.GetObjectResp.id:type_name -> pkt.GetObjectResp.Id
-	23, // 6: pkt.ListBucketResp.buckets:type_name -> pkt.ListBucketResp.Buckets
-	24, // 7: pkt.ListObjectReq.startid:type_name -> pkt.ListObjectReq.StartId
-	25, // 8: pkt.ListObjectReq.nextversionid:type_name -> pkt.ListObjectReq.NextVersionId
-	26, // 9: pkt.ListObjectResp.filemetalist:type_name -> pkt.ListObjectResp.FileMetaList
-	30, // 10: pkt.UploadFileReq.vnu:type_name -> pkt.UploadFileReq.VNU
-	27, // 11: pkt.ListObjectResp.FileMetaList.fileid:type_name -> pkt.ListObjectResp.FileMetaList.FileId
-	28, // 12: pkt.ListObjectResp.FileMetaList.bucketid:type_name -> pkt.ListObjectResp.FileMetaList.BucketId
-	29, // 13: pkt.ListObjectResp.FileMetaList.versionid:type_name -> pkt.ListObjectResp.FileMetaList.VersionId
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	18, // 0: pkt.CopyObjectResp.bucketid:type_name -> pkt.CopyObjectResp.BucketId
+	19, // 1: pkt.CopyObjectResp.versionid:type_name -> pkt.CopyObjectResp.VersionId
+	20, // 2: pkt.CopyObjectResp.fileid:type_name -> pkt.CopyObjectResp.FileId
+	21, // 3: pkt.DeleteFileReq.vnu:type_name -> pkt.DeleteFileReq.VNU
+	22, // 4: pkt.DownloadFileReq.versionid:type_name -> pkt.DownloadFileReq.VersionId
+	23, // 5: pkt.GetObjectResp.id:type_name -> pkt.GetObjectResp.Id
+	24, // 6: pkt.ListBucketResp.buckets:type_name -> pkt.ListBucketResp.Buckets
+	25, // 7: pkt.ListObjectReq.startid:type_name -> pkt.ListObjectReq.StartId
+	26, // 8: pkt.ListObjectReq.nextversionid:type_name -> pkt.ListObjectReq.NextVersionId
+	27, // 9: pkt.ListObjectResp.filemetalist:type_name -> pkt.ListObjectResp.FileMetaList
+	31, // 10: pkt.UploadFileReq.vnu:type_name -> pkt.UploadFileReq.VNU
+	32, // 11: pkt.StringMap.vals:type_name -> pkt.StringMap.Vals
+	28, // 12: pkt.ListObjectResp.FileMetaList.fileid:type_name -> pkt.ListObjectResp.FileMetaList.FileId
+	29, // 13: pkt.ListObjectResp.FileMetaList.bucketid:type_name -> pkt.ListObjectResp.FileMetaList.BucketId
+	30, // 14: pkt.ListObjectResp.FileMetaList.versionid:type_name -> pkt.ListObjectResp.FileMetaList.VersionId
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_msg_s3_proto_init() }
@@ -2623,7 +2734,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CopyObjectResp_BucketId); i {
+			switch v := v.(*StringMap); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2635,7 +2746,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CopyObjectResp_VersionId); i {
+			switch v := v.(*CopyObjectResp_BucketId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2647,7 +2758,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CopyObjectResp_FileId); i {
+			switch v := v.(*CopyObjectResp_VersionId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2659,7 +2770,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteFileReq_VNU); i {
+			switch v := v.(*CopyObjectResp_FileId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2671,7 +2782,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadFileReq_VersionId); i {
+			switch v := v.(*DeleteFileReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2683,7 +2794,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetObjectResp_Id); i {
+			switch v := v.(*DownloadFileReq_VersionId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2695,7 +2806,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListBucketResp_Buckets); i {
+			switch v := v.(*GetObjectResp_Id); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2707,7 +2818,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListObjectReq_StartId); i {
+			switch v := v.(*ListBucketResp_Buckets); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2719,7 +2830,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListObjectReq_NextVersionId); i {
+			switch v := v.(*ListObjectReq_StartId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2731,7 +2842,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListObjectResp_FileMetaList); i {
+			switch v := v.(*ListObjectReq_NextVersionId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2743,7 +2854,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListObjectResp_FileMetaList_FileId); i {
+			switch v := v.(*ListObjectResp_FileMetaList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2755,7 +2866,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListObjectResp_FileMetaList_BucketId); i {
+			switch v := v.(*ListObjectResp_FileMetaList_FileId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2767,7 +2878,7 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListObjectResp_FileMetaList_VersionId); i {
+			switch v := v.(*ListObjectResp_FileMetaList_BucketId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2779,7 +2890,31 @@ func file_msg_s3_proto_init() {
 			}
 		}
 		file_msg_s3_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListObjectResp_FileMetaList_VersionId); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_msg_s3_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UploadFileReq_VNU); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_msg_s3_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StringMap_Vals); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2797,7 +2932,7 @@ func file_msg_s3_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_msg_s3_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

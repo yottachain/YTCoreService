@@ -1,16 +1,22 @@
 package apisrv
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 )
 
-func Start() {
-
+func Start() int {
+	port, err := GetFreePort()
+	if err != nil {
+		port = 8030
+	}
+	http.HandleFunc("/api", ApiHandle)
 	server := &http.Server{
-		//Addr: fmt.Sprintf(":%d", port),
+		Addr: fmt.Sprintf(":%d", port),
 	}
 	go server.ListenAndServe()
+	return port
 }
 
 func GetFreePort() (int, error) {
@@ -24,4 +30,8 @@ func GetFreePort() (int, error) {
 	}
 	defer l.Close()
 	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+func ApiHandle(w http.ResponseWriter, req *http.Request) {
+	//
 }

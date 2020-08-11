@@ -171,3 +171,10 @@ message UploadFileReq{
     }
     optional bytes meta=4;
 }
+
+message StringMap{
+   repeated string keys=1;
+   repeated group Vals=2{
+       optional string val=9;
+   }
+}

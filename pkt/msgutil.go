@@ -103,10 +103,16 @@ func UnmarshalMap(bs []byte) (map[string]string, error) {
 		return nil, err
 	}
 	m := make(map[string]string)
-	size := len(msg.Values)
+	if msg.Keys == nil || msg.Vals == nil {
+		return m, nil
+	}
+	size := len(msg.Vals)
 	for index, k := range msg.Keys {
 		if index < size {
-			m[k] = msg.Values[index]
+			v := msg.Vals[index]
+			if v != nil && v.Val != nil {
+				m[k] = *v.Val
+			}
 		}
 	}
 	return m, nil
@@ -114,12 +120,13 @@ func UnmarshalMap(bs []byte) (map[string]string, error) {
 
 func MarshalMap(m map[string]string) ([]byte, error) {
 	keys := []string{}
-	vs := []string{}
+	vs := []*StringMap_Vals{}
 	for k, v := range m {
 		keys = append(keys, k)
-		vs = append(vs, v)
+		nv := &StringMap_Vals{Val: &v}
+		vs = append(vs, nv)
 	}
-	msg := &StringMap{Keys: keys, Values: vs}
+	msg := &StringMap{Keys: keys, Vals: vs}
 	res, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err

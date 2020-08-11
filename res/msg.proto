@@ -169,8 +169,3 @@ message UploadShardReq{
 
 message VoidResp {
 }
-
-message StringMap{
-   repeated string keys=1;
-   repeated string values=2;
-}
