@@ -50,7 +50,7 @@ type UploadBlock struct {
 	STime     int64
 }
 
-func (self *UploadBlock) DoFinish() {
+func (self *UploadBlock) DoFinish(size int64) {
 	if r := recover(); r != nil {
 		env.TraceError()
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
@@ -59,11 +59,12 @@ func (self *UploadBlock) DoFinish() {
 	self.WG.Done()
 	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
 	DecBlockMen(&self.BLK.Block)
-	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, self.BLK.Length())
+	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, size)
 }
 
 func (self *UploadBlock) upload() {
-	defer self.DoFinish()
+	size := self.BLK.Length()
+	defer self.DoFinish(size)
 	err := self.BLK.Sum()
 	if err != nil {
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))

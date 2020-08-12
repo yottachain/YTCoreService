@@ -47,10 +47,8 @@ func LoadUploadObject(userid int32, vnu primitive.ObjectID) (*UploadObjectCache,
 		if err != nil {
 			return nil, err
 		}
-		if meta.UserId == userid {
-			nums := pkt.ReferIds(pkt.ParseRefers(meta.BlockList))
-			ca = &UploadObjectCache{UserId: userid, BlockList: nums}
-		}
+		nums := pkt.ReferIds(pkt.ParseRefers(meta.BlockList))
+		ca = &UploadObjectCache{UserId: userid, BlockList: nums}
 	}
 	return ca, nil
 }
