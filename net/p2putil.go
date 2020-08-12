@@ -16,6 +16,7 @@ type Node struct {
 	Nodeid string
 	Pubkey string
 	Addrs  []string
+	Weight float64
 }
 
 func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *pkt.ErrorMessage) {

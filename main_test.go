@@ -18,10 +18,11 @@ func Test(t *testing.T) {
 
 	//***********api test*********
 	//test.ListObj()
-	test.UpAndDown()
+	test.UpAndDown2()
 
 	//**********code test**********
 	//env.InitClient()
 	//test.TestCutFile
 	//test.TestLRC()
+	select {}
 }

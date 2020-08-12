@@ -63,6 +63,7 @@ func StartPreAllocNode() {
 }
 
 func PreAllocNode(c *Client) error {
+	defer env.TracePanic()
 	req := &pkt.PreAllocNodeReqV2{UserId: &c.UserId, SignData: &c.Sign, KeyNumber: &c.KeyNumber, Count: new(uint32)}
 	*req.Count = uint32(env.PNN)
 	req.Excludes = ErrorList()
@@ -85,12 +86,18 @@ func PreAllocNode(c *Client) error {
 				ns.Nodeid = *n.Nodeid
 				ns.Pubkey = *n.Pubkey
 				ns.Addrs = n.Addrs
+				if n.Weight == nil {
+					ns.Weight = 0
+				} else {
+					ns.Weight = *n.Weight
+				}
+				//logrus.Debugf("[PreAllocNode]Return %d,Weight:%f\n", ns.Id, ns.Weight)
 				nodemap[ns.Id] = ns
 			}
 			nlen := len(nodemap)
 			if nlen > 0 {
 				DNList.UpdateNodeList(nodemap)
-				logrus.Infof("[PreAllocNode]Return to %d nodes,Excludes %d nodes.\n", nlen, len(req.Excludes))
+				logrus.Infof("[PreAllocNode]Return %d nodes,Excludes %d nodes.\n", nlen, len(req.Excludes))
 				return nil
 			}
 		}

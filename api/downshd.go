@@ -144,9 +144,9 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 }
 
 func (self *DownLoadShardInfo) DoFinish() {
+	env.TracePanic()
 	SHARD_DOWN_CH <- 1
 	self.DWNS.okSign <- 0
-	env.TracePanic()
 }
 
 func (me *DownLoadShardInfo) Download() []byte {

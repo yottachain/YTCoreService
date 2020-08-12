@@ -52,6 +52,7 @@ func (q *DNQueue) order() bool {
 			*nw.OKTimes = 0
 			q.nodemap[n.Id] = nw
 		}
+
 		if atomic.LoadInt32(nw.OKTimes) < int32(env.ShardNumPerNode) {
 			ls = append(ls, nw)
 		}
@@ -153,27 +154,24 @@ type NodeStat struct {
 	okDelayTimes *int64
 	okTimes      *int64
 	errTimes     *int64
-	busyTimes    *int64
 	resetTime    int64
 	snid         int32
 	timestamp    int64
 	sign         string
-	BUSYTIMES    int64
-	ERRTIMES     int64
+
+	ERRTIMES int64
 }
 
 func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {
-	ns := &NodeStat{okDelayTimes: new(int64), okTimes: new(int64), errTimes: new(int64), busyTimes: new(int64)}
+	ns := &NodeStat{okDelayTimes: new(int64), okTimes: new(int64), errTimes: new(int64)}
 	*ns.okDelayTimes = 0
 	*ns.okTimes = 0
 	*ns.errTimes = 0
-	*ns.busyTimes = 0
 	ns.resetTime = time.Now().Unix()
 	ns.snid = id
 	ns.timestamp = timestamp
 	ns.sign = sign
-	ns.BUSYTIMES = int64(env.Writetimeout) * int64(time.Millisecond)
-	ns.ERRTIMES = (ns.BUSYTIMES + 10000) * int64(time.Millisecond)
+	ns.ERRTIMES = int64(env.Writetimeout) * int64(time.Millisecond)
 	return ns
 }
 
@@ -192,13 +190,9 @@ func (n *NodeStat) SetERR() {
 	atomic.AddInt64(n.errTimes, 1)
 }
 
-func (n *NodeStat) SetBusy() {
-	atomic.AddInt64(n.busyTimes, 1)
-}
-
 func (n *NodeStat) SetOK(t int64) {
 	atomic.AddInt64(n.okTimes, 1)
-	atomic.AddInt64(n.okDelayTimes, t*time.Hour.Microseconds())
+	atomic.AddInt64(n.okDelayTimes, t*int64(time.Millisecond))
 }
 
 func (n *NodeStat) RandDelayTimes(size int) int {
@@ -209,26 +203,24 @@ func (n *NodeStat) UpdateState(oldn *NodeStat) {
 	*n.okDelayTimes = atomic.LoadInt64(oldn.okDelayTimes)
 	*n.okTimes = atomic.LoadInt64(oldn.okTimes)
 	*n.errTimes = atomic.LoadInt64(oldn.errTimes)
-	*n.busyTimes = atomic.LoadInt64(oldn.busyTimes)
 }
 
 func (n *NodeStat) GetDelayTimes() int64 {
 	oktimes := atomic.LoadInt64(n.okDelayTimes)
 	count := atomic.LoadInt64(n.okTimes)
 	errcount := atomic.LoadInt64(n.errTimes)
-	busycount := atomic.LoadInt64(n.busyTimes)
 	if count == 0 {
-		if errcount == 0 && busycount == 0 {
+		if errcount == 0 {
 			return 0
 		} else {
-			return (n.BUSYTIMES*busycount + n.ERRTIMES*errcount) / (busycount + errcount)
+			return (n.ERRTIMES * errcount) / errcount
 		}
 	} else {
 		times := oktimes / count
 		if times > n.ERRTIMES {
 			return times
 		} else {
-			return (oktimes + n.ERRTIMES*errcount + n.BUSYTIMES*busycount) / (count + errcount + busycount)
+			return (oktimes + n.ERRTIMES*errcount) / (count + errcount)
 		}
 	}
 }

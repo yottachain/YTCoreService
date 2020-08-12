@@ -27,9 +27,9 @@ func NewBlockReader(b *PlainBlock) *BlockReader {
 	r.block = b
 	r.head = int(ret)
 	if r.head == 0 {
-		r.reader = flate.NewReader(bytes.NewReader(b.Data[2:len(b.Data)]))
+		r.reader = flate.NewReader(bytes.NewReader(b.Data[2:]))
 	} else if r.head < 0 {
-		r.reader = bytes.NewReader(b.Data[2:len(b.Data)])
+		r.reader = bytes.NewReader(b.Data[2:])
 	} else {
 		r.reader = flate.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
 	}

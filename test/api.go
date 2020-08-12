@@ -14,10 +14,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = false
-const testsize = 1024 * 1024 * 3
+const yfnet = true
+const testsize = 1024 * 1024 * 9
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
+const filePath = "d:/test.iso"
 
 var data []byte
 var client *api.Client
@@ -36,6 +37,22 @@ func UpAndDown() {
 	vhw := upload()
 	download(vhw)
 	downloadRange(vhw)
+}
+
+func UpAndDown2() {
+	initApi()
+	vhw := uploadFile()
+	download(vhw)
+}
+
+func uploadFile() []byte {
+	up := client.NewUploadObject()
+	vhw, errmsg := up.UploadFile(filePath)
+	if errmsg != nil {
+		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
+	}
+	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
+	return vhw
 }
 
 func initApi() {

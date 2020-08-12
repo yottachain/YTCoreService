@@ -59,9 +59,9 @@ type UploadShard struct {
 }
 
 func (self *UploadShard) DoFinish() {
+	env.TracePanic()
 	SHARD_UP_CH <- 1
 	self.WG.Done()
-	env.TracePanic()
 }
 
 func (self *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
@@ -95,7 +95,6 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 				return times, resp, nil
 			} else {
 				if times >= env.UploadShardRetryTimes {
-					node.NodeInfo.SetBusy()
 					return times, nil, errors.New("NO_TOKEN")
 				}
 			}
@@ -144,6 +143,7 @@ func (self *UploadShard) DoSend() {
 			node = n
 			continue
 		}
+		node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
 		req.AllocId = ctlresp.AllocId
 		resp, err1 := self.SendShard(node, req)
 		times := time.Now().Sub(startTime).Milliseconds()
@@ -156,7 +156,6 @@ func (self *UploadShard) DoSend() {
 			node = n
 			continue
 		}
-		node.NodeInfo.SetOK(times)
 		self.res.DNSIGN = resp.DNSIGN
 		self.res.NODEID = node.NodeInfo.Id
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",

@@ -1,9 +1,12 @@
 package apisrv
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"pkg/io/ioutil"
 )
 
 func Start() int {
@@ -32,6 +35,26 @@ func GetFreePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
+func WriteErr(w http.ResponseWriter, err string) {
+	w.WriteHeader(500)
+	w.Header().Set("Content-Type", "text/plain")
+	io.WriteString(w, err)
+}
+
 func ApiHandle(w http.ResponseWriter, req *http.Request) {
-	//
+	bs, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		WriteErr(w, err.Error())
+		return
+	}
+	m := make(map[string]string)
+	err = json.Unmarshal(bs, &m)
+	if err != nil {
+		WriteErr(w, err.Error())
+		return
+	}
+	methodname := m["method"]
+	if methodname == "regist" {
+		//
+	}
 }

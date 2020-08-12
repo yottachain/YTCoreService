@@ -13,12 +13,35 @@ var MemCond = sync.NewCond(new(sync.Mutex))
 
 func init() {
 	*MemSize = 0
+	/*
+		var MenCH = make(chan bool)
+		go func() {
+			for {
+				timeout := time.After(time.Second * 5)
+				select {
+				case MenCH <- true:
+				case <-timeout:
+					MemCond.Signal()
+					length := atomic.LoadInt64(MemSize)
+					logrus.Debugf("Mem Lock wait timeout,curmemory size %d\n", length)
+				}
+			}
+		}()
+	*/
 }
 
 func AddBlockMen(b *codec.Block) {
 	size := len(b.Data)
 	length := atomic.AddInt64(MemSize, int64(size))
 	AddMem(length)
+}
+
+func DecBlockMen(b *codec.Block) {
+	if b.Data != nil {
+		size := int64(len(b.Data))
+		atomic.AddInt64(MemSize, -size)
+		MemCond.Broadcast()
+	}
 }
 
 func AddMem(length int64) {
@@ -35,26 +58,18 @@ func AddMem(length int64) {
 }
 
 func AddEncoderMem(enc *codec.ErasureEncoder) int64 {
-	var size int
+	var size int64
 	if enc.IsCopyShard() {
-		size = env.PFL + 16
+		size = int64(env.PFL + 16)
 	} else {
-		size = (env.PFL + 16) * len(enc.Shards)
+		size = int64((env.PFL + 16) * len(enc.Shards))
 	}
-	length := atomic.AddInt64(MemSize, int64(size))
+	length := atomic.AddInt64(MemSize, size)
 	AddMem(length)
-	return length
+	return size
 }
 
 func DecMen(length int64) {
 	atomic.AddInt64(MemSize, -length)
 	MemCond.Broadcast()
-}
-
-func DecBlockMen(b *codec.Block) {
-	if b.Data != nil {
-		size := int64(len(b.Data))
-		atomic.AddInt64(MemSize, -size)
-		MemCond.Broadcast()
-	}
 }

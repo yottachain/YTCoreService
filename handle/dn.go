@@ -296,7 +296,7 @@ func SendRebuildTask(node *YTDNMgmt.Node) {
 			logrus.Errorf("[SendRebuildTask]ERR:Too many routines.\n")
 			return
 		}
-		go ExecSendRebuildTask(node)
+		ExecSendRebuildTask(node)
 	}
 }
 

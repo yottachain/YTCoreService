@@ -86,6 +86,7 @@ func (self *SNSynchronizer) run() {
 	if self.wg != nil {
 		defer self.wg.Done()
 	}
+	defer env.TracePanic()
 	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	for {
