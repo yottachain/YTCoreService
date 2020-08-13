@@ -11,6 +11,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
+	"github.com/yottachain/YTCoreService/env"
 )
 
 func TestAES() {
@@ -30,6 +31,26 @@ func TestAES() {
 
 	d := codec.ECBDecryptNoPad(bs, newkey)
 	fmt.Printf("data:%s\n", base58.Encode(d))
+}
+
+func TestLRCEncode() {
+	codec.InitLRC()
+	myfunc := func() {
+		for ii := 0; ii < 500; ii++ {
+			bs := env.MakeRandData(1024*1024*2 - 256)
+			b := &codec.EncryptedBlock{}
+			b.Data = bs
+			encoder := codec.NewErasureEncoder(b)
+			encoder.Encode()
+			shards := encoder.Shards
+			fmt.Printf("Encode OK:%d/%d\n", len(shards), ii)
+		}
+	}
+	go myfunc()
+	go myfunc()
+	go myfunc()
+	go myfunc()
+	go myfunc()
 }
 
 func TestLRC() {

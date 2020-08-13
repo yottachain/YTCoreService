@@ -59,6 +59,11 @@ func GetEmptyMessage(msgType []byte) (proto.Message, error) {
 }
 
 func UnmarshalMsg(data []byte) proto.Message {
+	if data == nil || len(data) < 2 {
+		errmsg := fmt.Sprintf("[Packet]Unmarshal ERR:nil data")
+		logrus.Errorln(errmsg)
+		return NewErrorMsg(INVALID_ARGS, errmsg)
+	}
 	msgType := data[0:2]
 	msg, err := GetEmptyMessage(msgType)
 	if err != nil {
