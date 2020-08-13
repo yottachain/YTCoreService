@@ -61,11 +61,12 @@ func saveFile(vhw []byte) {
 			case oksign <- 1:
 				return
 			case <-timeout:
-				logrus.Infof("[UploadFile]Progress:%d\n", dn.GetProgress())
+				logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
 			}
 		}
 	}()
 	dn.SaveToPath(savePath)
+	logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
 	logrus.Infof("[DownloadFile]OK.\n")
 	<-oksign
 }

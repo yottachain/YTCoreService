@@ -77,6 +77,7 @@ func (me *DownLoadReader) readBlock() error {
 			}
 		}
 		me.pos = me.pos + refer.OriginalSize
+		me.Progress.ReadBlockNum++
 		me.referIndex++
 	}
 	return nil

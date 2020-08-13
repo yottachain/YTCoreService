@@ -39,15 +39,10 @@ func (self *DownloadObject) GetProgress() int32 {
 	if self.Progress.TotalBlockNum == 0 || self.Progress.ReadBlockNum == 0 {
 		return 0
 	}
-	p := (self.Progress.ReadBlockNum - 1) * 100 / self.Progress.TotalBlockNum
-	if p == 100 {
-		if self.Progress.Complete {
-			return 100
-		} else {
-			return 99
-		}
+	if self.Progress.Complete {
+		return 100
 	}
-	return p
+	return (self.Progress.ReadBlockNum - 1) * 100 / self.Progress.TotalBlockNum
 }
 
 func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
