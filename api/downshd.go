@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/md5"
 	"errors"
+	"io/ioutil"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -98,9 +100,10 @@ type DownLoadShardInfo struct {
 	NodeInfo   *net.Node
 	VHF        []byte
 	RetryTimes int
+	Path       string
 }
 
-func NewDownLoadShardInfo(n *pkt.DownloadBlockInitResp_NList_Ns, v []byte, rt int, d *DownLoadShards) *DownLoadShardInfo {
+func NewDownLoadShardInfo(n *pkt.DownloadBlockInitResp_NList_Ns, v []byte, rt int, d *DownLoadShards, path string) *DownLoadShardInfo {
 	if n.Id == nil || n.Nodeid == nil || n.Pubkey == nil || n.Addrs == nil || len(n.Addrs) == 0 {
 		logrus.Errorf("[DownloadShard]%DownLoad ERR,Nodeinfo is null\n", d.logPrefix, base58.Encode(v))
 		return nil
@@ -110,7 +113,7 @@ func NewDownLoadShardInfo(n *pkt.DownloadBlockInitResp_NList_Ns, v []byte, rt in
 		return nil
 	}
 	node := &net.Node{Id: *n.Id, Nodeid: *n.Nodeid, Pubkey: *n.Pubkey, Addrs: n.Addrs}
-	info := &DownLoadShardInfo{DWNS: d, NodeInfo: node, VHF: v, RetryTimes: rt}
+	info := &DownLoadShardInfo{DWNS: d, NodeInfo: node, VHF: v, RetryTimes: rt, Path: path}
 	return info
 }
 
@@ -135,6 +138,9 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 	if bytes.Equal(me.VHF, newvhf) {
 		logrus.Infof("[DownloadShard]%sDownload %s OK,from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
 		me.DWNS.OnResponse(data)
+		if me.Path != "" {
+			ioutil.WriteFile(me.Path+strconv.Itoa(int(data[0])), data, 0644)
+		}
 		return data
 	} else {
 		logrus.Errorf("[DownloadShard]%sVerify shard inconsistency ERR,Request %s return %s data,from %d\n",

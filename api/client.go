@@ -88,7 +88,7 @@ func (c *Client) NewUploadObject() *UploadObject {
 }
 
 func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessage) {
-	do := &DownloadObject{UClient: c}
+	do := &DownloadObject{UClient: c, Progress: &DownProgress{}}
 	err := do.InitByVHW(vhw)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessa
 }
 
 func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.ObjectID) (*DownloadObject, *pkt.ErrorMessage) {
-	do := &DownloadObject{UClient: c}
+	do := &DownloadObject{UClient: c, Progress: &DownProgress{}}
 	err := do.InitByKey(bucketName, filename, version)
 	if err != nil {
 		return nil, err

@@ -1,8 +1,10 @@
 package api
 
 import (
+	"errors"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -15,14 +17,37 @@ import (
 )
 
 type DownloadObject struct {
-	UClient *Client
-	Length  int64
-	REFS    []*pkt.Refer
-	BkCall  BackupCaller
+	UClient  *Client
+	Length   int64
+	REFS     []*pkt.Refer
+	BkCall   BackupCaller
+	Progress *DownProgress
+}
+
+type DownProgress struct {
+	Path          string
+	TotalBlockNum int32
+	ReadBlockNum  int32
+	Complete      bool
 }
 
 func (self *DownloadObject) SetBackupCaller(call BackupCaller) {
 	self.BkCall = call
+}
+
+func (self *DownloadObject) GetProgress() int32 {
+	if self.Progress.TotalBlockNum == 0 || self.Progress.ReadBlockNum == 0 {
+		return 0
+	}
+	p := (self.Progress.ReadBlockNum - 1) * 100 / self.Progress.TotalBlockNum
+	if p == 100 {
+		if self.Progress.Complete {
+			return 100
+		} else {
+			return 99
+		}
+	}
+	return p
 }
 
 func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
@@ -83,6 +108,7 @@ func (self *DownloadObject) init(req proto.Message, key string) *pkt.ErrorMessag
 	}
 	logrus.Infof("[DownloadOBJ][%s]Init OK, length %d,num of blocks %d,take times %d ms.\n", key, self.Length,
 		len(self.REFS), time.Now().Sub(startTime).Milliseconds())
+	self.Progress.TotalBlockNum = int32(len(self.REFS))
 	return nil
 }
 
@@ -94,6 +120,29 @@ func (self *DownloadObject) Load() io.Reader {
 func (self *DownloadObject) LoadRange(start, end int64) io.Reader {
 	rd := NewDownLoadReader(self, start, end)
 	return rd
+}
+
+func (self *DownloadObject) SaveToPath(path string) error {
+	s, err := os.Stat(path)
+	if err != nil {
+		if !os.IsExist(err) {
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	} else {
+		if !s.IsDir() {
+			return errors.New("The specified path is not a directory.")
+		}
+	}
+	self.Progress.Path = path
+	if !strings.HasSuffix(path, "/") {
+		self.Progress.Path = path + "/"
+	}
+	return self.SaveToFile(self.Progress.Path + "source.dat")
 }
 
 func (self *DownloadObject) SaveToFile(path string) error {
@@ -117,5 +166,6 @@ func (self *DownloadObject) SaveToFile(path string) error {
 			break
 		}
 	}
+	self.Progress.Complete = true
 	return nil
 }

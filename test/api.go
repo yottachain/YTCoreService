@@ -20,6 +20,7 @@ const testsize = 1024 * 1024 * 9
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
 const filePath = "d:/test.iso"
+const savePath = "d:/test"
 
 var data []byte
 var client *api.Client
@@ -43,15 +44,44 @@ func UpAndDownBytes() {
 func UpAndDownFile() {
 	initApi()
 	vhw := uploadFile()
-	download(vhw)
+	//download(vhw)
+	saveFile(vhw)
+}
+
+func saveFile(vhw []byte) {
+	dn, errmsg := client.NewDownloadObject(vhw)
+	if errmsg != nil {
+		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
+	}
+	oksign := make(chan int)
+	go func() {
+		for {
+			timeout := time.After(time.Second * 5)
+			select {
+			case oksign <- 1:
+				return
+			case <-timeout:
+				logrus.Infof("[UploadFile]Progress:%d\n", dn.GetProgress())
+			}
+		}
+	}()
+	dn.SaveToPath(savePath)
+	logrus.Infof("[DownloadFile]OK.\n")
+	<-oksign
 }
 
 func uploadFile() []byte {
 	up := client.NewUploadObject()
+	oksign := make(chan int)
 	go func() {
 		for {
-			time.Sleep(time.Duration(5) * time.Second)
-			logrus.Infof("[UploadFile]Progress:%d\n", up.GetProgress())
+			timeout := time.After(time.Second * 5)
+			select {
+			case oksign <- 1:
+				return
+			case <-timeout:
+				logrus.Infof("[UploadFile]Progress:%d\n", up.GetProgress())
+			}
 		}
 	}()
 	vhw, errmsg := up.UploadFile(filePath)
@@ -60,6 +90,7 @@ func uploadFile() []byte {
 	}
 	logrus.Infof("[UploadFile]Progress:%d\n", up.GetProgress())
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
+	<-oksign
 	return vhw
 }
 

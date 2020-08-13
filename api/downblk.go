@@ -15,6 +15,7 @@ import (
 type DownloadBlock struct {
 	UClient *Client
 	Ref     *pkt.Refer
+	Path    string
 }
 
 func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
@@ -122,7 +123,7 @@ func (self DownloadBlock) loadLRCShard(ks []byte, resp *pkt.DownloadBlockInitRes
 		var dn *DownLoadShardInfo
 		for _, n := range resp.Nlist.Ns {
 			if n.Id != nil && id == *n.Id {
-				dn = NewDownLoadShardInfo(n, vhf, env.DownloadRetryTimes, dns)
+				dn = NewDownLoadShardInfo(n, vhf, env.DownloadRetryTimes, dns, self.Path)
 				break
 			}
 		}
@@ -155,7 +156,7 @@ func (self DownloadBlock) loadCopyShard(ks []byte, resp *pkt.DownloadBlockInitRe
 	var b []byte
 	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), len(resp.Nlist.Ns))
 	for _, n := range resp.Nlist.Ns {
-		dnshard := NewDownLoadShardInfo(n, vhf, 0, dns)
+		dnshard := NewDownLoadShardInfo(n, vhf, 0, dns, self.Path)
 		if dnshard != nil {
 			<-SHARD_DOWN_CH
 			b = dnshard.Download()
@@ -177,11 +178,17 @@ func (self DownloadBlock) loadCopyShard(ks []byte, resp *pkt.DownloadBlockInitRe
 }
 
 func (self DownloadBlock) aesDecode(b *codec.EncryptedBlock) (*codec.PlainBlock, *pkt.ErrorMessage) {
+	if self.Path != "" {
+		b.Save(self.Path + "block.enc")
+	}
 	dec := codec.NewBlockAESDecryptor(b)
 	pb, err := dec.Decrypt()
 	if err != nil {
 		logrus.Errorf("[DownloadBlock][%d][%d]AESDecode ERR:%s\n", self.Ref.Id, self.Ref.VBI, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+	}
+	if self.Path != "" {
+		pb.Save(self.Path + "block.src")
 	}
 	return pb, nil
 }

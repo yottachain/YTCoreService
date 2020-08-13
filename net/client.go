@@ -182,6 +182,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool) *p
 }
 
 func (client *TcpClient) DisConnect() {
+	defer env.TracePanic()
 	atomic.StoreInt32(client.statu, 1)
 	p2phst.ClientStore().Close(client.PeerId)
 }

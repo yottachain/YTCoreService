@@ -25,10 +25,10 @@ type UploadObject struct {
 	ActiveTime *int64
 	ERR        atomic.Value
 	activesign chan int
-	PRO        *Progress
+	PRO        *UpProgress
 }
 
-type Progress struct {
+type UpProgress struct {
 	Length        *int64
 	ReadinLength  *int64
 	ReadOutLength *int64
@@ -36,7 +36,7 @@ type Progress struct {
 }
 
 func NewUploadObject(c *Client) *UploadObject {
-	p := &Progress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
+	p := &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
 	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p}
 	return o
 }

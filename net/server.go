@@ -1,23 +1,22 @@
 package net
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/libp2p/go-libp2p-core/crypto"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/mr-tron/base58"
-	"github.com/multiformats/go-multiaddr"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
-	YTinterface "github.com/yottachain/YTHost/interface"
-	"github.com/yottachain/YTHost/newHost"
+	hst "github.com/yottachain/YTHost"
+	host "github.com/yottachain/YTHost/hostInterface"
 	"github.com/yottachain/YTHost/option"
 	"github.com/yottachain/YTHost/service"
 	"golang.org/x/crypto/ripemd160"
 )
 
-var serverhost *newHost.HostPool
-var p2phst YTinterface.Host
+var p2phst host.Host
 
 func Stop() {
 
@@ -26,34 +25,24 @@ func Stop() {
 func Start(port int32, port2 int32, privatekey string) error {
 	privbytes, err := base58.Decode(privatekey)
 	if err != nil {
-		logrus.Panicf("[Booter]Bad format of private key,Base58 format needed")
+		return errors.New("bad format of private key,Base58 format needed")
 	}
 	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
 	if err != nil {
-		logrus.Panicf("[Booter]Bad format of private key")
+		return errors.New("bad format of private key")
 	}
-	addrs := []multiaddr.Multiaddr{}
-	add1 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
-	ma1, _ := ma.NewMultiaddr(add1)
-	addrs = append(addrs, ma1)
-	if port2 > 0 {
-		add2 := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d/http", port2)
-		ma2, _ := ma.NewMultiaddr(add2)
-		addrs = append(addrs, ma2)
+	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
+	p2phst, err = hst.NewHost(option.ListenAddr(ma), option.Identity(pk))
+	if err != nil {
+		return err
 	}
-	serverhost = newHost.NewHost(addrs, option.Identity(pk))
-	if len(serverhost.Hosts) < 1 {
-		logrus.Panicf("[Booter]Init ERR.\n")
+	go p2phst.Accept()
+	logrus.Infof("[Booter]P2P initialization completed, port %d\n", port)
+	logrus.Infof("[Booter]NodeID:%s\n", p2phst.Config().ID.String())
+	maddrs := p2phst.Addrs()
+	for k, m := range maddrs {
+		logrus.Infof("[Booter]Node Addrs %d:%s\n", k, m.String())
 	}
-	p2phst = serverhost.Hosts[0]
-	for _, hst := range serverhost.Hosts {
-		logrus.Infof("[Booter]P2P initializing...NodeID:%s\n", hst.Config().ID.String())
-		maddrs := hst.Addrs()
-		for k, m := range maddrs {
-			logrus.Infof("[Booter]Node Addrs %d:%s\n", k, m.String())
-		}
-	}
-	go serverhost.Accept()
 	go Clear()
 	return nil
 }
@@ -83,5 +72,6 @@ var callback OnMessageFunc
 
 func RegisterGlobalMsgHandler(call OnMessageFunc) {
 	callback = call
-	serverhost.RegisterGlobalMsgHandler(MessageHandler)
+	p2phst.RegisterGlobalMsgHandler(MessageHandler)
+	//serverhost.RegisterHandler(0x1c, MessageHandler)
 }

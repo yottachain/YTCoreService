@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
+	"strconv"
 
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -16,6 +18,7 @@ type BackupCaller interface {
 
 type DownLoadReader struct {
 	UClient    *Client
+	Progress   *DownProgress
 	BkCall     BackupCaller
 	Refs       map[int32]*pkt.Refer
 	readpos    int64
@@ -27,6 +30,7 @@ type DownLoadReader struct {
 
 func NewDownLoadReader(dobj *DownloadObject, st, ed int64) *DownLoadReader {
 	reader := &DownLoadReader{UClient: dobj.UClient, readpos: st, end: ed, BkCall: dobj.BkCall, referIndex: 0, pos: 0}
+	reader.Progress = dobj.Progress
 	refmap := make(map[int32]*pkt.Refer)
 	for _, ref := range dobj.REFS {
 		id := int32(ref.Id) & 0xFFFF
@@ -52,7 +56,13 @@ func (me *DownLoadReader) readBlock() error {
 			return nil
 		}
 		if me.readpos < me.pos+refer.OriginalSize {
-			dn := &DownloadBlock{UClient: me.UClient, Ref: refer}
+			p := me.Progress.Path
+			if p != "" {
+				p = p + "block" + strconv.Itoa(int(me.referIndex))
+				os.Mkdir(p, os.ModePerm)
+				p = p + "/"
+			}
+			dn := &DownloadBlock{UClient: me.UClient, Ref: refer, Path: p}
 			plainblock, err := dn.Load()
 			if err != nil {
 				return me.ReadCaller(pkt.ToError(err))
