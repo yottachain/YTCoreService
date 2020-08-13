@@ -103,7 +103,9 @@ func (self *DownloadObject) init(req proto.Message, key string) *pkt.ErrorMessag
 	}
 	logrus.Infof("[DownloadOBJ][%s]Init OK, length %d,num of blocks %d,take times %d ms.\n", key, self.Length,
 		len(self.REFS), time.Now().Sub(startTime).Milliseconds())
-	self.Progress.TotalBlockNum = int32(len(self.REFS))
+	if self.Progress != nil {
+		self.Progress.TotalBlockNum = int32(len(self.REFS))
+	}
 	return nil
 }
 

@@ -118,7 +118,7 @@ func UpdatePrivateKey() {
 	if err != nil {
 		logrus.Panicf("Failed to save profile:%s\n", err)
 	} else {
-		logrus.Infof("ShadowPriKey  encrypted.\n")
+		logrus.Infof("ShadowPriKey encrypted.\n")
 	}
 }
 
