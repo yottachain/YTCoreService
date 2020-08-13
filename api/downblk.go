@@ -188,7 +188,7 @@ func (self DownloadBlock) aesDecode(b *codec.EncryptedBlock) (*codec.PlainBlock,
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	if self.Path != "" {
-		pb.Save(self.Path + "block.src")
+		pb.Save(self.Path + "block.zip")
 	}
 	return pb, nil
 }

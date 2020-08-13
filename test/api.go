@@ -19,7 +19,7 @@ const yfnet = true
 const testsize = 1024 * 1024 * 9
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
-const filePath = "d:/test.iso"
+const filePath = "d:/test.rar"
 const savePath = "d:/test"
 
 var data []byte

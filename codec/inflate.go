@@ -12,6 +12,7 @@ import (
 )
 
 type BlockReader struct {
+	saver  io.WriteCloser
 	block  *PlainBlock
 	head   int
 	reader io.Reader
@@ -34,6 +35,15 @@ func NewBlockReader(b *PlainBlock) *BlockReader {
 		r.reader = flate.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
 	}
 	return r
+}
+
+func (br *BlockReader) SetPath(p string) {
+	if p != "" {
+		f, err := os.OpenFile(p+"block.src", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+		if err == nil {
+			br.saver = f
+		}
+	}
 }
 
 func (br *BlockReader) Skip(n int64) error {
@@ -59,6 +69,10 @@ func (br *BlockReader) Read(p []byte) (n int, err error) {
 	num, err = br.reader.Read(p)
 	if err == io.EOF {
 		if num > 0 {
+			if br.saver != nil {
+				br.saver.Write(p[0:num])
+				br.saver.Close()
+			}
 			return num, nil
 		}
 		if br.head > 0 {
@@ -66,7 +80,14 @@ func (br *BlockReader) Read(p []byte) (n int, err error) {
 			br.reader = bytes.NewReader(br.block.Data[size-br.head : size])
 			br.head = 0
 			return br.Read(p)
+		} else {
+			if br.saver != nil {
+				br.saver.Close()
+			}
 		}
+	}
+	if br.saver != nil {
+		br.saver.Write(p[0:num])
 	}
 	return num, err
 }
