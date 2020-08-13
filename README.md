@@ -22,7 +22,7 @@ c：用户端实例
 c.UserId:注册成功后sn返回的用户ID
 c.SuperNode:用户所属的SN节点信息
 c.AccessorKey:用户端实例唯一标识,用户公钥
-SDK支持实例华多个用户端，最大2000
+SDK支持实例化多个用户端，最大2000
 
 通过AccessorKey获取用户端实例
 c:=api.GetClient(AccessorKey)
