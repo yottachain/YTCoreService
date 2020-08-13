@@ -29,8 +29,6 @@ const SN_RETRYTIMES = 6 * 5
 const DN_RETRY_WAIT = 5
 const CONN_EXPIRED = 60 * 5
 
-const LRCMAXHANDLERS = 50
-
 var ShardNumPerNode int
 
 var Conntimeout = 30000

@@ -13,21 +13,6 @@ var MemCond = sync.NewCond(new(sync.Mutex))
 
 func init() {
 	*MemSize = 0
-	/*
-		var MenCH = make(chan bool)
-		go func() {
-			for {
-				timeout := time.After(time.Second * 5)
-				select {
-				case MenCH <- true:
-				case <-timeout:
-					MemCond.Signal()
-					length := atomic.LoadInt64(MemSize)
-					logrus.Debugf("Mem Lock wait timeout,curmemory size %d\n", length)
-				}
-			}
-		}()
-	*/
 }
 
 func AddBlockMen(b *codec.Block) {

@@ -29,8 +29,7 @@ import (
 
 func InitLRC() {
 	s1 := int16(env.Default_PND - 23)
-	s2 := int16(env.LRCMAXHANDLERS)
-	ret := C.LRC_Initial(C.short(s1), C.short(s2))
+	ret := C.LRC_Initial(C.short(s1))
 	if ret <= 0 {
 		logrus.Panicf("[LRC]Init ERR,return:%d\n", ret)
 	}
@@ -38,7 +37,7 @@ func InitLRC() {
 
 type LRC_Decoder struct {
 	orgsize int64
-	handle  int16
+	handle  unsafe.Pointer
 	out     []byte
 	in      [][]byte
 }
@@ -56,7 +55,7 @@ func (me *LRC_Decoder) Decode(bs []byte) ([]byte, error) {
 		return me.out[0:me.orgsize], nil
 	}
 	inptr := unsafe.Pointer(&bs[0])
-	ret := C.LRC_Decode(C.short(me.handle), inptr)
+	ret := C.LRC_Decode(me.handle, inptr)
 	osize := int16(ret)
 	if osize < 0 {
 		me.Free()
@@ -73,9 +72,9 @@ func (me *LRC_Decoder) Decode(bs []byte) ([]byte, error) {
 }
 
 func (me *LRC_Decoder) Free() {
-	if me.handle >= 0 {
-		C.LRC_FreeHandle(C.short(me.handle))
-		me.handle = -1
+	if me.handle != nil {
+		C.LRC_FreeHandle(me.handle)
+		me.handle = nil
 	}
 }
 
@@ -89,11 +88,10 @@ func LRC_Decode(originalCount int64) (*LRC_Decoder, error) {
 	bs := make([]byte, env.PFL*shardCount)
 	outptr := unsafe.Pointer(&bs[0])
 	ret := C.LRC_BeginDecode(C.ushort(shardCount), C.ulong(env.PFL), outptr)
-	r := int16(ret)
-	if r < 0 {
+	if ret == nil {
 		return nil, errors.New("LRC begin decode ERR.")
 	}
-	return &LRC_Decoder{orgsize: originalCount, handle: r, out: bs, in: [][]byte{}}, nil
+	return &LRC_Decoder{orgsize: originalCount, handle: unsafe.Pointer(ret), out: bs, in: [][]byte{}}, nil
 }
 
 func LRC_Encode(data [][]byte) ([][]byte, error) {

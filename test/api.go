@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"pkg/fmt"
+	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
@@ -32,14 +33,14 @@ func ListObj() {
 	fmt.Println(api.LengthKey + ":" + m[api.LengthKey])
 }
 
-func UpAndDown() {
+func UpAndDownBytes() {
 	initApi()
 	vhw := upload()
 	download(vhw)
 	downloadRange(vhw)
 }
 
-func UpAndDown2() {
+func UpAndDownFile() {
 	initApi()
 	vhw := uploadFile()
 	download(vhw)
@@ -47,10 +48,17 @@ func UpAndDown2() {
 
 func uploadFile() []byte {
 	up := client.NewUploadObject()
+	go func() {
+		for {
+			time.Sleep(time.Duration(5) * time.Second)
+			logrus.Infof("[UploadFile]Progress:%d\n", up.GetProgress())
+		}
+	}()
 	vhw, errmsg := up.UploadFile(filePath)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
+	logrus.Infof("[UploadFile]Progress:%d\n", up.GetProgress())
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
 	return vhw
 }
