@@ -95,7 +95,6 @@ func (me *ErasureEncoder) Encode() error {
 			me.Shards[index] = shard
 		}
 		me.MakeVHBLRCMode()
-
 	}
 	return nil
 }

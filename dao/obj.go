@@ -34,7 +34,7 @@ func (self *ObjectMeta) GetAndUpdateNlink() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOneAndUpdate(ctx, filter, update).Decode(self)
 	if err != nil {
-		logrus.Errorf("[GetAndUpdateNlink]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]GetAndUpdateNlink ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -43,7 +43,7 @@ func (self *ObjectMeta) GetAndUpdateNlink() error {
 func (self *ObjectMeta) IsExists() (bool, error) {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"_id": self.VHW}
-	opt := options.FindOne().SetProjection(bson.M{"NLINK": 1, "VNU": 1, "blocks": 1})
+	opt := options.FindOne().SetProjection(bson.M{"NLINK": 1, "VNU": 1, "length": 1, "blocks": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	err := source.GetObjectColl().FindOne(ctx, filter, opt).Decode(self)
@@ -51,22 +51,34 @@ func (self *ObjectMeta) IsExists() (bool, error) {
 		if err == mongo.ErrNoDocuments {
 			return false, nil
 		} else {
-			logrus.Errorf("[IsExists]ERR:%s\n", err)
+			logrus.Errorf("[ObjectMeta]IsExists ERR:%s\n", err)
 			return false, err
 		}
 	}
 	return true, nil
 }
 
-func (self *ObjectMeta) InsertOrUpdate() error {
+func (self *ObjectMeta) UpdateLength() error {
 	source := NewUserMetaSource(uint32(self.UserId))
-	filter := bson.M{"VNU": self.VNU}
-	opt := options.Update().SetUpsert(true)
+	filter := bson.M{"_id": self.VHW}
+	update := bson.M{"$set": bson.M{"length": self.Length}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := source.GetObjectColl().UpdateOne(ctx, filter, bson.M{"$set": self}, opt)
+	_, err := source.GetObjectColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		logrus.Errorf("[InsertOrUpdate]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]UpdateLength ERR:%s\n", err)
+		return err
+	}
+	return nil
+}
+
+func (self *ObjectMeta) Insert() error {
+	source := NewUserMetaSource(uint32(self.UserId))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetObjectColl().InsertOne(ctx, self)
+	if err != nil {
+		logrus.Errorf("[ObjectMeta]Insert ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -83,7 +95,7 @@ func (self *ObjectMeta) INCObjectNLINK() error {
 	defer cancel()
 	_, err := source.GetObjectColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		logrus.Errorf("[INCObjectNLINK]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]INCObjectNLINK ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -96,7 +108,7 @@ func (self *ObjectMeta) GetByVHW() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOne(ctx, filter).Decode(self)
 	if err != nil {
-		logrus.Errorf("[GetByVHW]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]GetByVHW ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -109,7 +121,7 @@ func (self *ObjectMeta) GetByVNU() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOne(ctx, filter).Decode(self)
 	if err != nil {
-		logrus.Errorf("[GetByVNU]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]GetByVNU ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -123,7 +135,7 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 	defer cancel()
 	_, err := source.GetObjectColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		logrus.Errorf("[AddRefer]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]AddRefer ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -139,7 +151,7 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[ListObjects]ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
 		return nil, startVnu, err
 	}
 	vbis := [][]byte{}
@@ -152,7 +164,7 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 		var res = &ObjectMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[ListObjects]Decode ERR:%s\n", err)
+			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
 			return nil, startVnu, err
 		}
 		if res.VNU.Timestamp().Unix() > stoptime {
@@ -168,7 +180,7 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 		startVnu = res.VNU
 	}
 	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[ListObjects]Cursor ERR:%s, block count:%d\n", curerr, len(vbis))
+		logrus.Errorf("[ObjectMeta]ListObjects Cursor ERR:%s, block count:%d\n", curerr, len(vbis))
 		return nil, startVnu, curerr
 	}
 	return vbis, startVnu, nil

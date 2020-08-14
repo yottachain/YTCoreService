@@ -142,6 +142,13 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 	if len(h.m.VHW) != 32 {
 		return pkt.NewError(pkt.INVALID_VHW)
 	}
+	has, err := net.HasSpace(*h.m.Length, h.user.Username)
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	if !has {
+		return pkt.NewError(pkt.NOT_ENOUGH_DHH)
+	}
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
 	exists, err := meta.IsExists()
 	if err != nil {
@@ -157,10 +164,13 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 			nums := pkt.ReferIds(pkt.ParseRefers(meta.BlockList))
 			ca.AddBlocks(nums)
 			if meta.Length != *h.m.Length {
-				logrus.Warnf("[UploadOBJInit]UID:%d,File length inconsistency.\n", h.user.UserID)
-			} else {
-				logrus.Debugf("[UploadOBJInit]UID:%d,Uploading...\n", h.user.UserID)
+				meta.Length = *h.m.Length
+				err = meta.UpdateLength()
+				if err != nil {
+					return pkt.NewError(pkt.SERVER_ERROR)
+				}
 			}
+			logrus.Debugf("[UploadOBJInit]UID:%d,Uploading...\n", h.user.UserID)
 			count := uint32(len(nums))
 			resp.Blocks = &pkt.UploadObjectInitResp_Blocks{Count: &count, Blocks: nums}
 		} else {
@@ -174,23 +184,16 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 		}
 	} else {
 		meta.VNU = primitive.NewObjectID()
-		i1, i2, i3, i4 := pkt.ObjectIdParam(meta.VNU)
-		resp.Vnu = &pkt.UploadObjectInitResp_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
-	}
-	has, err := net.HasSpace(*h.m.Length, h.user.Username)
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	if has {
 		meta.Length = *h.m.Length
 		meta.NLINK = 0
+		meta.Usedspace = 0
 		meta.BlockList = [][]byte{}
-		err = meta.InsertOrUpdate()
+		err = meta.Insert()
 		if err != nil {
 			return pkt.NewError(pkt.SERVER_ERROR)
 		}
-	} else {
-		return pkt.NewError(pkt.NOT_ENOUGH_DHH)
+		i1, i2, i3, i4 := pkt.ObjectIdParam(meta.VNU)
+		resp.Vnu = &pkt.UploadObjectInitResp_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	}
 	logrus.Infof("[UploadOBJInit]UID:%d,UploadId:%s.\n", h.user.UserID, meta.VNU.Hex())
 	SetUploadObject(meta.VNU, ca)

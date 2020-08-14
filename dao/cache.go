@@ -24,7 +24,7 @@ func AddAction(action *Action) error {
 	defer cancel()
 	_, err := source.GetOBJColl().InsertOne(ctx, action)
 	if err != nil {
-		logrus.Errorf("[AddAction]UserID:%d,ERR:%s\n", action.UserID, err)
+		logrus.Errorf("[CacheMeta]AddAction UserID:%d,ERR:%s\n", action.UserID, err)
 		return err
 	}
 	return nil
@@ -37,7 +37,7 @@ func AddNewObject(id primitive.ObjectID, usedSpace uint64, userID int32, usernam
 	defer cancel()
 	_, err := source.GetOBJColl().InsertOne(ctx, action)
 	if err != nil {
-		logrus.Errorf("[AddNewObject]UserID:%d,ERR:%s\n", userID, err)
+		logrus.Errorf("[CacheMeta]AddNewObject UserID:%d,ERR:%s\n", userID, err)
 		return err
 	}
 	return nil
@@ -53,7 +53,7 @@ func FindOneNewObject() *Action {
 		if err == mongo.ErrNoDocuments {
 			return nil
 		}
-		logrus.Errorf("[FindOneNewObject]ERR:%s\n", err)
+		logrus.Errorf("[CacheMeta]FindOneNewObject ERR:%s\n", err)
 		return nil
 	}
 	return action
@@ -67,7 +67,7 @@ func SetUserSumTime(userid int32) error {
 	defer cancel()
 	_, err := source.GetSumColl().UpdateOne(ctx, filter, data)
 	if err != nil {
-		logrus.Errorf("[SetUserSumTime]UserID:%d,ERR:%s\n", userid, err)
+		logrus.Errorf("[CacheMeta]SetUserSumTime UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
@@ -86,7 +86,7 @@ func GetUserSumTime(userid int32) (int64, error) {
 		if err == mongo.ErrNoDocuments {
 			return 0, nil
 		} else {
-			logrus.Errorf("[GetUserSumTime]ERR:%s\n", err)
+			logrus.Errorf("[CacheMeta]GetUserSumTime ERR:%s\n", err)
 			return 0, err
 		}
 	}

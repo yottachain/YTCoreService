@@ -17,11 +17,11 @@ func Test(t *testing.T) {
 	//***********api test*********
 	//test.ListObj()
 	//test.UpAndDownFile()
-	test.UpAndDownBytes()
+	//test.UpAndDownBytes()
 
 	//**********code test**********
 	//env.InitClient()
 	//test.TestCutFile
-	//test.TestLRC()
+	test.TestLRCEncode()
 	select {}
 }

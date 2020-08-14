@@ -152,7 +152,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool) *p
 			if time.Now().Unix()-contime < env.DN_RETRY_WAIT {
 				logmsg := fmt.Sprintf("[P2P]%s%s did not connect successfully %d seconds ago\n", log_pre, addrString, env.DN_RETRY_WAIT)
 				logrus.Errorf(logmsg)
-				return pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
+				return pkt.NewErrorMsg(pkt.CONN_ERROR, logmsg)
 			} else {
 				maddrs, err := StringListToMaddrs(addrs)
 				if err != nil {

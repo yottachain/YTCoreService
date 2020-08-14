@@ -167,11 +167,14 @@ func (me *DownLoadShardInfo) Download() []byte {
 				return nil
 			}
 			logrus.Errorf("[DownloadShard]%sDownload ERR,%s from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
-			times++
+			if err.Code == pkt.CONN_ERROR {
+				time.Sleep(time.Duration(1) * time.Second)
+			} else {
+				times++
+			}
 			if times >= me.RetryTimes {
 				return nil
 			}
-			time.Sleep(time.Duration(env.DN_RETRY_WAIT) * time.Second)
 		} else {
 			msg = m
 			break

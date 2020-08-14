@@ -36,7 +36,7 @@ func TestAES() {
 func TestLRCEncode() {
 	codec.InitLRC()
 	myfunc := func() {
-		for ii := 0; ii < 500; ii++ {
+		for ii := 0; ii < 50; ii++ {
 			bs := env.MakeRandData(1024*1024*2 - 256)
 			b := &codec.EncryptedBlock{}
 			b.Data = bs
@@ -46,11 +46,9 @@ func TestLRCEncode() {
 			fmt.Printf("Encode OK:%d/%d\n", len(shards), ii)
 		}
 	}
-	go myfunc()
-	go myfunc()
-	go myfunc()
-	go myfunc()
-	go myfunc()
+	for ii := 0; ii < 5; ii++ {
+		go myfunc()
+	}
 }
 
 func TestLRC() {

@@ -31,20 +31,20 @@ func GetBlockByVHP(vhp []byte) ([]*BlockMeta, error) {
 	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[GetBlockByVHP]ERR:%s\n", err)
+		logrus.Errorf("[BlockMeta]GetBlockByVHP ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &BlockMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[GetBlockByVHP]Decode ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockByVHP Decode ERR:%s\n", err)
 			return nil, err
 		}
 		result = append(result, res)
 	}
 	if err := cur.Err(); err != nil {
-		logrus.Errorf("[GetBlockByVHP]Cursor ERR:%s\n", err)
+		logrus.Errorf("[BlockMeta]GetBlockByVHP Cursor ERR:%s\n", err)
 		return nil, err
 	}
 	return result, nil
@@ -62,7 +62,7 @@ func GetBlockVNF(vbi int64) (*BlockMeta, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			logrus.Errorf("[GetBlockVNF]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockVNF ERR:%s\n", err)
 			return nil, err
 		}
 	}
@@ -81,7 +81,7 @@ func GetBlockById(vbi int64) (*BlockMeta, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			logrus.Errorf("[GetBlockById]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockById ERR:%s\n", err)
 			return nil, err
 		}
 	}
@@ -100,7 +100,7 @@ func GetBlockByVHP_VHB(vhp []byte, vhb []byte) (*BlockMeta, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			logrus.Errorf("[GetBlockByVHP_VHB]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockByVHP_VHB ERR:%s\n", err)
 			return nil, err
 		}
 	}
@@ -115,7 +115,7 @@ func SaveBlockMeta(meta *BlockMeta) error {
 	if err != nil {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
-			logrus.Errorf("[SaveBlockMeta]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]SaveBlockMeta ERR:%s\n", err)
 			return err
 		}
 	}
@@ -134,7 +134,7 @@ func SaveBlockData(id int64, data []byte) error {
 	if err != nil {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
-			logrus.Errorf("[SaveBlockData]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]SaveBlockData ERR:%s\n", err)
 			return err
 		}
 	}
@@ -152,7 +152,7 @@ func GetBlockData(id int64) []byte {
 	err := source.GetBlockDataColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			logrus.Errorf("[GetBlockData]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockData ERR:%s\n", err)
 		}
 		return nil
 	}
@@ -169,7 +169,7 @@ func GetBlockCount() (uint64, error) {
 	err := source.GetBlockCountColl().FindOne(ctx, filter, opt).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			logrus.Errorf("[GetBlockCount]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockCount ERR:%s\n", err)
 			return 0, err
 		} else {
 			return 0, nil
@@ -187,7 +187,7 @@ func IncBlockCount() error {
 	defer cancel()
 	_, err := source.GetBlockCountColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		logrus.Errorf("[IncBlockCount]ERR:%s\n", err)
+		logrus.Errorf("[BlockMeta]IncBlockCount ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -203,7 +203,7 @@ func GetBlockNlinkCount() (uint64, error) {
 	err := source.GetBlockCountColl().FindOne(ctx, filter, opt).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			logrus.Errorf("[GetBlockNlinkCount]ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetBlockNlinkCount ERR:%s\n", err)
 			return 0, err
 		} else {
 			return 0, nil
@@ -221,7 +221,7 @@ func IncBlockNlinkCount() error {
 	defer cancel()
 	_, err := source.GetBlockCountColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		logrus.Errorf("[IncBlockNlinkCount]ERR:%s\n", err)
+		logrus.Errorf("[BlockMeta]IncBlockNlinkCount ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -238,20 +238,20 @@ func GetUsedSpace(ids []int64) (map[int64]*BlockMeta, error) {
 	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[GetUsedSpace]ERR:%s\n", err)
+		logrus.Errorf("[BlockMeta]GetUsedSpace ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &BlockMeta{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[GetUsedSpace]Decode ERR:%s\n", err)
+			logrus.Errorf("[BlockMeta]GetUsedSpace Decode ERR:%s\n", err)
 			return nil, err
 		}
 		metas[res.VBI] = res
 	}
 	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[GetUsedSpace]Cursor ERR:%s\n", curerr)
+		logrus.Errorf("[BlockMeta]GetUsedSpace Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return metas, nil

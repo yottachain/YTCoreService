@@ -72,7 +72,7 @@ func GetUserCache(userid int32, keyNumber int, signdata string) *User {
 	pkey := base58.Encode(user.KUEp[0])
 	pass := YTCrypto.Verify(pkey, []byte(data), signdata)
 	if !pass {
-		logrus.Errorf("[GetUserCache]Signature verification failed,UserId:%d\n", userid)
+		logrus.Errorf("[UserMeta]GetUserCache Signature verification failed,UserId:%d\n", userid)
 		return nil
 	}
 	return user
@@ -86,7 +86,7 @@ func UpdateNilRelationship() {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateMany(ctx, filter, update)
 	if err != nil {
-		logrus.Errorf("[UpdateNilRelationship]ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]UpdateNilRelationship ERR:%s\n", err)
 	}
 }
 
@@ -99,7 +99,7 @@ func GetUserByUserId(userid int32) *User {
 	err := source.GetUserColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			logrus.Errorf("[GetUserByUserId]ERR:%s\n", err)
+			logrus.Errorf("[UserMeta]GetUserByUserId ERR:%s\n", err)
 		}
 		return nil
 	}
@@ -115,7 +115,7 @@ func GetUserByUsername(username string) *User {
 	err := source.GetUserColl().FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			logrus.Errorf("[GetUserByUsername]ERR:%s\n", err)
+			logrus.Errorf("[UserMeta]GetUserByUsername ERR:%s\n", err)
 		}
 		return nil
 	}
@@ -130,7 +130,7 @@ func AddUserKUEp(userid int32, kuep []byte) error {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
-		logrus.Errorf("[AddUserKUEp]UserID:%d,ERR:%s\n", userid, err)
+		logrus.Errorf("[UserMeta]AddUserKUEp UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
@@ -144,7 +144,7 @@ func UpdateUserCost(userid int32, costPerCycle uint64) error {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
-		logrus.Errorf("[UpdateUserCost]UserID:%d,ERR:%s\n", userid, err)
+		logrus.Errorf("[UserMeta]UpdateUserCost UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
@@ -158,7 +158,7 @@ func UpdateUserSpace(userid int32, usedSpace uint64, fileTotal uint64, spaceTota
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
-		logrus.Errorf("[UpdateUserSpace]UserID:%d,ERR:%s\n", userid, err)
+		logrus.Errorf("[UserMeta]UpdateUserSpace UserID:%d,ERR:%s\n", userid, err)
 		return err
 	}
 	return nil
@@ -170,7 +170,7 @@ func AddUser(user *User) error {
 	defer cancel()
 	_, err := source.GetUserColl().InsertOne(ctx, user)
 	if err != nil {
-		logrus.Errorf("[AddUser]UserID:%d,ERR:%s\n", user.UserID, err)
+		logrus.Errorf("[UserMeta]AddUser UserID:%d,ERR:%s\n", user.UserID, err)
 		return err
 	}
 	return nil
@@ -189,20 +189,20 @@ func ListUsers(lastId int32, limit int, fields bson.M) ([]*User, error) {
 	cur, err := source.GetUserColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[ListUsers]ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]ListUsers ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &User{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[ListUsers]Decode ERR:%s\n", err)
+			logrus.Errorf("[UserMeta]ListUsers Decode ERR:%s\n", err)
 			return nil, err
 		}
 		result = append(result, res)
 	}
 	if err := cur.Err(); err != nil {
-		logrus.Errorf("[ListUsers]Cursor ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]ListUsers Cursor ERR:%s\n", err)
 		return nil, err
 	}
 	return result, nil
@@ -221,20 +221,20 @@ func TotalUsers() (*User, error) {
 	cur, err := source.GetUserColl().Aggregate(ctx, []bson.M{o})
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[TotalUsers]ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]TotalUsers ERR:%s\n", err)
 		return nil, err
 	}
 	if cur.Next(ctx) {
 		var res = &User{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[TotalUsers]Decode ERR:%s\n", err)
+			logrus.Errorf("[UserMeta]TotalUsers Decode ERR:%s\n", err)
 			return nil, err
 		}
 		return res, nil
 	}
 	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[TotalUsers]Cursor ERR:%s\n", curerr)
+		logrus.Errorf("[UserMeta]TotalUsers Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return &User{Usedspace: 0, SpaceTotal: 0, FileTotal: 0}, nil
@@ -249,7 +249,7 @@ func GetUserCount() (int32, error) {
 		if err == mongo.ErrNilDocument {
 			return 0, nil
 		} else {
-			logrus.Errorf("[GetUserCount]ERR:%s\n", err)
+			logrus.Errorf("[UserMeta]GetUserCount ERR:%s\n", err)
 			return 0, err
 		}
 	} else {
@@ -265,7 +265,7 @@ func SetRelationship(username, relationship string) error {
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		logrus.Errorf("[SetRelationship]ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]SetRelationship ERR:%s\n", err)
 		return err
 	}
 	return nil
@@ -290,20 +290,20 @@ func SumRelationship() (map[string]int64, error) {
 	cur, err := source.GetUserColl().Aggregate(ctx, []bson.M{filter, o})
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[SumRelationship]ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]SumRelationship ERR:%s\n", err)
 		return nil, err
 	}
 	for cur.Next(ctx) {
 		var res = &SumType{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[SumRelationship]Decode ERR:%s\n", err)
+			logrus.Errorf("[UserMeta]SumRelationship Decode ERR:%s\n", err)
 			return nil, err
 		}
 		resmap[res.Relationship] = res.Usedspace
 	}
 	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[SumRelationship]Cursor ERR:%s\n", curerr)
+		logrus.Errorf("[UserMeta]SumRelationship Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return resmap, nil
@@ -318,7 +318,7 @@ func SetSpaceSum(snid int32, mowner string, usedspace uint64) error {
 	defer cancel()
 	_, err := source.GetSumColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		logrus.Errorf("[SetSpaceSum]ERR:%s\n", err)
+		logrus.Errorf("[UserMeta]SetSpaceSum ERR:%s\n", err)
 		return err
 	}
 	return nil

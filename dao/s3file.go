@@ -53,7 +53,7 @@ func (self *FileMeta) GetLastFileMeta(justversion bool) error {
 		if err == mongo.ErrNoDocuments {
 			return err
 		} else {
-			logrus.Errorf("[GetFileMeta]ERR:%s\n", err)
+			logrus.Errorf("[S3FileMeta]GetLastFileMeta %s/%s ERR:%s\n", self.BucketId.Hex(), self.FileName, err)
 			return err
 		}
 	}
@@ -71,7 +71,7 @@ func (self *FileMeta) DeleteFileMeta() error {
 	defer cancel()
 	_, err := source.GetFileColl().DeleteOne(ctx, filter)
 	if err != nil {
-		logrus.Errorf("[DeleteFileMeta]UserID:%d,ERR:%s\n", self.UserId, err)
+		logrus.Errorf("[S3FileMeta]DeleteFileMeta UserID:%d,ERR:%s\n", self.UserId, err)
 		return err
 	}
 	return nil
@@ -85,7 +85,7 @@ func (self *FileMeta) DeleteLastFileMeta() error {
 	defer cancel()
 	_, err := source.GetFileColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		logrus.Errorf("[DeleteLastFileMeta]UserID:%d,ERR:%s\n", self.UserId, err)
+		logrus.Errorf("[S3FileMeta]DeleteLastFileMeta UserID:%d,ERR:%s\n", self.UserId, err)
 		return err
 	}
 	filter = bson.M{"bucketId": self.BucketId, "fileName": self.FileName, "version": bson.M{"$size": 0}}
@@ -105,7 +105,7 @@ func (self *FileMeta) SaveFileMeta() error {
 	opt := options.Update().SetUpsert(true)
 	_, err := source.GetFileColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
-		logrus.Errorf("[SaveFileMeta]UserID:%d,ERR:%s\n", self.UserId, err)
+		logrus.Errorf("[S3FileMeta]SaveFileMeta UserID:%d,ERR:%s\n", self.UserId, err)
 		return err
 	}
 	return nil
@@ -126,7 +126,6 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 		meta := &FileMeta{BucketId: bid, FileName: nFileName, UserId: int32(uid)}
 		err := meta.GetLastFileMeta(true)
 		if err != nil {
-			logrus.Errorf("[ListFileMeta]GetLastFileMeta %s/%s ERR:%s\n", bid.Hex(), nFileName, err)
 			return nil, err
 		}
 		if !wversion {
@@ -162,7 +161,7 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 	cur, err := source.GetFileColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)
 	if err != nil {
-		logrus.Errorf("[ListFileMeta]ERR:%s\n", err)
+		logrus.Errorf("[S3FileMeta]ListFileMeta ERR:%s\n", err)
 		return nil, err
 	}
 	count := 0
@@ -171,7 +170,7 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 		res := &FileMetaWithVersion{}
 		err = cur.Decode(res)
 		if err != nil {
-			logrus.Errorf("[ListFileMeta]Decode ERR:%s\n", err)
+			logrus.Errorf("[S3FileMeta]ListFileMeta Decode ERR:%s\n", err)
 			return nil, err
 		}
 		versize := len(res.Version)
@@ -199,13 +198,13 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 				}
 			}
 			if toFindNextVersionId {
-				logrus.Errorf("[ListFileMeta]ERR:INVALID_NEXTVERSIONID%s\n", nversion.Hex())
+				logrus.Errorf("[S3FileMeta]ListFileMeta ERR:INVALID_NEXTVERSIONID%s\n", nversion.Hex())
 				return nil, errors.New("INVALID_NEXTVERSIONID")
 			}
 		}
 	}
 	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[ListFileMeta]Cursor ERR:%s\n", curerr)
+		logrus.Errorf("[S3FileMeta]ListFileMeta Cursor ERR:%s\n", curerr)
 		return nil, curerr
 	}
 	return result, nil

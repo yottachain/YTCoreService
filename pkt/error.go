@@ -42,7 +42,9 @@ const INVALID_NEXTID = 0x23
 const TOO_MANY_CURSOR = 0x24
 const TOO_LOW_VERSION = 0x25
 const DN_IN_BLACKLIST = 0x26
+const BAD_MESSAGE = 0x27
 const INVALID_ARGS = 0x30
+const CONN_ERROR = 0x31
 
 var BUSY_ERROR = NewErrorMsg(SERVER_ERROR, "Too many routines")
 

@@ -62,19 +62,19 @@ func UnmarshalMsg(data []byte) proto.Message {
 	if data == nil || len(data) < 2 {
 		errmsg := fmt.Sprintf("[Packet]Unmarshal ERR:nil data")
 		logrus.Errorln(errmsg)
-		return NewErrorMsg(INVALID_ARGS, errmsg)
+		return NewErrorMsg(BAD_MESSAGE, errmsg)
 	}
 	msgType := data[0:2]
 	msg, err := GetEmptyMessage(msgType)
 	if err != nil {
-		return NewErrorMsg(INVALID_ARGS, err.Error())
+		return NewErrorMsg(BAD_MESSAGE, err.Error())
 	}
 	bs := data[2:]
 	err = proto.Unmarshal(bs, msg)
 	if err != nil {
 		errmsg := fmt.Sprintf("[Packet]Unmarshal ERR%s.", err.Error())
 		logrus.Errorln(errmsg)
-		return NewErrorMsg(INVALID_ARGS, errmsg)
+		return NewErrorMsg(BAD_MESSAGE, errmsg)
 	}
 	return msg
 }
