@@ -36,11 +36,11 @@ func (self *DownloadObject) SetBackupCaller(call BackupCaller) {
 }
 
 func (self *DownloadObject) GetProgress() int32 {
-	if self.Progress.TotalBlockNum == 0 || self.Progress.ReadBlockNum == 0 {
-		return 0
-	}
 	if self.Progress.Complete {
 		return 100
+	}
+	if self.Progress.TotalBlockNum == 0 || self.Progress.ReadBlockNum == 0 {
+		return 0
 	}
 	return (self.Progress.ReadBlockNum - 1) * 100 / self.Progress.TotalBlockNum
 }
