@@ -16,12 +16,13 @@ func Test(t *testing.T) {
 
 	//***********api test*********
 	//test.ListObj()
-	//test.UpAndDownFile()
+	test.UpAndDownFile()
+	//test.DownLoadByKey()
 	//test.UpAndDownBytes()
 
 	//**********code test**********
 	//env.InitClient()
 	//test.TestCutFile
-	test.TestLRCEncode()
+	//test.TestLRCEncode()
 	select {}
 }

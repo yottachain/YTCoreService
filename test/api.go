@@ -15,11 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = true
+const yfnet = false
 const testsize = 1024 * 1024 * 9
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
-const filePath = "d:/nodemgr.log"
+const filePath = "d:/source.dat"
 const savePath = "d:/test"
 
 var data []byte
@@ -48,6 +48,35 @@ func UpAndDownFile() {
 	saveFile(vhw)
 }
 
+func DownLoadByKey() {
+	initApi()
+	dn, errmsg := client.NewDownloadFile("newbucket", "log", primitive.NilObjectID)
+	if errmsg != nil {
+		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
+	}
+	oksign := make(chan int)
+	go func() {
+		for {
+			timeout := time.After(time.Second * 5)
+			select {
+			case oksign <- 1:
+				return
+			case <-timeout:
+				logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
+			}
+		}
+	}()
+	dn.SaveToPath(savePath)
+	err := dn.SaveToPath(savePath)
+	if err != nil {
+		logrus.Error("[DownloadFile]ERR:%s.\n", err)
+	} else {
+		logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
+		logrus.Infof("[DownloadFile]OK.\n")
+	}
+	<-oksign
+}
+
 func saveFile(vhw []byte) {
 	dn, errmsg := client.NewDownloadObject(vhw)
 	if errmsg != nil {
@@ -65,9 +94,13 @@ func saveFile(vhw []byte) {
 			}
 		}
 	}()
-	dn.SaveToPath(savePath)
-	logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
-	logrus.Infof("[DownloadFile]OK.\n")
+	err := dn.SaveToPath(savePath)
+	if err != nil {
+		logrus.Error("[DownloadFile]ERR:%s.\n", err)
+	} else {
+		logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
+		logrus.Infof("[DownloadFile]OK.\n")
+	}
 	<-oksign
 }
 
@@ -104,8 +137,10 @@ func initApi() {
 		pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-		user = "ianmooneyy11"
-		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
+		//user = "ianmooneyy11"
+		//pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
+		user = "pollyzhang11"
+		pkey = "5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw"
 	}
 	api.StartApi()
 	c, err := api.NewClient(user, pkey)

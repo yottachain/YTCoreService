@@ -3,6 +3,7 @@ package codec
 import (
 	"bytes"
 	"compress/flate"
+	"compress/zlib"
 	"crypto/sha256"
 	"hash"
 	"io"
@@ -27,12 +28,19 @@ func NewBlockReader(b *PlainBlock) *BlockReader {
 	r := new(BlockReader)
 	r.block = b
 	r.head = int(ret)
+	var err error
 	if r.head == 0 {
-		r.reader = flate.NewReader(bytes.NewReader(b.Data[2:]))
+		r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2:]))
+		if err != nil {
+			r.reader = flate.NewReader(bytes.NewReader(b.Data[2:]))
+		}
 	} else if r.head < 0 {
 		r.reader = bytes.NewReader(b.Data[2:])
 	} else {
-		r.reader = flate.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
+		r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
+		if err != nil {
+			r.reader = flate.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
+		}
 	}
 	return r
 }
