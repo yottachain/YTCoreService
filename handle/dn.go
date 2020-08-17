@@ -3,12 +3,12 @@ package handle
 import (
 	"context"
 	"fmt"
+	"pkg/encoding/base64"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
@@ -209,7 +209,12 @@ func ExecSendSpotCheck() {
 		for ii := 0; ii < num; ii++ {
 			t := list.TaskList[ii]
 			req.TaskList[ii] = &pkt.SpotCheckTask{Id: t.ID, NodeId: t.NodeID, Addr: t.Addr}
-			vni := base58.Decode(t.VNI)
+			vni, err := base64.StdEncoding.DecodeString(t.VNI)
+			if err != nil {
+				logrus.Warnf("[GetSpotCheckList]Return ERR VNI:%s\n", t.VNI)
+				req.TaskList[ii].VHF = []byte{}
+				continue
+			}
 			size := len(vni)
 			if size > 16 {
 				vni = vni[size-16:]
