@@ -9,11 +9,15 @@ package codec
 #include <lrc/gf256.h>
 #include <lrc/gf256.c>
 
-void *allocArray(int ln) {
+void **allocArray(int ln) {
 	return malloc(ln * sizeof(void *));
 }
 
-void freeArray(void *p) {
+void freeArray(void **p,int ln) {
+	int i;
+	for (i = 0; i < ln; i++) {
+		free(p[i]);
+	}
 	free(p);
 }
 */
@@ -38,23 +42,24 @@ func InitLRC() {
 type LRC_Decoder struct {
 	orgsize int64
 	handle  unsafe.Pointer
+	inptr   []unsafe.Pointer
+	outptr  unsafe.Pointer
 	out     []byte
-	in      [][]byte
 }
 
 func (me *LRC_Decoder) GetOut() []byte {
-	if me.in == nil {
-		return me.out[0:me.orgsize]
+	if me.inptr == nil {
+		return me.out
 	} else {
 		return nil
 	}
 }
 
 func (me *LRC_Decoder) Decode(bs []byte) ([]byte, error) {
-	if me.in == nil {
+	if me.inptr == nil {
 		return me.out[0:me.orgsize], nil
 	}
-	inptr := unsafe.Pointer(&bs[0])
+	inptr := C.CBytes(bs)
 	ret := C.LRC_Decode(me.handle, inptr)
 	osize := int16(ret)
 	if osize < 0 {
@@ -62,11 +67,12 @@ func (me *LRC_Decoder) Decode(bs []byte) ([]byte, error) {
 		return nil, errors.New("LRC decode ERR.")
 	}
 	if osize > 0 {
+		me.out = C.GoBytes(me.outptr, C.int(me.orgsize))
 		me.Free()
-		me.in = nil
-		return me.out[0:me.orgsize], nil
+		me.inptr = nil
+		return me.out, nil
 	} else {
-		me.in = append(me.in, bs)
+		me.inptr = append(me.inptr, inptr)
 		return nil, nil
 	}
 }
@@ -74,6 +80,10 @@ func (me *LRC_Decoder) Decode(bs []byte) ([]byte, error) {
 func (me *LRC_Decoder) Free() {
 	if me.handle != nil {
 		C.LRC_FreeHandle(me.handle)
+		C.free(me.outptr)
+		for _, p := range me.inptr {
+			C.free(p)
+		}
 		me.handle = nil
 	}
 }
@@ -85,56 +95,38 @@ func LRC_Decode(originalCount int64) (*LRC_Decoder, error) {
 	if remainSize > 0 {
 		shardCount++
 	}
-	bs := make([]byte, env.PFL*shardCount)
-	outptr := unsafe.Pointer(&bs[0])
-	ret := C.LRC_BeginDecode(C.ushort(shardCount), C.ulong(env.PFL), outptr)
+	outp := C.CBytes(make([]byte, env.PFL*shardCount))
+	ret := C.LRC_BeginDecode(C.ushort(shardCount), C.ulong(env.PFL), outp)
 	if ret == nil {
 		return nil, errors.New("LRC begin decode ERR.")
 	}
-	return &LRC_Decoder{orgsize: originalCount, handle: unsafe.Pointer(ret), out: bs, in: [][]byte{}}, nil
+	return &LRC_Decoder{
+		orgsize: originalCount,
+		handle:  unsafe.Pointer(ret),
+		inptr:   []unsafe.Pointer{},
+		outptr:  outp,
+	}, nil
 }
 
 func LRC_Encode(data [][]byte) ([][]byte, error) {
 	size := uint16(len(data))
+	outsize := env.PFL * env.Default_PND
+	outptr := C.CBytes(make([]byte, outsize))
 	ptrs := C.allocArray(C.int(size))
-	defer C.freeArray(ptrs)
 	ps := (*[env.Max_Shard_Count]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
 	for ii := 0; ii < int(size); ii++ {
-		ps[ii] = unsafe.Pointer(&data[ii][0])
+		ps[ii] = C.CBytes(data[ii])
 	}
-	outsize := env.PFL * env.Default_PND
-	out := make([]byte, outsize)
-	outptr := unsafe.Pointer(&out[0])
+	defer func() {
+		C.freeArray(ptrs, C.int(size))
+		C.free(outptr)
+	}()
 	ret := C.LRC_Encode((*unsafe.Pointer)(ptrs), C.ushort(size), C.ulong(uint64(env.PFL)), outptr)
 	osize := int16(ret)
 	if osize <= 0 {
 		return nil, errors.New("LRC encode ERR.")
 	}
-	pout := make([][]byte, osize)
-	for ii := 0; ii < int(osize); ii++ {
-		spos := ii * env.PFL
-		epos := (ii + 1) * env.PFL
-		pout[ii] = out[spos:epos]
-	}
-	return pout, nil
-}
-
-func LRC_Encode1(data [][]byte) ([][]byte, error) {
-	size := uint16(len(data))
-	ptrs := C.allocArray(C.int(size))
-	defer C.freeArray(ptrs)
-	ps := (*[env.Max_Shard_Count]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size:size]
-	for ii := 0; ii < int(size); ii++ {
-		ps[ii] = unsafe.Pointer(&data[ii][0])
-	}
-	outsize := env.PFL * env.Default_PND
-	out := make([]byte, outsize)
-	outptr := unsafe.Pointer(&out[0])
-	ret := C.LRC_Encode((*unsafe.Pointer)(ptrs), C.ushort(size), C.ulong(uint64(env.PFL)), outptr)
-	osize := int16(ret)
-	if osize <= 0 {
-		return nil, errors.New("LRC encode ERR.")
-	}
+	out := C.GoBytes(outptr, C.int(outsize))
 	pout := make([][]byte, osize)
 	for ii := 0; ii < int(osize); ii++ {
 		spos := ii * env.PFL
