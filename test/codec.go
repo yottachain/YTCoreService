@@ -46,7 +46,7 @@ func TestLRCEncode() {
 			fmt.Printf("Encode OK:%d/%d\n", len(shards), ii)
 		}
 	}
-	for ii := 0; ii < 5; ii++ {
+	for ii := 0; ii < 1; ii++ {
 		go myfunc()
 	}
 }

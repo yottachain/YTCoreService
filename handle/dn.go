@@ -315,7 +315,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 		return
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
-	req := &pkt.TaskList{Tasklist: ls.Tasklist}
+	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
@@ -347,6 +347,10 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
+	if h.m.NodeId != newid {
+		newid = h.m.NodeId
+		logrus.Warnf("[DNRebuidRep]Node unequal:%d!=%d.\n", newid, h.m.NodeId)
+	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
 		logrus.Errorf("[DNRebuidRep][%d]Rebuild task OpResultList is empty.\n", newid)
 		return &pkt.VoidResp{}
@@ -376,7 +380,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 	defer cancel()
-	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid}
+	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
 	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 	if err != nil {
 		logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)

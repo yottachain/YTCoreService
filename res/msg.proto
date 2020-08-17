@@ -121,6 +121,7 @@ message TaskDescriptionLRC{
 
 message TaskList{
     repeated bytes tasklist=1;
+    int64 expiredTime=2;
 }
 
 message TaskDispatchList{
@@ -137,6 +138,8 @@ message TaskOpResult{
 message TaskOpResultList{
     repeated bytes id = 1; 
     repeated int32 RES=2;
+    int32 nodeId=3;
+    int64 expiredTime=4;
 }
 
 message UploadFackShardReq{ 

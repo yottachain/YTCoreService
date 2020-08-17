@@ -28,8 +28,8 @@ import (
 )
 
 func InitLRC() {
-	s1 := int16(env.Default_PND - 23)
-	ret := C.LRC_Initial(C.short(s1))
+	s1 := C.short(int16(env.Default_PND - 23))
+	ret := C.LRC_Initial(s1)
 	if ret <= 0 {
 		logrus.Panicf("[LRC]Init ERR,return:%d\n", ret)
 	}
@@ -96,10 +96,8 @@ func LRC_Decode(originalCount int64) (*LRC_Decoder, error) {
 
 func LRC_Encode(data [][]byte) ([][]byte, error) {
 	size := uint16(len(data))
-
 	ptrs := C.allocArray(C.int(size))
 	defer C.freeArray(ptrs)
-
 	ps := (*[env.Max_Shard_Count]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
 	for ii := 0; ii < int(size); ii++ {
 		ps[ii] = unsafe.Pointer(&data[ii][0])
@@ -107,7 +105,6 @@ func LRC_Encode(data [][]byte) ([][]byte, error) {
 	outsize := env.PFL * env.Default_PND
 	out := make([]byte, outsize)
 	outptr := unsafe.Pointer(&out[0])
-
 	ret := C.LRC_Encode((*unsafe.Pointer)(ptrs), C.ushort(size), C.ulong(uint64(env.PFL)), outptr)
 	osize := int16(ret)
 	if osize <= 0 {

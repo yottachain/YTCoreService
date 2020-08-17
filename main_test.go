@@ -22,7 +22,7 @@ func Test(t *testing.T) {
 
 	//**********code test**********
 	//env.InitClient()
-	//test.TestCutFile
+	//test.TestCutFile()
 	//test.TestLRCEncode()
 	select {}
 }
