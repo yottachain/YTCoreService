@@ -34,6 +34,7 @@ func TestAES() {
 }
 
 func TestLRCLoop() {
+	env.InitClient()
 	codec.InitLRC()
 	myfunc := func() {
 		for ii := 0; ii < 50; ii++ {

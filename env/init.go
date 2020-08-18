@@ -1,7 +1,9 @@
 package env
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,6 +54,13 @@ func InitClient() {
 	}
 	readClientProperties()
 	initClientLog()
+	port, err := GetFreePort()
+	if err != nil {
+		return
+	}
+	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	logrus.Infof("[Init]Starting pprof server on address %s\n", addr)
+	go http.ListenAndServe(addr, nil)
 }
 
 func InitServer() {
@@ -74,15 +83,6 @@ func initClientLog() {
 	logFileName := YTFS_HOME + "log/client.log"
 	os.MkdirAll(YTFS_HOME+"log", os.ModePerm)
 	initLog(logFileName, nil)
-	/*
-		go func() {
-			err := http.ListenAndServe("", nil)
-			if err != nil {
-				logrus.Errorf("[Init]ERR when starting pprof server on address %s: %s\n", err)
-			} else {
-				logrus.Infof("[Init]Enable pprof server:%s\n")
-			}
-		}()*/
 }
 
 func initServerLog() {

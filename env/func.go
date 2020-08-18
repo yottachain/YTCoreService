@@ -3,6 +3,7 @@ package env
 import (
 	"encoding/binary"
 	"math/rand"
+	"net"
 	"runtime"
 	"strings"
 	"time"
@@ -70,4 +71,17 @@ func MakeRandData(size int64) []byte {
 		binary.BigEndian.PutUint64(buf[ii*8:(ii+1)*8], rand.Uint64())
 	}
 	return buf
+}
+
+func GetFreePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
+	}
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port, nil
 }

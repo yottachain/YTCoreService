@@ -2,9 +2,9 @@ package test
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"io"
 	"os"
-	"pkg/fmt"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
