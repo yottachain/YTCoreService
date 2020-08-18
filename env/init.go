@@ -58,7 +58,7 @@ func InitClient() {
 	if err != nil {
 		return
 	}
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	logrus.Infof("[Init]Starting pprof server on address %s\n", addr)
 	go http.ListenAndServe(addr, nil)
 }

@@ -21,8 +21,10 @@ void freeArray(void **p,int size) {
 	int i;
 	for (i = 0; i < size; i++) {
 		free(p[i]);
+		//p[i]=NULL;
 	}
 	free(p);
+	//p = NULL;
 }
 */
 import "C"

@@ -33,32 +33,36 @@ func TestAES() {
 	fmt.Printf("data:%s\n", base58.Encode(d))
 }
 
+func lrc(ii int) {
+	bs := env.MakeRandData(1024*1024*2 - 256)
+	b := &codec.EncryptedBlock{}
+	b.Data = bs
+	encoder := codec.NewErasureEncoder(b)
+	encoder.Encode()
+	shards := encoder.Shards
+	fmt.Printf("Encode OK:%d/%d\n", len(shards), ii)
+	/*
+		decoder, _ := codec.NewErasureDecoder(int64(len(bs)))
+		count := 0
+		for {
+			ii := time.Now().UnixNano() % int64(len(shards))
+			shard := shards[ii]
+			ok, _ := decoder.AddShard(shard.Data)
+			shards = append(shards[:ii], shards[ii+1:]...)
+			count++
+			if ok {
+				break
+			}
+		}
+		fmt.Printf("Decode OK,input:%d\n", count)
+	*/
+}
 func TestLRCLoop() {
 	env.InitClient()
 	codec.InitLRC()
 	myfunc := func() {
-		for ii := 0; ii < 50; ii++ {
-			bs := env.MakeRandData(1024*1024*2 - 256)
-			b := &codec.EncryptedBlock{}
-			b.Data = bs
-			encoder := codec.NewErasureEncoder(b)
-			encoder.Encode()
-			shards := encoder.Shards
-			fmt.Printf("Encode OK:%d/%d\n", len(shards), ii)
-
-			decoder, _ := codec.NewErasureDecoder(int64(len(bs)))
-			count := 0
-			for {
-				ii := time.Now().UnixNano() % int64(len(shards))
-				shard := shards[ii]
-				ok, _ := decoder.AddShard(shard.Data)
-				shards = append(shards[:ii], shards[ii+1:]...)
-				count++
-				if ok {
-					break
-				}
-			}
-			fmt.Printf("Decode OK,input:%d\n", count)
+		for ii := 0; ii < 500; ii++ {
+			lrc(ii)
 		}
 	}
 	for ii := 0; ii < 20; ii++ {

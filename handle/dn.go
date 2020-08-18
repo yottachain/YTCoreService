@@ -356,8 +356,8 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
 	if h.m.NodeId != newid {
-		newid = h.m.NodeId
 		logrus.Warnf("[DNRebuidRep]Node unequal:%d!=%d.\n", newid, h.m.NodeId)
+		newid = h.m.NodeId
 	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
 		logrus.Errorf("[DNRebuidRep][%d]Rebuild task OpResultList is empty.\n", newid)
@@ -386,22 +386,27 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 			m.NewNodeId = newid
 		}
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
-	defer cancel()
-	req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
-	err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
-	if err != nil {
-		logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)
-	} else {
-		logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, size, len(h.m.Id))
+	if time.Now().Unix() < h.m.ExpiredTime {
 		if size > 0 {
 			err = dao.SaveShardRebuildMetas(metas)
 			if err != nil {
 				logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
+				return &pkt.VoidResp{}
 			} else {
 				logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
 			}
 		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
+		defer cancel()
+		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
+		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
+		if err != nil {
+			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)
+		} else {
+			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, size, len(h.m.Id))
+		}
+	} else {
+		logrus.Warnf("[DNRebuidRep]ExpiredTime:%d<%d.\n", h.m.ExpiredTime, time.Now().Unix())
 	}
 	return &pkt.VoidResp{}
 }
