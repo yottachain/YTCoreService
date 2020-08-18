@@ -219,6 +219,9 @@ func ExecSendSpotCheck() {
 			if size > 16 {
 				vni = vni[size-16:]
 			}
+			if size < 16 {
+				logrus.Warnf("[GetSpotCheckList]Return ERR len(%d) VNI:%s\n", size, t.VNI)
+			}
 			req.TaskList[ii].VHF = vni
 		}
 		nodes := []*net.Node{}

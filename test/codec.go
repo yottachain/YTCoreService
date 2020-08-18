@@ -33,7 +33,7 @@ func TestAES() {
 	fmt.Printf("data:%s\n", base58.Encode(d))
 }
 
-func TestLRCEncode() {
+func TestLRCLoop() {
 	codec.InitLRC()
 	myfunc := func() {
 		for ii := 0; ii < 50; ii++ {
@@ -60,7 +60,7 @@ func TestLRCEncode() {
 			fmt.Printf("Decode OK,input:%d\n", count)
 		}
 	}
-	for ii := 0; ii < 1; ii++ {
+	for ii := 0; ii < 20; ii++ {
 		go myfunc()
 	}
 }
