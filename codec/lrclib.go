@@ -9,13 +9,16 @@ package codec
 #include <lrc/gf256.h>
 #include <lrc/gf256.c>
 
-void **allocArray(int ln) {
-	return malloc(ln * sizeof(void *));
+void *allocBytes(int size){
+	return malloc(size);
 }
 
-void freeArray(void **p,int ln) {
-	int i;
-	for (i = 0; i < ln; i++) {
+void **allocArray(int size) {
+	return malloc(size * sizeof(void *));
+}
+
+void freeArray(void **p,int size) {
+	for (int i = 0; i < size; i++) {
 		free(p[i]);
 	}
 	free(p);
@@ -95,7 +98,7 @@ func LRC_Decode(originalCount int64) (*LRC_Decoder, error) {
 	if remainSize > 0 {
 		shardCount++
 	}
-	outp := C.CBytes(make([]byte, env.PFL*shardCount))
+	outp := C.allocBytes(C.int(env.PFL * shardCount))
 	ret := C.LRC_BeginDecode(C.ushort(shardCount), C.ulong(env.PFL), outp)
 	if ret == nil {
 		return nil, errors.New("LRC begin decode ERR.")
@@ -111,7 +114,7 @@ func LRC_Decode(originalCount int64) (*LRC_Decoder, error) {
 func LRC_Encode(data [][]byte) ([][]byte, error) {
 	size := uint16(len(data))
 	outsize := env.PFL * env.Default_PND
-	outptr := C.CBytes(make([]byte, outsize))
+	outptr := C.allocBytes(C.int(outsize))
 	ptrs := C.allocArray(C.int(size))
 	ps := (*[env.Max_Shard_Count]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
 	for ii := 0; ii < int(size); ii++ {
