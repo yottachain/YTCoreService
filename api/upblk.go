@@ -231,6 +231,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	enc := codec.NewErasureEncoder(eblk)
 	err = enc.Encode()
 	if err != nil {
+		logrus.Errorf("[UploadBlock]ErasureEncoder ERR:%s\n", self.logPrefix, err)
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
 		return
 	}

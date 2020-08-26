@@ -2,7 +2,7 @@ package codec
 
 import (
 	"bytes"
-	"compress/zlib"
+	"compress/flate"
 	"crypto/sha256"
 	"errors"
 	"io"
@@ -145,7 +145,7 @@ func (fileEncoder *FileEncoder) pack() error {
 func (fileEncoder *FileEncoder) deflate() (int64, error) {
 	buf := bytes.NewBuffer(nil)
 	buf.Write([]byte{0, 0})
-	flateWrite := zlib.NewWriter(buf)
+	flateWrite, _ := flate.NewWriter(buf, flate.BestSpeed)
 	var err error
 	bs := make([]byte, 16)
 	var totalIn int64 = 0

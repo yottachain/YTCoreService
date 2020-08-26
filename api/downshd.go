@@ -86,6 +86,7 @@ func (me *DownLoadShards) OnResponse(data []byte) {
 	}
 	b, err := me.coder.AddShard(data)
 	if err != nil {
+		logrus.Errorf("[DownloadShard]ErasureDecoder AddShard ERR:%s\n", me.logPrefix, err)
 		me.ERR.Store(err)
 		atomic.StoreInt32(me.cancel, 1)
 		return

@@ -47,7 +47,7 @@ func (me *ErasureDecoder) AddShard(bs []byte) (bool, error) {
 		return true, nil
 	}
 	if me.decoder == nil {
-		me.copydata = bs[1 : me.encryptedBlockSize+1]
+		me.copydata = bs[1:me.encryptedBlockSize]
 		return true, nil
 	}
 	bss, err := me.decoder.Decode(bs)
