@@ -385,22 +385,26 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	DelUploadObject(meta.VNU)
+	if usedspace <= env.PCM {
+		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 0)
+		logrus.Infof("[UploadOBJEnd][%d]File length less than 16K,Delay billing...\n", h.user.UserID)
+		return &pkt.VoidResp{}
+	}
 	err = net.AddUsedSpace(h.user.Username, addusedspace)
 	if err != nil {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 0)
-		logrus.Errorf("[UploadOBJEnd][%d] Add usedSpace ERR:%s\n", h.user.UserID, err)
-		DelUploadObject(meta.VNU)
+		logrus.Errorf("[UploadOBJEnd][%d]Add usedSpace ERR:%s\n", h.user.UserID, err)
 		return &pkt.VoidResp{}
 	}
-	logrus.Infof("[UploadOBJEnd]User [%d] add usedSpace:%d\n", h.user.UserID, usedspace)
+	logrus.Infof("[UploadOBJEnd][%d]Add usedSpace:%d\n", h.user.UserID, usedspace)
 	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
 	err = net.SubBalance(h.user.Username, firstCost)
 	if err != nil {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
-		logrus.Errorf("[UploadOBJEnd][%d] Sub Balance ERR:%s\n", h.user.UserID, err)
+		logrus.Errorf("[UploadOBJEnd][%d]Sub Balance ERR:%s\n", h.user.UserID, err)
 	}
-	logrus.Infof("[UploadOBJEnd]User [%d] Sub balance:%d\n", h.user.UserID, firstCost)
+	logrus.Infof("[UploadOBJEnd][%d]Sub balance:%d\n", h.user.UserID, firstCost)
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
-	DelUploadObject(meta.VNU)
 	return &pkt.VoidResp{}
 }
