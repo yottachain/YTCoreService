@@ -50,7 +50,11 @@ func (h *UploadBlockInitHandler) Handle() proto.Message {
 	logrus.Infof("[UploadBLK]Init %d/%s/%d\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 	if env.S3Version != "" {
 		if h.m.Version == nil || *h.m.Version == "" || bytes.Compare([]byte(*h.m.Version), []byte(env.S3Version)) < 0 {
-			errmsg := fmt.Sprintf("[UploadBLK]UID:%d,ERR:TOO_LOW_VERSION?%s\n", h.user.UserID, *h.m.Version)
+			v := "NULL"
+			if h.m.Version != nil {
+				v = *h.m.Version
+			}
+			errmsg := fmt.Sprintf("[UploadBLK]UID:%d,ERR:TOO_LOW_VERSION?%s\n", h.user.UserID, v)
 			logrus.Errorf(errmsg)
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
