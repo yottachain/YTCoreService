@@ -19,6 +19,7 @@ var DATABASENAME string
 var USER_DATABASENAME string
 var DNI_DATABASENAME string
 var CACHE_DATABASENAME string
+var Cluster_DB bool = false
 
 var config *env.Config
 var MongoAddress string
@@ -35,10 +36,16 @@ func InitMongo() {
 		DNI_DATABASENAME = "yotta" + strconv.Itoa(env.SuperNodeID)
 		CACHE_DATABASENAME = "cache_" + strconv.Itoa(env.SuperNodeID)
 	} else {
+		Cluster_DB = strings.EqualFold(s, "Cluster_DB")
+		if Cluster_DB {
+			USER_DATABASENAME = "usermeta"
+			CACHE_DATABASENAME = "cache_" + strconv.Itoa(env.SuperNodeID)
+		} else {
+			USER_DATABASENAME = "usermeta_"
+			CACHE_DATABASENAME = "cache"
+		}
 		DATABASENAME = "metabase"
-		USER_DATABASENAME = "usermeta_"
 		DNI_DATABASENAME = "yotta"
-		CACHE_DATABASENAME = "cache"
 	}
 	confpath := env.YTSN_HOME + "conf/mongo.properties"
 	conf, err := env.NewConfig(confpath)
@@ -194,7 +201,8 @@ const OBJECT_INDEX_NAME = "VNU"
 
 var USERBASE_MAP = struct {
 	sync.RWMutex
-	bases map[uint32]*UserMetaSource
+	clusterDB *UserMetaSource
+	bases     map[uint32]*UserMetaSource
 }{bases: make(map[uint32]*UserMetaSource)}
 
 type UserMetaSource struct {
@@ -206,17 +214,32 @@ type UserMetaSource struct {
 }
 
 func NewUserMetaSource(uid uint32) *UserMetaSource {
+	var base *UserMetaSource
 	USERBASE_MAP.RLock()
-	base := USERBASE_MAP.bases[uid]
+	if Cluster_DB {
+		base = USERBASE_MAP.clusterDB
+	} else {
+		base = USERBASE_MAP.bases[uid]
+	}
 	USERBASE_MAP.RUnlock()
 	if base == nil {
 		USERBASE_MAP.Lock()
-		base = USERBASE_MAP.bases[uid]
-		if base == nil {
-			base = &UserMetaSource{}
-			base.userid = uid
-			base.initMetaDB()
-			USERBASE_MAP.bases[uid] = base
+		if Cluster_DB {
+			base = USERBASE_MAP.clusterDB
+			if base == nil {
+				base = &UserMetaSource{}
+				base.userid = uid
+				base.initMetaDB()
+				USERBASE_MAP.clusterDB = base
+			}
+		} else {
+			base = USERBASE_MAP.bases[uid]
+			if base == nil {
+				base = &UserMetaSource{}
+				base.userid = uid
+				base.initMetaDB()
+				USERBASE_MAP.bases[uid] = base
+			}
 		}
 		USERBASE_MAP.Unlock()
 	}
@@ -224,7 +247,11 @@ func NewUserMetaSource(uid uint32) *UserMetaSource {
 }
 
 func (source *UserMetaSource) initMetaDB() {
-	source.db = session.Database(USER_DATABASENAME + strconv.FormatUint(uint64(source.userid), 10))
+	if Cluster_DB {
+		source.db = session.Database(USER_DATABASENAME)
+	} else {
+		source.db = session.Database(USER_DATABASENAME + strconv.FormatUint(uint64(source.userid), 10))
+	}
 	source.bucket_c = source.db.Collection(BUCKET_TABLE_NAME)
 	index1 := mongo.IndexModel{
 		Keys:    bson.M{"bucketName": 1},
