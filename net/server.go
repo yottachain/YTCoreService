@@ -10,7 +10,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 	hst "github.com/yottachain/YTHost"
-	host "github.com/yottachain/YTHost/hostInterface"
+	host "github.com/yottachain/YTHost/interface"
 	"github.com/yottachain/YTHost/option"
 	"github.com/yottachain/YTHost/service"
 	"golang.org/x/crypto/ripemd160"
