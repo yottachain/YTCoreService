@@ -112,18 +112,31 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
-	err := client.connect(addrs, log_pre, nowait)
-	if err != nil {
-		return nil, err
-	}
 
 	maddrs, Err := StringListToMaddrs(addrs)
-	if err != nil {
-		addrString := AddrsToString(addrs)
-		logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
-		logrus.Errorf(logmsg)
-		return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
+	isHttp := false
+	for _, maddr := range maddrs {
+		 if _, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
+		 	isHttp = true
+		 	break
+		 }
 	}
+
+	if !isHttp {
+		err := client.connect(addrs, log_pre, nowait)
+		if err != nil {
+			return nil, err
+		}
+
+		//maddrs, Err := StringListToMaddrs(addrs)
+		if err != nil {
+			addrString := AddrsToString(addrs)
+			logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
+			logrus.Errorf(logmsg)
+			return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
+		}
+	}
+
 	timeout := time.Millisecond * time.Duration(env.Writetimeout)
 	if nowait {
 		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
