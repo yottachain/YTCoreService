@@ -114,6 +114,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
 
 	maddrs, Err := StringListToMaddrs(addrs)
+	logrus.Printf("maddrs lenth is %d\n", len(maddrs))
 	isHttp := false
 	for _, maddr := range maddrs {
 		 if _, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
@@ -136,6 +137,8 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 			return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 		}
 	}
+
+	logrus.Print("begin send----------")
 
 	timeout := time.Millisecond * time.Duration(env.Writetimeout)
 	if nowait {
