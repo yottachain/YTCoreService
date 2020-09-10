@@ -13,7 +13,7 @@ var SPOTCHECK_ADDR string = ""
 var REBUILD_ADDR string = ""
 var SUM_USER_FEE int = 0
 
-var nodemgrLog string
+var StdLog string
 
 var SuperNodeID int
 var Port int
@@ -74,7 +74,7 @@ func readSnProperties() {
 	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
 	SUM_USER_FEE = config.GetRangeInt("SUM_USER_FEE", 0, 90, 0)
 
-	nodemgrLog = config.GetUpperString("nodemgrLog", "")
+	StdLog = config.GetUpperString("nodemgrLog", "")
 
 	IsBackup = config.GetRangeInt("isBackup", 0, 1, 0)
 	SelfIp = config.GetString("selfIp", "")

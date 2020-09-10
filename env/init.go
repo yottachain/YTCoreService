@@ -80,25 +80,21 @@ func InitServer() {
 }
 
 func initClientLog() {
-	logFileName := YTFS_HOME + "log/client.log"
+	logFileName := YTFS_HOME + "log/log"
 	os.MkdirAll(YTFS_HOME+"log", os.ModePerm)
 	initLog(logFileName, nil)
 }
 
 func initServerLog() {
-	logFileName := YTSN_HOME + "log/server.log"
-	nodelogFileName := YTSN_HOME + "log/nodemgr.log"
+	logFileName := YTSN_HOME + "log/log"
+	nodelogFileName := YTSN_HOME + "log/std"
 	os.MkdirAll(YTSN_HOME+"log", os.ModePerm)
 	initLog(logFileName, nil)
-	NodeMgrLog = logrus.New()
-	initLog(nodelogFileName, NodeMgrLog)
+	STDLog = logrus.New()
+	initLog(nodelogFileName, STDLog)
 }
 
 func initLog(logFileName string, log *logrus.Logger) {
-	logFile, logErr := os.OpenFile(logFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
-	if logErr != nil {
-		logrus.Panic("Fail to find", *logFile, "Server start Failed")
-	}
 	format := &Formatter{}
 	lv, std := ParseLevel(LogLevel)
 	if std {
@@ -111,9 +107,10 @@ func initLog(logFileName string, log *logrus.Logger) {
 		if Console {
 			log.SetOutput(os.Stdout)
 		} else {
-			log.SetOutput(logFile)
 			if hook != nil {
 				log.AddHook(hook)
+			} else {
+				log.SetOutput(os.Stdout)
 			}
 		}
 	} else {
@@ -122,9 +119,10 @@ func initLog(logFileName string, log *logrus.Logger) {
 		if Console {
 			logrus.SetOutput(os.Stdout)
 		} else {
-			logrus.SetOutput(logFile)
 			if hook != nil {
 				logrus.AddHook(hook)
+			} else {
+				logrus.SetOutput(os.Stdout)
 			}
 		}
 	}
@@ -134,6 +132,7 @@ func NewHook(logName string, format *Formatter) (logrus.Hook, error) {
 	writer, err := rotatelogs.New(
 		logName+".%Y%m%d",
 		rotatelogs.WithRotationTime(time.Hour*24),
+		rotatelogs.WithLinkName(logName),
 	)
 	if err != nil {
 		return nil, err
@@ -149,24 +148,24 @@ func NewHook(logName string, format *Formatter) (logrus.Hook, error) {
 	return lfsHook, nil
 }
 
-var NodeMgrLog *logrus.Logger
+var STDLog *logrus.Logger
 
 type LogWrite struct {
 }
 
 func (l LogWrite) Write(p []byte) (n int, err error) {
 	num := len(p)
-	if NodeMgrLog == nil {
+	if STDLog == nil {
 		return num, nil
 	}
-	if nodemgrLog == "OFF" {
+	if StdLog == "OFF" {
 		return num, nil
 	}
-	if nodemgrLog == "ON" && Console == false {
+	if StdLog == "ON" && Console == false {
 		if num > 20 {
-			NodeMgrLog.Printf(string(p[20:]))
+			STDLog.Printf(string(p[20:]))
 		} else {
-			NodeMgrLog.Printf(string(p))
+			STDLog.Printf(string(p))
 		}
 		return num, nil
 	}
