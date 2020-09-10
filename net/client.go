@@ -115,7 +115,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 
 	//输出sn地址
 	addrString := AddrsToString(addrs)
-	logmsg := fmt.Sprintf("[client] connect sn addrs=%s \n", log_pre, addrString)
+	logmsg := fmt.Sprintf("[client] connect sn addrs=%s \n", addrString)
 	logrus.Errorf(logmsg)
 
 	maddrs, Err := StringListToMaddrs(addrs)
