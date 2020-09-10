@@ -13,7 +13,7 @@ var SPOTCHECK_ADDR string = ""
 var REBUILD_ADDR string = ""
 var SUM_USER_FEE int = 0
 
-var nodemgrLog string
+var StdLog string
 
 var SuperNodeID int
 var Port int
@@ -74,7 +74,7 @@ func readSnProperties() {
 	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
 	SUM_USER_FEE = config.GetRangeInt("SUM_USER_FEE", 0, 90, 0)
 
-	nodemgrLog = config.GetUpperString("nodemgrLog", "")
+	StdLog = config.GetUpperString("nodemgrLog", "")
 
 	IsBackup = config.GetRangeInt("isBackup", 0, 1, 0)
 	SelfIp = config.GetString("selfIp", "")
@@ -115,7 +115,7 @@ func readSnProperties() {
 	LsCachePageNum = config.GetRangeInt("lsCachePageNum", 1, 100, 10)
 	LsCursorLimit = config.GetRangeInt("lsCursorLimit", 0, 5, 1)
 	LsCacheMaxSize = config.GetRangeInt("lsCacheMaxSize", 1000, 500000, 20000)
-	LsShardInterval = config.GetRangeInt("lsShardInterval", 10, 180, 30)
+	LsShardInterval = config.GetRangeInt("lsShardInterval", 30, 500, 60)
 	PayInterval = config.GetRangeInt("payInterval", 500, 500, 180000)
 
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))

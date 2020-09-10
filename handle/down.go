@@ -7,6 +7,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type DownloadObjectInitHandler struct {
@@ -37,8 +38,13 @@ func (h *DownloadObjectInitHandler) Handle() proto.Message {
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
 	err := meta.GetByVHW()
 	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
+		if err == mongo.ErrNoDocuments {
+			return pkt.NewError(pkt.INVALID_VHW)
+		} else {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		}
 	}
+
 	logrus.Infof("[DownloadObj]UID:%d,VNU:%s\n", h.user.UserID, meta.VNU.Hex())
 	size := uint32(len(meta.BlockList))
 	refs := &pkt.DownloadObjectInitResp_RefList{Count: &size, Refers: meta.BlockList}
@@ -157,13 +163,12 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	num := len(nodes)
-	if num != len(nodeidsls) {
-		logrus.Errorf("[DownloadBLK]Some Nodes have been cancelled\n")
-	}
 	respNodes := make([]*pkt.DownloadBlockInitResp_NList_Ns, num)
 	for index, n := range nodes {
-		respNodes[index] = &pkt.DownloadBlockInitResp_NList_Ns{
-			Id: &n.Id, Nodeid: &n.Nodeid, Pubkey: &n.Pubkey, Addrs: n.Addrs,
+		if n != nil {
+			respNodes[index] = &pkt.DownloadBlockInitResp_NList_Ns{
+				Id: &n.Id, Nodeid: &n.Nodeid, Pubkey: &n.Pubkey, Addrs: n.Addrs,
+			}
 		}
 	}
 	count := uint32(num)

@@ -189,26 +189,6 @@ func UpdateShardMeta(metas map[int64]int32) error {
 	return nil
 }
 
-func SaveShardMetas(ls []*ShardMeta) error {
-	source := NewBaseSource()
-	count := len(ls)
-	obs := make([]interface{}, count)
-	for ii, o := range ls {
-		obs[ii] = o
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, err := source.GetShardColl().InsertMany(ctx, obs)
-	if err != nil {
-		errstr := err.Error()
-		if !strings.ContainsAny(errstr, "duplicate key error") {
-			logrus.Errorf("[ShardMeta]SaveShardMetas ERR:%s\n", err)
-			return err
-		}
-	}
-	return nil
-}
-
 func SaveShardRebuildMetas(ls []*ShardRebuidMeta) error {
 	source := NewBaseSource()
 	count := len(ls)
@@ -223,6 +203,26 @@ func SaveShardRebuildMetas(ls []*ShardRebuidMeta) error {
 		errstr := err.Error()
 		if !strings.ContainsAny(errstr, "duplicate key error") {
 			logrus.Errorf("[ShardMeta]SaveShardRebuildMetas ERR:%s\n", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func SaveShardMetas(ls []*ShardMeta) error {
+	source := NewBaseSource()
+	count := len(ls)
+	obs := make([]interface{}, count)
+	for ii, o := range ls {
+		obs[ii] = o
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetShardColl().InsertMany(ctx, obs)
+	if err != nil {
+		errstr := err.Error()
+		if !strings.ContainsAny(errstr, "duplicate key error") {
+			logrus.Errorf("[ShardMeta]SaveShardMetas ERR:%s\n", err)
 			return err
 		}
 	}

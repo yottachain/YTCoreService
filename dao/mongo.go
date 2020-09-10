@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
@@ -19,7 +20,6 @@ var DATABASENAME string
 var USER_DATABASENAME string
 var DNI_DATABASENAME string
 var CACHE_DATABASENAME string
-var Cluster_DB bool = false
 
 var config *env.Config
 var MongoAddress string
@@ -36,14 +36,8 @@ func InitMongo() {
 		DNI_DATABASENAME = "yotta" + strconv.Itoa(env.SuperNodeID)
 		CACHE_DATABASENAME = "cache_" + strconv.Itoa(env.SuperNodeID)
 	} else {
-		Cluster_DB = strings.EqualFold(s, "Cluster_DB")
-		if Cluster_DB {
-			USER_DATABASENAME = "usermeta"
-			CACHE_DATABASENAME = "cache_" + strconv.Itoa(env.SuperNodeID)
-		} else {
-			USER_DATABASENAME = "usermeta_"
-			CACHE_DATABASENAME = "cache"
-		}
+		USER_DATABASENAME = "usermeta_"
+		CACHE_DATABASENAME = "cache"
 		DATABASENAME = "metabase"
 		DNI_DATABASENAME = "yotta"
 	}
@@ -112,6 +106,7 @@ const BLOCK_CNT_TABLE_NAME = "block_count"
 const SHARD_TABLE_NAME = "shards"
 const SHARD_CNT_TABLE_NAME = "shard_count"
 const SHARD_RBD_TABLE_NAME = "shards_rebuild"
+const SHARD_UP_TABLE_NAME = "shards_upload"
 
 type MetaBaseSource struct {
 	db          *mongo.Database
@@ -201,8 +196,7 @@ const OBJECT_INDEX_NAME = "VNU"
 
 var USERBASE_MAP = struct {
 	sync.RWMutex
-	clusterDB *UserMetaSource
-	bases     map[uint32]*UserMetaSource
+	bases map[uint32]*UserMetaSource
 }{bases: make(map[uint32]*UserMetaSource)}
 
 type UserMetaSource struct {
@@ -216,30 +210,16 @@ type UserMetaSource struct {
 func NewUserMetaSource(uid uint32) *UserMetaSource {
 	var base *UserMetaSource
 	USERBASE_MAP.RLock()
-	if Cluster_DB {
-		base = USERBASE_MAP.clusterDB
-	} else {
-		base = USERBASE_MAP.bases[uid]
-	}
+	base = USERBASE_MAP.bases[uid]
 	USERBASE_MAP.RUnlock()
 	if base == nil {
 		USERBASE_MAP.Lock()
-		if Cluster_DB {
-			base = USERBASE_MAP.clusterDB
-			if base == nil {
-				base = &UserMetaSource{}
-				base.userid = uid
-				base.initMetaDB()
-				USERBASE_MAP.clusterDB = base
-			}
-		} else {
-			base = USERBASE_MAP.bases[uid]
-			if base == nil {
-				base = &UserMetaSource{}
-				base.userid = uid
-				base.initMetaDB()
-				USERBASE_MAP.bases[uid] = base
-			}
+		base = USERBASE_MAP.bases[uid]
+		if base == nil {
+			base = &UserMetaSource{}
+			base.userid = uid
+			base.initMetaDB()
+			USERBASE_MAP.bases[uid] = base
 		}
 		USERBASE_MAP.Unlock()
 	}
@@ -247,11 +227,7 @@ func NewUserMetaSource(uid uint32) *UserMetaSource {
 }
 
 func (source *UserMetaSource) initMetaDB() {
-	if Cluster_DB {
-		source.db = session.Database(USER_DATABASENAME)
-	} else {
-		source.db = session.Database(USER_DATABASENAME + strconv.FormatUint(uint64(source.userid), 10))
-	}
+	source.db = session.Database(USER_DATABASENAME + strconv.FormatUint(uint64(source.userid), 10))
 	source.bucket_c = source.db.Collection(BUCKET_TABLE_NAME)
 	index1 := mongo.IndexModel{
 		Keys:    bson.M{"bucketName": 1},
@@ -343,10 +319,11 @@ const USERSUM_CACHE_NAME = "userfeesum"
 var cacheBaseSource *CacheBaseSource = nil
 
 type CacheBaseSource struct {
-	db    *mongo.Database
-	dni_c *mongo.Collection
-	obj_c *mongo.Collection
-	sum_c *mongo.Collection
+	db         *mongo.Database
+	dni_c      *mongo.Collection
+	obj_c      *mongo.Collection
+	sum_c      *mongo.Collection
+	shard_up_c sync.Map
 }
 
 func NewCacheBaseSource() *CacheBaseSource {
@@ -359,6 +336,30 @@ func (source *CacheBaseSource) initMetaDB() {
 	source.obj_c = source.db.Collection(OBJECT_NEW_TABLE_NAME)
 	source.sum_c = source.db.Collection(USERSUM_CACHE_NAME)
 	logrus.Infof("[InitMongo]Create cache tables Success.\n")
+}
+
+func (source *CacheBaseSource) DropShardUploadColl(vbi int64) {
+	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("20060102")
+	v, ok := source.shard_up_c.Load(ss)
+	if ok {
+		c := v.(*mongo.Collection)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		c.Drop(ctx)
+		source.shard_up_c.Delete(ss)
+	}
+}
+
+func (source *CacheBaseSource) GetShardUploadColl(vbi int64) *mongo.Collection {
+	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("20060102")
+	v, ok := source.shard_up_c.Load(ss)
+	if ok {
+		return v.(*mongo.Collection)
+	} else {
+		c := source.db.Collection(ss)
+		source.shard_up_c.Store(ss, c)
+		return c
+	}
 }
 
 func (source *CacheBaseSource) GetDB() *mongo.Database {

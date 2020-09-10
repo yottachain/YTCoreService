@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -45,9 +46,13 @@ func GetNode(id int32) (*net.Node, error) {
 	v, found := NODE_CACHE_BY_ID.Get(strconv.Itoa(int(id)))
 	if !found {
 		node, err := net.NodeMgr.GetNodes([]int32{id})
-		if err != nil || node == nil || len(node) == 0 {
+		if err != nil {
+			logrus.Errorf("[GetNode]NodeID %d,ERR:%s.\n", id, err)
 			return nil, err
 		} else {
+			if node == nil || len(node) == 0 {
+				return nil, nil
+			}
 			n := &net.Node{Id: node[0].ID, Nodeid: node[0].NodeID, Pubkey: node[0].PubKey, Addrs: node[0].Addrs}
 			NODE_CACHE_BY_PUBKEY.Set(n.Pubkey, n, cache.DefaultExpiration)
 			NODE_CACHE_BY_ID.Set(strconv.Itoa(int(n.Id)), n, cache.DefaultExpiration)
@@ -58,6 +63,7 @@ func GetNode(id int32) (*net.Node, error) {
 }
 
 func GetNodes(ids []int32) ([]*net.Node, error) {
+	noexistids := ""
 	size := len(ids)
 	nodes := make([]*net.Node, size)
 	for ii := 0; ii < size; ii++ {
@@ -65,9 +71,20 @@ func GetNodes(ids []int32) ([]*net.Node, error) {
 		if err != nil {
 			return nil, err
 		}
+		if n == nil {
+			if noexistids == "" {
+				noexistids = noexistids + strconv.Itoa(int(ids[ii]))
+			} else {
+				noexistids = noexistids + "," + strconv.Itoa(int(ids[ii]))
+			}
+		}
 		nodes[ii] = n
 	}
-	return nodes, nil
+	if noexistids != "" {
+		return nodes, errors.New("NodeID " + noexistids + " does not exist")
+	} else {
+		return nodes, nil
+	}
 }
 
 type StatusRepHandler struct {
