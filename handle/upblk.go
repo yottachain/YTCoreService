@@ -54,8 +54,8 @@ func (h *UploadBlockInitHandler) Handle() proto.Message {
 			if h.m.Version != nil {
 				v = *h.m.Version
 			}
-			errmsg := fmt.Sprintf("[UploadBLK]UID:%d,ERR:TOO_LOW_VERSION?%s\n", h.user.UserID, v)
-			logrus.Errorf(errmsg)
+			errmsg := fmt.Sprintf("UID:%d,ERR:TOO_LOW_VERSION?%s", h.user.UserID, v)
+			logrus.Errorf("[UploadBLK]%s\n", errmsg)
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
 	}
@@ -423,7 +423,25 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	err = saveShardCount(vbi, shardMetas)
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
 	return nil
+}
+
+func saveShardCount(vbi int64, ls []*dao.ShardMeta) error {
+	m := make(map[int32]uint16)
+	for _, shard := range ls {
+		num, ok := m[shard.NodeId]
+		if ok {
+			m[shard.NodeId] = num + 1
+		} else {
+			m[shard.NodeId] = 1
+		}
+	}
+	bs := dao.ToBytes(m)
+	return dao.SaveNodeShardCount(vbi, bs)
 }
 
 func verifySign(meta *dao.ShardMeta, node []*net.Node) bool {

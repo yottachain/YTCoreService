@@ -169,11 +169,11 @@ func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 			if errstr != "" {
-				WriteJson(w, errstr)
+				WriteErr(w, errstr)
 				return
 			}
 		}
-		WriteErr(w, ress)
+		WriteJson(w, ress)
 	}
 }
 

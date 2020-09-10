@@ -115,7 +115,7 @@ func readSnProperties() {
 	LsCachePageNum = config.GetRangeInt("lsCachePageNum", 1, 100, 10)
 	LsCursorLimit = config.GetRangeInt("lsCursorLimit", 0, 5, 1)
 	LsCacheMaxSize = config.GetRangeInt("lsCacheMaxSize", 1000, 500000, 20000)
-	LsShardInterval = config.GetRangeInt("lsShardInterval", 10, 180, 30)
+	LsShardInterval = config.GetRangeInt("lsShardInterval", 30, 500, 60)
 	PayInterval = config.GetRangeInt("payInterval", 500, 500, 180000)
 
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))
