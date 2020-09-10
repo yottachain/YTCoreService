@@ -138,8 +138,6 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		}
 	}
 
-	logrus.Print("begin send----------")
-
 	timeout := time.Millisecond * time.Duration(env.Writetimeout)
 	if nowait {
 		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
