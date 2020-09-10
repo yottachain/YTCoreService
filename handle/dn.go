@@ -80,7 +80,7 @@ func GetNodes(ids []int32) ([]*net.Node, error) {
 		}
 		nodes[ii] = n
 	}
-	if noexistids == "" {
+	if noexistids != "" {
 		return nodes, errors.New("NodeID " + noexistids + " does not exist")
 	} else {
 		return nodes, nil
