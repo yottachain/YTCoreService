@@ -55,7 +55,7 @@ type result struct {
 }
 
 func ListNodeShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
-	source := NewBaseSource()
+	source := NewCacheBaseSource()
 	filter := bson.M{"_id": bson.M{"$gt": firstid}}
 	opt := options.Find().SetSort(bson.M{"_id": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
@@ -90,7 +90,7 @@ func ListNodeShardCount(firstid int64, lastid int64) (map[int32]int64, error) {
 }
 
 func SaveNodeShardCount(vbi int64, bs []byte) error {
-	source := NewBaseSource()
+	source := NewCacheBaseSource()
 	res := &result{ID: vbi, Data: bs}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -106,6 +106,6 @@ func SaveNodeShardCount(vbi int64, bs []byte) error {
 }
 
 func DropNodeShardColl(vbi int64) {
-	source := NewBaseSource()
+	source := NewCacheBaseSource()
 	source.DropShardUploadColl(vbi)
 }
