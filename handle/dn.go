@@ -395,35 +395,71 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	if err != nil {
 		return &pkt.VoidResp{}
 	}
-	size := len(metas)
-	if size > 0 {
-		vbi := dao.GenerateShardID(size)
-		for index, m := range metas {
-			m.ID = vbi + int64(index)
-			m.NewNodeId = newid
-		}
-	}
 	if time.Now().Unix() < h.m.ExpiredTime {
-		if size > 0 {
-			err = dao.SaveShardRebuildMetas(metas)
-			if err != nil {
-				logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
-				return &pkt.VoidResp{}
-			} else {
-				logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
-			}
+		err := SaveRep(newid, metas)
+		if err != nil {
+			return &pkt.VoidResp{}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 		defer cancel()
 		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
 		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 		if err != nil {
-			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)
+			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, len(metas), len(h.m.Id), err)
 		} else {
-			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, size, len(h.m.Id))
+			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, len(metas), len(h.m.Id))
 		}
 	} else {
 		logrus.Warnf("[DNRebuidRep]ExpiredTime:%d<%d.\n", h.m.ExpiredTime, time.Now().Unix())
 	}
 	return &pkt.VoidResp{}
+}
+
+func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
+	size := len(metas)
+	if size == 0 {
+		return nil
+	}
+	vbi := dao.GenerateShardID(size)
+	for index, m := range metas {
+		m.ID = vbi + int64(index)
+		m.NewNodeId = newid
+	}
+	count := make(map[int32]int16)
+	upmetas := make(map[int64]int32)
+	for _, res := range metas {
+		num, ok := count[res.NewNodeId]
+		if ok {
+			count[res.NewNodeId] = num + 1
+		} else {
+			count[res.NewNodeId] = 1
+		}
+		num, ok = count[res.OldNodeId]
+		if ok {
+			count[res.OldNodeId] = num - 1
+		} else {
+			count[res.OldNodeId] = -1
+		}
+		upmetas[res.VFI] = res.NewNodeId
+	}
+	err := dao.UpdateShardMeta(upmetas)
+	if err != nil {
+		logrus.Errorf("[DNRebuidRep][%d]UpdateShardMeta ERR:%s,count %d\n", newid, err, size)
+		return err
+	} else {
+		logrus.Infof("[DNRebuidRep][%d]UpdateShardMeta OK,count %d\n", newid, size)
+	}
+	bs := dao.ToBytes(count)
+	err = dao.SaveNodeShardCount(vbi, bs)
+	if err != nil {
+		return err
+	}
+	err = dao.SaveShardRebuildMetas(metas)
+	if err != nil {
+		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s,count %d\n", newid, err, size)
+		return err
+	} else {
+		logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult OK, count:%d\n", newid, size)
+	}
+	return nil
 }

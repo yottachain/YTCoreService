@@ -431,7 +431,7 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 }
 
 func saveShardCount(vbi int64, ls []*dao.ShardMeta) error {
-	m := make(map[int32]uint16)
+	m := make(map[int32]int16)
 	for _, shard := range ls {
 		num, ok := m[shard.NodeId]
 		if ok {

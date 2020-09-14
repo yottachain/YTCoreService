@@ -339,7 +339,7 @@ func (source *CacheBaseSource) initMetaDB() {
 }
 
 func (source *CacheBaseSource) DropShardUploadColl(vbi int64) {
-	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("20060102")
+	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("2006010215")
 	v, ok := source.shard_up_c.Load(ss)
 	if ok {
 		c := v.(*mongo.Collection)
@@ -351,7 +351,7 @@ func (source *CacheBaseSource) DropShardUploadColl(vbi int64) {
 }
 
 func (source *CacheBaseSource) GetShardUploadColl(vbi int64) *mongo.Collection {
-	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("20060102")
+	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("2006010215")
 	v, ok := source.shard_up_c.Load(ss)
 	if ok {
 		return v.(*mongo.Collection)
