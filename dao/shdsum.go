@@ -82,7 +82,7 @@ func ListNodeShardCount(firstid int64, lastid int64) (map[int32]int64, int64, bo
 	}
 	ii := 0
 	count := make(map[int32]int64)
-	var lid int64 = 0
+	var lid int64 = firstid
 	var hasnext bool = false
 	for {
 		hasnext = cur.Next(ctx)
