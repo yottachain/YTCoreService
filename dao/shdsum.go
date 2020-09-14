@@ -26,9 +26,9 @@ func ToBytes(nodes map[int32]int16) []byte {
 func ToMap(bs []byte) map[int32]int16 {
 	buf := bytes.NewBuffer(bs)
 	m := make(map[int32]int16)
-	size := 0
+	var size int32
 	binary.Read(buf, binary.BigEndian, &size)
-	for ii := 0; ii < size; ii++ {
+	for ii := 0; ii < int(size); ii++ {
 		var k int32
 		var v int16
 		binary.Read(buf, binary.BigEndian, &k)
