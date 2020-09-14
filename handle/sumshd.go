@@ -75,8 +75,8 @@ func IterateUploadShards() {
 			time.Sleep(time.Duration(30) * time.Second)
 			return
 		}
-		s1 = time.Unix(firstId>>32, 0).Format("20060102")
-		s2 = time.Unix(id>>32, 0).Format("20060102")
+		s1 = time.Unix(firstId>>32, 0).Format("2006010215")
+		s2 = time.Unix(id>>32, 0).Format("2006010215")
 		if s1 != s2 {
 			dao.DropNodeShardColl(firstId)
 		}
@@ -85,6 +85,8 @@ func IterateUploadShards() {
 	}
 	if !has && s1 == s2 {
 		time.Sleep(time.Duration(DELAY_TIMES) * time.Second)
+	} else {
+		time.Sleep(time.Duration(1) * time.Second)
 	}
 }
 
