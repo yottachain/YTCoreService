@@ -49,6 +49,9 @@ func GenerateUserID() uint32 {
 
 func GetSequence(inc int) int32 {
 	id := atomic.AddInt32(BLKID_SEQ, int32(inc))
+	if id == 0 {
+		id = atomic.AddInt32(BLKID_SEQ, int32(inc))
+	}
 	bs := make([]byte, 4)
 	if env.IsBackup == 0 {
 		bs[0] = uint8(env.SuperNodeID)
