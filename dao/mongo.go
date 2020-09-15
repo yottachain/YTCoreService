@@ -347,8 +347,10 @@ func (source *CacheBaseSource) DropShardUploadColl(vbi int64) {
 		defer cancel()
 		c.Drop(ctx)
 		source.shard_up_c.Delete(ss)
+		logrus.Infof("[DropNodeShardColl]%s.\n", ss)
+	} else {
+		logrus.Infof("[DropNodeShardColl]%s,NO COLL\n", ss)
 	}
-	logrus.Infof("[DropNodeShardColl]%s.\n", ss)
 }
 
 func (source *CacheBaseSource) GetShardUploadColl(vbi int64) *mongo.Collection {
