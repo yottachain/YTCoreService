@@ -287,6 +287,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 	if h.m.InvalidNodeList == nil || len(h.m.InvalidNodeList) == 0 {
 		logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Not err.\n", myid, h.m.TaskId)
 	} else {
+		startTime := time.Now()
 		for _, res := range h.m.InvalidNodeList {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 			defer cancel()
@@ -297,6 +298,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 				logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Node [%d] ERR\n", myid, h.m.TaskId, res)
 			}
 		}
+		logrus.Infof("[UploadBLK]UpdateTaskStatus OK,count %d,take times %d ms\n", len(h.m.InvalidNodeList), time.Now().Sub(startTime).Milliseconds())
 	}
 	return &pkt.VoidResp{}
 }
