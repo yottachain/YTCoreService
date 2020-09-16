@@ -42,7 +42,7 @@ func BytesToFileMetaMap(meta []byte, versionid primitive.ObjectID) (map[string]s
 	if meta == nil {
 		return nil, errors.New("no data")
 	}
-	if len(meta) > 24 {
+	if len(meta) >= 24 {
 		m, err := pkt.UnmarshalMap(meta)
 		if err == nil {
 			s, _ := m[ETagKey]

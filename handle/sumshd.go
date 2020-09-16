@@ -78,7 +78,7 @@ func IterateUploadShards() {
 		s1 = time.Unix(firstId>>32, 0).Format("2006010215")
 		s2 = time.Unix(id>>32, 0).Format("2006010215")
 		if s1 != s2 {
-			dao.DropNodeShardColl(firstId)
+			dao.DropNodeShardColl(firstId)	 
 		}
 		logrus.Infof("[IterateShards]Iterate shards OK, lastId:%d\n", id)
 		firstId = id

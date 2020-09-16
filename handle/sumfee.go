@@ -196,7 +196,7 @@ func DoBlockSpaceSum() {
 		uspace, err := bss.ReqBlockUsedSpace()
 		if err != nil {
 			logrus.Errorf("[SumBlockUsedSpace]ERR:%d,retry...\n", err.GetCode())
-			time.Sleep(time.Duration(60*5) * time.Second)
+			time.Sleep(time.Duration(60) * time.Second)
 		} else {
 			space = uspace
 			break
