@@ -20,6 +20,7 @@ var NodeMgr *YTDNMgmt.NodeDaoImpl
 var superNodeList []*YTDNMgmt.SuperNode
 var superNodeMap = make(map[string]*YTDNMgmt.SuperNode)
 var LocalIp string = ""
+var SelfIP string = ""
 
 func InitShadowPriKey() error {
 	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {
@@ -77,6 +78,7 @@ func InitNodeMgr(MongoAddress string) error {
 	readSuperNodeList(ls)
 	readLocalIP()
 	IsActive()
+	SelfIP = GetSelfIp()
 	return nil
 }
 

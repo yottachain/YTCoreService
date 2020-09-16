@@ -298,7 +298,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 				logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Node [%d] ERR\n", myid, h.m.TaskId, res)
 			}
 		}
-		logrus.Infof("[UploadBLK]UpdateTaskStatus OK,count %d,take times %d ms\n", len(h.m.InvalidNodeList), time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[DNSpotCheckRep]UpdateTaskStatus OK,count %d,take times %d ms\n", len(h.m.InvalidNodeList), time.Now().Sub(startTime).Milliseconds())
 	}
 	return &pkt.VoidResp{}
 }
@@ -323,7 +323,7 @@ func SendRebuildTask(node *YTDNMgmt.Node) {
 			logrus.Errorf("[SendRebuildTask]ERR:Too many routines.\n")
 			return
 		}
-		ExecSendRebuildTask(node)
+		go ExecSendRebuildTask(node)
 	}
 }
 
