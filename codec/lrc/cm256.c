@@ -125,11 +125,6 @@ int cm256_init_(int version)
 // Note that for x_i == x_0, this will return 1, so it is better to unroll out the first row.
 static GF256_FORCE_INLINE unsigned char GetMatrixElement(unsigned char iMatrix, unsigned char matrixLen, unsigned char iElement)
 {
-    assert(iMatrix >= matrixLen);
-#ifdef TANGCODE
-    if ( matrixLen == 128 && iMatrix < matrixLen + GF256Ctx.Max128RecoveryMatrixes )
-        return GF256Ctx.GF256_128[iMatrix-matrixLen][iElement];
-#endif
     return gf256_div(gf256_add(iElement, matrixLen), gf256_add(iMatrix, iElement));
 }
 

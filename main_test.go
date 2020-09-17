@@ -14,6 +14,8 @@ func init() {
 func Test(t *testing.T) {
 	defer env.TracePanic()
 
+	
+
 	//***********api test*********
 	//test.ListObj()
 	//test.UpAndDownFile()
@@ -23,6 +25,6 @@ func Test(t *testing.T) {
 	//**********code test**********
 	//env.InitClient()
 	//test.TestCutFile()
-	//test.TestLRCLoop()
+	//test.TestLRC()
 	select {}
 }

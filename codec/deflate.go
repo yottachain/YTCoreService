@@ -2,7 +2,7 @@ package codec
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/zlib"
 	"crypto/sha256"
 	"errors"
 	"io"
@@ -22,7 +22,7 @@ type FileEncoder struct {
 }
 
 func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
-	if len(bs) >= env.Max_Memory_Usage {
+	if len(bs) > env.Max_Memory_Usage {
 		return nil, errors.New("Length over 10M")
 	}
 	size := int64(len(bs))
@@ -145,7 +145,7 @@ func (fileEncoder *FileEncoder) pack() error {
 func (fileEncoder *FileEncoder) deflate() (int64, error) {
 	buf := bytes.NewBuffer(nil)
 	buf.Write([]byte{0, 0})
-	flateWrite, _ := flate.NewWriter(buf, flate.BestSpeed)
+	flateWrite := zlib.NewWriter(buf)
 	var err error
 	bs := make([]byte, 16)
 	var totalIn int64 = 0

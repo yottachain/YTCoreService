@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Action struct {
@@ -135,9 +136,10 @@ func SetUserSumTime(userid int32) error {
 	source := NewCacheBaseSource()
 	filter := bson.M{"_id": userid}
 	data := bson.M{"$set": bson.M{"statTime": time.Now().Unix() * 1000}}
+	opt := options.Update().SetUpsert(true)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := source.GetSumColl().UpdateOne(ctx, filter, data)
+	_, err := source.GetSumColl().UpdateOne(ctx, filter, data, opt)
 	if err != nil {
 		logrus.Errorf("[CacheMeta]SetUserSumTime UserID:%d,ERR:%s\n", userid, err)
 		return err

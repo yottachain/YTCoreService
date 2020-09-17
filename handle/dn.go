@@ -298,7 +298,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 				logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Node [%d] ERR\n", myid, h.m.TaskId, res)
 			}
 		}
-		logrus.Infof("[UploadBLK]UpdateTaskStatus OK,count %d,take times %d ms\n", len(h.m.InvalidNodeList), time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[DNSpotCheckRep]UpdateTaskStatus OK,count %d,take times %d ms\n", len(h.m.InvalidNodeList), time.Now().Sub(startTime).Milliseconds())
 	}
 	return &pkt.VoidResp{}
 }
@@ -323,7 +323,7 @@ func SendRebuildTask(node *YTDNMgmt.Node) {
 			logrus.Errorf("[SendRebuildTask]ERR:Too many routines.\n")
 			return
 		}
-		ExecSendRebuildTask(node)
+		go ExecSendRebuildTask(node)
 	}
 }
 
@@ -402,14 +402,17 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		if err != nil {
 			return &pkt.VoidResp{}
 		}
+		startTime := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 		defer cancel()
 		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
 		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 		if err != nil {
-			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, len(metas), len(h.m.Id), err)
+			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s,take times %d ms\n",
+				newid, len(metas), len(h.m.Id), err, time.Now().Sub(startTime).Milliseconds())
 		} else {
-			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, len(metas), len(h.m.Id))
+			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d,take times %d ms\n",
+				newid, len(metas), len(h.m.Id), time.Now().Sub(startTime).Milliseconds())
 		}
 	} else {
 		logrus.Warnf("[DNRebuidRep]ExpiredTime:%d<%d.\n", h.m.ExpiredTime, time.Now().Unix())
@@ -444,24 +447,30 @@ func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
 		}
 		upmetas[res.VFI] = res.NewNodeId
 	}
+	startTime := time.Now()
 	err := dao.UpdateShardMeta(upmetas)
 	if err != nil {
-		logrus.Errorf("[DNRebuidRep][%d]UpdateShardMeta ERR:%s,count %d\n", newid, err, size)
+		logrus.Errorf("[DNRebuidRep][%d]UpdateShardMeta ERR:%s,count %d,take times %d ms\n",
+			newid, err, size, time.Now().Sub(startTime).Milliseconds())
 		return err
 	} else {
-		logrus.Infof("[DNRebuidRep][%d]UpdateShardMeta OK,count %d\n", newid, size)
+		logrus.Infof("[DNRebuidRep][%d]UpdateShardMeta OK,count %d,take times %d ms\n",
+			newid, size, time.Now().Sub(startTime).Milliseconds())
 	}
 	bs := dao.ToBytes(count)
 	err = dao.SaveNodeShardCount(vbi, bs)
 	if err != nil {
 		return err
 	}
+	startTime = time.Now()
 	err = dao.SaveShardRebuildMetas(metas)
 	if err != nil {
-		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s,count %d\n", newid, err, size)
+		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s,count %d,take times %d ms\n",
+			newid, err, size, time.Now().Sub(startTime).Milliseconds())
 		return err
 	} else {
-		logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult OK, count:%d\n", newid, size)
+		logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult OK, count:%d,take times %d ms\n",
+			newid, size, time.Now().Sub(startTime).Milliseconds())
 	}
 	return nil
 }

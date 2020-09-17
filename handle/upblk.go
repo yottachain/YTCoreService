@@ -374,9 +374,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 		}
 	}
 	logrus.Infof("[UploadBLK]Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
-	startTime = time.Now()
-	ip := net.GetSelfIp()
-	logrus.Infof("[UploadBLK]ResolveIPAddr,take times %d ms\n", time.Now().Sub(startTime).Milliseconds())
+	ip := net.SelfIP
 	return &pkt.UploadBlockEndResp{Host: &ip, VBI: &vbi}
 }
 

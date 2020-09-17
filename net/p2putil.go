@@ -64,7 +64,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 			if nowait || retryTimes >= retry {
 				return nil, err
 			}
-			if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR) {
+			if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR) {
 				return nil, err
 			}
 			if retryTimes != 0 {
