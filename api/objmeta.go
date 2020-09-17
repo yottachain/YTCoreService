@@ -70,7 +70,7 @@ func (self *ObjectInfo) GetBlockInfo(refer *pkt.Refer) (*BlockInfo, *pkt.ErrorMe
 		ids := initresp.Nids.Nodeids
 		b := &BlockInfo{VHF: vhfs, NodeID: ids}
 		for _, n := range initresp.Nlist.Ns {
-			if n.Id != nil {
+			if n != nil && n.Id != nil {
 				self.ADDR[*n.Id] = n.Addrs
 			}
 		}

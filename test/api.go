@@ -19,7 +19,7 @@ const yfnet = true
 const testsize = 1024 * 1024 * 9
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
-const filePath = "d:/virtue.3.4.0.zip"
+const filePath = "d:/nohup.out"
 const savePath = "d:/test"
 
 var data []byte
@@ -32,6 +32,8 @@ func ListObj() {
 	item := items[100]
 	m, _ := api.BytesToFileMetaMap(item.Meta, primitive.NilObjectID)
 	fmt.Println(api.LengthKey + ":" + m[api.LengthKey])
+	info, _ := client.NewObjectMeta("test", item.FileName, primitive.NilObjectID)
+	fmt.Printf("%s:%d\n", api.LengthKey, info.Length)
 }
 
 func UpAndDownBytes() {
@@ -50,7 +52,7 @@ func UpAndDownFile() {
 
 func DownLoadByKey() {
 	initApi()
-	dn, errmsg := client.NewDownloadFile("newbucket", "log", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("owner", "tmpfile_owner_1fa0ff0.txt", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
@@ -133,8 +135,12 @@ func initApi() {
 	var pkey string
 	if yfnet {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
-		user = "username1234"
-		pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
+		//user = "username1234"
+		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
+		//user = "pollytestde1"
+		//pkey = "5JsohFvnt2qhkKxzConrJSxU2ti4qGifjJ9dGCxhpup4EYw1es8"
+		user = "devtestuser4"
+		pkey = "5JDYRHvNaWENtEpuugw9xqb8MS2AbefpBQvaFg3iq3cxPALg6XZ"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
 		//user = "ianmooneyy11"

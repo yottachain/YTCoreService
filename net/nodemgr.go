@@ -20,7 +20,7 @@ var NodeMgr *YTDNMgmt.NodeDaoImpl
 var superNodeList []*YTDNMgmt.SuperNode
 var superNodeMap = make(map[string]*YTDNMgmt.SuperNode)
 var LocalIp string = ""
-var SelfIP string = ""
+var SelfIP = ""
 
 func InitShadowPriKey() error {
 	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {

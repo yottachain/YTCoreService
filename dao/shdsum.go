@@ -134,5 +134,4 @@ func SaveNodeShardCount(vbi int64, bs []byte) error {
 func DropNodeShardColl(vbi int64) {
 	source := NewCacheBaseSource()
 	source.DropShardUploadColl(vbi)
-	
 }

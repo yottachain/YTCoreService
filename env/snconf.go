@@ -28,7 +28,6 @@ var LsCacheExpireTime int
 var LsCachePageNum int
 var LsCursorLimit int
 var LsCacheMaxSize int
-var LsShardInterval int
 var PayInterval int
 
 var HttpPort int
@@ -74,7 +73,7 @@ func readSnProperties() {
 	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
 	SUM_USER_FEE = config.GetRangeInt("SUM_USER_FEE", 0, 90, 0)
 
-	StdLog = config.GetUpperString("nodemgrLog", "")
+	StdLog = config.GetUpperString("stdLog", "")
 
 	IsBackup = config.GetRangeInt("isBackup", 0, 1, 0)
 	SelfIp = config.GetString("selfIp", "")
@@ -115,7 +114,6 @@ func readSnProperties() {
 	LsCachePageNum = config.GetRangeInt("lsCachePageNum", 1, 100, 10)
 	LsCursorLimit = config.GetRangeInt("lsCursorLimit", 0, 5, 1)
 	LsCacheMaxSize = config.GetRangeInt("lsCacheMaxSize", 1000, 500000, 20000)
-	LsShardInterval = config.GetRangeInt("lsShardInterval", 30, 500, 60)
 	PayInterval = config.GetRangeInt("payInterval", 500, 500, 180000)
 
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))

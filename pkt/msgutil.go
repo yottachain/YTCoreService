@@ -31,8 +31,7 @@ func MarshalMsg(msg proto.Message) ([]byte, string, int32, error) {
 	}
 	res, err := proto.Marshal(msg)
 	if err != nil {
-		errmsg := fmt.Sprintf("[Packet]Marshal ERR%s.", err.Error())
-		logrus.Errorln(errmsg)
+		logrus.Errorf("[Packet]Marshal ERR:%s\n", err.Error())
 		return nil, name, msgType, err
 	}
 	return res, name, msgType, nil
@@ -52,16 +51,16 @@ func GetEmptyMessage(msgType []byte) (proto.Message, error) {
 	if curfunc, ok := ID_CLASS_MAP[crc]; ok {
 		return curfunc(), nil
 	} else {
-		errmsg := fmt.Sprintf("[Packet]Message type id'%d' no registration.", crc)
-		logrus.Errorln(errmsg)
+		errmsg := fmt.Sprintf("Message type id'%d' no registration.", crc)
+		logrus.Errorf("[Packet]%s\n", errmsg)
 		return nil, errors.New(errmsg)
 	}
 }
 
 func UnmarshalMsg(data []byte) proto.Message {
 	if data == nil || len(data) < 2 {
-		errmsg := fmt.Sprintf("[Packet]Unmarshal ERR:nil data")
-		logrus.Errorln(errmsg)
+		errmsg := "Unmarshal ERR:nil data"
+		logrus.Errorf("[Packet]%s\n", errmsg)
 		return NewErrorMsg(BAD_MESSAGE, errmsg)
 	}
 	msgType := data[0:2]
@@ -72,8 +71,8 @@ func UnmarshalMsg(data []byte) proto.Message {
 	bs := data[2:]
 	err = proto.Unmarshal(bs, msg)
 	if err != nil {
-		errmsg := fmt.Sprintf("[Packet]Unmarshal ERR%s.", err.Error())
-		logrus.Errorln(errmsg)
+		errmsg := fmt.Sprintf("Unmarshal ERR:%s.", err.Error())
+		logrus.Errorf("[Packet]%s\n", errmsg)
 		return NewErrorMsg(BAD_MESSAGE, errmsg)
 	}
 	return msg

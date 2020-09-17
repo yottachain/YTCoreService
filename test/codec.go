@@ -44,25 +44,28 @@ func TestLRCLoop() {
 			encoder := codec.NewErasureEncoder(b)
 			err := encoder.Encode()
 			if err != nil {
-				fmt.Printf("Encode ERR:%s\n", err)
+				logrus.Panicf("Encode ERR:%s\n", err)
 			}
 			shards := encoder.Shards
 			fmt.Printf("Encode OK:%d/%d\n", len(shards), ii)
-			/*
-				decoder, _ := codec.NewErasureDecoder(int64(len(bs)))
-				count := 0
-				for {
-					ii := time.Now().UnixNano() % int64(len(shards))
-					shard := shards[ii]
-					ok, _ := decoder.AddShard(shard.Data)
-					shards = append(shards[:ii], shards[ii+1:]...)
-					count++
-					if ok {
-						break
-					}
+
+			decoder, _ := codec.NewErasureDecoder(int64(len(bs)))
+			count := 0
+			for {
+				ii := time.Now().UnixNano() % int64(len(shards))
+				shard := shards[ii]
+				ok, _ := decoder.AddShard(shard.Data)
+				shards = append(shards[:ii], shards[ii+1:]...)
+				if len(shards) == 0 {
+					logrus.Panicf("Decode ERR:%d shards\n", len(encoder.Shards))
 				}
-				fmt.Printf("Decode OK,input:%d\n", count)
-			*/
+				count++
+				if ok {
+					break
+				}
+			}
+			fmt.Printf("Decode OK,input:%d\n", count)
+
 		}
 	}
 	for ii := 0; ii < 30; ii++ {
