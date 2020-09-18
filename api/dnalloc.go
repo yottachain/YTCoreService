@@ -97,6 +97,7 @@ func PreAllocNode(c *Client) error {
 			nlen := len(nodemap)
 			if nlen > 0 {
 				DNList.UpdateNodeList(nodemap)
+				DNList.SetwIds(1)
 				logrus.Infof("[PreAllocNode]Return %d nodes,Excludes %d nodes.\n", nlen, len(req.Excludes))
 				return nil
 			}

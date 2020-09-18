@@ -69,8 +69,9 @@ func (q *DNQueue) order() bool {
 
 func (q *DNQueue) GetNodeStatExcluld(blk []int32) *NodeStatWOK {
 	for {
-		n := q.GetNodeStat()
-		if !env.IsExistInArray(n.NodeInfo.Id, blk) {
+		//n := q.GetNodeStat()
+		n := q.GetWeightNodeStat()
+		if !env.IsExistInArray(n.NodeInfo.Id, blk) && atomic.LoadInt32(n.OKTimes) <= int32(env.ShardNumPerNode) {
 			return n
 		}
 	}
@@ -97,9 +98,34 @@ func (q *DNQueue) GetNodeStat() *NodeStatWOK {
 	return node
 }
 
+func (q *DNQueue) GetWeightNodeStat() *NodeStatWOK {
+	q.Lock()
+	defer q.Unlock()
+
+	var node *NodeStat
+	for {
+		node = DNList.GetNodeStat()
+		if node != nil {
+			break
+		}
+	}
+
+	nStat, ok := q.nodemap[node.Id]
+	if !ok {
+		nStat := &NodeStatWOK{NodeInfo: node, OKTimes: new(int32)}
+		*nStat.OKTimes = 0
+		q.nodemap[node.Id] = nStat
+	}
+
+	nStat.AddCount()
+
+	return nStat
+}
+
 type NodeList struct {
 	sync.RWMutex
 	list       map[int32]*NodeStat
+	wIds		[] int32
 	updateTime int64
 	resetSign  *int32
 }
@@ -131,6 +157,35 @@ func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 	}
 	n.list = ns
 	n.Unlock()
+}
+
+func (n *NodeList) SetwIds (divsor uint) {
+	n.RLock()
+	defer n.RUnlock()
+
+	for _, v := range n.list {
+		num := uint(v.Weight) / divsor
+		for i := uint(0); i < num; i++ {
+			n.wIds = append(n.wIds, v.Id)
+		}
+	}
+}
+
+func (n *NodeList) GetNodeStat () *NodeStat{
+	n.RLock()
+	defer n.RUnlock()
+
+	var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	l := len(n.wIds)
+	idx := r.Intn(l)
+	nId := n.wIds[idx]
+
+	node, ok := n.list[nId]
+	if ok {
+		return node
+	}else {
+		return nil
+	}
 }
 
 func (n *NodeList) Len() int {
