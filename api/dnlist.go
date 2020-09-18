@@ -112,7 +112,7 @@ func (q *DNQueue) GetWeightNodeStat() *NodeStatWOK {
 
 	nStat, ok := q.nodemap[node.Id]
 	if !ok {
-		nStat := &NodeStatWOK{NodeInfo: node, OKTimes: new(int32)}
+		nStat = &NodeStatWOK{NodeInfo: node, OKTimes: new(int32)}
 		*nStat.OKTimes = 0
 		q.nodemap[node.Id] = nStat
 	}
