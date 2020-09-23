@@ -13,6 +13,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCoreService/stat"
 	ytcrypto "github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTDNMgmt"
 )
@@ -84,6 +85,8 @@ func StartApi() {
 	InitSuperList()
 	go StartPreAllocNode()
 	env.PrintEnv()
+	go stat.Ccstat.PrintCc()
+
 }
 
 func InitSuperList() {

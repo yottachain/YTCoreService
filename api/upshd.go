@@ -12,6 +12,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCoreService/stat"
 )
 
 var SHARD_UP_CH chan int
@@ -145,6 +146,10 @@ func (self *UploadShard) DoSend() {
 		}
 		node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
 		req.AllocId = ctlresp.AllocId
+
+		stat.Ccstat.ShardCcAdd()
+		stat.Ccstat.Shards()
+
 		resp, err1 := self.SendShard(node, req)
 		times := time.Now().Sub(startTime).Milliseconds()
 		if err1 != nil {
@@ -154,12 +159,16 @@ func (self *UploadShard) DoSend() {
 			logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d ms,retry next node %d\n",
 				self.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times, n.NodeInfo.Id)
 			node = n
+			stat.Ccstat.ShardCcSub()
 			continue
 		}
 		self.res.DNSIGN = resp.DNSIGN
 		self.res.NODEID = node.NodeInfo.Id
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			self.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
+
+		stat.Ccstat.ShardCcSub()
+		stat.Ccstat.ShardSucs()
 		break
 	}
 }
