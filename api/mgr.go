@@ -83,6 +83,7 @@ func StartApi() {
 	net.Start(0, 0, priv)
 	InitSuperList()
 	go StartPreAllocNode()
+	env.PrintEnv()
 }
 
 func InitSuperList() {

@@ -13,6 +13,7 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/stat"
 )
 
 var YTSN_HOME string
@@ -77,6 +78,12 @@ func InitServer() {
 	initServerLog()
 	ReadExport(YTSN_HOME + "bin/ytsn.ev")
 	ReadExport(YTSN_HOME + "bin/ytsnd.sh")
+}
+
+func PrintEnv() {
+		stat.Ccstat.Println("UploadFileMaxMemory", UploadFileMaxMemory)
+		stat.Ccstat.Println("UploadBlockThreadNum", UploadBlockThreadNum)
+		stat.Ccstat.Println("UploadShardThreadNum", UploadShardThreadNum)
 }
 
 func initClientLog() {
