@@ -22,12 +22,12 @@ func (ccs *ccstat) shardCcAdd() {
 	ccs.ccShards++
 }
 
-func (ccs *ccstat) init() {
+func init() {
 	fd, err := os.OpenFile("stat.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		log.Fatalln("open stat.log fail  "+ err.Error())
 	}
-	ccs.fd = fd
+	Ccstat.fd = fd
 }
 
 func (ccs *ccstat) Println(key string, v interface{}) {
