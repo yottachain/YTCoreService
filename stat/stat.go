@@ -35,14 +35,19 @@ func (ccs *ccstat) Println(key string, v interface{}) {
 	vt := reflect.ValueOf(v)
 	var str = ""
 
-	for i := 0; i < t.NumField(); i++ {
-		key := t.Field(i)
-		value := vt.Field(i).Interface()
+	if k := t.Kind(); k == reflect.Struct {
+		for i := 0; i < t.NumField(); i++ {
+			key := t.Field(i)
+			value := vt.Field(i).Interface()
 
-		s := fmt.Sprintf("%s = %v ", key.Name, value)
-		str = str + s
+			s := fmt.Sprintf("%s = %v ", key.Name, value)
+			str = str + s
+		}
+		_, _ = fmt.Fprintf(ccs.fd, "%s=(%v)\n", key, str)
+	}else {
+		_, _ = fmt.Fprintf(ccs.fd, "%s=%v\n", key, vt)
 	}
-	_, _ = fmt.Fprintf(ccs.fd, "%s=(%v)\n", key, str)
+
 	_ = ccs.fd.Sync()
 }
 
