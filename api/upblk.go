@@ -250,12 +250,12 @@ func (self *UploadBlock) UploadBlockDedup() {
 		stat.Ccstat.BlkCcAdd()
 		blkls, err := self.UploadShards(ks, eblk.VHB, enc, &rsize, ress, ids)
 		if err != nil {
-			stat.Ccstat.BlkCcSub()
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
 				logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
 				NotifyAllocNode(true)
 				retrytimes++
+				stat.Ccstat.BlkCcSub()
 				continue
 			}
 			self.UPOBJ.ERR.Store(err)

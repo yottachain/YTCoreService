@@ -21,7 +21,7 @@ type ccstat struct {
 	fd 	*os.File
 }
 
-var Ccstat = ccstat{ccShards:0}
+var Ccstat = ccstat{ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
 
 func (ccs *ccstat) ShardCcAdd() {
 	ccs.Lock()
@@ -102,7 +102,7 @@ func (ccs *ccstat) PrintCc() {
 		ccs.Lock()
 		_, _ = fmt.Fprintf(ccs.fd, "send-blk-goroutine-cc=%d get-token-cc=%d send-shard-goroutine-cc=%d\n",
 			ccs.ccBlks, ccs.ccGts, ccs.ccShards)
-		_, _ = fmt.Fprintf(ccs.fd, "gts=%d/s  gt-success=%d send-shards=%d/s  send-success-shards=%d/s\n",
+		_, _ = fmt.Fprintf(ccs.fd, "gts=%d/s  gt-success=%d/s send-shards=%d/s  send-success-shards=%d/s\n",
 			ccs.gts - gts, ccs.gtSucs - gtSucs, ccs.sendShs - sshs, ccs.sendShSucs - sshsucs)
 		gts = ccs.gts
 		gtSucs = ccs.gtSucs
