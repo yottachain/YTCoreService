@@ -142,6 +142,19 @@ func (self *ObjectMeta) GetAndUpdate() error {
 	return nil
 }
 
+func (self *ObjectMeta) GetAndDelete() error {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"VNU": self.VNU}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := source.GetObjectColl().FindOneAndDelete(ctx, filter).Decode(self)
+	if err != nil {
+		logrus.Errorf("[ObjectMeta]GetAndUpdate ERR:%s\n", err)
+		return err
+	}
+	return nil
+}
+
 func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uint64) error {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": VNU}

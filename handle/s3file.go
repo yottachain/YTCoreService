@@ -215,16 +215,16 @@ func (h *DeleteObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 
 func (h *DeleteObjectHandler) Handle() proto.Message {
 	fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.verid}
-	err := fmeta.GetAndUpdate()
+	err := fmeta.GetAndDelete()
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	if fmeta.NLINK == 1 {
-		err = dao.UpdateUserSpace(h.user.UserID, -int64(fmeta.Usedspace), -1, -int64(fmeta.Length))
-		if err != nil {
-			return pkt.NewError(pkt.SERVER_ERROR)
-		}
+
+	err = dao.UpdateUserSpace(h.user.UserID, -int64(fmeta.Usedspace), -1, -int64(fmeta.Length))
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+
 	return &pkt.VoidResp{}
 }
 
