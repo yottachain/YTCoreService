@@ -127,6 +127,21 @@ func (self *ObjectMeta) GetByVNU() error {
 	return nil
 }
 
+func (self *ObjectMeta) GetAndUpdate() error {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"VNU": self.VNU}
+	update := bson.M{"$inc": bson.M{"NLINK": -1}}
+	opt := options.FindOneAndUpdate().SetProjection(bson.M{"_id": 1, "NLINK": 1, "length": 1, "usedspace": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := source.GetObjectColl().FindOneAndUpdate(ctx, filter, update, opt).Decode(self)
+	if err != nil {
+		logrus.Errorf("[ObjectMeta]GetAndUpdate ERR:%s\n", err)
+		return err
+	}
+	return nil
+}
+
 func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uint64) error {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": VNU}
@@ -144,7 +159,7 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byte, primitive.ObjectID, error) {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
-	fields := bson.M{"VNU": 1, "blocks": 1}
+	fields := bson.M{"VNU": 1, "NLINK": 1, "blocks": 1}
 	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
@@ -170,6 +185,10 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 		if res.VNU.Timestamp().Unix() > stoptime {
 			startVnu = primitive.NilObjectID
 			break
+		}
+		if res.NLINK <= 0 {
+			startVnu = res.VNU
+			continue
 		}
 		if len(vbis) > limit {
 			break

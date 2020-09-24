@@ -43,6 +43,18 @@ message DeleteFileReqV2{
     optional bytes meta=7;
 }
 
+message DeleteObjectReqV2{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional group VNU=4{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;
+    }
+}
+
 message GetBucketReqV2{
     optional uint32 userId=1;
     optional string signData=2;

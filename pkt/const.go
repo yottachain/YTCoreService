@@ -44,7 +44,6 @@ func init_id_class() {
 	ID_CLASS_MAP[0x1978]=func() proto.Message { return &UploadShard2CResp{} }
 	ID_CLASS_MAP[0xcb05]=func() proto.Message { return &UploadShardReq{} }
 	ID_CLASS_MAP[0xe64f]=func() proto.Message { return &VoidResp{} }
-	ID_CLASS_MAP[0xc24f]=func() proto.Message { return &StringMap{} }
 	ID_CLASS_MAP[0xe231]=func() proto.Message { return &DownloadBlockDBResp{} }
 	ID_CLASS_MAP[0xff86]=func() proto.Message { return &DownloadBlockInitReq{} }
 	ID_CLASS_MAP[0x4cf2]=func() proto.Message { return &DownloadObjectInitResp{} }
@@ -106,10 +105,12 @@ func init_id_class() {
 	ID_CLASS_MAP[0x276d]=func() proto.Message { return &ListObjectRespV2{} }
 	ID_CLASS_MAP[0x7e07]=func() proto.Message { return &UpdateBucketReq{} }
 	ID_CLASS_MAP[0x62fb]=func() proto.Message { return &UploadFileReq{} }
+	ID_CLASS_MAP[0xe26d]=func() proto.Message { return &StringMap{} }
 	ID_CLASS_MAP[0xd09e]=func() proto.Message { return &CopyObjectReqV2{} }
 	ID_CLASS_MAP[0xdbc2]=func() proto.Message { return &CreateBucketReqV2{} }
 	ID_CLASS_MAP[0xd6f3]=func() proto.Message { return &DeleteBucketReqV2{} }
 	ID_CLASS_MAP[0x4076]=func() proto.Message { return &DeleteFileReqV2{} }
+	ID_CLASS_MAP[0xe9f5]=func() proto.Message { return &DeleteObjectReqV2{} }
 	ID_CLASS_MAP[0x3288]=func() proto.Message { return &GetBucketReqV2{} }
 	ID_CLASS_MAP[0x0d8e]=func() proto.Message { return &GetObjectReqV2{} }
 	ID_CLASS_MAP[0xfd39]=func() proto.Message { return &ListBucketReqV2{} }
@@ -158,7 +159,6 @@ func init_class_id() {
 	CLASS_ID_MAP["UploadShard2CResp"]=0x1978
 	CLASS_ID_MAP["UploadShardReq"]=0xcb05
 	CLASS_ID_MAP["VoidResp"]=0xe64f
-	CLASS_ID_MAP["StringMap"]=0xc24f
 	CLASS_ID_MAP["DownloadBlockDBResp"]=0xe231
 	CLASS_ID_MAP["DownloadBlockInitReq"]=0xff86
 	CLASS_ID_MAP["DownloadObjectInitResp"]=0x4cf2
@@ -220,10 +220,12 @@ func init_class_id() {
 	CLASS_ID_MAP["ListObjectRespV2"]=0x276d
 	CLASS_ID_MAP["UpdateBucketReq"]=0x7e07
 	CLASS_ID_MAP["UploadFileReq"]=0x62fb
+	CLASS_ID_MAP["StringMap"]=0xe26d
 	CLASS_ID_MAP["CopyObjectReqV2"]=0xd09e
 	CLASS_ID_MAP["CreateBucketReqV2"]=0xdbc2
 	CLASS_ID_MAP["DeleteBucketReqV2"]=0xd6f3
 	CLASS_ID_MAP["DeleteFileReqV2"]=0x4076
+	CLASS_ID_MAP["DeleteObjectReqV2"]=0xe9f5
 	CLASS_ID_MAP["GetBucketReqV2"]=0x3288
 	CLASS_ID_MAP["GetObjectReqV2"]=0x0d8e
 	CLASS_ID_MAP["ListBucketReqV2"]=0xfd39

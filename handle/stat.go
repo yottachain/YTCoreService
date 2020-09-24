@@ -20,7 +20,7 @@ func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorM
 	req, ok := msg.(*pkt.TotalReq)
 	if ok {
 		h.m = req
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, SYNC_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
@@ -67,7 +67,7 @@ func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 		if h.m.Userid == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, SYNC_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
