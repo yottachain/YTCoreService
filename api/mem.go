@@ -30,16 +30,16 @@ func DecBlockMen(b *codec.Block) {
 }
 
 func AddMem(length int64) {
-	//for {
-	//	if length >= int64(env.UploadFileMaxMemory) {
-	//		MemCond.L.Lock()
-	//		MemCond.Wait()
-	//		MemCond.L.Unlock()
-	//		length = atomic.LoadInt64(MemSize)
-	//	} else {
-	//		break
-	//	}
-	//}
+	for {
+		if length >= int64(env.UploadFileMaxMemory) {
+			MemCond.L.Lock()
+			MemCond.Wait()
+			MemCond.L.Unlock()
+			length = atomic.LoadInt64(MemSize)
+		} else {
+			break
+		}
+	}
 }
 
 func AddEncoderMem(enc *codec.ErasureEncoder) int64 {
