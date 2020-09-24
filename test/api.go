@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = false
+const yfnet = true
 const testsize = 1024 * 1024 * 9
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12

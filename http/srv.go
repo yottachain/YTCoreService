@@ -18,7 +18,7 @@ import (
 var home_page string
 var ip_list []string
 var server *http.Server
-var RoutineConter *int32
+var RoutineConter *int32 = new(int32)
 
 const CacheExpiredTime = 10
 
