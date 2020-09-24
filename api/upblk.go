@@ -14,6 +14,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCoreService/stat"
 	"github.com/yottachain/YTDNMgmt"
 )
 
@@ -246,8 +247,10 @@ func (self *UploadBlock) UploadBlockDedup() {
 	ress := make([]*UploadShardResult, size)
 	var ids []int32
 	for {
+		stat.Ccstat.BlkCcAdd()
 		blkls, err := self.UploadShards(ks, eblk.VHB, enc, &rsize, ress, ids)
 		if err != nil {
+			stat.Ccstat.BlkCcSub()
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
 				logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
@@ -257,6 +260,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 			}
 			self.UPOBJ.ERR.Store(err)
 		}
+		stat.Ccstat.BlkCcSub()
 		break
 	}
 }

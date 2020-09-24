@@ -87,7 +87,6 @@ func StartApi() {
 	env.PrintEnv()
 	PrintApiCfg()
 	go stat.Ccstat.PrintCc()
-
 }
 
 func PrintApiCfg () {

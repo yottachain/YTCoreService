@@ -14,6 +14,10 @@ type ccstat struct {
 	ccShards	int32
 	sendShs		uint64
 	sendShSucs	uint64
+	ccBlks		int32
+	ccGts		int32
+	gts 		uint64
+	gtSucs 		uint64
 	fd 	*os.File
 }
 
@@ -43,6 +47,42 @@ func (ccs *ccstat) ShardSucs() {
 	ccs.sendShSucs++
 }
 
+func (ccs *ccstat) BlkCcAdd() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.ccBlks++
+}
+
+func (ccs *ccstat) BlkCcSub() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.ccBlks--
+}
+
+func (ccs *ccstat) GtCcAdd() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.ccGts++
+}
+
+func (ccs *ccstat) GtCcSub() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.ccGts--
+}
+
+func (ccs *ccstat) GtsAdd() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.gts++
+}
+
+func (ccs *ccstat) GtSucsAdd() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.gtSucs++
+}
+
 func init() {
 	fd, err := os.OpenFile("stat.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
@@ -54,13 +94,18 @@ func init() {
 func (ccs *ccstat) PrintCc() {
 	var sshs = uint64(0)
 	var sshsucs = uint64(0)
+	var gts = uint64(0)
+	var gtSucs = uint64(0)
 
 	for {
 		<- time.After(time.Second*1)
 		ccs.Lock()
-		_, _ = fmt.Fprintf(ccs.fd, "send-shard-goroutine-cc=%d\n", ccs.ccShards)
-		_, _ = fmt.Fprintf(ccs.fd, "send-shards=%d/s  send-success-shards=%d/s\n",
-			ccs.sendShs - sshs, ccs.sendShSucs - sshsucs)
+		_, _ = fmt.Fprintf(ccs.fd, "send-blk-goroutine-cc=%d get-token-cc=%d send-shard-goroutine-cc=%d\n",
+			ccs.ccBlks, ccs.ccGts, ccs.ccShards)
+		_, _ = fmt.Fprintf(ccs.fd, "gts=%d/s  gt-success=%d send-shards=%d/s  send-success-shards=%d/s\n",
+			ccs.gts - gts, ccs.gtSucs - gtSucs, ccs.sendShs - sshs, ccs.sendShSucs - sshsucs)
+		gts = ccs.gts
+		gtSucs = ccs.gtSucs
 		sshs = ccs.sendShs
 		sshsucs = ccs.sendShSucs
 		ccs.Unlock()

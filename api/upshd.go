@@ -133,9 +133,15 @@ func (self *UploadShard) DoSend() {
 	for {
 		startTime := time.Now()
 		req := self.MakeRequest(node)
+
+		stat.Ccstat.GtsAdd()
+		stat.Ccstat.GtCcAdd()
+
 		rtimes, ctlresp, err := self.GetToken(node)
 		ctrtimes := time.Now().Sub(startTime).Milliseconds()
 		if err != nil {
+			stat.Ccstat.GtCcSub()
+
 			self.retrytimes++
 			node.DecCount()
 			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
@@ -147,6 +153,8 @@ func (self *UploadShard) DoSend() {
 		node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
 		req.AllocId = ctlresp.AllocId
 
+		stat.Ccstat.GtCcSub()
+		stat.Ccstat.GtSucsAdd()
 		stat.Ccstat.ShardCcAdd()
 		stat.Ccstat.Shards()
 
