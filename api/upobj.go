@@ -107,7 +107,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 		wgroup := sync.WaitGroup{}
 		atomic.StoreInt64(self.ActiveTime, time.Now().Unix())
 		go self.waitcheck()
-		var id uint32 = 0
+		//var id uint32 = 0
 		var blks [] *codec.PlainBlock
 		for {
 			b, err := self.Encoder.ReadNext()
