@@ -56,6 +56,9 @@ func (self *UploadBlock) DoFinish(size int64) {
 		env.TraceError()
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 	}
+
+	stat.Ccstat.BlkCcSub()
+
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
 	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
@@ -65,6 +68,8 @@ func (self *UploadBlock) DoFinish(size int64) {
 
 func (self *UploadBlock) upload() {
 	size := self.BLK.Length()
+
+	stat.Ccstat.BlkCcAdd()
 	defer self.DoFinish(size)
 	err := self.BLK.Sum()
 	if err != nil {
@@ -247,7 +252,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	ress := make([]*UploadShardResult, size)
 	var ids []int32
 	for {
-		stat.Ccstat.BlkCcAdd()
+		//stat.Ccstat.BlkCcAdd()
 		blkls, err := self.UploadShards(ks, eblk.VHB, enc, &rsize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
@@ -255,12 +260,12 @@ func (self *UploadBlock) UploadBlockDedup() {
 				logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
 				NotifyAllocNode(true)
 				retrytimes++
-				stat.Ccstat.BlkCcSub()
+				//stat.Ccstat.BlkCcSub()
 				continue
 			}
 			self.UPOBJ.ERR.Store(err)
 		}
-		stat.Ccstat.BlkCcSub()
+		//stat.Ccstat.BlkCcSub()
 		break
 	}
 }
