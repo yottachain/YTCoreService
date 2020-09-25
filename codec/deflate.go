@@ -147,8 +147,7 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 	buf.Write([]byte{0, 0})
 	flateWrite := zlib.NewWriter(buf)
 	var err error
-	//bs := make([]byte, 16)
-	bs := make([]byte, 1024)
+	bs := make([]byte, 16)
 	var totalIn int64 = 0
 	var num int
 	for {
