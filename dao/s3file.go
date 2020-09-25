@@ -77,6 +77,25 @@ func (self *FileMeta) DeleteFileMeta() error {
 	return nil
 }
 
+func (self *FileMeta) DeleteObjectMeta() (*FileMetaWithVersion, error) {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName}
+	opt := options.FindOneAndDelete().SetProjection(bson.M{"_id": 1, "version.versionId": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res := &FileMetaWithVersion{}
+	err := source.GetFileColl().FindOneAndDelete(ctx, filter, opt).Decode(res)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		} else {
+			logrus.Errorf("[S3FileMeta]DeleteObjectMeta %s/%s ERR:%s\n", self.BucketId.Hex(), self.FileName, err)
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
 func (self *FileMeta) DeleteLastFileMeta() error {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName}

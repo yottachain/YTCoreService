@@ -135,12 +135,12 @@ func initApi() {
 	var pkey string
 	if yfnet {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
-		//user = "username1234"
-		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
+		user = "username1234"
+		pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
 		//user = "pollytestde1"
 		//pkey = "5JsohFvnt2qhkKxzConrJSxU2ti4qGifjJ9dGCxhpup4EYw1es8"
-		user = "devtestuser4"
-		pkey = "5JDYRHvNaWENtEpuugw9xqb8MS2AbefpBQvaFg3iq3cxPALg6XZ"
+		//user = "devtestuser4"
+		//pkey = "5JDYRHvNaWENtEpuugw9xqb8MS2AbefpBQvaFg3iq3cxPALg6XZ"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
 		//user = "ianmooneyy11"

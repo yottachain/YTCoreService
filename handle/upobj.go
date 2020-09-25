@@ -381,7 +381,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	if usedspace%unitspace > 1 {
 		addusedspace = addusedspace + 1
 	}
-	err = dao.UpdateUserSpace(h.user.UserID, usedspace, 1, meta.Length)
+	err = dao.UpdateUserSpace(h.user.UserID, int64(usedspace), 1, int64(meta.Length))
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}

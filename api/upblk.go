@@ -268,8 +268,8 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 	num := 0
 	for index, shd := range enc.Shards {
 		if ress[index] == nil {
-			ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids)
 			wgroup.Add(1)
+			ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids)
 			num++
 		}
 	}

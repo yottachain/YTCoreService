@@ -40,6 +40,7 @@ var ShadowPriKey string
 var ContractAccount string
 var ContractOwnerD string
 
+var MAX_HTTP_ROUTINE int32
 var MAX_AYNC_ROUTINE int32
 var MAX_SYNC_ROUTINE int32
 var MAX_READ_ROUTINE int32
@@ -117,8 +118,9 @@ func readSnProperties() {
 	PayInterval = config.GetRangeInt("payInterval", 500, 500, 180000)
 
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))
+	MAX_HTTP_ROUTINE = int32(config.GetRangeInt("MAX_HTTP_ROUTINE", 500, 2000, 1000))
 	MAX_WRITE_ROUTINE = int32(config.GetRangeInt("MAX_WRITE_ROUTINE", 500, 5000, 2000))
-	MAX_SYNC_ROUTINE = int32(config.GetRangeInt("MAX_SYNC_ROUTINE", 200, 2000, 1000))
+	MAX_SYNC_ROUTINE = int32(config.GetRangeInt("MAX_SYNC_ROUTINE", 200, 3000, 2000))
 	MAX_READ_ROUTINE = int32(config.GetRangeInt("MAX_READ_ROUTINE", 200, 2000, 1000))
 	MAX_STAT_ROUTINE = int32(config.GetRangeInt("MAX_STAT_ROUTINE", 200, 2000, 1000))
 	PER_USER_MAX_READ_ROUTINE = int32(config.GetRangeInt("PER_USER_MAX_READ_ROUTINE", 1, 20, 5))

@@ -2,6 +2,7 @@ package net
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
@@ -78,8 +79,32 @@ func InitNodeMgr(MongoAddress string) error {
 	readSuperNodeList(ls)
 	readLocalIP()
 	IsActive()
+	AddLocalSuperNode()
 	SelfIP = GetSelfIp()
 	return nil
+}
+
+func AddLocalSuperNode() {
+	type SuperNode struct {
+		Number int
+		Addr   string
+	}
+	path := env.YTSN_HOME + "conf/snlist.local.properties"
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		logrus.Errorf("Failed to read snlist.local.properties:%s\n", err)
+	}
+	list := []*SuperNode{}
+	err = json.Unmarshal(data, &list)
+	if err != nil {
+		logrus.Errorf("Failed to unmarshal snlist.local.properties:%s\n", err)
+	}
+	for _, sn := range list {
+		snode := GetSuperNode(sn.Number)
+		if snode != nil {
+			snode.Addrs = append(snode.Addrs, sn.Addr)
+		}
+	}
 }
 
 func readLocalIP() {

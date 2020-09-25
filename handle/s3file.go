@@ -171,12 +171,60 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName, VersionId: h.verid}
 	if h.verid == primitive.NilObjectID {
 		err = fmeta.DeleteFileMeta()
+
 	} else {
 		err = fmeta.DeleteLastFileMeta()
 	}
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	return &pkt.VoidResp{}
+}
+
+type DeleteObjectHandler struct {
+	pkey  string
+	m     *pkt.DeleteObjectReqV2
+	user  *dao.User
+	verid primitive.ObjectID
+}
+
+func (h *DeleteObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+	h.pkey = pubkey
+	req, ok := msg.(*pkt.DeleteObjectReqV2)
+	if ok {
+		h.m = req
+		if h.m.Vnu == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		h.verid = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
+		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
+		if h.user == nil {
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
+		}
+		return nil, WRITE_ROUTINE_NUM, nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
+	}
+}
+
+func (h *DeleteObjectHandler) Handle() proto.Message {
+	fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.verid}
+	err := fmeta.GetAndDelete()
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+
+	err = dao.UpdateUserSpace(h.user.UserID, -int64(fmeta.Usedspace), -1, -int64(fmeta.Length))
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+
 	return &pkt.VoidResp{}
 }
 
