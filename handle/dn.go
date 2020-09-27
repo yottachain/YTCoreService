@@ -251,7 +251,7 @@ func ExecSendSpotCheck() {
 		}
 		SPOT_NODE_LIST.RUnlock()
 		for _, n := range nodes {
-			_, err := net.RequestDN(req, n, "")
+			_, err := net.RequestDN(req, n, "", false)
 			if err != nil {
 				logrus.Errorf("[SendTask][%d]Send spotcheck task [%s] ERR:%d--%s\n", n.Id, req.TaskId, err.Code, err.Msg)
 			} else {
@@ -343,7 +343,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
 	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime}
-	_, e := net.RequestDN(req, node, "")
+	_, e := net.RequestDN(req, node, "", false)
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
 	} else {

@@ -19,7 +19,7 @@ type Node struct {
 	Weight float64
 }
 
-func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *pkt.ErrorMessage) {
+func RequestDN(msg proto.Message, dn *Node, log_prefix string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
 	data, name, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
@@ -35,7 +35,7 @@ func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *
 		return nil, err
 	}
 	defer env.TracePanic()
-	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false)
+	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, nowait)
 }
 
 func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, retry int, nowait bool) (proto.Message, *pkt.ErrorMessage) {

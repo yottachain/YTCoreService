@@ -162,7 +162,7 @@ func (me *DownLoadShardInfo) Download() []byte {
 	times := 0
 	var msg proto.Message
 	for {
-		m, err := net.RequestDN(req, me.NodeInfo, me.DWNS.logPrefix)
+		m, err := net.RequestDN(req, me.NodeInfo, me.DWNS.logPrefix, false)
 		if err != nil {
 			if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 				return nil
