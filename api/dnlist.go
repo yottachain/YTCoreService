@@ -12,6 +12,28 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 )
 
+type idWeight struct {
+	id int32
+	weight float64
+}
+
+type idWeightsAsc []idWeight
+func (p idWeightsAsc) Len() int { return len(p) }
+func (p idWeightsAsc) Less(i, j int) bool {
+	return p[i].weight < p[j].weight
+}
+// 交换数据
+func (p idWeightsAsc) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
+
+type idWeightsDes []idWeight
+func (p idWeightsDes) Len() int { return len(p) }
+func (p idWeightsDes) Less(i, j int) bool {
+	return p[i].weight > p[j].weight
+}
+// 交换数据
+func (p idWeightsDes) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
 type NodeStatWOK struct {
 	NodeInfo *NodeStat
 	OKTimes  *int32
@@ -125,6 +147,7 @@ func (q *DNQueue) GetWeightNodeStat() *NodeStatWOK {
 type NodeList struct {
 	sync.RWMutex
 	list       map[int32]*NodeStat
+	weights 	[] idWeight
 	wIds		[] int32
 	updateTime int64
 	resetSign  *int32
@@ -159,14 +182,27 @@ func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 	n.Unlock()
 }
 
-func (n *NodeList) SetwIds (divsor uint) {
+func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 	n.RLock()
 	defer n.RUnlock()
 
-	for _, v := range n.list {
-		num := uint(v.Weight) / divsor
+	for id, v := range n.list {
+		weight := idWeight{id, v.Weight}
+		n.weights = append(n.weights, weight)
+	}
+
+	var desWeights idWeightsDes
+	desWeights = n.weights
+	sort.Sort(desWeights)
+	n.weights = desWeights
+
+	for i, v := range n.weights {
+		if uint(i) > dnc {
+			break
+		}
+		num := uint(v.weight) / divsor
 		for i := uint(0); i < num; i++ {
-			n.wIds = append(n.wIds, v.Id)
+			n.wIds = append(n.wIds, v.id)
 		}
 	}
 }

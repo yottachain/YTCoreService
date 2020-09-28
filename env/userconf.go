@@ -17,6 +17,8 @@ var DownloadRetryTimes int = 3
 
 var DownloadThread int = 200
 
+var OptionMiners = 1000
+
 func readClientProperties() {
 	confpath := YTFS_HOME + "conf/ytfs.properties"
 	config, err := NewConfig(confpath)
@@ -43,4 +45,6 @@ func readClientProperties() {
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+
+	OptionMiners = config.GetRangeInt("optionMiners", 5, 3000, 1000)
 }
