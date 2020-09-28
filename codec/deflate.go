@@ -194,7 +194,6 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 				fileEncoder.readinTotal = fileEncoder.readinTotal + totalIn
 				return 0, nil
 			}
-
 		}
 	}
 	flateWrite.Close()
