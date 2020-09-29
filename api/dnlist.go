@@ -191,10 +191,7 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 		n.weights = append(n.weights, weight)
 	}
 
-	var desWeights idWeightsDes
-	desWeights = n.weights
-	sort.Sort(desWeights)
-	n.weights = desWeights
+	sort.Sort(idWeightsDes(n.weights))
 
 	for i, v := range n.weights {
 		if uint(i) > dnc {

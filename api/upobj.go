@@ -42,7 +42,9 @@ func NewUploadObject(c *Client) *UploadObject {
 }
 
 func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
+	sTime := time.Now()
 	enc, err := codec.NewFileEncoder(path)
+	logrus.Infof("encoder use time %d s\n", time.Now().Sub(sTime).Milliseconds())
 	if err != nil {
 		logrus.Errorf("[NewFileEncoder]Path:%s,ERR:%s\n", path, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
