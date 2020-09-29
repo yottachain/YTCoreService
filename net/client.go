@@ -119,6 +119,12 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	logrus.Infof(logmsg)
 
 	maddrs, Err := StringListToMaddrs(addrs)
+	if Err != nil {
+		logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
+		logrus.Errorf(logmsg)
+		return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
+	}
+
 	logrus.Printf("maddrs lenth is %d\n", len(maddrs))
 	isHttp := false
 	for _, maddr := range maddrs {
@@ -132,14 +138,6 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		err := client.connect(addrs, log_pre, nowait)
 		if err != nil {
 			return nil, err
-		}
-
-		//maddrs, Err := StringListToMaddrs(addrs)
-		if err != nil {
-			addrString := AddrsToString(addrs)
-			logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
-			logrus.Errorf(logmsg)
-			return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 		}
 	}
 
