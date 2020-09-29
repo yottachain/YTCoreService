@@ -109,8 +109,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 		wgroup := sync.WaitGroup{}
 		atomic.StoreInt64(self.ActiveTime, time.Now().Unix())
 		go self.waitcheck()
-		//var id uint32 = 0
-		var blks [] *codec.PlainBlock
+		var id uint32 = 0
 		for {
 			b, err := self.Encoder.ReadNext()
 			if err != nil {
@@ -124,26 +123,14 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 			}
 			atomic.StoreInt64(self.PRO.ReadinLength, self.Encoder.GetReadinTotal())
 			atomic.StoreInt64(self.PRO.ReadOutLength, self.Encoder.GetReadoutTotal())
-
-			blks = append(blks, b)
-			//if self.IdExist(id) {
-			//	atomic.AddInt64(self.PRO.WriteLength, b.Length())
-			//	logrus.Infof("[UploadObject][%s][%d]Block has been uploaded.\n", self.VNU.Hex(), id)
-			//} else {
-			//	wgroup.Add(1)
-			//	StartUploadBlock(int16(id), b, self, &wgroup)
-			//}
-			//id++
-		}
-
-		for id, b := range blks{
-			if self.IdExist(uint32(id)) {
+			if self.IdExist(id) {
 				atomic.AddInt64(self.PRO.WriteLength, b.Length())
 				logrus.Infof("[UploadObject][%s][%d]Block has been uploaded.\n", self.VNU.Hex(), id)
 			} else {
 				wgroup.Add(1)
 				StartUploadBlock(int16(id), b, self, &wgroup)
 			}
+			id++
 		}
 		wgroup.Wait()
 		<-self.activesign
