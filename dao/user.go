@@ -150,7 +150,7 @@ func UpdateUserCost(userid int32, costPerCycle uint64) error {
 	return nil
 }
 
-func UpdateUserSpace(userid int32, usedSpace uint64, fileTotal uint64, spaceTotal uint64) error {
+func UpdateUserSpace(userid int32, usedSpace int64, fileTotal int64, spaceTotal int64) error {
 	source := NewBaseSource()
 	filter := bson.M{"_id": userid}
 	data := bson.M{"$inc": bson.M{"usedspace": usedSpace, "fileTotal": fileTotal, "spaceTotal": spaceTotal}}

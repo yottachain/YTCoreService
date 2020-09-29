@@ -32,13 +32,16 @@ func ListObj() {
 	item := items[100]
 	m, _ := api.BytesToFileMetaMap(item.Meta, primitive.NilObjectID)
 	fmt.Println(api.LengthKey + ":" + m[api.LengthKey])
+	info, _ := client.NewObjectMeta("test", item.FileName, primitive.NilObjectID)
+	fmt.Printf("%s:%d\n", api.LengthKey, info.Length)
 }
 
 func UpAndDownBytes() {
 	initApi()
-	vhw := upload()
+	vhw, vnu := upload()
 	download(vhw)
 	downloadRange(vhw)
+	client.NewObjectAccessor().DeleteObjectV2(vnu)
 }
 
 func UpAndDownFile() {
@@ -50,7 +53,7 @@ func UpAndDownFile() {
 
 func DownLoadByKey() {
 	initApi()
-	dn, errmsg := client.NewDownloadFile("newbucket", "log", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("newjava", "tmpfile_newjava_60978c.txt1", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
@@ -133,8 +136,12 @@ func initApi() {
 	var pkey string
 	if yfnet {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
-		user = "username1234"
-		pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
+		//user = "username1234"
+		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
+		//user = "pollytestde1"
+		//pkey = "5JsohFvnt2qhkKxzConrJSxU2ti4qGifjJ9dGCxhpup4EYw1es8"
+		user = "devvtest1111"
+		pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
 		//user = "ianmooneyy11"
@@ -151,14 +158,14 @@ func initApi() {
 	data = env.MakeRandData(testsize)
 }
 
-func upload() []byte {
+func upload() ([]byte, primitive.ObjectID) {
 	up := client.NewUploadObject()
 	vhw, errmsg := up.UploadBytes(data)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
-	return vhw
+	return vhw, up.VNU
 }
 
 func download(vhw []byte) {

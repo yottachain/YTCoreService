@@ -22,7 +22,7 @@ type FileEncoder struct {
 }
 
 func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
-	if len(bs) >= env.Max_Memory_Usage {
+	if len(bs) > env.Max_Memory_Usage {
 		return nil, errors.New("Length over 10M")
 	}
 	size := int64(len(bs))
@@ -194,7 +194,6 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 				fileEncoder.readinTotal = fileEncoder.readinTotal + totalIn
 				return 0, nil
 			}
-
 		}
 	}
 	flateWrite.Close()

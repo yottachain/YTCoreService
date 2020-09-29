@@ -122,9 +122,11 @@ func (self DownloadBlock) loadLRCShard(ks []byte, resp *pkt.DownloadBlockInitRes
 		vhf := resp.Vhfs.VHF[ii]
 		var dn *DownLoadShardInfo
 		for _, n := range resp.Nlist.Ns {
-			if n.Id != nil && id == *n.Id {
-				dn = NewDownLoadShardInfo(n, vhf, env.DownloadRetryTimes, dns, self.Path)
-				break
+			if n != nil {
+				if n.Id != nil && id == *n.Id {
+					dn = NewDownLoadShardInfo(n, vhf, env.DownloadRetryTimes, dns, self.Path)
+					break
+				}
 			}
 		}
 		if dn != nil {
@@ -156,12 +158,14 @@ func (self DownloadBlock) loadCopyShard(ks []byte, resp *pkt.DownloadBlockInitRe
 	var b []byte
 	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), len(resp.Nlist.Ns))
 	for _, n := range resp.Nlist.Ns {
-		dnshard := NewDownLoadShardInfo(n, vhf, 0, dns, self.Path)
-		if dnshard != nil {
-			<-SHARD_DOWN_CH
-			b = dnshard.Download()
-			if b != nil {
-				break
+		if n != nil {
+			dnshard := NewDownLoadShardInfo(n, vhf, 0, dns, self.Path)
+			if dnshard != nil {
+				<-SHARD_DOWN_CH
+				b = dnshard.Download()
+				if b != nil {
+					break
+				}
 			}
 		}
 	}

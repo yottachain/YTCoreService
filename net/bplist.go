@@ -159,7 +159,7 @@ func (self *EOSURI) SetErr(err error) bool {
 	if msg == "" {
 		return false
 	}
-	if strings.ContainsAny(msg, "Duplicate transaction") {
+	if strings.ContainsAny(msg, "Transaction exceeded the current CPU") {
 		time.Sleep(time.Duration(10) * time.Millisecond)
 	} else {
 		atomic.StoreInt32(self.ErrStatu, 1)

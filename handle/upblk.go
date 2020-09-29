@@ -50,8 +50,12 @@ func (h *UploadBlockInitHandler) Handle() proto.Message {
 	logrus.Infof("[UploadBLK]Init %d/%s/%d\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 	if env.S3Version != "" {
 		if h.m.Version == nil || *h.m.Version == "" || bytes.Compare([]byte(*h.m.Version), []byte(env.S3Version)) < 0 {
-			errmsg := fmt.Sprintf("[UploadBLK]UID:%d,ERR:TOO_LOW_VERSION?%s\n", h.user.UserID, *h.m.Version)
-			logrus.Errorf(errmsg)
+			v := "NULL"
+			if h.m.Version != nil {
+				v = *h.m.Version
+			}
+			errmsg := fmt.Sprintf("UID:%d,ERR:TOO_LOW_VERSION?%s", h.user.UserID, v)
+			logrus.Errorf("[UploadBLK]%s\n", errmsg)
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
 	}
@@ -370,7 +374,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 		}
 	}
 	logrus.Infof("[UploadBLK]Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
-	ip := net.GetSelfIp()
+	ip := net.SelfIP
 	return &pkt.UploadBlockEndResp{Host: &ip, VBI: &vbi}
 }
 
@@ -419,7 +423,25 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	err = saveShardCount(vbi, shardMetas)
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
 	return nil
+}
+
+func saveShardCount(vbi int64, ls []*dao.ShardMeta) error {
+	m := make(map[int32]int16)
+	for _, shard := range ls {
+		num, ok := m[shard.NodeId]
+		if ok {
+			m[shard.NodeId] = num + 1
+		} else {
+			m[shard.NodeId] = 1
+		}
+	}
+	bs := dao.ToBytes(m)
+	return dao.SaveNodeShardCount(vbi, bs)
 }
 
 func verifySign(meta *dao.ShardMeta, node []*net.Node) bool {

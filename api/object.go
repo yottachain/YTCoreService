@@ -42,7 +42,7 @@ func BytesToFileMetaMap(meta []byte, versionid primitive.ObjectID) (map[string]s
 	if meta == nil {
 		return nil, errors.New("no data")
 	}
-	if len(meta) > 24 {
+	if len(meta) >= 24 {
 		m, err := pkt.UnmarshalMap(meta)
 		if err == nil {
 			s, _ := m[ETagKey]
@@ -266,6 +266,27 @@ func (self *ObjectAccessor) DeleteObject(buck, fileName string, Verid primitive.
 		return errmsg
 	} else {
 		logrus.Infof("[DeleteObject][%d]%s/%s OK.\n", self.UClient.UserId, buck, fileName)
+		return nil
+	}
+}
+
+func (self *ObjectAccessor) DeleteObjectV2(Verid primitive.ObjectID) *pkt.ErrorMessage {
+	req := &pkt.DeleteObjectReqV2{
+		UserId:    &self.UClient.UserId,
+		SignData:  &self.UClient.Sign,
+		KeyNumber: &self.UClient.KeyNumber,
+	}
+	if Verid != primitive.NilObjectID {
+		i1, i2, i3, i4 := pkt.ObjectIdParam(Verid)
+		v := &pkt.DeleteObjectReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
+		req.Vnu = v
+	}
+	_, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
+	if errmsg != nil {
+		logrus.Errorf("[DeleteObjectV2][%d]%s ERR:%s\n", self.UClient.UserId, Verid.Hex(), pkt.ToError(errmsg))
+		return errmsg
+	} else {
+		logrus.Infof("[DeleteObjectV2][%d]%s OK.\n", self.UClient.UserId, Verid.Hex())
 		return nil
 	}
 }

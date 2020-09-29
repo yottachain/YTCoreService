@@ -27,6 +27,12 @@ var TotalCache = struct {
 }{LastTimes: new(int64)}
 
 func TotalHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if !checkIp(req.RemoteAddr) {
 		WriteErr(w, fmt.Sprintf("Invalid IP:%s", req.RemoteAddr))
 		return
@@ -90,6 +96,12 @@ func TotalHandle(w http.ResponseWriter, req *http.Request) {
 }
 
 func RelationshipHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if !checkIp(req.RemoteAddr) {
 		WriteErr(w, fmt.Sprintf("Invalid IP:%s", req.RemoteAddr))
 		return
@@ -133,6 +145,12 @@ func RelationshipHandle(w http.ResponseWriter, req *http.Request) {
 }
 
 func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if !checkIp(req.RemoteAddr) {
 		WriteErr(w, fmt.Sprintf("Invalid IP:%s", req.RemoteAddr))
 		return
@@ -169,11 +187,11 @@ func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 			if errstr != "" {
-				WriteJson(w, errstr)
+				WriteErr(w, errstr)
 				return
 			}
 		}
-		WriteErr(w, ress)
+		WriteJson(w, ress)
 	}
 }
 
@@ -181,6 +199,12 @@ var DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
 var USER_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
 
 func ListHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if !checkIp(req.RemoteAddr) {
 		WriteErr(w, fmt.Sprintf("Invalid IP:%s", req.RemoteAddr))
 		return

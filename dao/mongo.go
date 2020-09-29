@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
@@ -35,10 +36,10 @@ func InitMongo() {
 		DNI_DATABASENAME = "yotta" + strconv.Itoa(env.SuperNodeID)
 		CACHE_DATABASENAME = "cache_" + strconv.Itoa(env.SuperNodeID)
 	} else {
-		DATABASENAME = "metabase"
 		USER_DATABASENAME = "usermeta_"
-		DNI_DATABASENAME = "yotta"
 		CACHE_DATABASENAME = "cache"
+		DATABASENAME = "metabase"
+		DNI_DATABASENAME = "yotta"
 	}
 	confpath := env.YTSN_HOME + "conf/mongo.properties"
 	conf, err := env.NewConfig(confpath)
@@ -105,6 +106,7 @@ const BLOCK_CNT_TABLE_NAME = "block_count"
 const SHARD_TABLE_NAME = "shards"
 const SHARD_CNT_TABLE_NAME = "shard_count"
 const SHARD_RBD_TABLE_NAME = "shards_rebuild"
+const SHARD_UP_TABLE_NAME = "shards_upload"
 
 type MetaBaseSource struct {
 	db          *mongo.Database
@@ -206,8 +208,9 @@ type UserMetaSource struct {
 }
 
 func NewUserMetaSource(uid uint32) *UserMetaSource {
+	var base *UserMetaSource
 	USERBASE_MAP.RLock()
-	base := USERBASE_MAP.bases[uid]
+	base = USERBASE_MAP.bases[uid]
 	USERBASE_MAP.RUnlock()
 	if base == nil {
 		USERBASE_MAP.Lock()
@@ -316,10 +319,11 @@ const USERSUM_CACHE_NAME = "userfeesum"
 var cacheBaseSource *CacheBaseSource = nil
 
 type CacheBaseSource struct {
-	db    *mongo.Database
-	dni_c *mongo.Collection
-	obj_c *mongo.Collection
-	sum_c *mongo.Collection
+	db         *mongo.Database
+	dni_c      *mongo.Collection
+	obj_c      *mongo.Collection
+	sum_c      *mongo.Collection
+	shard_up_c sync.Map
 }
 
 func NewCacheBaseSource() *CacheBaseSource {
@@ -332,6 +336,31 @@ func (source *CacheBaseSource) initMetaDB() {
 	source.obj_c = source.db.Collection(OBJECT_NEW_TABLE_NAME)
 	source.sum_c = source.db.Collection(USERSUM_CACHE_NAME)
 	logrus.Infof("[InitMongo]Create cache tables Success.\n")
+}
+
+func (source *CacheBaseSource) DropShardUploadColl(vbi int64) {
+	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("2006010215")
+	v, ok := source.shard_up_c.Load(ss)
+	if ok {
+		c := v.(*mongo.Collection)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		c.Drop(ctx)
+		source.shard_up_c.Delete(ss)
+	}
+	logrus.Infof("[DropNodeShardColl]%s.\n", ss)
+}
+
+func (source *CacheBaseSource) GetShardUploadColl(vbi int64) *mongo.Collection {
+	ss := SHARD_UP_TABLE_NAME + time.Unix(vbi>>32, 0).Format("2006010215")
+	v, ok := source.shard_up_c.Load(ss)
+	if ok {
+		return v.(*mongo.Collection)
+	} else {
+		c := source.db.Collection(ss)
+		source.shard_up_c.Store(ss, c)
+		return c
+	}
 }
 
 func (source *CacheBaseSource) GetDB() *mongo.Database {

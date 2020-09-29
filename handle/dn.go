@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -45,9 +46,13 @@ func GetNode(id int32) (*net.Node, error) {
 	v, found := NODE_CACHE_BY_ID.Get(strconv.Itoa(int(id)))
 	if !found {
 		node, err := net.NodeMgr.GetNodes([]int32{id})
-		if err != nil || node == nil || len(node) == 0 {
+		if err != nil {
+			logrus.Errorf("[GetNode]NodeID %d,ERR:%s.\n", id, err)
 			return nil, err
 		} else {
+			if node == nil || len(node) == 0 {
+				return nil, nil
+			}
 			n := &net.Node{Id: node[0].ID, Nodeid: node[0].NodeID, Pubkey: node[0].PubKey, Addrs: node[0].Addrs}
 			NODE_CACHE_BY_PUBKEY.Set(n.Pubkey, n, cache.DefaultExpiration)
 			NODE_CACHE_BY_ID.Set(strconv.Itoa(int(n.Id)), n, cache.DefaultExpiration)
@@ -58,6 +63,7 @@ func GetNode(id int32) (*net.Node, error) {
 }
 
 func GetNodes(ids []int32) ([]*net.Node, error) {
+	noexistids := ""
 	size := len(ids)
 	nodes := make([]*net.Node, size)
 	for ii := 0; ii < size; ii++ {
@@ -65,9 +71,20 @@ func GetNodes(ids []int32) ([]*net.Node, error) {
 		if err != nil {
 			return nil, err
 		}
+		if n == nil {
+			if noexistids == "" {
+				noexistids = noexistids + strconv.Itoa(int(ids[ii]))
+			} else {
+				noexistids = noexistids + "," + strconv.Itoa(int(ids[ii]))
+			}
+		}
 		nodes[ii] = n
 	}
-	return nodes, nil
+	if noexistids != "" {
+		return nodes, errors.New("NodeID " + noexistids + " does not exist")
+	} else {
+		return nodes, nil
+	}
 }
 
 type StatusRepHandler struct {
@@ -270,6 +287,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 	if h.m.InvalidNodeList == nil || len(h.m.InvalidNodeList) == 0 {
 		logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Not err.\n", myid, h.m.TaskId)
 	} else {
+		startTime := time.Now()
 		for _, res := range h.m.InvalidNodeList {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 			defer cancel()
@@ -280,6 +298,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 				logrus.Infof("[DNSpotCheckRep][%d]Exec spotcheck results,TaskID:[%s],Node [%d] ERR\n", myid, h.m.TaskId, res)
 			}
 		}
+		logrus.Infof("[DNSpotCheckRep]UpdateTaskStatus OK,count %d,take times %d ms\n", len(h.m.InvalidNodeList), time.Now().Sub(startTime).Milliseconds())
 	}
 	return &pkt.VoidResp{}
 }
@@ -304,7 +323,7 @@ func SendRebuildTask(node *YTDNMgmt.Node) {
 			logrus.Errorf("[SendRebuildTask]ERR:Too many routines.\n")
 			return
 		}
-		ExecSendRebuildTask(node)
+		go ExecSendRebuildTask(node)
 	}
 }
 
@@ -378,35 +397,80 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	if err != nil {
 		return &pkt.VoidResp{}
 	}
-	size := len(metas)
-	if size > 0 {
-		vbi := dao.GenerateShardID(size)
-		for index, m := range metas {
-			m.ID = vbi + int64(index)
-			m.NewNodeId = newid
-		}
-	}
 	if time.Now().Unix() < h.m.ExpiredTime {
-		if size > 0 {
-			err = dao.SaveShardRebuildMetas(metas)
-			if err != nil {
-				logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s\n", newid, err)
-				return &pkt.VoidResp{}
-			} else {
-				logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult ok, count:%d\n", newid, size)
-			}
+		err := SaveRep(newid, metas)
+		if err != nil {
+			return &pkt.VoidResp{}
 		}
+		startTime := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 		defer cancel()
 		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
 		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 		if err != nil {
-			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s\n", newid, size, len(h.m.Id), err)
+			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s,take times %d ms\n",
+				newid, len(metas), len(h.m.Id), err, time.Now().Sub(startTime).Milliseconds())
 		} else {
-			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d\n", newid, size, len(h.m.Id))
+			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d,take times %d ms\n",
+				newid, len(metas), len(h.m.Id), time.Now().Sub(startTime).Milliseconds())
 		}
 	} else {
 		logrus.Warnf("[DNRebuidRep]ExpiredTime:%d<%d.\n", h.m.ExpiredTime, time.Now().Unix())
 	}
 	return &pkt.VoidResp{}
+}
+
+func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
+	size := len(metas)
+	if size == 0 {
+		return nil
+	}
+	vbi := dao.GenerateShardID(size)
+	for index, m := range metas {
+		m.ID = vbi + int64(index)
+		m.NewNodeId = newid
+	}
+	count := make(map[int32]int16)
+	upmetas := make(map[int64]int32)
+	for _, res := range metas {
+		num, ok := count[res.NewNodeId]
+		if ok {
+			count[res.NewNodeId] = num + 1
+		} else {
+			count[res.NewNodeId] = 1
+		}
+		num, ok = count[res.OldNodeId]
+		if ok {
+			count[res.OldNodeId] = num - 1
+		} else {
+			count[res.OldNodeId] = -1
+		}
+		upmetas[res.VFI] = res.NewNodeId
+	}
+	startTime := time.Now()
+	err := dao.UpdateShardMeta(upmetas)
+	if err != nil {
+		logrus.Errorf("[DNRebuidRep][%d]UpdateShardMeta ERR:%s,count %d,take times %d ms\n",
+			newid, err, size, time.Now().Sub(startTime).Milliseconds())
+		return err
+	} else {
+		logrus.Infof("[DNRebuidRep][%d]UpdateShardMeta OK,count %d,take times %d ms\n",
+			newid, size, time.Now().Sub(startTime).Milliseconds())
+	}
+	bs := dao.ToBytes(count)
+	err = dao.SaveNodeShardCount(vbi, bs)
+	if err != nil {
+		return err
+	}
+	startTime = time.Now()
+	err = dao.SaveShardRebuildMetas(metas)
+	if err != nil {
+		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s,count %d,take times %d ms\n",
+			newid, err, size, time.Now().Sub(startTime).Milliseconds())
+		return err
+	} else {
+		logrus.Infof("[DNRebuidRep][%d]Save Rebuild TaskOpResult OK, count:%d,take times %d ms\n",
+			newid, size, time.Now().Sub(startTime).Milliseconds())
+	}
+	return nil
 }

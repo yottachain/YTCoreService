@@ -29,6 +29,7 @@ func init() {
 	ID_HANDLER_MAP[0x48bf] = func() MessageEvent { return MessageEvent(&UploadFileHandler{}) }
 	ID_HANDLER_MAP[0xd09e] = func() MessageEvent { return MessageEvent(&CopyObjectHandler{}) }
 	ID_HANDLER_MAP[0x4076] = func() MessageEvent { return MessageEvent(&DeleteFileHandler{}) }
+	ID_HANDLER_MAP[0xe9f5] = func() MessageEvent { return MessageEvent(&DeleteObjectHandler{}) }
 	ID_HANDLER_MAP[0x0d8e] = func() MessageEvent { return MessageEvent(&GetObjectHandler{}) }
 	ID_HANDLER_MAP[0xc23f] = func() MessageEvent { return MessageEvent(&ListObjectHandler{}) }
 

@@ -9,15 +9,15 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
 var IVParameter []byte
 
 func init() {
-	bs := []byte("YottaChain2018王东临侯月文韩大光")
 	md5Digest := md5.New()
-	md5Digest.Write(bs)
+	md5Digest.Write([]byte(strconv.Itoa(int(time.Now().UnixNano()))))
 	IVParameter = md5Digest.Sum(nil)
 	rand.Seed(time.Now().UnixNano())
 }

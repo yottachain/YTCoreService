@@ -82,20 +82,18 @@ func insertSuperNode() {
 	}
 	for _, sn := range list {
 		n := &SuperNode{ID: sn.Number, Nodeid: sn.ID, Privkey: sn.PrivateKey, Addrs: sn.Addrs}
+		filter := bson.M{"_id": sn.Number}
 		n.Pubkey, err = ytcrypto.GetPublicKeyByPrivateKey(sn.PrivateKey)
 		if err != nil {
 			logrus.Panicf("PrivateKey %s ERR:%s\n", sn.PrivateKey, err)
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_, err := collection.InsertOne(ctx, n)
+		opt := &options.ReplaceOptions{}
+		opt.SetUpsert(true)
+		_, err := collection.ReplaceOne(ctx, filter, n, opt)
 		if err != nil {
-			errstr := err.Error()
-			if !strings.ContainsAny(errstr, "duplicate key error") {
-				logrus.Panicf("Save superNode ERR:%s\n", err)
-			} else {
-				logrus.Errorf("Save superNode ERR:%s\n", err)
-			}
+			logrus.Errorf("Save superNode ERR:%s\n", err)
 		} else {
 			logrus.Infof("Insert OK:%d\n", n.ID)
 		}
