@@ -113,9 +113,9 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	}
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
 
-	//输出sn地址
+	//输出地址
 	addrString := AddrsToString(addrs)
-	logmsg := fmt.Sprintf("[client] connect sn addrs=%s \n", addrString)
+	logmsg := fmt.Sprintf("[client] connect addrs=%s \n", addrString)
 	logrus.Infof(logmsg)
 
 	maddrs, Err := StringListToMaddrs(addrs)
