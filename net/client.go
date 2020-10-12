@@ -130,11 +130,13 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	for _, maddr := range maddrs {
 		 if _, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
 		 	isHttp = true
+		 	logrus.Printf("maddr support HTTP \n")
 		 	break
 		 }
 	}
 
 	if !isHttp {
+		logrus.Printf("maddr not support HTTP \n")
 		err := client.connect(addrs, log_pre, nowait)
 		if err != nil {
 			return nil, err
