@@ -57,6 +57,7 @@ func ListBucketFromCache(uid int32) ([]string, error) {
 	key := strconv.Itoa(int(uid))
 	v, found := BUCKET_LIST_CACHE.Get(key)
 	if !found {
+		logrus.Infof("[Listbucket]UID:%d\n", uid)
 		ss, err := ListBucket(uid)
 		if err != nil {
 			return nil, err

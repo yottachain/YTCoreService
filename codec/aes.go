@@ -15,7 +15,15 @@ import (
 
 var IVParameter []byte
 
-func init() {
+func init() { //去重
+	bs := []byte("YottaChain2018王东临侯月文韩大光")
+	md5Digest := md5.New()
+	md5Digest.Write(bs)
+	IVParameter = md5Digest.Sum(nil)
+	rand.Seed(time.Now().UnixNano())
+}
+
+func init1() {
 	md5Digest := md5.New()
 	md5Digest.Write([]byte(strconv.Itoa(int(time.Now().UnixNano()))))
 	IVParameter = md5Digest.Sum(nil)

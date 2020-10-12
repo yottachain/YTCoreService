@@ -45,6 +45,8 @@ func Start(port int) error {
 	http.HandleFunc("/usertotal", UserTotalHandle)
 	http.HandleFunc("/list", ListHandle)
 	http.HandleFunc("/active_nodes", ActiveNodesHandle)
+	http.HandleFunc("/readable_nodes", ReadableNodesHandle)
+
 	http.HandleFunc("/statistics", StatisticsHandle)
 	http.HandleFunc("/relationship", RelationshipHandle)
 	http.HandleFunc("/newnodeid", NewnodeidHandle)
