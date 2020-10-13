@@ -17,8 +17,8 @@ func Test(t *testing.T) {
 	//***********api test*********
 	//test.ListObj()
 	//test.UpAndDownFile()
-	test.DownLoadByKey()
-	//test.UpAndDownBytes()
+	//test.DownLoadByKey()
+	test.UpAndDownBytes()
 
 	//**********code test**********
 	//env.InitClient()

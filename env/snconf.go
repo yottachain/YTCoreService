@@ -80,7 +80,7 @@ func readSnProperties() {
 	SelfIp = config.GetString("selfIp", "")
 
 	S3Version = config.GetString("s3Version", "")
-	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 8)
+	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 1)
 	Space_factor = config.GetRangeInt("space_factor", 0, 100, 100)
 
 	HttpPort = config.GetRangeInt("httpPort", 8000, 20000, 8082)
@@ -115,7 +115,7 @@ func readSnProperties() {
 	LsCachePageNum = config.GetRangeInt("lsCachePageNum", 1, 100, 10)
 	LsCursorLimit = config.GetRangeInt("lsCursorLimit", 0, 5, 1)
 	LsCacheMaxSize = config.GetRangeInt("lsCacheMaxSize", 1000, 500000, 20000)
-	PayInterval = config.GetRangeInt("payInterval", 500, 500, 180000)
+	PayInterval = config.GetRangeInt("payInterval", 10000, 600000, 60000)
 
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))
 	MAX_HTTP_ROUTINE = int32(config.GetRangeInt("MAX_HTTP_ROUTINE", 500, 2000, 1000))

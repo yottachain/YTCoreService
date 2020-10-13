@@ -171,7 +171,6 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName, VersionId: h.verid}
 	if h.verid == primitive.NilObjectID {
 		err = fmeta.DeleteFileMeta()
-
 	} else {
 		err = fmeta.DeleteLastFileMeta()
 	}

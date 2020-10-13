@@ -84,7 +84,7 @@ func (q *DNQueue) GetNodeStat() *NodeStatWOK {
 			if q.order() {
 				break
 			} else {
-				logrus.Errorf("[GetNodeStat]Not enough nodes to upload shards,waiting...")
+				logrus.Errorf("[GetNodeStat]Not enough nodes to upload shards,waiting...\n")
 				time.Sleep(time.Duration(60) * time.Second)
 			}
 		} else {
