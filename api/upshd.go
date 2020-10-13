@@ -143,7 +143,8 @@ func (self *UploadShard) DoSend() {
 			node = n
 			continue
 		}
-		node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
+		//node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
+		node.NodeInfo.SetOK(ctrtimes)
 		req.AllocId = ctlresp.AllocId
 		resp, err1 := self.SendShard(node, req)
 		times := time.Now().Sub(startTime).Milliseconds()

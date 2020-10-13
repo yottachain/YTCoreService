@@ -198,9 +198,9 @@ func (h *ListBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *ListBucketHandler) Handle() proto.Message {
-	logrus.Infof("[Listbucket]UID:%d\n", h.user.UserID)
 	ss, err := dao.ListBucketFromCache(h.user.UserID)
 	if err != nil {
+		logrus.Infof("[Listbucket]UID:%d,ERR:%s\n", h.user.UserID, err)
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	count := uint32(len(ss))
