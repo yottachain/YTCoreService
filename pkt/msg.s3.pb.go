@@ -858,6 +858,7 @@ type ListObjectResp struct {
 	unknownFields protoimpl.UnknownFields
 
 	Filemetalist []*ListObjectResp_FileMetaList `protobuf:"group,1,rep,name=FileMetaList,json=filemetalist" json:"filemetalist,omitempty"`
+	LastLine     bool
 }
 
 func (x *ListObjectResp) Reset() {
@@ -904,7 +905,8 @@ type ListObjectRespV2 struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Data []byte `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data     []byte `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	LastLine bool
 }
 
 func (x *ListObjectRespV2) Reset() {
