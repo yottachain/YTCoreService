@@ -16,7 +16,7 @@ import (
 )
 
 const yfnet = false
-const testsize = 1024 * 1024 * 9
+const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
 const filePath = "d:/nohup.out"
@@ -24,6 +24,50 @@ const savePath = "d:/test"
 
 var data []byte
 var client *api.Client
+
+func ListBucket() {
+	initApi()
+	buck := client.NewBucketAccessor()
+	ss, err := buck.ListBucket()
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	for _, s := range ss {
+		logrus.Infof("[ListBucket]:%s\n", s)
+	}
+	/*
+		header := make(map[string]string)
+		header["version_status"] = "Enabled"
+		meta, err1 := api.BucketMetaMapToBytes(header)
+		if err1 != nil {
+			logrus.Panicf("[ListBucket]ERR:%s\n", err1)
+		}
+		err = buck.CreateBucket("mytesta", meta)
+		if err != nil {
+			logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+		}
+		ss, err = buck.ListBucket()
+		if err != nil {
+			logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+		}
+		for _, s := range ss {
+			logrus.Infof("[ListBucket]:%s\n", s)
+		}*/
+	err = buck.DeleteBucket("testsssssssss")
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	obj := client.NewObjectAccessor()
+	obj.ListObject("testsssssssss", "", "", false, primitive.NilObjectID, 1000)
+
+	ss, err = buck.ListBucket()
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	for _, s := range ss {
+		logrus.Infof("[ListBucket]:%s\n", s)
+	}
+}
 
 func ListObj() {
 	initApi()
@@ -146,8 +190,8 @@ func initApi() {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
 		user = "ianmooneyy11"
 		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
-		//user = "pollyzhang11"
-		//pkey = "5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw"
+		//user = "nloadzooqwer"
+		//pkey = "5KRWqgvdYVomJhobea4AbXpi9nR2wj53Hzy2JgUpAgZAry8WyeG"
 	}
 	api.StartApi()
 	c, err := api.NewClient(user, pkey)
