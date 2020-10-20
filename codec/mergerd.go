@@ -26,6 +26,10 @@ func NewPart(path string) (*Part, error) {
 
 type MergeReader struct {
 	Parts []*Part
+	r     os.File
+	buf   []byte
+	count int
+	pos   int
 }
 
 func NewMergeReader(ps []string) (*MergeReader, error) {
@@ -40,4 +44,12 @@ func NewMergeReader(ps []string) (*MergeReader, error) {
 	}
 	m := &MergeReader{Parts: parts}
 	return m, nil
+}
+
+func (br *MergeReader) Seek(offset int64, whence int) (int64, error) {
+	return 0, nil
+}
+
+func (br *MergeReader) Read(p []byte) (n int, err error) {
+	return 0, nil
 }
