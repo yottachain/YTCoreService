@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ import (
 var home_page string
 var ip_list []string
 var server *http.Server
+var RoutineConter *int32 = new(int32)
 
 const CacheExpiredTime = 10
 
@@ -43,6 +45,8 @@ func Start(port int) error {
 	http.HandleFunc("/usertotal", UserTotalHandle)
 	http.HandleFunc("/list", ListHandle)
 	http.HandleFunc("/active_nodes", ActiveNodesHandle)
+	http.HandleFunc("/readable_nodes", ReadableNodesHandle)
+
 	http.HandleFunc("/statistics", StatisticsHandle)
 	http.HandleFunc("/relationship", RelationshipHandle)
 	http.HandleFunc("/newnodeid", NewnodeidHandle)
@@ -109,4 +113,13 @@ func checkIp(ip string) bool {
 		}
 	}
 	return false
+}
+
+func checkRoutine() bool {
+	atomic.AddInt32(RoutineConter, 1)
+	if atomic.LoadInt32(RoutineConter) > env.MAX_HTTP_ROUTINE {
+		return false
+	} else {
+		return true
+	}
 }

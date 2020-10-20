@@ -20,7 +20,7 @@ func (h *TotalHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorM
 	req, ok := msg.(*pkt.TotalReq)
 	if ok {
 		h.m = req
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, HTTP_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
@@ -67,7 +67,7 @@ func (h *UserSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 		if h.m.Userid == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, HTTP_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
@@ -107,7 +107,7 @@ func (h *UserListHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Err
 		} else {
 			*h.m.Count = int32(env.CheckInt(int(*h.m.Count), 100, 1000))
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, HTTP_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
@@ -145,7 +145,7 @@ func (h *RelationshipHandler) SetMessage(pubkey string, msg proto.Message) (*pkt
 		if h.m.Username == nil || h.m.MpoolOwner == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, HTTP_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

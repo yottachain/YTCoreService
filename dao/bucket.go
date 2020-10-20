@@ -43,11 +43,6 @@ func GetBucketIdFromCache(bname string, uid int32) (*BucketMeta, error) {
 	}
 }
 
-func DelBucketCache(bname string, uid int32) {
-	key := fmt.Sprintf("%d-%s", uid, bname)
-	BUCKET_CACHE.Delete(key)
-}
-
 func DelBucketListCache(uid int32) {
 	key := strconv.Itoa(int(uid))
 	BUCKET_LIST_CACHE.Delete(key)
@@ -57,6 +52,7 @@ func ListBucketFromCache(uid int32) ([]string, error) {
 	key := strconv.Itoa(int(uid))
 	v, found := BUCKET_LIST_CACHE.Get(key)
 	if !found {
+		logrus.Debugf("[Listbucket]UID:%d\n", uid)
 		ss, err := ListBucket(uid)
 		if err != nil {
 			return nil, err
@@ -108,6 +104,7 @@ func GetBucketByName(bname string, uid int32) (*BucketMeta, error) {
 		logrus.Errorf("[BucketMeta]GetBucketByName ERR:%s\n", err)
 		return nil, err
 	}
+	res.UserId = uid
 	return res, nil
 }
 

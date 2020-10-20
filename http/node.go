@@ -19,6 +19,12 @@ var ActiveNodesCache = struct {
 }{LastTimes: new(int64)}
 
 func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if time.Now().Unix()-atomic.LoadInt64(ActiveNodesCache.LastTimes) < CacheExpiredTime {
 		v := ActiveNodesCache.Value.Load()
 		if v != nil {
@@ -52,12 +58,63 @@ func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+var ReadableNodesCache = struct {
+	Value     atomic.Value
+	LastTimes *int64
+}{LastTimes: new(int64)}
+
+func ReadableNodesHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
+	if time.Now().Unix()-atomic.LoadInt64(ReadableNodesCache.LastTimes) < CacheExpiredTime {
+		v := ReadableNodesCache.Value.Load()
+		if v != nil {
+			ss, _ := v.(string)
+			WriteJson(w, ss)
+			return
+		}
+	}
+	nodes, err := net.NodeMgr.ReadableNodesList()
+	if err != nil {
+		WriteErr(w, "ReadableNodesList err:"+err.Error())
+	} else {
+		ns := make([]map[string]interface{}, len(nodes))
+		for index, n := range nodes {
+			m := make(map[string]interface{})
+			m["id"] = strconv.Itoa(int(n.ID))
+			m["ip"] = n.Addrs
+			m["nodeid"] = n.NodeID
+			m["weight"] = strconv.FormatFloat(n.Weight, 'f', -1, 64)
+			ns[index] = m
+		}
+		txt, err := json.Marshal(ns)
+		if err != nil {
+			WriteErr(w, "ReadableNodesList Marshal err:"+err.Error())
+		} else {
+			ss := string(txt)
+			ReadableNodesCache.Value.Store(ss)
+			atomic.StoreInt64(ReadableNodesCache.LastTimes, time.Now().Unix())
+			WriteJson(w, ss)
+		}
+	}
+}
+
 var StatisticsCache = struct {
 	Value     atomic.Value
 	LastTimes *int64
 }{LastTimes: new(int64)}
 
 func StatisticsHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if time.Now().Unix()-atomic.LoadInt64(StatisticsCache.LastTimes) < CacheExpiredTime {
 		v := StatisticsCache.Value.Load()
 		if v != nil {
@@ -83,6 +140,12 @@ func StatisticsHandle(w http.ResponseWriter, req *http.Request) {
 }
 
 func NewnodeidHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	id, err := net.NodeMgr.NewNodeID()
 	if err != nil {
 		WriteErr(w, "NewNodeID err:"+err.Error())
@@ -117,6 +180,12 @@ func ReadRequest(req *http.Request) (string, error) {
 }
 
 func CallApiHandle(w http.ResponseWriter, req *http.Request, callname string) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
 	if !checkPostMethod(req) {
 		WriteErr(w, "Post method required")
 	} else {
@@ -129,7 +198,7 @@ func CallApiHandle(w http.ResponseWriter, req *http.Request, callname string) {
 			err := net.NodeMgr.CallAPI(trx, apiname)
 			if err != nil {
 				emsg := fmt.Sprintf("[HttpDN]Call API:%s,ERR:%s\n", apiname, err.Error())
-				logrus.Infof(emsg)
+				logrus.Errorf(emsg)
 				WriteErr(w, emsg)
 			} else {
 				WriteText(w, "OK")

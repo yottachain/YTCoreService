@@ -74,7 +74,6 @@ func (q *DNQueue) order() bool {
 			*nw.OKTimes = 0
 			q.nodemap[n.Id] = nw
 		}
-
 		if atomic.LoadInt32(nw.OKTimes) < int32(env.ShardNumPerNode) {
 			ls = append(ls, nw)
 		}
@@ -108,7 +107,7 @@ func (q *DNQueue) GetNodeStat() *NodeStatWOK {
 			if q.order() {
 				break
 			} else {
-				logrus.Errorf("[GetNodeStat]Not enough nodes to upload shards,waiting...")
+				logrus.Errorf("[GetNodeStat]Not enough nodes to upload shards,waiting...\n")
 				time.Sleep(time.Duration(60) * time.Second)
 			}
 		} else {
@@ -246,8 +245,7 @@ type NodeStat struct {
 	snid         int32
 	timestamp    int64
 	sign         string
-
-	ERRTIMES int64
+	ERRTIMES     int64
 }
 
 func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {

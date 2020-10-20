@@ -15,8 +15,10 @@ import (
 	"github.com/yottachain/YTDNMgmt"
 )
 
+var RoutineConter *int32 = new(int32)
+
 func AyncRequest(reqmsg proto.Message, exclude int, retrytime int) error {
-	if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
+	if atomic.LoadInt32(RoutineConter) > env.MAX_AYNC_ROUTINE {
 		return errors.New("Too many routines.")
 	}
 	list := net.GetSuperNodes()
@@ -35,8 +37,8 @@ func AyncRequest(reqmsg proto.Message, exclude int, retrytime int) error {
 }
 
 func SyncRequest(reqmsg proto.Message, exclude int, retrytime int) ([]*SNSynchronizer, error) {
-	if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
-		return nil, errors.New("SyncRequest:Too many routines.")
+	if atomic.LoadInt32(RoutineConter) > env.MAX_AYNC_ROUTINE {
+		return nil, errors.New("AyncRequest:Too many routines.")
 	}
 	list := net.GetSuperNodes()
 	num := len(list)
@@ -82,13 +84,17 @@ func (self *SNSynchronizer) Error() *pkt.ErrorMessage {
 	return self.err
 }
 
-func (self *SNSynchronizer) run() {
+func (self *SNSynchronizer) dofinish() {
+	env.TracePanic()
 	if self.wg != nil {
-		defer self.wg.Done()
+		self.wg.Done()
 	}
-	defer env.TracePanic()
-	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
-	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
+	atomic.AddInt32(RoutineConter, -1)
+}
+
+func (self *SNSynchronizer) run() {
+	atomic.AddInt32(RoutineConter, 1)
+	defer self.dofinish()
 	for {
 		if self.sn.ID == int32(env.SuperNodeID) {
 			handler, err := FindHandler(self.req)

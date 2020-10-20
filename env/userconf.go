@@ -39,7 +39,7 @@ func readClientProperties() {
 
 	ALLOC_MODE = config.GetRangeInt("ALLOC_MODE", -1, 2000, 0)
 
-	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 8)
+	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 1)
 
 	Conntimeout = config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 15000)
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)

@@ -130,7 +130,6 @@ func (h *DeleteBucketHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	dao.DelBucketListCache(h.user.UserID)
-	dao.DelBucketCache(*h.m.BucketName, h.user.UserID)
 	return &pkt.VoidResp{}
 }
 
@@ -169,7 +168,6 @@ func (h *UpdateBucketHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	dao.DelBucketCache(*h.m.BucketName, h.user.UserID)
 	return &pkt.VoidResp{}
 }
 
@@ -198,9 +196,9 @@ func (h *ListBucketHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *ListBucketHandler) Handle() proto.Message {
-	logrus.Infof("[Listbucket]UID:%d\n", h.user.UserID)
 	ss, err := dao.ListBucketFromCache(h.user.UserID)
 	if err != nil {
+		logrus.Infof("[Listbucket]UID:%d,ERR:%s\n", h.user.UserID, err)
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	count := uint32(len(ss))

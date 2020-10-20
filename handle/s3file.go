@@ -64,6 +64,7 @@ func (h *UploadFileHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	OBJ_ADD_LIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), time.Now())
 	return &pkt.VoidResp{}
 }
 
@@ -123,6 +124,7 @@ func (h *CopyObjectHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	OBJ_ADD_LIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), time.Now())
 	i1, i2, i3, i4 := pkt.ObjectIdParam(dstmeta.BucketId)
 	bucketid := &pkt.CopyObjectResp_BucketId{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	ii1, ii2, ii3, ii4 := pkt.ObjectIdParam(fmeta.VersionId)
@@ -174,6 +176,52 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 	} else {
 		err = fmeta.DeleteLastFileMeta()
 	}
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	OBJ_DEL_LIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), time.Now())
+	return &pkt.VoidResp{}
+}
+
+type DeleteObjectHandler struct {
+	pkey  string
+	m     *pkt.DeleteObjectReqV2
+	user  *dao.User
+	verid primitive.ObjectID
+}
+
+func (h *DeleteObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+	h.pkey = pubkey
+	req, ok := msg.(*pkt.DeleteObjectReqV2)
+	if ok {
+		h.m = req
+		if h.m.Vnu == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		h.verid = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
+		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
+		if h.user == nil {
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
+		}
+		return nil, WRITE_ROUTINE_NUM, nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
+	}
+}
+
+func (h *DeleteObjectHandler) Handle() proto.Message {
+	fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.verid}
+	err := fmeta.GetAndDelete()
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	err = dao.UpdateUserSpace(h.user.UserID, -int64(fmeta.Usedspace), -1, -int64(fmeta.Length))
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
@@ -295,6 +343,14 @@ func (h *ListObjectHandler) ReqHashCode(nfile string, nversion primitive.ObjectI
 }
 
 var OBJ_LIST_CACHE *cache.Cache
+var OBJ_DEL_LIST_CACHE *cache.Cache
+var OBJ_ADD_LIST_CACHE *cache.Cache
+
+func InitCache() {
+	OBJ_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
+	OBJ_DEL_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
+	OBJ_ADD_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
+}
 
 type Handles struct {
 	cursorCount *int32
@@ -307,11 +363,9 @@ var ListHandles = struct {
 }{handles: make(map[int32]*Handles)}
 
 func (h *ListObjectHandler) Handle() proto.Message {
-	v, found := OBJ_LIST_CACHE.Get(h.HashKey)
-	if found {
-		size := OBJ_LIST_CACHE.ItemCount()
-		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from cache,current size:%d\n", h.user.UserID, *h.m.BucketName, size)
-		return v.(proto.Message)
+	cacheresp := h.checkCache()
+	if cacheresp != nil {
+		return cacheresp
 	}
 	meta, _ := dao.GetBucketIdFromCache(*h.m.BucketName, h.user.UserID)
 	if meta == nil {
@@ -355,6 +409,46 @@ func (h *ListObjectHandler) Handle() proto.Message {
 	return res
 }
 
+func (h *ListObjectHandler) checkCache() proto.Message {
+	v, etime, found := OBJ_LIST_CACHE.GetWithExpiration(h.HashKey)
+	if !found {
+		return nil
+	}
+	deltime, has := OBJ_DEL_LIST_CACHE.Get(strconv.Itoa(int(h.user.UserID)))
+	if has {
+		dtime := deltime.(time.Time)
+		if etime.Sub(dtime) < time.Duration(env.LsCacheExpireTime)*time.Second {
+			found = false
+		}
+	}
+	if found {
+		lastline := false
+		res, ok := v.(pkt.ListObjectResp)
+		if ok {
+			lastline = res.LastLine
+		} else {
+			ress, ok1 := v.(pkt.ListObjectRespV2)
+			if ok1 {
+				lastline = ress.LastLine
+			}
+		}
+		if lastline {
+			addtime, has1 := OBJ_ADD_LIST_CACHE.Get(strconv.Itoa(int(h.user.UserID)))
+			if has1 {
+				atime := addtime.(time.Time)
+				if etime.Sub(atime) < time.Duration(env.LsCacheExpireTime)*time.Second {
+					found = false
+				}
+			}
+		}
+	}
+	if found {
+		size := OBJ_LIST_CACHE.ItemCount()
+		logrus.Infof("[ListObject]UID:%d,Bucket:%s,from cache,current size:%d\n", h.user.UserID, *h.m.BucketName, size)
+		return v.(proto.Message)
+	}
+	return nil
+}
 func (h *ListObjectHandler) doResponse(resp []*dao.FileMetaWithVersion) (proto.Message, int64) {
 	var count int64 = 0
 	linecount := 0
@@ -382,9 +476,9 @@ func (h *ListObjectHandler) doResponse(resp []*dao.FileMetaWithVersion) (proto.M
 			if linecount >= int(h.limit) {
 				linecount = 0
 				if firstResp == nil {
-					firstResp = h.addCache(res, lastkey)
+					firstResp = h.addCache(res, lastkey, false)
 				} else {
-					h.addCache(res, lastkey)
+					h.addCache(res, lastkey, false)
 				}
 				lastkey = h.ReqHashCode(fmeta.FileName, fm.VersionId)
 				res = []*pkt.ListObjectResp_FileMetaList{}
@@ -393,16 +487,17 @@ func (h *ListObjectHandler) doResponse(resp []*dao.FileMetaWithVersion) (proto.M
 	}
 	if len(res) > 0 {
 		if firstResp == nil {
-			firstResp = h.addCache(res, lastkey)
+			firstResp = h.addCache(res, lastkey, true)
 		} else {
-			h.addCache(res, lastkey)
+			h.addCache(res, lastkey, true)
 		}
 	}
 	return firstResp, count
 }
 
-func (h *ListObjectHandler) addCache(resp []*pkt.ListObjectResp_FileMetaList, key string) proto.Message {
+func (h *ListObjectHandler) addCache(resp []*pkt.ListObjectResp_FileMetaList, key string, lastline bool) proto.Message {
 	res := &pkt.ListObjectResp{Filemetalist: resp}
+	res.LastLine = lastline
 	if h.compress {
 		bs, err := proto.Marshal(res)
 		if err != nil {
@@ -414,6 +509,7 @@ func (h *ListObjectHandler) addCache(resp []*pkt.ListObjectResp_FileMetaList, ke
 		_, err = gw.Write(bs)
 		gw.Close()
 		ress := &pkt.ListObjectRespV2{Data: buf.Bytes()}
+		ress.LastLine = lastline
 		OBJ_LIST_CACHE.SetDefault(key, ress)
 		return ress
 	} else {

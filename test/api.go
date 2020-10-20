@@ -15,8 +15,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = true
-const testsize = 1024 * 1024 * 9
+const yfnet = false
+const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
 const filePath = "d:/nohup.out"
@@ -24,6 +24,50 @@ const savePath = "d:/test"
 
 var data []byte
 var client *api.Client
+
+func ListBucket() {
+	initApi()
+	buck := client.NewBucketAccessor()
+	ss, err := buck.ListBucket()
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	for _, s := range ss {
+		logrus.Infof("[ListBucket]:%s\n", s)
+	}
+	/*
+		header := make(map[string]string)
+		header["version_status"] = "Enabled"
+		meta, err1 := api.BucketMetaMapToBytes(header)
+		if err1 != nil {
+			logrus.Panicf("[ListBucket]ERR:%s\n", err1)
+		}
+		err = buck.CreateBucket("mytesta", meta)
+		if err != nil {
+			logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+		}
+		ss, err = buck.ListBucket()
+		if err != nil {
+			logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+		}
+		for _, s := range ss {
+			logrus.Infof("[ListBucket]:%s\n", s)
+		}*/
+	err = buck.DeleteBucket("testsssssssss")
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	obj := client.NewObjectAccessor()
+	obj.ListObject("testsssssssss", "", "", false, primitive.NilObjectID, 1000)
+
+	ss, err = buck.ListBucket()
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	for _, s := range ss {
+		logrus.Infof("[ListBucket]:%s\n", s)
+	}
+}
 
 func ListObj() {
 	initApi()
@@ -38,9 +82,10 @@ func ListObj() {
 
 func UpAndDownBytes() {
 	initApi()
-	vhw := upload()
+	vhw, _ := upload()
 	download(vhw)
 	downloadRange(vhw)
+	//client.NewObjectAccessor().DeleteObjectV2(vnu)
 }
 
 func UpAndDownFile() {
@@ -52,7 +97,7 @@ func UpAndDownFile() {
 
 func DownLoadByKey() {
 	initApi()
-	dn, errmsg := client.NewDownloadFile("owner", "tmpfile_owner_1fa0ff0.txt", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("newjava", "tmpfile_newjava_60978c.txt1", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
@@ -139,14 +184,14 @@ func initApi() {
 		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
 		//user = "pollytestde1"
 		//pkey = "5JsohFvnt2qhkKxzConrJSxU2ti4qGifjJ9dGCxhpup4EYw1es8"
-		user = "devtestuser4"
-		pkey = "5JDYRHvNaWENtEpuugw9xqb8MS2AbefpBQvaFg3iq3cxPALg6XZ"
+		user = "devvtest1111"
+		pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-		//user = "ianmooneyy11"
-		//pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
-		user = "pollyzhang11"
-		pkey = "5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw"
+		user = "ianmooneyy11"
+		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
+		//user = "nloadzooqwer"
+		//pkey = "5KRWqgvdYVomJhobea4AbXpi9nR2wj53Hzy2JgUpAgZAry8WyeG"
 	}
 	api.StartApi()
 	c, err := api.NewClient(user, pkey)
@@ -157,14 +202,14 @@ func initApi() {
 	data = env.MakeRandData(testsize)
 }
 
-func upload() []byte {
+func upload() ([]byte, primitive.ObjectID) {
 	up := client.NewUploadObject()
 	vhw, errmsg := up.UploadBytes(data)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
-	return vhw
+	return vhw, up.VNU
 }
 
 func download(vhw []byte) {

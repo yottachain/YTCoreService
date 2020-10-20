@@ -13,7 +13,7 @@ func StartDoCacheFee() {
 	time.Sleep(time.Duration(30) * time.Second)
 	for {
 		if !DoCacheAction() {
-			time.Sleep(time.Duration(30) * time.Second)
+			time.Sleep(time.Duration(300) * time.Second)
 		} else {
 			time.Sleep(time.Duration(env.PayInterval) * time.Millisecond)
 		}
