@@ -61,6 +61,7 @@ type UploadShard struct {
 
 func (self *UploadShard) DoFinish() {
 	env.TracePanic()
+	stat.Ccstat.ShardCcGSub()
 	SHARD_UP_CH <- 1
 	self.WG.Done()
 }
@@ -85,7 +86,8 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 		times++
 		if err != nil {
 			node.NodeInfo.SetERR()
-			return times, nil, errors.New("COMM_ERROR")
+			//return times, nil, errors.New("COMM_ERROR")
+			return times, nil, errors.New(err.String())
 		} else {
 			resp, ok := msg.(*pkt.GetNodeCapacityResp)
 			if !ok {
@@ -128,6 +130,7 @@ func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (
 }
 
 func (self *UploadShard) DoSend() {
+	stat.Ccstat.ShardCcGAdd()
 	defer self.DoFinish()
 	node := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
 	for {

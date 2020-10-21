@@ -11,6 +11,7 @@ import (
 
 type ccstat struct {
 	sync.Mutex
+	ccShardsG   int32
 	ccShards	int32
 	sendShs		uint64
 	sendShSucs	uint64
@@ -21,7 +22,7 @@ type ccstat struct {
 	fd 	*os.File
 }
 
-var Ccstat = ccstat{ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
+var Ccstat = ccstat{ccShardsG:0, ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
 
 func (ccs *ccstat) ShardCcAdd() {
 	ccs.Lock()
@@ -29,10 +30,25 @@ func (ccs *ccstat) ShardCcAdd() {
 	ccs.ccShards++
 }
 
+
 func (ccs *ccstat) ShardCcSub() {
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccShards--
+}
+
+//并发上传分片的协程数
+func (ccs *ccstat) ShardCcGAdd() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.ccShardsG++
+}
+
+//并发上传分片的协程数
+func (ccs *ccstat) ShardCcGSub() {
+	ccs.Lock()
+	defer ccs.Unlock()
+	ccs.ccShardsG--
 }
 
 func (ccs *ccstat) Shards() {
@@ -100,8 +116,8 @@ func (ccs *ccstat) PrintCc() {
 	for {
 		<- time.After(time.Second*1)
 		ccs.Lock()
-		_, _ = fmt.Fprintf(ccs.fd, "send-blk-goroutine-cc=%d get-token-cc=%d send-shard-goroutine-cc=%d\n",
-			ccs.ccBlks, ccs.ccGts, ccs.ccShards)
+		_, _ = fmt.Fprintf(ccs.fd, "send-blk-goroutine-cc=%d get-token-cc=%d send-shard-go-cc=%d send-shard-rungo-cc=%d\n",
+			ccs.ccBlks, ccs.ccGts, ccs.ccShards, ccs.ccShardsG)
 		_, _ = fmt.Fprintf(ccs.fd, "gts=%d/s  gt-success=%d/s send-shards=%d/s  send-success-shards=%d/s\n",
 			ccs.gts - gts, ccs.gtSucs - gtSucs, ccs.sendShs - sshs, ccs.sendShSucs - sshsucs)
 		gts = ccs.gts
