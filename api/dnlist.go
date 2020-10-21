@@ -185,6 +185,9 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 	n.Lock()
 	defer n.Unlock()
 
+	n.weights = nil
+	n.wIds = nil
+
 	for id, v := range n.list {
 		weight := idWeight{id, v.Weight}
 		n.weights = append(n.weights, weight)
