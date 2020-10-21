@@ -197,7 +197,7 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 			break
 		}
 		num := uint(v.weight) / divsor
-		for i := uint(0); i < num; i++ {
+		for j := uint(0); j < num; j++ {
 			n.wIds = append(n.wIds, v.id)
 		}
 	}
