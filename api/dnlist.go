@@ -90,8 +90,8 @@ func (q *DNQueue) order() bool {
 
 func (q *DNQueue) GetNodeStatExcluld(blk []int32) *NodeStatWOK {
 	for {
-		n := q.GetNodeStat()
-		//n := q.GetWeightNodeStat()
+		//n := q.GetNodeStat()
+		n := q.GetWeightNodeStat()
 		if !env.IsExistInArray(n.NodeInfo.Id, blk) && atomic.LoadInt32(n.OKTimes) <= int32(env.ShardNumPerNode) {
 			return n
 		}
@@ -182,8 +182,8 @@ func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 }
 
 func (n *NodeList) SetwIds (dnc uint, divsor uint) {
-	n.RLock()
-	defer n.RUnlock()
+	n.Lock()
+	defer n.Unlock()
 
 	for id, v := range n.list {
 		weight := idWeight{id, v.Weight}
