@@ -41,6 +41,17 @@ func NewUploadObject(c *Client) *UploadObject {
 	return o
 }
 
+func (self *UploadObject) UploadMultiFile(path []string) ([]byte, *pkt.ErrorMessage) {
+	enc, err := codec.NewMultiFileEncoder(path)
+	if err != nil {
+		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", path, err)
+		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+	}
+	self.Encoder = enc
+	defer enc.Close()
+	return self.upload()
+}
+
 func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 )
 
 var DATABASENAME string
+var USERDATABASENAME string
 var USER_DATABASENAME string
 var DNI_DATABASENAME string
 var CACHE_DATABASENAME string
@@ -33,10 +34,12 @@ func InitMongo() {
 	if IPFS_DBNAME_SNID {
 		DATABASENAME = "metabase" + "_" + strconv.Itoa(env.SuperNodeID)
 		USER_DATABASENAME = "usermeta_" + strconv.Itoa(env.SuperNodeID) + "_"
+		USERDATABASENAME = "usermeta_" + strconv.Itoa(env.SuperNodeID)
 		DNI_DATABASENAME = "yotta" + strconv.Itoa(env.SuperNodeID)
 		CACHE_DATABASENAME = "cache_" + strconv.Itoa(env.SuperNodeID)
 	} else {
 		USER_DATABASENAME = "usermeta_"
+		USERDATABASENAME = "usermeta"
 		CACHE_DATABASENAME = "cache"
 		DATABASENAME = "metabase"
 		DNI_DATABASENAME = "yotta"
@@ -87,6 +90,8 @@ func initclient() {
 	logrus.Infof("[InitMongo]Successful connection to Mongo server[%s]\n", MongoAddress)
 	metaBaseSource = &MetaBaseSource{}
 	metaBaseSource.initMetaDB()
+	userBaseSource = &UserBaseSource{}
+	//userBaseSource.initMetaDB()
 	dniBaseSource = &DNIBaseSource{}
 	dniBaseSource.initMetaDB()
 	cacheBaseSource = &CacheBaseSource{}
@@ -183,6 +188,55 @@ func (source *MetaBaseSource) GetShardCountColl() *mongo.Collection {
 
 func (source *MetaBaseSource) GetShardRebuildColl() *mongo.Collection {
 	return source.shard_rbd_c
+}
+
+const USER_BUCKET_TABLE_NAME = "buckets"
+const USER_BUCKET_INDEX_NAME = "BUKNAME"
+
+type UserBaseSource struct {
+	db       *mongo.Database
+	bucket_c *mongo.Collection
+	dir_c    *mongo.Collection
+	file_c   *mongo.Collection
+	object_c *mongo.Collection
+}
+
+var userBaseSource *UserBaseSource = nil
+
+func NewUserBaseSource() *UserBaseSource {
+	return userBaseSource
+}
+
+func (source *UserBaseSource) initMetaDB() {
+	source.db = session.Database(USERDATABASENAME)
+	source.bucket_c = source.db.Collection(USER_BUCKET_TABLE_NAME)
+	index1 := mongo.IndexModel{
+		Keys:    bson.M{"UID": 1, "BName": 1},
+		Options: options.Index().SetUnique(true).SetName(USER_BUCKET_INDEX_NAME),
+	}
+	source.bucket_c.Indexes().CreateOne(context.Background(), index1)
+
+	logrus.Infof("[InitMongo]Create usermeta tables Success.\n")
+}
+
+func (source *UserBaseSource) GetDB() *mongo.Database {
+	return source.db
+}
+
+func (source *UserBaseSource) GetBucketColl() *mongo.Collection {
+	return source.bucket_c
+}
+
+func (source *UserBaseSource) GetDirColl() *mongo.Collection {
+	return source.dir_c
+}
+
+func (source *UserBaseSource) GetFileColl() *mongo.Collection {
+	return source.file_c
+}
+
+func (source *UserBaseSource) GetObjectColl() *mongo.Collection {
+	return source.object_c
 }
 
 const BUCKET_TABLE_NAME = "buckets"

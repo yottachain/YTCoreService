@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	env.Console = true
+	//env.Console = true
 }
 
 func Test(t *testing.T) {
@@ -19,8 +19,8 @@ func Test(t *testing.T) {
 	//test.ListObj()
 	//test.UpAndDownFile()
 	//test.DownLoadByKey()
-	//test.UpAndDownBytes()
-	test.ListBucket()
+	test.UpAndDownBytes()
+	//test.ListBucket()
 
 	//**********code test**********
 	//env.InitClient()
