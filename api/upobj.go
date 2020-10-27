@@ -162,7 +162,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 
 func (self *UploadObject) waitcheck() {
 	for {
-		timeout := time.After(time.Second * 15)
+		timeout := time.After(time.Second * 30)
 		select {
 		case self.activesign <- 1:
 			close(self.activesign)

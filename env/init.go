@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -22,8 +23,9 @@ var Console bool = false
 
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
-	if file == "" {
+	if runtime.GOOS == "windows" {
 		ApplicationPath, _ := filepath.Abs(file)
+		ApplicationPath, _ = filepath.Split(ApplicationPath)
 		return ApplicationPath
 	} else {
 		fi, err := os.Lstat(file)

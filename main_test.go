@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	//env.Console = true
+	env.Console = true
 }
 
 func Test(t *testing.T) {

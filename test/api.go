@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = true
+const yfnet = false
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
@@ -190,7 +190,10 @@ func initApi() {
 		//pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-
+		user = "ianmooneyy11"
+		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
+		//user = "nloadzooqwer"
+		//pkey = "5KRWqgvdYVomJhobea4AbXpi9nR2wj53Hzy2JgUpAgZAry8WyeG"
 	}
 	api.StartApi()
 	c, err := api.NewClient(user, pkey)
