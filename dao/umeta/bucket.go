@@ -2,9 +2,9 @@ package dao
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
-type BucketMetaV2 struct {
+type S3BucketMeta struct {
 	BucketId   primitive.ObjectID `bson:"_id"`
-	UserId     int32              `bson:"UID"`
-	BucketName string             `bson:"BName"`
+	UserId     int32              `bson:"uid"`
+	BucketName string             `bson:"buckname"`
 	Meta       []byte             `bson:"meta"`
 }
