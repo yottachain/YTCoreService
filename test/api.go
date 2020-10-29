@@ -19,7 +19,7 @@ const yfnet = true
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
-const filePath = "d:/nohup.out"
+const filePath = "d:/test.rar"
 const savePath = "d:/test"
 
 var data []byte
@@ -93,7 +93,7 @@ func UpAndDownBytes() {
 func UpAndDownFile() {
 	initApi()
 	vhw := uploadFile()
-	download(vhw)
+	//download(vhw)
 	saveFile(vhw)
 }
 
@@ -153,8 +153,12 @@ func saveFile(vhw []byte) {
 	<-oksign
 }
 
-var filePaths = []string{"d:/p2p/YTS3.rar_1", "d:/p2p/YTS3.rar_2",
-	"d:/p2p/YTS3.rar_3"}
+var filePaths = []string{"d:/p2p/nnst2_1",
+	"d:/p2p/nnst2_2",
+	"d:/p2p/nnst2_3",
+	"d:/p2p/nnst2_4",
+	"d:/p2p/nnst2_5",
+	"d:/p2p/nnst2_6"}
 
 func uploadFile() []byte {
 	up := client.NewUploadObject()

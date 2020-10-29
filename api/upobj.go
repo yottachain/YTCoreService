@@ -100,6 +100,7 @@ func (self *UploadObject) GetProgress() int32 {
 }
 
 func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
+	defer env.TracePanic()
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	err := self.initUpload()
 	if err != nil {

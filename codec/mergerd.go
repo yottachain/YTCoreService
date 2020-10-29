@@ -55,14 +55,24 @@ func (br *Part) fill(rd *MergeReader) error {
 }
 
 func (br *Part) back(offset int64) error {
-	ret, err := br.r.Seek(offset, io.SeekCurrent)
-	if err != nil {
-		return err
+	if br.r == nil {
+		f, err := os.Open(br.Path)
+		if err != nil {
+			return err
+		}
+		br.r = f
+		br.length = br.length + offset
+		_, err = br.r.Seek(br.length, io.SeekStart)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := br.r.Seek(offset, io.SeekCurrent)
+		if err != nil {
+			return err
+		}
+		br.length = br.length + offset
 	}
-	if ret != offset {
-		return errors.New("seek err.")
-	}
-	br.length = br.length + offset
 	return nil
 }
 
@@ -75,12 +85,9 @@ func (br *Part) forward(offset int64) error {
 		br.r = f
 	}
 	if offset > 0 {
-		ret, err := br.r.Seek(offset, io.SeekStart)
+		_, err := br.r.Seek(offset, io.SeekStart)
 		if err != nil {
 			return err
-		}
-		if ret != offset {
-			return errors.New("seek err.")
 		}
 	}
 	br.length = offset
@@ -137,10 +144,10 @@ func (br *MergeReader) readNotAll(p []byte) (n int, err error) {
 	if br.count == br.pos {
 		for {
 			if br.curPart == nil {
-				br.curpartIndex++
-				if br.curpartIndex == len(br.Parts) {
+				if br.curpartIndex == len(br.Parts)-1 {
 					return 0, io.EOF
 				}
+				br.curpartIndex++
 				br.curPart = br.Parts[br.curpartIndex]
 				br.curPart.length = 0
 			}
@@ -187,8 +194,14 @@ func (br *MergeReader) Seek(offset int64, whence int) (int64, error) {
 				return offset, nil
 			} else {
 				newoff = offset - int64(br.count) + int64(br.pos)
+				if br.curPart == nil {
+					br.curPart = br.Parts[br.curpartIndex]
+				}
 				if br.curPart.length+newoff >= 0 {
-					br.curPart.back(newoff)
+					err := br.curPart.back(newoff)
+					if err != nil {
+						return 0, err
+					}
 				} else {
 					for {
 						newoff = br.curPart.length + newoff
@@ -198,7 +211,10 @@ func (br *MergeReader) Seek(offset int64, whence int) (int64, error) {
 							br.curpartIndex--
 							br.curPart = br.Parts[br.curpartIndex]
 						} else {
-							br.curPart.forward(newoff)
+							err := br.curPart.forward(newoff)
+							if err != nil {
+								return 0, err
+							}
 							break
 						}
 					}
