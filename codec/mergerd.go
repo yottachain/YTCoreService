@@ -138,6 +138,9 @@ func (br *MergeReader) readNotAll(p []byte) (n int, err error) {
 		for {
 			if br.curPart == nil {
 				br.curpartIndex++
+				if br.curpartIndex == len(br.Parts) {
+					return 0, io.EOF
+				}
 				br.curPart = br.Parts[br.curpartIndex]
 				br.curPart.length = 0
 			}

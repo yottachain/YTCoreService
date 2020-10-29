@@ -153,9 +153,8 @@ func saveFile(vhw []byte) {
 	<-oksign
 }
 
-var filePaths = []string{"d:/p2p/1_p2p-wrapper-0.1.jar", "d:/p2p/2_p2p-wrapper-0.1.jar",
-	"d:/p2p/3_p2p-wrapper-0.1.jar", "d:/p2p/4_p2p-wrapper-0.1.jar", "d:/p2p/5_p2p-wrapper-0.1.jar",
-	"d:/p2p/6_p2p-wrapper-0.1.jar"}
+var filePaths = []string{"d:/p2p/YTS3.rar_1", "d:/p2p/YTS3.rar_2",
+	"d:/p2p/YTS3.rar_3"}
 
 func uploadFile() []byte {
 	up := client.NewUploadObject()
