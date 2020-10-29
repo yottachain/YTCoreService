@@ -38,6 +38,22 @@ func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
 	return r, nil
 }
 
+func NewMultiFileEncoder(path []string) (*FileEncoder, error) {
+	mf, err := NewMergeReader(path, env.READFILE_BUF_SIZE)
+	if err != nil {
+		return nil, err
+	}
+	size, vhw, err1 := mf.Sum()
+	if err1 != nil {
+		return nil, err1
+	}
+	r := new(FileEncoder)
+	r.length = size
+	r.reader = mf
+	r.vhw = vhw
+	return r, nil
+}
+
 func NewFileEncoder(path string) (*FileEncoder, error) {
 	var size int64
 	f, err := os.Open(path)
@@ -55,7 +71,7 @@ func NewFileEncoder(path string) (*FileEncoder, error) {
 		return nil, err
 	}
 	r := new(FileEncoder)
-	r.length = int64(size)
+	r.length = size
 	r.reader = NewBufferReader(*newf, env.READFILE_BUF_SIZE)
 	r.vhw = sha256Digest.Sum(nil)
 	return r, nil
@@ -63,6 +79,9 @@ func NewFileEncoder(path string) (*FileEncoder, error) {
 
 func (fileEncoder *FileEncoder) Close() {
 	if r, ok := fileEncoder.reader.(*BufferReader); ok {
+		r.Close()
+	}
+	if r, ok := fileEncoder.reader.(*MergeReader); ok {
 		r.Close()
 	}
 }
@@ -267,7 +286,7 @@ func (br *BufferReader) fill() error {
 	}
 	num, err1 := br.r.Read(buffer)
 	if err1 != nil && err1 != io.EOF {
-		return err
+		return err1
 	}
 	if num > 0 {
 		br.count = num

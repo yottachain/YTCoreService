@@ -15,11 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = false
+const yfnet = true
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
-const filePath = "d:/nohup.out"
+const filePath = "d:/test.rar"
 const savePath = "d:/test"
 
 var data []byte
@@ -35,31 +35,33 @@ func ListBucket() {
 	for _, s := range ss {
 		logrus.Infof("[ListBucket]:%s\n", s)
 	}
-	/*
-		header := make(map[string]string)
-		header["version_status"] = "Enabled"
-		meta, err1 := api.BucketMetaMapToBytes(header)
-		if err1 != nil {
-			logrus.Panicf("[ListBucket]ERR:%s\n", err1)
-		}
-		err = buck.CreateBucket("mytesta", meta)
-		if err != nil {
-			logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
-		}
-		ss, err = buck.ListBucket()
-		if err != nil {
-			logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
-		}
-		for _, s := range ss {
-			logrus.Infof("[ListBucket]:%s\n", s)
-		}*/
-	err = buck.DeleteBucket("testsssssssss")
+
+	//delete
+	err = buck.DeleteBucket("1234")
 	if err != nil {
 		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
 	}
 	obj := client.NewObjectAccessor()
-	obj.ListObject("testsssssssss", "", "", false, primitive.NilObjectID, 1000)
+	obj.ListObject("1234", "", "", false, primitive.NilObjectID, 1000)
+	ss, err = buck.ListBucket()
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
+	for _, s := range ss {
+		logrus.Infof("[ListBucket]:%s\n", s)
+	}
 
+	//create
+	header := make(map[string]string)
+	header["version_status"] = "Enabled"
+	meta, err1 := api.BucketMetaMapToBytes(header)
+	if err1 != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", err1)
+	}
+	err = buck.CreateBucket("1234", meta)
+	if err != nil {
+		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+	}
 	ss, err = buck.ListBucket()
 	if err != nil {
 		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
@@ -151,6 +153,13 @@ func saveFile(vhw []byte) {
 	<-oksign
 }
 
+var filePaths = []string{"d:/p2p/nnst2_1",
+	"d:/p2p/nnst2_2",
+	"d:/p2p/nnst2_3",
+	"d:/p2p/nnst2_4",
+	"d:/p2p/nnst2_5",
+	"d:/p2p/nnst2_6"}
+
 func uploadFile() []byte {
 	up := client.NewUploadObject()
 	oksign := make(chan int)
@@ -165,7 +174,8 @@ func uploadFile() []byte {
 			}
 		}
 	}()
-	vhw, errmsg := up.UploadFile(filePath)
+	vhw, errmsg := up.UploadMultiFile(filePaths)
+	//vhw, errmsg := up.UploadFile(filePath)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
@@ -182,10 +192,10 @@ func initApi() {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 		//user = "username1234"
 		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
-		//user = "pollytestde1"
-		//pkey = "5JsohFvnt2qhkKxzConrJSxU2ti4qGifjJ9dGCxhpup4EYw1es8"
-		user = "devvtest1111"
-		pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
+		user = "devtestuser1"
+		pkey = "5KTF2yAamvcaoDu6juAvxT5nxTn3UGfNoY2CJn8VAQ4giAfma2a"
+		//user = "devvtest1111"
+		//pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
 		user = "ianmooneyy11"

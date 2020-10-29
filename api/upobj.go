@@ -41,6 +41,17 @@ func NewUploadObject(c *Client) *UploadObject {
 	return o
 }
 
+func (self *UploadObject) UploadMultiFile(path []string) ([]byte, *pkt.ErrorMessage) {
+	enc, err := codec.NewMultiFileEncoder(path)
+	if err != nil {
+		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", path, err)
+		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+	}
+	self.Encoder = enc
+	defer enc.Close()
+	return self.upload()
+}
+
 func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
 	sTime := time.Now()
 	enc, err := codec.NewFileEncoder(path)
@@ -91,6 +102,7 @@ func (self *UploadObject) GetProgress() int32 {
 }
 
 func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
+	defer env.TracePanic()
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	err := self.initUpload()
 	if err != nil {
@@ -166,7 +178,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 
 func (self *UploadObject) waitcheck() {
 	for {
-		timeout := time.After(time.Second * 15)
+		timeout := time.After(time.Second * 30)
 		select {
 		case self.activesign <- 1:
 			close(self.activesign)
