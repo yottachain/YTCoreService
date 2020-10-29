@@ -81,6 +81,9 @@ func (fileEncoder *FileEncoder) Close() {
 	if r, ok := fileEncoder.reader.(*BufferReader); ok {
 		r.Close()
 	}
+	if r, ok := fileEncoder.reader.(*MergeReader); ok {
+		r.Close()
+	}
 }
 
 func (fileEncoder *FileEncoder) ReadNext() (*PlainBlock, error) {

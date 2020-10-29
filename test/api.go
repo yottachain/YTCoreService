@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = false
+const yfnet = true
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
@@ -93,7 +93,7 @@ func UpAndDownBytes() {
 func UpAndDownFile() {
 	initApi()
 	vhw := uploadFile()
-	//download(vhw)
+	download(vhw)
 	saveFile(vhw)
 }
 
@@ -153,6 +153,10 @@ func saveFile(vhw []byte) {
 	<-oksign
 }
 
+var filePaths = []string{"d:/p2p/1_p2p-wrapper-0.1.jar", "d:/p2p/2_p2p-wrapper-0.1.jar",
+	"d:/p2p/3_p2p-wrapper-0.1.jar", "d:/p2p/4_p2p-wrapper-0.1.jar", "d:/p2p/5_p2p-wrapper-0.1.jar",
+	"d:/p2p/6_p2p-wrapper-0.1.jar"}
+
 func uploadFile() []byte {
 	up := client.NewUploadObject()
 	oksign := make(chan int)
@@ -167,7 +171,8 @@ func uploadFile() []byte {
 			}
 		}
 	}()
-	vhw, errmsg := up.UploadFile(filePath)
+	vhw, errmsg := up.UploadMultiFile(filePaths)
+	//vhw, errmsg := up.UploadFile(filePath)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
