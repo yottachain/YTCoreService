@@ -24,6 +24,7 @@ func Test(t *testing.T) {
 
 	//**********code test**********
 	//env.InitClient()
+	//test.TestMultiCutFile()
 	//test.TestCutFile()
 	//test.TestLRC()
 	select {}

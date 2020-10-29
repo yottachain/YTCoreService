@@ -23,6 +23,10 @@ var Console bool = false
 
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
+	if file == "" {
+		ApplicationPath, _ := filepath.Abs(file)
+		return ApplicationPath
+	}
 	if runtime.GOOS == "windows" {
 		ApplicationPath, _ := filepath.Abs(file)
 		ApplicationPath, _ = filepath.Split(ApplicationPath)
@@ -51,6 +55,7 @@ func InitClient() {
 	if YTFS_HOME == "" {
 		YTFS_HOME = GetCurrentPath()
 	}
+	YTSN_HOME = strings.ReplaceAll(YTSN_HOME, "\\", "/")
 	if !strings.HasSuffix(YTFS_HOME, "/") {
 		YTFS_HOME = YTFS_HOME + "/"
 	}
@@ -70,6 +75,7 @@ func InitServer() {
 	if YTSN_HOME == "" {
 		YTSN_HOME = GetCurrentPath()
 	}
+	YTSN_HOME = strings.ReplaceAll(YTSN_HOME, "\\", "/")
 	if !strings.HasSuffix(YTSN_HOME, "/") {
 		YTSN_HOME = YTSN_HOME + "/"
 	}
