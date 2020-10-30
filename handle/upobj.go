@@ -398,7 +398,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 		return &pkt.VoidResp{}
 	}
 	logrus.Infof("[UploadOBJEnd][%d]Add usedSpace:%d\n", h.user.UserID, usedspace)
-	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
+	firstCost := CalFirstFee(int64(usedspace))
 	err = net.SubBalance(h.user.Username, firstCost)
 	if err != nil {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
