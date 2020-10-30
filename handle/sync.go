@@ -85,7 +85,7 @@ func (self *SNSynchronizer) Error() *pkt.ErrorMessage {
 }
 
 func (self *SNSynchronizer) dofinish() {
-	env.TracePanic()
+	env.TracePanic("[SyncMsg]")
 	if self.wg != nil {
 		self.wg.Done()
 	}

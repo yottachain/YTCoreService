@@ -19,7 +19,7 @@ const yfnet = true
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
-const filePath = "d:/nohup.out"
+const filePath = "d:/test.rar"
 const savePath = "d:/test"
 
 var data []byte
@@ -153,6 +153,13 @@ func saveFile(vhw []byte) {
 	<-oksign
 }
 
+var filePaths = []string{"d:/p2p/nnst2_1",
+	"d:/p2p/nnst2_2",
+	"d:/p2p/nnst2_3",
+	"d:/p2p/nnst2_4",
+	"d:/p2p/nnst2_5",
+	"d:/p2p/nnst2_6"}
+
 func uploadFile() []byte {
 	up := client.NewUploadObject()
 	oksign := make(chan int)
@@ -167,7 +174,8 @@ func uploadFile() []byte {
 			}
 		}
 	}()
-	vhw, errmsg := up.UploadFile(filePath)
+	vhw, errmsg := up.UploadMultiFile(filePaths)
+	//vhw, errmsg := up.UploadFile(filePath)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
@@ -190,7 +198,10 @@ func initApi() {
 		//pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-
+		user = "ianmooneyy11"
+		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
+		//user = "nloadzooqwer"
+		//pkey = "5KRWqgvdYVomJhobea4AbXpi9nR2wj53Hzy2JgUpAgZAry8WyeG"
 	}
 	api.StartApi()
 	c, err := api.NewClient(user, pkey)

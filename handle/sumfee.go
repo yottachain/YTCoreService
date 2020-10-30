@@ -31,7 +31,7 @@ func StartIterateUser() {
 }
 
 func IterateUser() {
-	defer env.TracePanic()
+	defer env.TracePanic("[SumUsedSpace]")
 	var lastId int32 = 0
 	limit := 100
 	logrus.Infof("[SumUsedSpace]Start iterate user...\n")
@@ -190,7 +190,7 @@ func DoBlockSpaceSum() {
 		return
 	}
 	defer bss.WG.Done()
-	defer env.TracePanic()
+	defer env.TracePanic("[SumBlockUsedSpace]")
 	var space int64
 	for {
 		uspace, err := bss.ReqBlockUsedSpace()

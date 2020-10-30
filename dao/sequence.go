@@ -14,7 +14,6 @@ import (
 )
 
 var USERID_SEQ *uint32 = new(uint32)
-
 var BLKID_SEQ *int32 = new(int32)
 var SHDID_SEQ *int32 = new(int32)
 

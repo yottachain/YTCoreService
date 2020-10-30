@@ -23,7 +23,7 @@ func StartSumUsedSpace() {
 }
 
 func SumUsedSpace() {
-	defer env.TracePanic()
+	defer env.TracePanic("[RelationshipSum]")
 	m, err := dao.SumRelationship()
 	if err == nil {
 		if len(m) > 0 {

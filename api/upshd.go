@@ -42,7 +42,7 @@ const DN_RES_CACHE_FILL = 105
 
 type UploadShardResult struct {
 	SHARDID int32
-	NODEID  int32
+	NODE    *NodeStat
 	VHF     []byte
 	DNSIGN  string
 }
@@ -59,7 +59,7 @@ type UploadShard struct {
 }
 
 func (self *UploadShard) DoFinish() {
-	env.TracePanic()
+	env.TracePanic("[UploadShard]")
 	SHARD_UP_CH <- 1
 	self.WG.Done()
 }
@@ -158,7 +158,7 @@ func (self *UploadShard) DoSend() {
 			continue
 		}
 		self.res.DNSIGN = resp.DNSIGN
-		self.res.NODEID = node.NodeInfo.Id
+		self.res.NODE = node.NodeInfo
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			self.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 		break

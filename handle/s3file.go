@@ -221,10 +221,6 @@ func (h *DeleteObjectHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	err = dao.UpdateUserSpace(h.user.UserID, -int64(fmeta.Usedspace), -1, -int64(fmeta.Length))
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
 	return &pkt.VoidResp{}
 }
 
