@@ -47,19 +47,19 @@ func IsExistInArray(id int32, array []int32) bool {
 	return false
 }
 
-func TracePanic() {
+func TracePanic(prefix string) {
 	if r := recover(); r != nil {
-		TraceError()
+		TraceError(prefix)
 	}
 }
 
-func TraceError() {
+func TraceError(prefix string) {
 	stack := make([]byte, 4096)
 	length := runtime.Stack(stack, true)
 	ss := string(stack[0:length])
 	ls := strings.Split(ss, "\n")
 	for _, s := range ls {
-		logrus.Error("[Unkown]" + s + "\n")
+		logrus.Error(prefix + s + "\n")
 	}
 }
 

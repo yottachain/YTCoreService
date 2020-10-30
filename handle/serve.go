@@ -78,7 +78,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	msg := msgfunc()
 	name := reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
-	defer env.TracePanic()
+	defer env.TracePanic("[OnMessage]")
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
 		logrus.Errorf("[OnMessage]Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())

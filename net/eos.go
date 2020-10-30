@@ -2,6 +2,7 @@ package net
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -93,11 +94,17 @@ type GetBalanceReq struct {
 	Caller eos.AccountName `json:"caller"`
 }
 
-func GetBalance(username string) (uint64, error) {
+func GetBalance(username string) (v uint64, err error) {
 	if !env.BP_ENABLE {
 		return 10000000, nil
 	}
-	defer env.TracePanic()
+	defer func() {
+		if r := recover(); r != nil {
+			env.TraceError("[EOS]")
+			v = 0
+			err = errors.New("Unknown error")
+		}
+	}()
 	obj := GetBalanceReq{Owner: eos.AN(username),
 		UType: 2, Caller: eos.AN(env.BPAccount)}
 	res, err := RequestWRetry("getbalance", obj, 3)

@@ -21,7 +21,7 @@ func StartDoCacheFee() {
 }
 
 func DoCacheAction() bool {
-	defer env.TracePanic()
+	defer env.TracePanic("[DoCacheFee]")
 	action := dao.FindAndDeleteNewObject()
 	if action == nil {
 		return false
