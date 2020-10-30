@@ -8,7 +8,6 @@ import (
 	"time"
 
 	proto "github.com/golang/protobuf/proto"
-	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -22,7 +21,7 @@ var STAT_ROUTINE_NUM *int32 = new(int32)
 var HTTP_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
-	OBJ_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
+	InitCache()
 	atomic.StoreInt32(AYNC_ROUTINE_NUM, 0)
 	atomic.StoreInt32(SYNC_ROUTINE_NUM, 0)
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
@@ -79,7 +78,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	msg := msgfunc()
 	name := reflect.Indirect(reflect.ValueOf(msg)).Type().Name()
-	defer env.TracePanic()
+	defer env.TracePanic("[OnMessage]")
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
 		logrus.Errorf("[OnMessage]Deserialize (Msgid:%d) ERR:%s\n", msgType, err.Error())

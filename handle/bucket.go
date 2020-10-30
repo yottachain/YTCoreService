@@ -130,7 +130,6 @@ func (h *DeleteBucketHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	dao.DelBucketListCache(h.user.UserID)
-	dao.DelBucketCache(*h.m.BucketName, h.user.UserID)
 	return &pkt.VoidResp{}
 }
 
@@ -169,7 +168,6 @@ func (h *UpdateBucketHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	dao.DelBucketCache(*h.m.BucketName, h.user.UserID)
 	return &pkt.VoidResp{}
 }
 

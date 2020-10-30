@@ -106,7 +106,7 @@ func (h *NodeSyncHandler) Handle() proto.Message {
 		logrus.Errorf("[NodeStatSync]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
-	defer env.TracePanic()
+	defer env.TracePanic("[NodeStatSync]")
 	startTime := time.Now()
 	for _, n := range h.m.Node {
 		node := &YTDNMgmt.Node{

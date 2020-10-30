@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 )
 
@@ -78,7 +80,12 @@ func ReadableNodesHandle(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	nodes, err := net.NodeMgr.ReadableNodesList()
+	timerange := 0
+	queryForm, err := url.ParseQuery(req.URL.RawQuery)
+	if err == nil && len(queryForm["timerange"]) > 0 {
+		timerange = env.ToInt(queryForm["timerange"][0], 0)
+	}
+	nodes, err := net.NodeMgr.ReadableNodesList(timerange)
 	if err != nil {
 		WriteErr(w, "ReadableNodesList err:"+err.Error())
 	} else {

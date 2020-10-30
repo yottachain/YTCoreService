@@ -41,6 +41,17 @@ func NewUploadObject(c *Client) *UploadObject {
 	return o
 }
 
+func (self *UploadObject) UploadMultiFile(path []string) ([]byte, *pkt.ErrorMessage) {
+	enc, err := codec.NewMultiFileEncoder(path)
+	if err != nil {
+		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", path, err)
+		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+	}
+	self.Encoder = enc
+	defer enc.Close()
+	return self.upload()
+}
+
 func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {
@@ -88,7 +99,14 @@ func (self *UploadObject) GetProgress() int32 {
 	return int32(p1 * p2 / 100)
 }
 
-func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
+func (self *UploadObject) upload() (vhw []byte, reserr *pkt.ErrorMessage) {
+	defer func() {
+		if r := recover(); r != nil {
+			env.TraceError("[UploadObject]")
+			vhw = nil
+			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
+		}
+	}()
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	err := self.initUpload()
 	if err != nil {
@@ -151,7 +169,7 @@ func (self *UploadObject) upload() ([]byte, *pkt.ErrorMessage) {
 
 func (self *UploadObject) waitcheck() {
 	for {
-		timeout := time.After(time.Second * 15)
+		timeout := time.After(time.Second * 30)
 		select {
 		case self.activesign <- 1:
 			close(self.activesign)
@@ -198,12 +216,6 @@ func (self *UploadObject) complete() *pkt.ErrorMessage {
 }
 
 func (self *UploadObject) initUpload() *pkt.ErrorMessage {
-	defer func() {
-		if r := recover(); r != nil {
-			self.UClient = nil
-			env.TraceError()
-		}
-	}()
 	size := uint64(self.Encoder.GetLength())
 	req := &pkt.UploadObjectInitReqV2{
 		UserId:    &self.UClient.UserId,

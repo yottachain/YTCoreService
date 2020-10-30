@@ -114,7 +114,7 @@ func TestLRC() {
 	ioutil.WriteFile("d://test.0.docx", b.Data, 0777)
 }
 
-var filepath = "D:/test.rar"
+var filepath = "D:/p2p-wrapper-0.1.jar"
 
 func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 	if !readinmemory {
@@ -134,6 +134,50 @@ func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 		}
 		return enc
 	}
+}
+
+func TestMultiCutFile() {
+	key := codec.GenerateRandomKey()
+	logrus.Infof("key:%s\n", hex.EncodeToString(key))
+	paths := []string{"d:/p2p/1_p2p-wrapper-0.1.jar", "d:/p2p/2_p2p-wrapper-0.1.jar",
+		"d:/p2p/3_p2p-wrapper-0.1.jar", "d:/p2p/4_p2p-wrapper-0.1.jar", "d:/p2p/5_p2p-wrapper-0.1.jar",
+		"d:/p2p/6_p2p-wrapper-0.1.jar"}
+	enc, err1 := codec.NewMultiFileEncoder(paths)
+	if err1 != nil {
+		panic(err1)
+	}
+	logrus.Infof("Hash:%s\n", hex.EncodeToString(enc.GetVHW()))
+
+	dec := codec.NewFileDecoder(filepath + ".new")
+	I := 0
+	for {
+		has, err := enc.HasNext()
+		if err != nil {
+			panic(err)
+		}
+		if has {
+			block := enc.Next()
+			logrus.Infof("b%d osize:%d,rsize:%d \n", I, block.OriginalSize, len(block.Data))
+			aes := codec.NewBlockAESEncryptor(block, key)
+			eb, err := aes.Encrypt()
+			if err != nil {
+				panic(err)
+			}
+			eb.Save(filepath + strconv.Itoa(I))
+			eb.Clear()
+			logrus.Infof("Save %s%d ok\n", filepath, I)
+			dec.AddEncryptedBlock(eb)
+			I++
+		} else {
+			break
+		}
+	}
+	err := dec.Handle()
+	if err != nil {
+		panic(err)
+	}
+	logrus.Infof("Hash:%s\n", hex.EncodeToString(dec.GetVHW()))
+
 }
 
 func TestCutFile() {

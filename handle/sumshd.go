@@ -33,7 +33,7 @@ func StartIterateShards() {
 }
 
 func FindFirstId() bool {
-	defer env.TracePanic()
+	defer env.TracePanic("[IterateShards]")
 	id, err := dao.GetShardCountProgress()
 	if err != nil {
 		time.Sleep(time.Duration(30) * time.Second)
@@ -56,7 +56,7 @@ func FindFirstId() bool {
 }
 
 func IterateUploadShards() {
-	defer env.TracePanic()
+	defer env.TracePanic("[IterateShards]")
 	querylasttime := dao.GenerateZeroID(time.Now().Unix() - DELAY_TIMES)
 	logrus.Infof("[IterateShards]Start iterate shards from id:%d\n", firstId)
 	hash, id, has, err := dao.ListNodeShardCount(firstId, querylasttime)

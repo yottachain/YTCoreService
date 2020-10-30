@@ -149,7 +149,7 @@ func (self *ObjectMeta) GetAndDelete() error {
 	defer cancel()
 	err := source.GetObjectColl().FindOneAndDelete(ctx, filter).Decode(self)
 	if err != nil {
-		logrus.Errorf("[ObjectMeta]GetAndUpdate ERR:%s\n", err)
+		logrus.Errorf("[ObjectMeta]GetAndDelete ERR:%s\n", err)
 		return err
 	}
 	return nil
