@@ -60,7 +60,7 @@ type UploadShard struct {
 }
 
 func (self *UploadShard) DoFinish() {
-	env.TracePanic()
+	env.TracePanic("[UploadShard]")
 	stat.Ccstat.ShardCcGSub()
 	SHARD_UP_CH <- 1
 	self.WG.Done()
