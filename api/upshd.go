@@ -43,7 +43,7 @@ const DN_RES_CACHE_FILL = 105
 
 type UploadShardResult struct {
 	SHARDID int32
-	NODEID  int32
+	NODE    *NodeStat
 	VHF     []byte
 	DNSIGN  string
 }
