@@ -53,7 +53,7 @@ type UploadBlock struct {
 
 func (self *UploadBlock) DoFinish(size int64) {
 	if r := recover(); r != nil {
-		env.TraceError()
+		env.TraceError("[UploadBlock]")
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 	}
 
@@ -263,6 +263,10 @@ func (self *UploadBlock) UploadBlockDedup() {
 				//stat.Ccstat.BlkCcSub()
 				continue
 			}
+			if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" { //不可能发生,发生时严重告警
+				time.Sleep(time.Duration(60) * time.Second)
+				continue
+			}
 			self.UPOBJ.ERR.Store(err)
 		}
 		//stat.Ccstat.BlkCcSub()
@@ -283,6 +287,9 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 		}
 	}
 	wgroup.Wait()
+	if self.CheckSendShardPanic(ress) {
+		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
+	}
 	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, num, size, time.Now().Sub(startTime).Milliseconds())
 	startTime = time.Now()
 	uid := int32(self.UPOBJ.UClient.UserId)
@@ -325,14 +332,24 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 	}
 }
 
+func (self *UploadBlock) CheckSendShardPanic(ress []*UploadShardResult) bool {
+	for index, res := range ress {
+		if res.NODE == nil {
+			ress[index] = nil
+			return true
+		}
+	}
+	return false
+}
+
 func (self *UploadBlock) CheckErrorMessage(ress []*UploadShardResult, jsonstr string) []int32 {
 	if jsonstr != "" {
 		ids := []int32{}
 		err := json.Unmarshal([]byte(jsonstr), &ids)
 		if err == nil {
 			for index, res := range ress {
-				if env.IsExistInArray(res.NODEID, ids) {
-					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODEID)
+				if env.IsExistInArray(res.NODE.Id, ids) {
+					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODE.Id)
 					ress[index] = nil
 				}
 			}
@@ -350,7 +367,7 @@ func ToUploadBlockEndReqV2_OkList(res []*UploadShardResult) []*pkt.UploadBlockEn
 	for index, r := range res {
 		oklist[index] = &pkt.UploadBlockEndReqV2_OkList{
 			SHARDID: &r.SHARDID,
-			NODEID:  &r.NODEID,
+			NODEID:  &r.NODE.Id,
 			VHF:     r.VHF,
 			DNSIGN:  &r.DNSIGN,
 		}
