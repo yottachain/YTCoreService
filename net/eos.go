@@ -62,13 +62,16 @@ type AddUsedSpaceReq struct {
 }
 
 func AddUsedSpace(username string, length uint64) error {
-	if !env.BP_ENABLE {
-		return nil
-	}
-	obj := AddUsedSpaceReq{Owner: eos.AN(username), Length: length,
-		Caller: eos.AN(env.BPAccount)}
-	_, err := RequestWRetry("addhspace", obj, 8)
-	return err
+	return nil
+	/*
+		if !env.BP_ENABLE {
+			return nil
+		}
+		obj := AddUsedSpaceReq{Owner: eos.AN(username), Length: length,
+			Caller: eos.AN(env.BPAccount)}
+		_, err := RequestWRetry("addhspace", obj, 8)
+		return err
+	*/
 }
 
 type SubBalanceReq struct {

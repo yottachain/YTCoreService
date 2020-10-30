@@ -54,7 +54,7 @@ func TracePanic(prefix string) {
 }
 
 func TraceError(prefix string) {
-	stack := make([]byte, 4096)
+	stack := make([]byte, 2048)
 	length := runtime.Stack(stack, true)
 	ss := string(stack[0:length])
 	ls := strings.Split(ss, "\n")
