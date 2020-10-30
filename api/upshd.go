@@ -175,7 +175,7 @@ func (self *UploadShard) DoSend() {
 			continue
 		}
 		self.res.DNSIGN = resp.DNSIGN
-		self.res.NODEID = node.NodeInfo.Id
+		self.res.NODE = node.NodeInfo
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			self.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 
