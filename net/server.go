@@ -41,7 +41,7 @@ func Start(port int32, port2 int32, privatekey string) error {
 		ma2, _ := ma.NewMultiaddr(add2)
 		addrs = append(addrs, ma2)
 	}
-	serverhost = newHost.NewHost(addrs, option.Identity(pk))
+	serverhost = newHost.NewHost(addrs, option.Identity(pk), option.OpenPProf("0.0.0.0:10000"))
 	if len(serverhost.Hosts) < 1 {
 		logrus.Panicf("[Booter]Init ERR.\n")
 	}
