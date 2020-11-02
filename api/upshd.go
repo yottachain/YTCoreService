@@ -82,7 +82,7 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 		RetryTimes: uint32(self.retrytimes)}
 	times := 0
 	for {
-		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, self.logPrefix, false)
+		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, self.logPrefix, true)
 		times++
 		if err != nil {
 			node.NodeInfo.SetERR()
