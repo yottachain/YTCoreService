@@ -68,7 +68,7 @@ func (me *UserObjectSum) AddUsedSapce(space int64) {
 	atomic.AddInt64(me.UsedSpace, space)
 }
 
-func (me *UserObjectSum) GetUsedSapce() int64 {
+func (me *UserObjectSum) GetUsedSpace() int64 {
 	return atomic.LoadInt64(me.UsedSpace)
 }
 
@@ -133,8 +133,7 @@ func (me *UserObjectSum) IterateObjects() {
 }
 
 func (me *UserObjectSum) SetCycleFee() {
-	uspace := me.GetUsedSapce()
-	cost := env.UnitCycleCost * uint64(uspace) / env.UnitSpace
+	cost := CalCycleFee(me.GetUsedSpace())
 	logrus.Infof("[SumFileUsedSpace]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
 	var err error
 	if cost > 0 {

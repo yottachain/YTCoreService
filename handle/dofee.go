@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -42,7 +43,7 @@ func DoCacheAction() bool {
 		}
 		logrus.Infof("[DoCacheFee]User [%d] add usedSpace:%d\n", action.UserID, addusedspace)
 	}
-	firstCost := env.UnitFirstCost * usedspace / env.UnitSpace
+	firstCost := CalFirstFee(int64(usedspace))
 	err := net.SubBalance(action.Username, firstCost)
 	if err != nil {
 		action.Step = 1
@@ -53,4 +54,24 @@ func DoCacheAction() bool {
 		logrus.Infof("[DoCacheFee]User [%d] sub balance:%d\n", action.UserID, firstCost)
 	}
 	return true
+}
+
+func CalCycleFee(usedpace int64) uint64 {
+	uspace := big.NewInt(usedpace)
+	unitCycleCost := big.NewInt(int64(env.UnitCycleCost))
+	unitSpace := big.NewInt(int64(env.UnitSpace))
+	bigcost := big.NewInt(0)
+	bigcost = bigcost.Mul(uspace, unitCycleCost)
+	bigcost = bigcost.Div(bigcost, unitSpace)
+	return uint64(bigcost.Int64())
+}
+
+func CalFirstFee(usedpace int64) uint64 {
+	uspace := big.NewInt(usedpace)
+	unitFirstCost := big.NewInt(int64(env.UnitFirstCost))
+	unitSpace := big.NewInt(int64(env.UnitSpace))
+	bigcost := big.NewInt(0)
+	bigcost = bigcost.Mul(uspace, unitFirstCost)
+	bigcost = bigcost.Div(bigcost, unitSpace)
+	return uint64(bigcost.Int64())
 }
