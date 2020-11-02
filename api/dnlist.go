@@ -213,6 +213,10 @@ func (n *NodeList) GetNodeStat () *NodeStat{
 	defer n.RUnlock()
 
 	l := len(n.wIds)
+	if l <= 0 {
+		return nil
+	}
+
 	idx := r.Intn(l)
 	nId := n.wIds[idx]
 
