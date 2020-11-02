@@ -18,6 +18,7 @@ var DownloadRetryTimes int = 3
 var DownloadThread int = 200
 
 var OptionMiners = 1000
+var WeightDivsor = 500
 
 func readClientProperties() {
 	confpath := YTFS_HOME + "conf/ytfs.properties"
@@ -47,4 +48,5 @@ func readClientProperties() {
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
 
 	OptionMiners = config.GetRangeInt("optionMiners", 200, 3000, 1000)
+	WeightDivsor = config.GetRangeInt("WeightDivsor", 1, 500, 500)
 }
