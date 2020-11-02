@@ -206,7 +206,7 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 	}
 }
 
-var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+//var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func (n *NodeList) GetNodeStat () *NodeStat{
 	n.RLock()
@@ -216,7 +216,8 @@ func (n *NodeList) GetNodeStat () *NodeStat{
 	if l <= 0 {
 		return nil
 	}
-
+	
+	var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	idx := r.Intn(l)
 	nId := n.wIds[idx]
 
