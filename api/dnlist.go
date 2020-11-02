@@ -206,11 +206,12 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 	}
 }
 
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 func (n *NodeList) GetNodeStat () *NodeStat{
 	n.RLock()
 	defer n.RUnlock()
 
-	var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	l := len(n.wIds)
 	idx := r.Intn(l)
 	nId := n.wIds[idx]
