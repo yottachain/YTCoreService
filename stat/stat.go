@@ -118,12 +118,18 @@ func (ccs *ccstat) PrintCc() {
 		ccs.Lock()
 		_, _ = fmt.Fprintf(ccs.fd, "send-blk-goroutine-cc=%d get-token-cc=%d send-shard-go-cc=%d send-shard-rungo-cc=%d\n",
 			ccs.ccBlks, ccs.ccGts, ccs.ccShards, ccs.ccShardsG)
-		_, _ = fmt.Fprintf(ccs.fd, "gts=%d/s  gt-success=%d/s send-shards=%d/s  send-success-shards=%d/s\n",
-			ccs.gts - gts, ccs.gtSucs - gtSucs, ccs.sendShs - sshs, ccs.sendShSucs - sshsucs)
+
 		gts = ccs.gts
+		ccs.gts = 0
 		gtSucs = ccs.gtSucs
+		ccs.gtSucs = 0
 		sshs = ccs.sendShs
+		ccs.sendShs = 0
 		sshsucs = ccs.sendShSucs
+		ccs.sendShSucs = 0
+		_, _ = fmt.Fprintf(ccs.fd, "gts=%d/s  gt-success=%d/s send-shards=%d/s  send-success-shards=%d/s\n",
+			gts, gtSucs, sshs, sshsucs)
+
 		ccs.Unlock()
 	}
 }
