@@ -210,9 +210,9 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 			n.wIds = append(n.wIds, v.id)
 		}
 	}
-}
 
-//var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+}
 
 func (n *NodeList) GetNodeStat () *NodeStat{
 	n.RLock()
