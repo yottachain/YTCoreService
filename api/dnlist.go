@@ -17,7 +17,6 @@ type idWeight struct {
 	weight float64
 }
 
-var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 type idWeightsAsc []idWeight
 func (p idWeightsAsc) Len() int { return len(p) }
@@ -156,6 +155,7 @@ type NodeList struct {
 	wIds		[] int32
 	updateTime int64
 	resetSign  *int32
+	r  			*rand.Rand
 }
 
 func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
@@ -210,8 +210,6 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 			n.wIds = append(n.wIds, v.id)
 		}
 	}
-
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 func (n *NodeList) GetNodeStat () *NodeStat{
@@ -223,7 +221,7 @@ func (n *NodeList) GetNodeStat () *NodeStat{
 		return nil
 	}
 
-	idx := r.Intn(l)
+	idx := n.r.Intn(l)
 	nId := n.wIds[idx]
 
 	node, ok := n.list[nId]
