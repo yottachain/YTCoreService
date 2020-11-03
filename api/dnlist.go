@@ -155,7 +155,8 @@ type NodeList struct {
 	wIds		[] int32
 	updateTime int64
 	resetSign  *int32
-	r  			*rand.Rand
+	//r  			*rand.Rand
+	currPos		int
 }
 
 func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
@@ -210,6 +211,8 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 			n.wIds = append(n.wIds, v.id)
 		}
 	}
+
+	n.currPos = 0
 }
 
 func (n *NodeList) GetNodeStat () *NodeStat{
@@ -221,8 +224,13 @@ func (n *NodeList) GetNodeStat () *NodeStat{
 		return nil
 	}
 
-	n.r.Seed(time.Now().UnixNano())
-	idx := n.r.Intn(l)
+	//n.r.Seed(time.Now().UnixNano())
+	//idx := n.r.Intn(l)
+	if n.currPos >= l {
+		n.currPos = 0
+	}
+	idx := n.currPos
+	n.currPos++
 	nId := n.wIds[idx]
 
 	node, ok := n.list[nId]
