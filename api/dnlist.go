@@ -17,6 +17,8 @@ type idWeight struct {
 	weight float64
 }
 
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 type idWeightsAsc []idWeight
 func (p idWeightsAsc) Len() int { return len(p) }
 func (p idWeightsAsc) Less(i, j int) bool {
@@ -94,8 +96,8 @@ func (q *DNQueue) order() bool {
 
 func (q *DNQueue) GetNodeStatExcluld(blk []int32) *NodeStatWOK {
 	for {
-		n := q.GetNodeStat()
-		//n := q.GetWeightNodeStat()
+		//n := q.GetNodeStat()
+		n := q.GetWeightNodeStat()
 		if !env.IsExistInArray(n.NodeInfo.Id, blk) && atomic.LoadInt32(n.OKTimes) <= int32(env.ShardNumPerNode) {
 			return n
 		}
@@ -221,7 +223,6 @@ func (n *NodeList) GetNodeStat () *NodeStat{
 		return nil
 	}
 
-	var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	idx := r.Intn(l)
 	nId := n.wIds[idx]
 
