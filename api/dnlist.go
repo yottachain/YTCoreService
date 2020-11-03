@@ -221,6 +221,7 @@ func (n *NodeList) GetNodeStat () *NodeStat{
 		return nil
 	}
 
+	n.r.Seed(time.Now().UnixNano())
 	idx := n.r.Intn(l)
 	nId := n.wIds[idx]
 
