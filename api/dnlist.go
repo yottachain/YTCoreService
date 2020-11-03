@@ -213,8 +213,8 @@ func (n *NodeList) SetwIds (dnc uint, divsor uint) {
 }
 
 func (n *NodeList) GetNodeStat () *NodeStat{
-	n.RLock()
-	defer n.RUnlock()
+	n.Lock()
+	defer n.Unlock()
 
 	l := len(n.wIds)
 	if l <= 0 {
