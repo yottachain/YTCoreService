@@ -84,7 +84,11 @@ func (q *DNQueue) order() bool {
 	}
 	q.queue = OrderNodeList(ls)
 	q.pos = 0
-	q.limit = len(ls)
+	if env.OptionMiners < len(ls) {
+		q.limit = env.OptionMiners
+	}else {
+		q.limit = len(ls)
+	}
 	return true
 }
 
