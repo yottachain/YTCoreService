@@ -3,6 +3,7 @@ package codec
 import (
 	"bytes"
 	"compress/zlib"
+	"crypto/md5"
 	"crypto/sha256"
 	"errors"
 	"io"
@@ -19,6 +20,7 @@ type FileEncoder struct {
 	vhw          []byte
 	reader       io.ReadSeeker
 	curBlock     *PlainBlock
+	md5          []byte
 }
 
 func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
@@ -30,11 +32,14 @@ func NewBytesEncoder(bs []byte) (*FileEncoder, error) {
 		return nil, errors.New("Zero length file")
 	}
 	sha256Digest := sha256.New()
+	md5Digest := md5.New()
 	sha256Digest.Write(bs)
+	md5Digest.Write(bs)
 	r := new(FileEncoder)
 	r.length = size
 	r.reader = bytes.NewReader(bs)
 	r.vhw = sha256Digest.Sum(nil)
+	r.md5 = md5Digest.Sum(nil)
 	return r, nil
 }
 
@@ -43,7 +48,7 @@ func NewMultiFileEncoder(path []string) (*FileEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	size, vhw, err1 := mf.Sum()
+	size, vhw, md5, err1 := mf.Sum()
 	if err1 != nil {
 		return nil, err1
 	}
@@ -51,6 +56,7 @@ func NewMultiFileEncoder(path []string) (*FileEncoder, error) {
 	r.length = size
 	r.reader = mf
 	r.vhw = vhw
+	r.md5 = md5
 	return r, nil
 }
 
@@ -232,6 +238,10 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 
 func (fileEncoder *FileEncoder) GetLength() int64 {
 	return fileEncoder.length
+}
+
+func (fileEncoder *FileEncoder) GetMD5() []byte {
+	return fileEncoder.md5
 }
 
 func (fileEncoder *FileEncoder) GetVHW() []byte {

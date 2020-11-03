@@ -52,26 +52,36 @@ func (self *UploadObject) UploadMultiFile(path []string) ([]byte, *pkt.ErrorMess
 	return self.upload()
 }
 
-func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
+func (self *UploadObject) UploadFile(path string) ([]byte, []byte, *pkt.ErrorMessage) {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewFileEncoder]Path:%s,ERR:%s\n", path, err)
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return nil, nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
-	return self.upload()
+	sha256, err1 := self.upload()
+	if err != nil {
+		return nil, nil, err1
+	} else {
+		return sha256, enc.GetMD5(), nil
+	}
 }
 
-func (self *UploadObject) UploadBytes(data []byte) ([]byte, *pkt.ErrorMessage) {
+func (self *UploadObject) UploadBytes(data []byte) ([]byte, []byte, *pkt.ErrorMessage) {
 	enc, err := codec.NewBytesEncoder(data)
 	if err != nil {
 		logrus.Errorf("[NewBytesEncoder]ERR:%s\n", err)
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return nil, nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
-	return self.upload()
+	sha256, err1 := self.upload()
+	if err != nil {
+		return nil, nil, err1
+	} else {
+		return sha256, enc.GetMD5(), nil
+	}
 }
 
 func (self *UploadObject) IdExist(id uint32) bool {
