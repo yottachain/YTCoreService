@@ -31,7 +31,7 @@ func NotifyAllocNode(reset bool) {
 
 func StartPreAllocNode() {
 	rand.Seed(time.Now().UnixNano())
-	DNList = &NodeList{list: make(map[int32]*NodeStat), updateTime: 0, resetSign: new(int32), currPos:0}
+	DNList = &NodeList{list: make(map[int32]*NodeStat), updateTime: 0, resetSign: new(int32)}
 	*DNList.resetSign = 0
 	go func() {
 		for {
