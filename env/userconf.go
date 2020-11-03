@@ -32,7 +32,7 @@ func readClientProperties() {
 
 	UploadFileMaxMemory = config.GetRangeInt("uploadFileMaxMemory", 5, 6000, 30)
 	UploadFileMaxMemory = UploadFileMaxMemory * 1024 * 1024
-	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 300, 30)
+	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 1000, 30)
 	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 1500, 30000, 1500)
 	UploadShardRetryTimes = config.GetRangeInt("uploadShardRetryTimes", 1, 10, 3)
 	DownloadRetryTimes = config.GetRangeInt("downloadRetryTimes", 3, 10, 3)
