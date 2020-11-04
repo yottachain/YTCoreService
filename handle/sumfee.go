@@ -264,11 +264,14 @@ func (h *BlockUsedSpaceHandler) GetUsedSpaceByID(metas map[int64]*dao.BlockMeta)
 	for _, id := range h.m.Id {
 		m[id] = metas[id]
 		count++
-		if count > 30 {
+		if count > 2000 {
 			space = space + h.GetUsedSpaceByMap(m)
 			count = 0
 			m = make(map[int64]*dao.BlockMeta)
 		}
+	}
+	if len(m) > 0 {
+		space = space + h.GetUsedSpaceByMap(m)
 	}
 	return space
 }

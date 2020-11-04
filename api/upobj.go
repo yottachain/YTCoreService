@@ -117,7 +117,6 @@ func (self *UploadObject) upload() (reserr *pkt.ErrorMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
-
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
 	}()
