@@ -41,33 +41,47 @@ func NewUploadObject(c *Client) *UploadObject {
 	return o
 }
 
-func (self *UploadObject) UploadMultiFile(path []string) ([]byte, *pkt.ErrorMessage) {
+func (self *UploadObject) GetSHA256() []byte {
+	if self.Encoder != nil {
+		return self.Encoder.GetVHW()
+	}
+	return nil
+}
+
+func (self *UploadObject) GetMD5() []byte {
+	if self.Encoder != nil {
+		return self.Encoder.GetMD5()
+	}
+	return nil
+}
+
+func (self *UploadObject) UploadMultiFile(path []string) *pkt.ErrorMessage {
 	enc, err := codec.NewMultiFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", path, err)
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
 	return self.upload()
 }
 
-func (self *UploadObject) UploadFile(path string) ([]byte, *pkt.ErrorMessage) {
+func (self *UploadObject) UploadFile(path string) *pkt.ErrorMessage {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewFileEncoder]Path:%s,ERR:%s\n", path, err)
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
 	return self.upload()
 }
 
-func (self *UploadObject) UploadBytes(data []byte) ([]byte, *pkt.ErrorMessage) {
+func (self *UploadObject) UploadBytes(data []byte) *pkt.ErrorMessage {
 	enc, err := codec.NewBytesEncoder(data)
 	if err != nil {
 		logrus.Errorf("[NewBytesEncoder]ERR:%s\n", err)
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
@@ -99,21 +113,20 @@ func (self *UploadObject) GetProgress() int32 {
 	return int32(p1 * p2 / 100)
 }
 
-func (self *UploadObject) upload() (vhw []byte, reserr *pkt.ErrorMessage) {
+func (self *UploadObject) upload() (reserr *pkt.ErrorMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
-			vhw = nil
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
 	}()
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	err := self.initUpload()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if self.UClient == nil {
-		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
+		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 	}
 	logrus.Infof("[UploadObject][%s]Start upload object...\n", self.VNU.Hex())
 	if self.Exist {
@@ -129,7 +142,7 @@ func (self *UploadObject) upload() (vhw []byte, reserr *pkt.ErrorMessage) {
 		for {
 			b, err := self.Encoder.ReadNext()
 			if err != nil {
-				return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+				return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 			}
 			if b == nil {
 				break
@@ -159,12 +172,12 @@ func (self *UploadObject) upload() (vhw []byte, reserr *pkt.ErrorMessage) {
 		}
 		if errmsg != nil {
 			logrus.Errorf("[UploadObject][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
-			return nil, errmsg
+			return errmsg
 		} else {
 			logrus.Infof("[UploadObject][%s]Upload object OK.\n", self.VNU.Hex())
 		}
 	}
-	return self.Encoder.GetVHW(), nil
+	return nil
 }
 
 func (self *UploadObject) waitcheck() {

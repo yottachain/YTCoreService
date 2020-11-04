@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = true
+const yfnet = false
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
@@ -174,11 +174,12 @@ func uploadFile() []byte {
 			}
 		}
 	}()
-	vhw, errmsg := up.UploadMultiFile(filePaths)
+	errmsg := up.UploadMultiFile(filePaths)
 	//vhw, errmsg := up.UploadFile(filePath)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
+	vhw := up.GetSHA256()
 	logrus.Infof("[UploadFile]Progress:%d\n", up.GetProgress())
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
 	<-oksign
@@ -214,10 +215,11 @@ func initApi() {
 
 func upload() ([]byte, primitive.ObjectID) {
 	up := client.NewUploadObject()
-	vhw, errmsg := up.UploadBytes(data)
+	errmsg := up.UploadBytes(data)
 	if errmsg != nil {
 		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
+	vhw := up.GetSHA256()
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
 	return vhw, up.VNU
 }
