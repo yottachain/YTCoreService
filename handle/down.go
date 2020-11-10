@@ -44,7 +44,6 @@ func (h *DownloadObjectInitHandler) Handle() proto.Message {
 			return pkt.NewError(pkt.SERVER_ERROR)
 		}
 	}
-
 	logrus.Infof("[DownloadObj]UID:%d,VNU:%s\n", h.user.UserID, meta.VNU.Hex())
 	size := uint32(len(meta.BlockList))
 	refs := &pkt.DownloadObjectInitResp_RefList{Count: &size, Refers: meta.BlockList}
