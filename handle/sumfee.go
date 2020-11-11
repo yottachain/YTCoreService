@@ -234,7 +234,7 @@ func (h *BlockUsedSpaceHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "")
 	}
-	space := h.GetUsedSpaceByMap(metas)
+	space := h.GetUsedSpaceByID(metas)
 	return &pkt.LongResp{Value: space}
 }
 
