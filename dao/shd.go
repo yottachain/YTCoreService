@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -205,10 +204,6 @@ func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {
 	if curerr := cur.Err(); curerr != nil {
 		logrus.Errorf("[ShardMeta]GetShardMetas Cursor ERR:%s\n", curerr)
 		return nil, curerr
-	}
-	if len(metas) != count {
-		logrus.Errorf("[ShardMeta]GetShardMetas Return:%d,reqcount:%d\n", len(metas), count)
-		return nil, errors.New("")
 	}
 	return metas, nil
 }

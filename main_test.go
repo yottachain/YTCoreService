@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -12,11 +11,12 @@ func init() {
 }
 
 func Test(t *testing.T) {
-	defer env.TracePanic("Test")
+	//defer env.TracePanic("Test")
+	Make()
 
 	//***********api test*********
 	//test.ListObj()
-	test.UpAndDownFile()
+	//test.UpAndDownFile()
 	//test.DownLoadByKey()
 	//test.UpAndDownBytes()
 	//test.ListBucket()
