@@ -1,4 +1,4 @@
-package backup
+package api
 
 import (
 	"bytes"
@@ -253,9 +253,13 @@ func (self *Encoder) writeKey(f *os.File) error {
 	if self.prefix != "" {
 		key = strings.TrimPrefix(self.in, self.prefix)
 	}
+	return WriteKey(key, f)
+}
+
+func WriteKey(key string, f *os.File) error {
 	bs := []byte(key)
-	size := int64(len(bs))
-	bs1 := env.IdToBytes(size)
+	size := int32(len(bs))
+	bs1 := env.Int32ToBytes(size)
 	bss := bytes.Join([][]byte{bs1, bs}, []byte{})
 	_, err := f.Write(bss)
 	if err != nil {
