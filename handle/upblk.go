@@ -17,6 +17,35 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type CheckBlockDupHandler struct {
+	pkey string
+	m    *pkt.CheckBlockDupReq
+	user *dao.User
+}
+
+func (h *CheckBlockDupHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+	h.pkey = pubkey
+	req, ok := msg.(*pkt.CheckBlockDupReq)
+	if ok {
+		h.m = req
+		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VHP == nil {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
+		if h.user == nil {
+			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
+		}
+		return nil, READ_ROUTINE_NUM, nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
+	}
+}
+
+func (h *CheckBlockDupHandler) Handle() proto.Message {
+	logrus.Debugf("[CheckBlockDup]User %d\n", h.user.UserID)
+	return CheckBlockDup(h.m.VHP)
+}
+
 type UploadBlockInitHandler struct {
 	pkey string
 	m    *pkt.UploadBlockInitReqV2
@@ -59,7 +88,11 @@ func (h *UploadBlockInitHandler) Handle() proto.Message {
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
 	}
-	n := net.GetBlockSuperNode(h.m.VHP)
+	return CheckBlockDup(h.m.VHP)
+}
+
+func CheckBlockDup(vhp []byte) proto.Message {
+	n := net.GetBlockSuperNode(vhp)
 	if n.ID != int32(env.SuperNodeID) {
 		return pkt.NewErrorMsg(pkt.ILLEGAL_VHP_NODEID, "Invalid request")
 	}
@@ -67,7 +100,7 @@ func (h *UploadBlockInitHandler) Handle() proto.Message {
 	if env.DE_DUPLICATION {
 		return &pkt.UploadBlockInitResp{StartTime: &st}
 	}
-	ls, err := dao.GetBlockByVHP(h.m.VHP)
+	ls, err := dao.GetBlockByVHP(vhp)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}

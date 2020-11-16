@@ -117,7 +117,7 @@ func (self *UploadObject) upload() (reserr *pkt.ErrorMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
-
+			self.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
 	}()
@@ -202,6 +202,9 @@ func (self *UploadObject) waitcheck() {
 			close(self.activesign)
 			return
 		case <-timeout:
+			if self.ERR.Load() != nil {
+				break
+			}
 			self.active()
 		}
 	}

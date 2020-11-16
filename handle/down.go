@@ -1,6 +1,8 @@
 package handle
 
 import (
+	"strings"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
@@ -44,7 +46,6 @@ func (h *DownloadObjectInitHandler) Handle() proto.Message {
 			return pkt.NewError(pkt.SERVER_ERROR)
 		}
 	}
-
 	logrus.Infof("[DownloadObj]UID:%d,VNU:%s\n", h.user.UserID, meta.VNU.Hex())
 	size := uint32(len(meta.BlockList))
 	refs := &pkt.DownloadObjectInitResp_RefList{Count: &size, Refers: meta.BlockList}
@@ -147,6 +148,10 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	if len(metas) != int(bmeta.VNF) {
+		logrus.Errorf("[DownloadBLK]VBI:%d,GetShardMetas Return:%d,reqcount:%d\n", *h.m.VBI, len(metas), bmeta.VNF)
+		return pkt.NewError(pkt.INVALID_SHARD)
+	}
 	nodeidsls := []int32{}
 	vhfs := make([][]byte, bmeta.VNF)
 	nodeids := make([]int32, bmeta.VNF)
@@ -160,7 +165,11 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 	nodes, err := GetNodes(nodeidsls)
 	if err != nil {
 		logrus.Errorf("[DownloadBLK]GetNodes ERR:%s\n", err)
-		return pkt.NewError(pkt.SERVER_ERROR)
+		if strings.ContainsAny(err.Error(), "does not exist") {
+			return pkt.NewError(pkt.NO_ENOUGH_NODE)
+		} else {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		}
 	}
 	num := len(nodes)
 	respNodes := make([]*pkt.DownloadBlockInitResp_NList_Ns, num)

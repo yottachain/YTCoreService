@@ -1,8 +1,6 @@
 package codec
 
 import (
-	"crypto/md5"
-	"crypto/sha256"
 	"errors"
 	"io"
 	"os"
@@ -131,30 +129,6 @@ func NewMergeReader(ps []string, bufsize int) (*MergeReader, error) {
 	return m, nil
 }
 
-func (br *MergeReader) Sum() (int64, []byte, []byte, error) {
-	defer br.Close()
-	sha256Digest := sha256.New()
-	md5Digest := md5.New()
-	readbuf := make([]byte, 8192)
-	var size int64 = 0
-	for {
-		num, err := br.Read(readbuf)
-		if err != nil && err != io.EOF {
-			return 0, nil, nil, err
-		}
-		if num > 0 {
-			bs := readbuf[0:num]
-			sha256Digest.Write(bs)
-			md5Digest.Write(bs)
-			size = size + int64(num)
-		}
-		if err != nil && err == io.EOF {
-			break
-		}
-	}
-	return size, sha256Digest.Sum(nil), md5Digest.Sum(nil), nil
-}
-
 func (br *MergeReader) readNotAll(p []byte) (n int, err error) {
 	if br.count == br.pos {
 		for {
@@ -265,7 +239,7 @@ func (br *MergeReader) Read(p []byte) (n int, err error) {
 	}
 }
 
-func (br *MergeReader) Close() {
+func (br *MergeReader) Close() error {
 	for _, p := range br.Parts {
 		p.close()
 		p.length = 0
@@ -274,4 +248,5 @@ func (br *MergeReader) Close() {
 	br.curpartIndex = -1
 	br.count = 0
 	br.pos = 0
+	return nil
 }

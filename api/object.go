@@ -71,6 +71,9 @@ func FileMetaMapTobytes(m map[string]string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New(ETagKey + " value err.")
 	}
+	if len(bs2) != 16 {
+		return nil, errors.New(ETagKey + " value err.")
+	}
 	s2, _ := m[LengthKey]
 	size, err := strconv.Atoi(s2)
 	if err != nil {

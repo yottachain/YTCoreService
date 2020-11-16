@@ -18,12 +18,12 @@ func Test(t *testing.T) {
 	//test.ListObj()
 	//test.UpAndDownFile()
 	//test.DownLoadByKey()
-	test.UpAndDownBytes()
+	//test.UpAndDownBytes()
 	//test.ListBucket()
 
 	//**********code test**********
 	//env.InitClient()
-	//test.TestMultiCutFile()
+	test.TestMultiCutFile()
 	//test.TestCutFile()
 	//test.TestLRC()
 	select {}

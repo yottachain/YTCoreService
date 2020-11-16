@@ -48,7 +48,7 @@ func NewMultiFileEncoder(path []string) (*FileEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	size, vhw, md5, err1 := mf.Sum()
+	size, vhw, md5, err1 := Sum(mf)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -66,11 +66,9 @@ func NewFileEncoder(path string) (*FileEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	sha256Digest := sha256.New()
-	size, err = io.Copy(sha256Digest, f)
-	if err != nil {
-		return nil, err
+	size, vhw, md5, err1 := Sum(f)
+	if err1 != nil {
+		return nil, err1
 	}
 	newf, err := os.Open(path)
 	if err != nil {
@@ -79,7 +77,8 @@ func NewFileEncoder(path string) (*FileEncoder, error) {
 	r := new(FileEncoder)
 	r.length = size
 	r.reader = NewBufferReader(*newf, env.READFILE_BUF_SIZE)
-	r.vhw = sha256Digest.Sum(nil)
+	r.vhw = vhw
+	r.md5 = md5
 	return r, nil
 }
 

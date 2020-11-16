@@ -148,9 +148,15 @@ func (decoder *FileDecoder) Handle() error {
 		br := NewBlockReader(value)
 		num, err := decoder.readBlock(sha256Digest, f, br)
 		if err == io.EOF {
-			continue
+			num = 0
 		}
 		size = size + int64(num)
+		if bb, ok := item.(*PlainBlock); ok {
+			bb.Clear()
+		}
+		if bb, ok := item.(*EncryptedBlock); ok {
+			bb.Clear()
+		}
 	}
 	decoder.vhw = sha256Digest.Sum(nil)
 	decoder.length = size

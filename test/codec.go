@@ -114,7 +114,7 @@ func TestLRC() {
 	ioutil.WriteFile("d://test.0.docx", b.Data, 0777)
 }
 
-var filepath = "D:/p2p-wrapper-0.1.jar"
+var filepath = "D:/test/Windows2012.iso"
 
 func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 	if !readinmemory {
@@ -137,11 +137,17 @@ func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 }
 
 func TestMultiCutFile() {
+	env.InitClient()
 	key := codec.GenerateRandomKey()
 	logrus.Infof("key:%s\n", hex.EncodeToString(key))
-	paths := []string{"d:/p2p/1_p2p-wrapper-0.1.jar", "d:/p2p/2_p2p-wrapper-0.1.jar",
-		"d:/p2p/3_p2p-wrapper-0.1.jar", "d:/p2p/4_p2p-wrapper-0.1.jar", "d:/p2p/5_p2p-wrapper-0.1.jar",
-		"d:/p2p/6_p2p-wrapper-0.1.jar"}
+	//paths := []string{"d:/p2p/1_p2p-wrapper-0.1.jar", "d:/p2p/2_p2p-wrapper-0.1.jar",
+	//	"d:/p2p/3_p2p-wrapper-0.1.jar", "d:/p2p/4_p2p-wrapper-0.1.jar", "d:/p2p/5_p2p-wrapper-0.1.jar",
+	//	"d:/p2p/6_p2p-wrapper-0.1.jar"}
+	paths := make([]string, 558)
+	for ii := 1; ii <= 558; ii++ {
+		paths[ii-1] = fmt.Sprintf("D:/Windows2012R2.iso/%d", ii)
+	}
+
 	enc, err1 := codec.NewMultiFileEncoder(paths)
 	if err1 != nil {
 		panic(err1)
