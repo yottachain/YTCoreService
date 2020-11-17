@@ -343,8 +343,8 @@ func (ns NodeStatOrder) Less(i, j int) bool {
 		i2 := ns.Nodes[j].NodeInfo.RandDelayTimes(size)
 		return i1 < i2
 	} else {
-		return ns.Nodes[i].NodeInfo.GetDelayTimes() < ns.Nodes[j].NodeInfo.GetDelayTimes()
-		//return ns.Nodes[i].NodeInfo.Weight  > ns.Nodes[j].NodeInfo.Weight
+		//return ns.Nodes[i].NodeInfo.GetDelayTimes() < ns.Nodes[j].NodeInfo.GetDelayTimes()
+		return ns.Nodes[i].NodeInfo.Weight  > ns.Nodes[j].NodeInfo.Weight
 	}
 }
 
