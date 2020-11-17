@@ -41,6 +41,13 @@ func NewUploadObject(c *Client) *UploadObject {
 	return o
 }
 
+func (self *UploadObject) GetLength() int64 {
+	if self.Encoder != nil {
+		return self.Encoder.GetLength()
+	}
+	return 0
+}
+
 func (self *UploadObject) GetSHA256() []byte {
 	if self.Encoder != nil {
 		return self.Encoder.GetVHW()

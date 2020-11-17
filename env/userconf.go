@@ -2,6 +2,8 @@ package env
 
 import (
 	"log"
+	"os"
+	"strings"
 )
 
 var PNN int = 328 * 2
@@ -17,12 +19,46 @@ var DownloadRetryTimes int = 3
 
 var DownloadThread int = 200
 
+var CachePath string
+var MaxCacheSize int64
+var SyncMode int = 0
+
+var cfg *Config
+
+func GetConfig() *Config {
+	return cfg
+}
+
+func GetS3Cache() string {
+	return GetCacheDir("s3cache")
+}
+
+func GetDBCache() string {
+	return GetCacheDir("dbcache")
+}
+
+func GetCacheDir(name string) string {
+	path := CachePath
+	if !strings.HasSuffix(path, "/") {
+		path = path + "/"
+	}
+	path = path + name + "/"
+	os.MkdirAll(path, os.ModePerm)
+	return path
+}
+
 func readClientProperties() {
 	confpath := YTFS_HOME + "conf/ytfs.properties"
 	config, err := NewConfig(confpath)
 	if err != nil {
 		log.Panicf("[Init]No properties file could be found for ytfs service:%s\n", confpath)
 	}
+	cfg = config
+	CachePath = config.GetString("cache", YTFS_HOME)
+	SyncMode = config.GetRangeInt("syncmode", 0, 2, 0)
+	size := config.GetRangeInt("cachemaxsize", 5, 1024*100, 10)
+	MaxCacheSize = int64(size) * 1024 * 1024 * 1024
+
 	LogLevel = config.GetString("logLevel", "trace,stdout")
 	PNN = config.GetRangeInt("PNN", 328, 328*4, 328*2)
 	PTR = config.GetRangeInt("PTR", 1, 60, 2)
@@ -43,4 +79,5 @@ func readClientProperties() {
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -17,14 +16,13 @@ import (
 )
 
 type Encoder struct {
-	in     string
-	prefix string
-	ifenc  bool
-	fc     *codec.FileEncoder
+	in  string
+	key string
+	fc  *codec.FileEncoder
 }
 
-func NewEncoder(inpath, root string, ifEncrypt bool) (*Encoder, error) {
-	en := &Encoder{in: inpath, prefix: root, ifenc: ifEncrypt}
+func NewEncoder(inpath, s3key string) (*Encoder, error) {
+	en := &Encoder{in: inpath, key: s3key}
 	enc, err := codec.NewFileEncoder(en.in)
 	if err != nil {
 		return nil, err
@@ -76,11 +74,7 @@ func (self *Encoder) Handle(out string) error {
 		if b == nil {
 			break
 		} else {
-			if self.ifenc {
-				size, err = self.writeEncryptedBlock(f, b)
-			} else {
-				size, err = self.writePlainBlock(f, b)
-			}
+			size, err = self.writeEncryptedBlock(f, b)
 			if err != nil {
 				return err
 			}
@@ -102,9 +96,9 @@ func (self *Encoder) writeEncryptedBlock(f *os.File, b *codec.PlainBlock) (int64
 	b.Sum()
 	SN := net.GetBlockSuperNode(b.VHP)
 	req := &pkt.CheckBlockDupReq{
-		UserId:    &UClient.UserId,
-		SignData:  &UClient.Sign,
-		KeyNumber: &UClient.KeyNumber,
+		UserId:    &BackupClient.UserId,
+		SignData:  &BackupClient.Sign,
+		KeyNumber: &BackupClient.KeyNumber,
 		VHP:       b.VHP,
 	}
 	var resp proto.Message
@@ -143,7 +137,7 @@ func (self *Encoder) writeNoDupBlock(f *os.File, b *codec.PlainBlock) (int64, er
 	}
 	size := int64(len(eblk.Data))
 	bs4 := env.IdToBytes(size)
-	keu := codec.ECBEncryptNoPad(ks, UClient.AESKey)
+	keu := codec.ECBEncryptNoPad(ks, BackupClient.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, b.KD)
 	bss := bytes.Join([][]byte{bs1, bs2, bs3, bs4, b.VHP, keu, ked, eblk.Data}, []byte{})
 	_, err = f.Write(bss)
@@ -200,39 +194,27 @@ func (self *Encoder) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *codec.PlainB
 			vhb = eblk.VHB
 		}
 		if bytes.Equal(vhb, vhbs[index]) {
-			return codec.ECBEncryptNoPad(ks, UClient.AESKey), vhb
+			return codec.ECBEncryptNoPad(ks, BackupClient.AESKey), vhb
 		}
 	}
 	return nil, nil
 }
 
-func (self *Encoder) writePlainBlock(f *os.File, b *codec.PlainBlock) (int64, error) {
-	bs1 := env.IdToBytes(b.OriginalSize)
-	size := len(b.Data)
-	bs2 := env.IdToBytes(int64(size))
-	bs3 := b.Data
-	bss := bytes.Join([][]byte{bs1, bs2, bs3}, []byte{})
-	_, err := f.Write(bss)
-	if err != nil {
-		return 0, err
-	}
-	return int64(size) + 16, nil
-}
-
 func (self *Encoder) writeHead(f *os.File) (int64, error) {
 	bs1 := env.IdToBytes(0)
 	bs2 := env.IdToBytes(self.fc.GetLength())
-	bs3 := []byte{0x00}
-	if self.ifenc {
-		bs3 = []byte{0x01}
-	}
-	bs4 := self.GetMD5()
-	bss := bytes.Join([][]byte{bs1, bs2, bs3, bs4}, []byte{})
+	bs3 := self.GetMD5()
+	bs4 := env.Int32ToBytes(int32(BackupClient.UserId))
+	bs5 := env.Int32ToBytes(int32(BackupClient.KeyNumber))
+	bs7 := []byte(BackupClient.Sign)
+	size := len(bs7)
+	bs6 := env.Int32ToBytes(int32(size))
+	bss := bytes.Join([][]byte{bs1, bs2, bs3, bs4, bs5, bs6, bs7}, []byte{})
 	_, err := f.Write(bss)
 	if err != nil {
 		return 0, err
 	}
-	return 8 + 8 + 1 + 16, nil
+	return 8 + 8 + 16 + 4 + 4 + 4 + int64(size), nil
 }
 
 func (self *Encoder) writeBottonPos(f *os.File, pos int64) error {
@@ -249,11 +231,7 @@ func (self *Encoder) writeBottonPos(f *os.File, pos int64) error {
 }
 
 func (self *Encoder) writeKey(f *os.File) error {
-	key := self.in
-	if self.prefix != "" {
-		key = strings.TrimPrefix(self.in, self.prefix)
-	}
-	return WriteKey(key, f)
+	return WriteKey(self.key, f)
 }
 
 func WriteKey(key string, f *os.File) error {

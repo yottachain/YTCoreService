@@ -1,6 +1,8 @@
 package api
 
-var UClient *Client
+import "github.com/yottachain/YTCoreService/api"
+
+var BackupClient *api.Client
 
 type DupBlock struct {
 	OriginalSize int64

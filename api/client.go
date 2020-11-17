@@ -3,10 +3,12 @@ package api
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -81,6 +83,53 @@ func (c *Client) MakeSign() error {
 		c.Sign = s
 		return nil
 	}
+}
+
+func (c *Client) GetProgress(bucketname, key string) int32 {
+	v := cache.GetUploadObject(int32(c.UserId), bucketname, key)
+	if v != nil {
+		obj := v.(*UploadObject)
+		return obj.GetProgress()
+	}
+	vv := cache.GetValue(int32(c.UserId), bucketname, key)
+	if vv != nil {
+		return 0
+	} else {
+		return 100
+	}
+}
+
+func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	if env.SyncMode == 0 {
+		up := NewUploadObject(c)
+		cache.PutUploadObject(int32(c.UserId), bucketname, key, up)
+		defer func() {
+			cache.DelUploadObject(int32(c.UserId), bucketname, key)
+			for _, p := range path {
+				os.Remove(p)
+			}
+		}()
+		err := up.UploadMultiFile(path)
+		if err != nil {
+			return nil, err
+		}
+		meta := MetaTobytes(up.GetLength(), up.GetMD5())
+		acessor := c.NewObjectAccessor()
+		err = acessor.CreateObject(bucketname, key, up.VNU, meta)
+		if err != nil {
+			return nil, err
+		}
+		return up.GetMD5(), nil
+	}
+	return nil, nil
+}
+
+func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	return nil, nil
+}
+
+func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	return nil, nil
 }
 
 func (c *Client) NewUploadObject() *UploadObject {

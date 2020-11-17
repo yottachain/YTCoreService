@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -23,7 +22,7 @@ func Test(t *testing.T) {
 
 	//**********code test**********
 	//env.InitClient()
-	test.TestMultiCutFile()
+	//test.TestMultiCutFile()
 	//test.TestCutFile()
 	//test.TestLRC()
 	select {}

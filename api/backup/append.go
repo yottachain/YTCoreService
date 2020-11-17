@@ -5,16 +5,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/yottachain/YTCoreService/env"
 )
 
-func Append(srcpath, root, path string) error {
+func Append(srcpath, path string) error {
 	key := srcpath
-	if root != "" {
-		key = strings.TrimPrefix(srcpath, root)
-	}
 	exist, err := checkExist(key, path)
 	if err != nil {
 		return err

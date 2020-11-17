@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974
+	github.com/boltdb/bolt v1.3.1
 	github.com/gobuffalo/packr/v2 v2.5.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
