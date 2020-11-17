@@ -1,11 +1,9 @@
-package cache
+package api
 
 import (
 	"fmt"
 	"sync"
 )
-
-var CurCacheSize *int64
 
 var UPLOADING sync.Map
 

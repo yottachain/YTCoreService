@@ -8,7 +8,6 @@ import (
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
-	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -86,12 +85,12 @@ func (c *Client) MakeSign() error {
 }
 
 func (c *Client) GetProgress(bucketname, key string) int32 {
-	v := cache.GetUploadObject(int32(c.UserId), bucketname, key)
+	v := GetUploadObject(int32(c.UserId), bucketname, key)
 	if v != nil {
 		obj := v.(*UploadObject)
 		return obj.GetProgress()
 	}
-	vv := cache.GetValue(int32(c.UserId), bucketname, key)
+	vv := GetValue(int32(c.UserId), bucketname, key)
 	if vv != nil {
 		return 0
 	} else {
@@ -102,9 +101,9 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		up := NewUploadObject(c)
-		cache.PutUploadObject(int32(c.UserId), bucketname, key, up)
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
 		defer func() {
-			cache.DelUploadObject(int32(c.UserId), bucketname, key)
+			DelUploadObject(int32(c.UserId), bucketname, key)
 			for _, p := range path {
 				os.Remove(p)
 			}
