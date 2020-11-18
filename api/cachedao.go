@@ -3,20 +3,11 @@ package api
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"strings"
 
 	"github.com/boltdb/bolt"
 	"github.com/yottachain/YTCoreService/env"
-)
-
-var dbname = "cache.db"
-var tmpbucket = []byte("tmpobject")
-var syncbucket = []byte("syncobject")
-
-var (
-	DB       *bolt.DB
-	TempBuck *bolt.Bucket
-	SyncBuck *bolt.Bucket
 )
 
 type Key struct {
@@ -46,10 +37,21 @@ func NewKey(data []byte) *Key {
 type Value struct {
 	Type   int8
 	Length int64
-	Sha256 []byte
 	Md5    []byte
 	Path   []string
 	Data   []byte
+}
+
+func MultiPartFileValue(path []string, length int64, md5 []byte) *Value {
+	return &Value{Type: 2, Length: length, Md5: md5, Path: path}
+}
+
+func SingleFileValue(path string, length int64, md5 []byte) *Value {
+	return &Value{Type: 1, Length: length, Md5: md5, Path: []string{path}}
+}
+
+func BytesFileValue(data []byte, length int64, md5 []byte) *Value {
+	return &Value{Type: 0, Length: length, Md5: md5, Path: []string{}, Data: data}
 }
 
 func NewValue(data []byte) *Value {
@@ -57,8 +59,6 @@ func NewValue(data []byte) *Value {
 	bytebuf := bytes.NewBuffer(data)
 	binary.Read(bytebuf, binary.BigEndian, &v.Type)
 	binary.Read(bytebuf, binary.BigEndian, &v.Length)
-	v.Sha256 = make([]byte, 32)
-	bytebuf.Read(v.Sha256)
 	v.Md5 = make([]byte, 16)
 	bytebuf.Read(v.Md5)
 	if v.Type == 0 {
@@ -93,7 +93,6 @@ func (self *Value) ToBytes() []byte {
 	}
 	binary.Write(bytebuf, binary.BigEndian, self.Type)
 	binary.Write(bytebuf, binary.BigEndian, self.Length)
-	bytebuf.Write(self.Sha256)
 	bytebuf.Write(self.Md5)
 	if self.Type == 0 {
 		ii := int32(len(self.Data))
@@ -111,31 +110,30 @@ func (self *Value) ToBytes() []byte {
 	return bytebuf.Bytes()
 }
 
-func InitDB() error {
-	path := env.YTFS_HOME + dbname
-	dbc, err := bolt.Open(path, 0600, nil)
-	if err != nil {
-		return err
-	} else {
-		DB = dbc
-	}
-	err = DB.Update(func(tx *bolt.Tx) error {
-		b, err1 := tx.CreateBucket(tmpbucket)
-		TempBuck = b
-		return err1
+func SumSpace() int64 {
+	return 0
+}
+
+func InsertValue(k *Key, v *Value) error {
+	return DB.Update(func(tx *bolt.Tx) error {
+		bs := k.ToBytes()
+		vv := TempBuck.Get(bs)
+		if vv != nil {
+			return errors.New("Repeat upload")
+		}
+		err := TempBuck.Put(bs, v.ToBytes())
+		if err != nil {
+			return err
+		}
+		return nil
 	})
-	if err != nil {
-		return err
-	}
-	err = DB.Update(func(tx *bolt.Tx) error {
-		b, err1 := tx.CreateBucket(syncbucket)
-		SyncBuck = b
-		return err1
+}
+
+func DeleteValue(k *Key) {
+	DB.Update(func(tx *bolt.Tx) error {
+		TempBuck.Delete(k.ToBytes())
+		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func GetValue(userid int32, buck, key string) *Value {

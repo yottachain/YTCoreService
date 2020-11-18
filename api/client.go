@@ -87,8 +87,7 @@ func (c *Client) MakeSign() error {
 func (c *Client) GetProgress(bucketname, key string) int32 {
 	v := GetUploadObject(int32(c.UserId), bucketname, key)
 	if v != nil {
-		obj := v.(*UploadObject)
-		return obj.GetProgress()
+		return v.GetProgress()
 	}
 	vv := GetValue(int32(c.UserId), bucketname, key)
 	if vv != nil {
@@ -113,22 +112,56 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 			return nil, err
 		}
 		meta := MetaTobytes(up.GetLength(), up.GetMD5())
-		acessor := c.NewObjectAccessor()
-		err = acessor.CreateObject(bucketname, key, up.VNU, meta)
+		err = c.NewObjectAccessor().CreateObject(bucketname, key, up.VNU, meta)
 		if err != nil {
 			return nil, err
 		}
 		return up.GetMD5(), nil
 	}
-	return nil, nil
+	return UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
 }
 
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	return nil, nil
+	if env.SyncMode == 0 {
+		up := NewUploadObject(c)
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		defer func() {
+			DelUploadObject(int32(c.UserId), bucketname, key)
+		}()
+		err := up.UploadBytes(data)
+		if err != nil {
+			return nil, err
+		}
+		meta := MetaTobytes(up.GetLength(), up.GetMD5())
+		err = c.NewObjectAccessor().CreateObject(bucketname, key, up.VNU, meta)
+		if err != nil {
+			return nil, err
+		}
+		return up.GetMD5(), nil
+	}
+	return UploadBytesFile(int32(c.UserId), data, bucketname, key)
 }
 
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	return nil, nil
+	if env.SyncMode == 0 {
+		up := NewUploadObject(c)
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		defer func() {
+			DelUploadObject(int32(c.UserId), bucketname, key)
+			os.Remove(path)
+		}()
+		err := up.UploadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		meta := MetaTobytes(up.GetLength(), up.GetMD5())
+		err = c.NewObjectAccessor().CreateObject(bucketname, key, up.VNU, meta)
+		if err != nil {
+			return nil, err
+		}
+		return up.GetMD5(), nil
+	}
+	return UploadSingleFile(int32(c.UserId), path, bucketname, key)
 }
 
 func (c *Client) NewUploadObject() *UploadObject {

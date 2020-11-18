@@ -65,7 +65,7 @@ func (self *UploadObject) GetMD5() []byte {
 func (self *UploadObject) UploadMultiFile(path []string) *pkt.ErrorMessage {
 	enc, err := codec.NewMultiFileEncoder(path)
 	if err != nil {
-		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", path, err)
+		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
 	self.Encoder = enc

@@ -1,5 +1,4 @@
 module github.com/yottachain/YTCoreService
-
 go 1.14
 
 require (
