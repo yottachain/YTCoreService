@@ -15,7 +15,7 @@ import (
 )
 
 var UPLOADING sync.Map
-var CurCacheSize *int64
+var CurCacheSize *int64 = new(int64)
 
 func PutUploadObject(userid int32, buck, key string, obj *UploadObject) {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)

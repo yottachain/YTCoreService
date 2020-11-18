@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"sync/atomic"
 
 	"github.com/boltdb/bolt"
@@ -9,12 +10,9 @@ import (
 )
 
 var dbname = "cache.db"
-var tmpbucket = []byte("tmpobject")
-var syncbucket = []byte("syncobject")
-
+var TempBuck = []byte("tmpobject")
+var SyncBuck = []byte("syncobject")
 var DB *bolt.DB
-var TempBuck *bolt.Bucket
-var SyncBuck *bolt.Bucket
 
 func InitDB() error {
 	path := env.GetDBCache() + dbname
@@ -25,16 +23,30 @@ func InitDB() error {
 		DB = dbc
 	}
 	err = DB.Update(func(tx *bolt.Tx) error {
-		b, err1 := tx.CreateBucket(tmpbucket)
-		TempBuck = b
+		b, err1 := tx.CreateBucket(TempBuck)
+		if err1 != nil {
+			b = tx.Bucket(TempBuck)
+			if b == nil {
+				err1 = errors.New("CreateBucket err.")
+			} else {
+				err1 = nil
+			}
+		}
 		return err1
 	})
 	if err != nil {
 		return err
 	}
 	err = DB.Update(func(tx *bolt.Tx) error {
-		b, err1 := tx.CreateBucket(syncbucket)
-		SyncBuck = b
+		b, err1 := tx.CreateBucket(SyncBuck)
+		if err1 != nil {
+			b = tx.Bucket(SyncBuck)
+			if b == nil {
+				err1 = errors.New("CreateBucket err.")
+			} else {
+				err1 = nil
+			}
+		}
 		return err1
 	})
 	if err != nil {

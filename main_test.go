@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -17,7 +18,7 @@ func Test(t *testing.T) {
 	//test.ListObj()
 	//test.UpAndDownFile()
 	//test.DownLoadByKey()
-	//test.UpAndDownBytes()
+	test.UpAndDownBytes()
 	//test.ListBucket()
 
 	//**********code test**********

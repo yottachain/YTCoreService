@@ -118,7 +118,8 @@ func (self *Value) ToBytes() []byte {
 func Find(count int) []*Cache {
 	res := []*Cache{}
 	DB.View(func(tx *bolt.Tx) error {
-		cur := TempBuck.Cursor()
+		b := tx.Bucket(TempBuck)
+		cur := b.Cursor()
 		for k, v := cur.First(); k != nil; k, v = cur.Next() {
 			c := &Cache{K: NewKey(k), V: NewValue(v)}
 			res = append(res, c)
@@ -134,7 +135,8 @@ func Find(count int) []*Cache {
 func SumSpace() int64 {
 	var sum int64 = 0
 	DB.View(func(tx *bolt.Tx) error {
-		cur := TempBuck.Cursor()
+		b := tx.Bucket(TempBuck)
+		cur := b.Cursor()
 		for k, v := cur.First(); k != nil; k, v = cur.Next() {
 			vv := NewValue(v)
 			sum = sum + vv.Length
@@ -147,11 +149,12 @@ func SumSpace() int64 {
 func InsertValue(k *Key, v *Value) error {
 	return DB.Update(func(tx *bolt.Tx) error {
 		bs := k.ToBytes()
-		vv := TempBuck.Get(bs)
+		b := tx.Bucket(TempBuck)
+		vv := b.Get(bs)
 		if vv != nil {
 			return errors.New("Repeat upload")
 		}
-		err := TempBuck.Put(bs, v.ToBytes())
+		err := b.Put(bs, v.ToBytes())
 		if err != nil {
 			return err
 		}
@@ -161,7 +164,8 @@ func InsertValue(k *Key, v *Value) error {
 
 func DeleteValue(k *Key) {
 	DB.Update(func(tx *bolt.Tx) error {
-		TempBuck.Delete(k.ToBytes())
+		b := tx.Bucket(TempBuck)
+		b.Delete(k.ToBytes())
 		return nil
 	})
 }
@@ -172,7 +176,8 @@ func GetValue(userid int32, buck, key string) *Value {
 		ObjectName: key}
 	var val []byte
 	DB.View(func(tx *bolt.Tx) error {
-		val = TempBuck.Get(Key.ToBytes())
+		b := tx.Bucket(TempBuck)
+		val = b.Get(Key.ToBytes())
 		return nil
 	})
 	if val == nil || len(val) == 0 {
