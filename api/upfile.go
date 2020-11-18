@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -118,7 +119,8 @@ func Delete(paths []string) {
 	if paths != nil {
 		dir := ""
 		for _, p := range paths {
-			dir = path.Base(p)
+			p = strings.ReplaceAll(p, "\\", "/")
+			dir = path.Dir(p)
 			os.Remove(p)
 		}
 		os.Remove(dir)
@@ -174,7 +176,9 @@ func upload(cache *Cache) {
 	} else {
 		//emsg = uploadToYotta(cache)
 	}
-	if emsg == nil || (emsg != nil && emsg.Code == pkt.INVALID_ARGS) {
+	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
+		return
+	} else {
 		atomic.AddInt64(CurCacheSize, -cache.V.Length)
 		DeleteValue(cache.K)
 		Delete(cache.V.Path)
