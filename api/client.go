@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -103,9 +102,7 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 		PutUploadObject(int32(c.UserId), bucketname, key, up)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
-			for _, p := range path {
-				os.Remove(p)
-			}
+			Delete(path)
 		}()
 		err := up.UploadMultiFile(path)
 		if err != nil {
@@ -148,7 +145,7 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 		PutUploadObject(int32(c.UserId), bucketname, key, up)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
-			os.Remove(path)
+			Delete([]string{path})
 		}()
 		err := up.UploadFile(path)
 		if err != nil {

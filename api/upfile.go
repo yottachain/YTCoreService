@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -113,6 +114,17 @@ func UploadBytesFile(userid int32, data []byte, bucketname, key string) ([]byte,
 	return enc.GetMD5(), nil
 }
 
+func Delete(paths []string) {
+	if paths != nil {
+		dir := ""
+		for _, p := range paths {
+			dir = path.Base(p)
+			os.Remove(p)
+		}
+		os.Remove(dir)
+	}
+}
+
 var CACHE_UP_CH chan int
 var LoopCond = sync.NewCond(new(sync.Mutex))
 
@@ -165,11 +177,7 @@ func upload(cache *Cache) {
 	if emsg == nil || (emsg != nil && emsg.Code == pkt.INVALID_ARGS) {
 		atomic.AddInt64(CurCacheSize, -cache.V.Length)
 		DeleteValue(cache.K)
-		if cache.V.Path != nil {
-			for _, p := range cache.V.Path {
-				os.Remove(p)
-			}
-		}
+		Delete(cache.V.Path)
 	}
 }
 
