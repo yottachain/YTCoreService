@@ -17,7 +17,6 @@ var TempBuck *bolt.Bucket
 var SyncBuck *bolt.Bucket
 
 func InitDB() error {
-	atomic.StoreInt64(CurCacheSize, 0)
 	path := env.GetDBCache() + dbname
 	dbc, err := bolt.Open(path, 0600, nil)
 	if err != nil {
@@ -42,5 +41,12 @@ func InitDB() error {
 		return err
 	}
 	logrus.Infof("LocalDB init...Path:%s\n", path)
+	initCacheSize()
 	return nil
+}
+
+func initCacheSize() {
+	sum := SumSpace()
+	logrus.Infof("Sum cache size %d\n", sum)
+	atomic.StoreInt64(CurCacheSize, sum)
 }

@@ -10,6 +10,11 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
+type Cache struct {
+	K *Key
+	V *Value
+}
+
 type Key struct {
 	UserID     int32
 	Bucket     string
@@ -110,8 +115,33 @@ func (self *Value) ToBytes() []byte {
 	return bytebuf.Bytes()
 }
 
+func Find(count int) []*Cache {
+	res := []*Cache{}
+	DB.View(func(tx *bolt.Tx) error {
+		cur := TempBuck.Cursor()
+		for k, v := cur.First(); k != nil; k, v = cur.Next() {
+			c := &Cache{K: NewKey(k), V: NewValue(v)}
+			res = append(res, c)
+			if len(res) >= count {
+				break
+			}
+		}
+		return nil
+	})
+	return res
+}
+
 func SumSpace() int64 {
-	return 0
+	var sum int64 = 0
+	DB.View(func(tx *bolt.Tx) error {
+		cur := TempBuck.Cursor()
+		for k, v := cur.First(); k != nil; k, v = cur.Next() {
+			vv := NewValue(v)
+			sum = sum + vv.Length
+		}
+		return nil
+	})
+	return sum
 }
 
 func InsertValue(k *Key, v *Value) error {

@@ -95,7 +95,9 @@ func StartApi() {
 	priv, _ := ytcrypto.CreateKey()
 	net.Start(0, 0, priv)
 	InitSuperList()
+	InitDB()
 	go StartPreAllocNode()
+	go DoCache()
 }
 
 func InitSuperList() {
