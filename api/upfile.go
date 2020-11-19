@@ -19,15 +19,15 @@ import (
 var UPLOADING sync.Map
 var CurCacheSize *int64 = new(int64)
 
-func PutUploadObject(userid int32, buck, key string, obj ObjectUploader) {
+func PutUploadObject(userid int32, buck, key string, obj UploadObjectBase) {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	UPLOADING.Store(ss, obj)
 }
 
-func GetUploadObject(userid int32, buck, key string) ObjectUploader {
+func GetUploadObject(userid int32, buck, key string) UploadObjectBase {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	if vv, ok := UPLOADING.Load(ss); ok {
-		return vv.(ObjectUploader)
+		return vv.(UploadObjectBase)
 	}
 	return nil
 }
@@ -197,7 +197,7 @@ func DoUpload(cache *Cache) *pkt.ErrorMessage {
 		logrus.Errorf("[UploadToYotta]Client %d offline.\n", cache.K.UserID)
 		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
 	}
-	var obj ObjectUploader
+	var obj UploadObjectBase
 	if env.Driver == "yotta" {
 		obj = NewUploadObject(c)
 	} else {

@@ -97,7 +97,7 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 }
 
 func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	var up ObjectUploader
+	var up UploadObjectBase
 	if env.SyncMode == 0 {
 		if env.Driver == "yotta" {
 			up = NewUploadObject(c)
@@ -126,7 +126,7 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 }
 
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	var up ObjectUploader
+	var up UploadObjectBase
 	if env.SyncMode == 0 {
 		if env.Driver == "yotta" {
 			up = NewUploadObject(c)
@@ -154,7 +154,7 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 }
 
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	var up ObjectUploader
+	var up UploadObjectBase
 	if env.SyncMode == 0 {
 		if env.Driver == "yotta" {
 			up = NewUploadObject(c)

@@ -26,7 +26,7 @@ func (self *UpProgress) GetProgress() int32 {
 	return int32(p1 * p2 / 100)
 }
 
-type ObjectUploader interface {
+type UploadObjectBase interface {
 	UploadMultiFile(path []string) *pkt.ErrorMessage
 	UploadFile(path string) *pkt.ErrorMessage
 	UploadBytes(data []byte) *pkt.ErrorMessage
