@@ -46,12 +46,6 @@ func (h *Human) CallSayHi() {
 func Test(t *testing.T) {
 	defer env.TracePanic("Test")
 
-	mark := Student{Human{"Mark", 25, "222-222-YYYY"}, "MIT"}
-	sam := Employee{Human{"Sam", 45, "111-888-XXXX"}, "Golang Inc"}
-
-	mark.SayHi()
-	sam.SayHi()
-
 	//***********api test*********
 	//test.ListObj()
 	//test.UpAndDownFile()
