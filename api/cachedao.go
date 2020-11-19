@@ -122,7 +122,7 @@ func (self *Value) ToBytes() []byte {
 
 func Find(count int) []*Cache {
 	res := []*Cache{}
-	DB.View(func(tx *bolt.Tx) error {
+	CacheDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)
 		cur := b.Cursor()
 		for k, v := cur.First(); k != nil; k, v = cur.Next() {
@@ -143,7 +143,7 @@ func Find(count int) []*Cache {
 
 func SumSpace() int64 {
 	var sum int64 = 0
-	DB.View(func(tx *bolt.Tx) error {
+	CacheDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)
 		cur := b.Cursor()
 		for k, v := cur.First(); k != nil; k, v = cur.Next() {
@@ -156,7 +156,7 @@ func SumSpace() int64 {
 }
 
 func InsertValue(k *Key, v *Value) error {
-	return DB.Update(func(tx *bolt.Tx) error {
+	return CacheDB.Update(func(tx *bolt.Tx) error {
 		bs := k.ToBytes()
 		b := tx.Bucket(TempBuck)
 		vv := b.Get(bs)
@@ -177,7 +177,7 @@ func InsertValue(k *Key, v *Value) error {
 }
 
 func DeleteValue(k *Key) {
-	DB.Update(func(tx *bolt.Tx) error {
+	CacheDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)
 		b.Delete(k.ToBytes())
 		return nil
@@ -189,7 +189,7 @@ func GetValue(userid int32, buck, key string) *Value {
 		Bucket:     buck,
 		ObjectName: key}
 	var val []byte
-	DB.View(func(tx *bolt.Tx) error {
+	CacheDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)
 		val = b.Get(Key.ToBytes())
 		return nil

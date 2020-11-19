@@ -9,20 +9,22 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-var dbname = "cache.db"
+var cachedbname = "cache.db"
+var objdbname = "object.db"
 var TempBuck = []byte("tmpobject")
 var SyncBuck = []byte("syncobject")
-var DB *bolt.DB
+var CacheDB *bolt.DB
+var ObjectDB *bolt.DB
 
 func InitDB() error {
-	path := env.GetDBCache() + dbname
+	path := env.GetDBCache() + cachedbname
 	dbc, err := bolt.Open(path, 0600, nil)
 	if err != nil {
 		return err
 	} else {
-		DB = dbc
+		CacheDB = dbc
 	}
-	err = DB.Update(func(tx *bolt.Tx) error {
+	err = CacheDB.Update(func(tx *bolt.Tx) error {
 		b, err1 := tx.CreateBucket(TempBuck)
 		if err1 != nil {
 			b = tx.Bucket(TempBuck)
@@ -37,7 +39,14 @@ func InitDB() error {
 	if err != nil {
 		return err
 	}
-	err = DB.Update(func(tx *bolt.Tx) error {
+	path1 := env.GetDBCache() + objdbname
+	db, errr := bolt.Open(path1, 0600, nil)
+	if errr != nil {
+		return errr
+	} else {
+		ObjectDB = db
+	}
+	err = ObjectDB.Update(func(tx *bolt.Tx) error {
 		b, err1 := tx.CreateBucket(SyncBuck)
 		if err1 != nil {
 			b = tx.Bucket(SyncBuck)
