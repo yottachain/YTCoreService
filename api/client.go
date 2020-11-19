@@ -97,9 +97,14 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 }
 
 func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up ObjectUploader
 	if env.SyncMode == 0 {
-		up := NewUploadObject(c)
-		PutUploadObject(int32(c.UserId), bucketname, key, up.PRO)
+		if env.Driver == "yotta" {
+			up = NewUploadObject(c)
+		} else {
+			up = NewUploadObjectToDisk(c)
+		}
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
 			Delete(path)
@@ -108,10 +113,12 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 		if err != nil {
 			return nil, err
 		}
-		meta := MetaTobytes(up.GetLength(), up.GetMD5())
-		err = c.NewObjectAccessor().CreateObject(bucketname, key, up.VNU, meta)
-		if err != nil {
-			return nil, err
+		if r, ok := up.(*UploadObject); ok {
+			meta := MetaTobytes(up.GetLength(), up.GetMD5())
+			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return up.GetMD5(), nil
 	}
@@ -119,9 +126,14 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 }
 
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up ObjectUploader
 	if env.SyncMode == 0 {
-		up := NewUploadObject(c)
-		PutUploadObject(int32(c.UserId), bucketname, key, up.PRO)
+		if env.Driver == "yotta" {
+			up = NewUploadObject(c)
+		} else {
+			up = NewUploadObjectToDisk(c)
+		}
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
 		}()
@@ -129,10 +141,12 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 		if err != nil {
 			return nil, err
 		}
-		meta := MetaTobytes(up.GetLength(), up.GetMD5())
-		err = c.NewObjectAccessor().CreateObject(bucketname, key, up.VNU, meta)
-		if err != nil {
-			return nil, err
+		if r, ok := up.(*UploadObject); ok {
+			meta := MetaTobytes(up.GetLength(), up.GetMD5())
+			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return up.GetMD5(), nil
 	}
@@ -140,9 +154,14 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 }
 
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up ObjectUploader
 	if env.SyncMode == 0 {
-		up := NewUploadObject(c)
-		PutUploadObject(int32(c.UserId), bucketname, key, up.PRO)
+		if env.Driver == "yotta" {
+			up = NewUploadObject(c)
+		} else {
+			up = NewUploadObjectToDisk(c)
+		}
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
 			Delete([]string{path})
@@ -151,10 +170,12 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 		if err != nil {
 			return nil, err
 		}
-		meta := MetaTobytes(up.GetLength(), up.GetMD5())
-		err = c.NewObjectAccessor().CreateObject(bucketname, key, up.VNU, meta)
-		if err != nil {
-			return nil, err
+		if r, ok := up.(*UploadObject); ok {
+			meta := MetaTobytes(up.GetLength(), up.GetMD5())
+			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return up.GetMD5(), nil
 	}

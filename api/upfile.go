@@ -19,15 +19,15 @@ import (
 var UPLOADING sync.Map
 var CurCacheSize *int64 = new(int64)
 
-func PutUploadObject(userid int32, buck, key string, obj *UpProgress) {
+func PutUploadObject(userid int32, buck, key string, obj ObjectUploader) {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	UPLOADING.Store(ss, obj)
 }
 
-func GetUploadObject(userid int32, buck, key string) *UpProgress {
+func GetUploadObject(userid int32, buck, key string) ObjectUploader {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	if vv, ok := UPLOADING.Load(ss); ok {
-		return vv.(*UpProgress)
+		return vv.(ObjectUploader)
 	}
 	return nil
 }
@@ -181,12 +181,7 @@ func upload(cache *Cache) {
 		CACHE_UP_CH <- 1
 		DoingList.Delete(cache.K.ToString())
 	}()
-	var emsg *pkt.ErrorMessage = nil
-	if env.Driver == "yotta" {
-		emsg = uploadToYotta(cache)
-	} else {
-		emsg = uploadToDisk(cache)
-	}
+	emsg := DoUpload(cache)
 	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
@@ -196,46 +191,19 @@ func upload(cache *Cache) {
 	}
 }
 
-func uploadToDisk(cache *Cache) *pkt.ErrorMessage {
-	c := GetClientById(uint32(cache.K.UserID))
-	if c == nil {
-		logrus.Errorf("[UploadToDisk]Client %d offline.\n", cache.K.UserID)
-		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
-	}
-	obj := NewUploadObjectToDisk(c)
-	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj.PRO)
-	defer func() {
-		DelUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName)
-	}()
-	var emsg *pkt.ErrorMessage = nil
-	if cache.V.Type == 0 {
-		emsg = obj.UploadBytes(cache.V.Data)
-	} else if cache.V.Type == 0 {
-		emsg = obj.UploadFile(cache.V.Path[0])
-	} else {
-		emsg = obj.UploadMultiFile(cache.V.Path)
-	}
-	if emsg != nil {
-		return emsg
-	}
-	if !bytes.Equal(cache.V.Md5, obj.GetMD5()) {
-		if cache.V.Type > 0 {
-			logrus.Warnf("[UploadToDisk]%s,Md5 ERR.\n", cache.V.Path[0])
-		} else {
-			logrus.Warnf("[UploadToDisk]Md5 ERR.\n")
-		}
-	}
-	return nil
-}
-
-func uploadToYotta(cache *Cache) *pkt.ErrorMessage {
+func DoUpload(cache *Cache) *pkt.ErrorMessage {
 	c := GetClientById(uint32(cache.K.UserID))
 	if c == nil {
 		logrus.Errorf("[UploadToYotta]Client %d offline.\n", cache.K.UserID)
 		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
 	}
-	obj := NewUploadObject(c)
-	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj.PRO)
+	var obj ObjectUploader
+	if env.Driver == "yotta" {
+		obj = NewUploadObject(c)
+	} else {
+		obj = NewUploadObjectToDisk(c)
+	}
+	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj)
 	defer func() {
 		DelUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName)
 	}()
@@ -257,6 +225,10 @@ func uploadToYotta(cache *Cache) *pkt.ErrorMessage {
 			logrus.Warnf("[UploadToYotta]Md5 ERR.\n")
 		}
 	}
-	meta := MetaTobytes(obj.GetLength(), obj.GetMD5())
-	return c.NewObjectAccessor().CreateObject(cache.K.Bucket, cache.K.ObjectName, obj.VNU, meta)
+	if r, ok := obj.(*UploadObject); ok {
+		meta := MetaTobytes(obj.GetLength(), obj.GetMD5())
+		return c.NewObjectAccessor().CreateObject(cache.K.Bucket, cache.K.ObjectName, r.VNU, meta)
+	} else {
+		return nil
+	}
 }
