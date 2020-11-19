@@ -99,7 +99,7 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		up := NewUploadObject(c)
-		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		PutUploadObject(int32(c.UserId), bucketname, key, up.PRO)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
 			Delete(path)
@@ -121,7 +121,7 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		up := NewUploadObject(c)
-		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		PutUploadObject(int32(c.UserId), bucketname, key, up.PRO)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
 		}()
@@ -142,7 +142,7 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		up := NewUploadObject(c)
-		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		PutUploadObject(int32(c.UserId), bucketname, key, up.PRO)
 		defer func() {
 			DelUploadObject(int32(c.UserId), bucketname, key)
 			Delete([]string{path})

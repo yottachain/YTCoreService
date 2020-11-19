@@ -19,15 +19,15 @@ import (
 var UPLOADING sync.Map
 var CurCacheSize *int64 = new(int64)
 
-func PutUploadObject(userid int32, buck, key string, obj *UploadObject) {
+func PutUploadObject(userid int32, buck, key string, obj *UpProgress) {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	UPLOADING.Store(ss, obj)
 }
 
-func GetUploadObject(userid int32, buck, key string) *UploadObject {
+func GetUploadObject(userid int32, buck, key string) *UpProgress {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	if vv, ok := UPLOADING.Load(ss); ok {
-		return vv.(*UploadObject)
+		return vv.(*UpProgress)
 	}
 	return nil
 }
@@ -37,11 +37,20 @@ func DelUploadObject(userid int32, buck, key string) {
 	UPLOADING.Delete(ss)
 }
 
-func UploadMultiPartFile(userid int32, path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+func checkCacheSize() bool {
 	cachesize := atomic.LoadInt64(CurCacheSize)
-	if cachesize > env.MaxCacheSize {
+	if cachesize > 1024*1024*1024 {
 		time.Sleep(time.Duration(10) * time.Second)
-		logrus.Errorf("[UploadMultiPartFile]Cache space overflow! ->%d\n", cachesize)
+	}
+	if cachesize > env.MaxCacheSize {
+		logrus.Errorf("[AyncUploadFile]Cache space overflow! ->%d\n", cachesize)
+		return false
+	}
+	return true
+}
+
+func UploadMultiPartFile(userid int32, path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	if !checkCacheSize() {
 		return nil, pkt.NewErrorMsg(pkt.CACHE_FULL, "Cache space overflow")
 	}
 	enc, err := codec.NewMultiFileEncoder(path)
@@ -64,10 +73,7 @@ func UploadMultiPartFile(userid int32, path []string, bucketname, key string) ([
 }
 
 func UploadSingleFile(userid int32, path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	cachesize := atomic.LoadInt64(CurCacheSize)
-	if cachesize > env.MaxCacheSize {
-		time.Sleep(time.Duration(10) * time.Second)
-		logrus.Errorf("[UploadSingleFile]Cache space overflow! ->%d\n", cachesize)
+	if !checkCacheSize() {
 		return nil, pkt.NewErrorMsg(pkt.CACHE_FULL, "Cache space overflow")
 	}
 	enc, err := codec.NewFileEncoder(path)
@@ -90,10 +96,7 @@ func UploadSingleFile(userid int32, path string, bucketname, key string) ([]byte
 }
 
 func UploadBytesFile(userid int32, data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	cachesize := atomic.LoadInt64(CurCacheSize)
-	if cachesize > env.MaxCacheSize {
-		time.Sleep(time.Duration(10) * time.Second)
-		logrus.Errorf("[UploadBytesFile]Cache space overflow! ->%d\n", cachesize)
+	if !checkCacheSize() {
 		return nil, pkt.NewErrorMsg(pkt.CACHE_FULL, "Cache space overflow")
 	}
 	enc, err := codec.NewBytesEncoder(data)
@@ -129,6 +132,7 @@ func Delete(paths []string) {
 
 var CACHE_UP_CH chan int
 var LoopCond = sync.NewCond(new(sync.Mutex))
+var DoingList sync.Map
 
 func initCACHEUpPool() int {
 	count := env.CheckInt(env.UploadBlockThreadNum/3, 10, 30)
@@ -141,6 +145,11 @@ func initCACHEUpPool() int {
 
 func Notify() {
 	LoopCond.Signal()
+}
+
+func IsDoing(key *Key) bool {
+	_, ok := DoingList.Load(key.ToString())
+	return ok
 }
 
 func DoCache() {
@@ -160,6 +169,7 @@ func DoCache() {
 		} else {
 			for _, ca := range caches {
 				<-CACHE_UP_CH
+				DoingList.Store(ca.K.ToString, ca)
 				go upload(ca)
 			}
 		}
@@ -169,15 +179,16 @@ func DoCache() {
 func upload(cache *Cache) {
 	defer func() {
 		CACHE_UP_CH <- 1
+		DoingList.Delete(cache.K.ToString())
 	}()
 	var emsg *pkt.ErrorMessage = nil
-	if env.SyncMode == 1 {
+	if env.Driver == "yotta" {
 		emsg = uploadToYotta(cache)
 	} else {
-		//emsg = uploadToYotta(cache)
+		emsg = uploadToDisk(cache)
 	}
-	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
-		return
+	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
+		time.Sleep(time.Duration(15) * time.Second)
 	} else {
 		atomic.AddInt64(CurCacheSize, -cache.V.Length)
 		DeleteValue(cache.K)
@@ -185,14 +196,46 @@ func upload(cache *Cache) {
 	}
 }
 
+func uploadToDisk(cache *Cache) *pkt.ErrorMessage {
+	c := GetClientById(uint32(cache.K.UserID))
+	if c == nil {
+		logrus.Errorf("[UploadToDisk]Client %d offline.\n", cache.K.UserID)
+		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
+	}
+	obj := NewUploadObjectToDisk(c)
+	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj.PRO)
+	defer func() {
+		DelUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName)
+	}()
+	var emsg *pkt.ErrorMessage = nil
+	if cache.V.Type == 0 {
+		emsg = obj.UploadBytes(cache.V.Data)
+	} else if cache.V.Type == 0 {
+		emsg = obj.UploadFile(cache.V.Path[0])
+	} else {
+		emsg = obj.UploadMultiFile(cache.V.Path)
+	}
+	if emsg != nil {
+		return emsg
+	}
+	if !bytes.Equal(cache.V.Md5, obj.GetMD5()) {
+		if cache.V.Type > 0 {
+			logrus.Warnf("[UploadToDisk]%s,Md5 ERR.\n", cache.V.Path[0])
+		} else {
+			logrus.Warnf("[UploadToDisk]Md5 ERR.\n")
+		}
+	}
+	return nil
+}
+
 func uploadToYotta(cache *Cache) *pkt.ErrorMessage {
 	c := GetClientById(uint32(cache.K.UserID))
 	if c == nil {
 		logrus.Errorf("[UploadToYotta]Client %d offline.\n", cache.K.UserID)
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Client offline")
+		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
 	}
 	obj := NewUploadObject(c)
-	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj)
+	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj.PRO)
 	defer func() {
 		DelUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName)
 	}()

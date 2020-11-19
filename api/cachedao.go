@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/boltdb/bolt"
@@ -21,6 +22,10 @@ type Key struct {
 	ObjectName string
 }
 
+func (self *Key) ToString() string {
+	return strconv.Itoa(int(self.UserID)) + "/" + self.Bucket + "/" + self.ObjectName
+}
+
 func (self *Key) ToBytes() []byte {
 	s := self.Bucket + "/" + self.ObjectName
 	bytebuf := bytes.NewBuffer([]byte{})
@@ -34,7 +39,7 @@ func NewKey(data []byte) *Key {
 	ss := string(data[4:])
 	pos := strings.Index(ss, "/")
 	buck := ss[0:pos]
-	name := ss[pos:]
+	name := ss[pos+1:]
 	k := &Key{UserID: ii, Bucket: buck, ObjectName: name}
 	return k
 }
@@ -121,7 +126,11 @@ func Find(count int) []*Cache {
 		b := tx.Bucket(TempBuck)
 		cur := b.Cursor()
 		for k, v := cur.First(); k != nil; k, v = cur.Next() {
-			c := &Cache{K: NewKey(k), V: NewValue(v)}
+			nk := NewKey(k)
+			if IsDoing(nk) {
+				continue
+			}
+			c := &Cache{K: nk, V: NewValue(v)}
 			res = append(res, c)
 			if len(res) >= count {
 				break
@@ -152,7 +161,12 @@ func InsertValue(k *Key, v *Value) error {
 		b := tx.Bucket(TempBuck)
 		vv := b.Get(bs)
 		if vv != nil {
-			return errors.New("Repeat upload")
+			md5_1 := v.Md5
+			md5_2 := NewValue(vv).Md5
+			if bytes.Equal(md5_1, md5_2) {
+				return nil
+			}
+			return errors.New("Repeat key.")
 		}
 		err := b.Put(bs, v.ToBytes())
 		if err != nil {

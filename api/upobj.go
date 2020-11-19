@@ -35,6 +35,19 @@ type UpProgress struct {
 	WriteLength   *int64
 }
 
+func (self *UpProgress) GetProgress() int32 {
+	l1 := atomic.LoadInt64(self.Length)
+	l2 := atomic.LoadInt64(self.ReadinLength)
+	l3 := atomic.LoadInt64(self.ReadOutLength)
+	l4 := atomic.LoadInt64(self.WriteLength)
+	if l1 == 0 || l3 == 0 {
+		return 0
+	}
+	p1 := l2 * 100 / l1
+	p2 := l4 * 100 / l3
+	return int32(p1 * p2 / 100)
+}
+
 func NewUploadObject(c *Client) *UploadObject {
 	p := &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
 	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p}
@@ -70,7 +83,7 @@ func (self *UploadObject) UploadMultiFile(path []string) *pkt.ErrorMessage {
 	}
 	self.Encoder = enc
 	defer enc.Close()
-	return self.upload()
+	return self.Upload()
 }
 
 func (self *UploadObject) UploadFile(path string) *pkt.ErrorMessage {
@@ -81,7 +94,7 @@ func (self *UploadObject) UploadFile(path string) *pkt.ErrorMessage {
 	}
 	self.Encoder = enc
 	defer enc.Close()
-	return self.upload()
+	return self.Upload()
 }
 
 func (self *UploadObject) UploadBytes(data []byte) *pkt.ErrorMessage {
@@ -92,7 +105,7 @@ func (self *UploadObject) UploadBytes(data []byte) *pkt.ErrorMessage {
 	}
 	self.Encoder = enc
 	defer enc.Close()
-	return self.upload()
+	return self.Upload()
 }
 
 func (self *UploadObject) IdExist(id uint32) bool {
@@ -108,19 +121,10 @@ func (self *UploadObject) IdExist(id uint32) bool {
 }
 
 func (self *UploadObject) GetProgress() int32 {
-	l1 := atomic.LoadInt64(self.PRO.Length)
-	l2 := atomic.LoadInt64(self.PRO.ReadinLength)
-	l3 := atomic.LoadInt64(self.PRO.ReadOutLength)
-	l4 := atomic.LoadInt64(self.PRO.WriteLength)
-	if l1 == 0 || l3 == 0 {
-		return 0
-	}
-	p1 := l2 * 100 / l1
-	p2 := l4 * 100 / l3
-	return int32(p1 * p2 / 100)
+	return self.PRO.GetProgress()
 }
 
-func (self *UploadObject) upload() (reserr *pkt.ErrorMessage) {
+func (self *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
