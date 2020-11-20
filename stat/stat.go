@@ -2,6 +2,7 @@ package stat
 
 import (
 	"fmt"
+	"github.com/yottachain/YTCoreService/env"
 	"log"
 	"os"
 	"reflect"
@@ -100,7 +101,7 @@ func (ccs *ccstat) GtSucsAdd() {
 }
 
 func init() {
-	fd, err := os.OpenFile("stat.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	fd, err := os.OpenFile(env.YTFS_HOME+"stat.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		log.Fatalln("open stat.log fail  "+ err.Error())
 	}
