@@ -342,7 +342,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 		return
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
-	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime}
+	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime, SrcNodeID: ls.SrcNodeID}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
@@ -405,7 +405,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		startTime := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
 		defer cancel()
-		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime}
+		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime, SrcNodeID: h.m.SrcNodeID}
 		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
 		if err != nil {
 			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s,take times %d ms\n",
