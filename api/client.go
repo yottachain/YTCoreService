@@ -102,7 +102,7 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 	var up UploadObjectBase
 	if env.SyncMode == 0 {
 		if env.Driver == "nas" {
-			up = NewUploadObjectToDisk(c)
+			up = NewUploadObjectToDisk(c, bucketname, key)
 		} else {
 			up = NewUploadObject(c)
 		}
@@ -131,7 +131,7 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 	var up UploadObjectBase
 	if env.SyncMode == 0 {
 		if env.Driver == "nas" {
-			up = NewUploadObjectToDisk(c)
+			up = NewUploadObjectToDisk(c, bucketname, key)
 		} else {
 			up = NewUploadObject(c)
 		}
@@ -169,7 +169,7 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 	var up UploadObjectBase
 	if env.SyncMode == 0 {
 		if env.Driver == "nas" {
-			up = NewUploadObjectToDisk(c)
+			up = NewUploadObjectToDisk(c, bucketname, key)
 		} else {
 			up = NewUploadObject(c)
 		}

@@ -6,18 +6,32 @@ import (
 	"encoding/binary"
 	"io"
 	"os"
+	"sync/atomic"
 
 	"github.com/mr-tron/base58/base58"
 	"github.com/yottachain/YTCoreService/env"
 )
 
 type Encoder struct {
-	key       string
-	userId    uint32
-	keyNumber uint32
-	sign      string
-	checker   DupBlockChecker
-	fc        *FileEncoder
+	key           string
+	userId        uint32
+	keyNumber     uint32
+	sign          string
+	checker       DupBlockChecker
+	fc            *FileEncoder
+	ReadinLength  *int64
+	ReadOutLength *int64
+	WriteLength   *int64
+}
+
+func NewEncoder(uid, keyNum uint32, signstr string, s3key string, enc *FileEncoder, check DupBlockChecker) *Encoder {
+	return &Encoder{key: s3key,
+		userId:    uid,
+		keyNumber: keyNum,
+		sign:      signstr,
+		checker:   check,
+		fc:        enc,
+	}
 }
 
 func (self *Encoder) GetSHA256() []byte {
@@ -36,15 +50,13 @@ func (self *Encoder) GetBaseMD5() string {
 	return base58.Encode(self.fc.GetMD5())
 }
 
-func (self *Encoder) Close() {
-	if self.fc != nil {
-		self.fc.Close()
-		self.fc = nil
-	}
+func (self *Encoder) HandleProgress(Readin, ReadOut, Write *int64) {
+	self.ReadinLength = Readin
+	self.ReadOutLength = ReadOut
+	self.WriteLength = Write
 }
 
 func (self *Encoder) Handle(out string) error {
-	defer self.Close()
 	f, err := os.OpenFile(out+self.GetBaseSHA256(), os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return err
@@ -59,6 +71,10 @@ func (self *Encoder) Handle(out string) error {
 		b, err := self.fc.ReadNext()
 		if err != nil {
 			return err
+		}
+		if self.ReadinLength != nil {
+			atomic.StoreInt64(self.ReadinLength, self.fc.GetReadinTotal())
+			atomic.StoreInt64(self.ReadOutLength, self.fc.GetReadoutTotal())
 		}
 		if b == nil {
 			break
@@ -75,6 +91,9 @@ func (self *Encoder) Handle(out string) error {
 			}
 			if err != nil {
 				return err
+			}
+			if self.WriteLength != nil {
+				atomic.AddInt64(self.WriteLength, b.Length())
 			}
 			lastpos = lastpos + size
 		}

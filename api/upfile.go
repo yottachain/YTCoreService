@@ -66,7 +66,6 @@ func UploadMultiPartFile(userid int32, path []string, bucketname, key string) ([
 		logrus.Errorf("[UploadMultiPartFile]%s/%s,Insert cache ERR:%s\n", bucketname, key, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
-	atomic.AddInt64(cache.CurCacheSize, enc.GetLength())
 	logrus.Infof("[UploadMultiPartFile]%s/%s,Insert cache ok\n", bucketname, key)
 	Notify()
 	return enc.GetMD5(), nil
@@ -89,7 +88,6 @@ func UploadSingleFile(userid int32, path string, bucketname, key string) ([]byte
 		logrus.Errorf("[UploadSingleFile]%s/%s,Insert cache ERR:%s\n", bucketname, key, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
-	atomic.AddInt64(cache.CurCacheSize, enc.GetLength())
 	logrus.Infof("[UploadSingleFile]%s/%s,Insert cache ok\n", bucketname, key)
 	Notify()
 	return enc.GetMD5(), nil
@@ -112,7 +110,6 @@ func UploadBytesFile(userid int32, data []byte, bucketname, key string) ([]byte,
 		logrus.Errorf("[UploadBytesFile]%s/%s,Insert cache ERR:%s\n", bucketname, key, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
-	atomic.AddInt64(cache.CurCacheSize, enc.GetLength())
 	logrus.Infof("[UploadBytesFile]%s/%s,Insert cache ok\n", bucketname, key)
 	Notify()
 	return enc.GetMD5(), nil
@@ -194,12 +191,12 @@ func upload(ca *cache.Cache) {
 func DoUpload(ca *cache.Cache) *pkt.ErrorMessage {
 	c := GetClientById(uint32(ca.K.UserID))
 	if c == nil {
-		logrus.Errorf("[UploadToYotta]Client %d offline.\n", ca.K.UserID)
+		logrus.Errorf("[AyncUpload]Client %d offline.\n", ca.K.UserID)
 		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
 	}
 	var obj UploadObjectBase
 	if env.Driver == "nas" {
-		obj = NewUploadObjectToDisk(c)
+		obj = NewUploadObjectToDisk(c, ca.K.Bucket, ca.K.ObjectName)
 	} else {
 		obj = NewUploadObject(c)
 	}
@@ -220,9 +217,9 @@ func DoUpload(ca *cache.Cache) *pkt.ErrorMessage {
 	}
 	if !bytes.Equal(ca.V.Md5, obj.GetMD5()) {
 		if ca.V.Type > 0 {
-			logrus.Warnf("[UploadToYotta]%s,Md5 ERR.\n", ca.V.Path[0])
+			logrus.Warnf("[AyncUpload]%s,Md5 ERR.\n", ca.V.Path[0])
 		} else {
-			logrus.Warnf("[UploadToYotta]Md5 ERR.\n")
+			logrus.Warnf("[AyncUpload]Md5 ERR.\n")
 		}
 	}
 	if r, ok := obj.(*UploadObject); ok {

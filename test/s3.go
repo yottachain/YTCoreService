@@ -13,8 +13,7 @@ import (
 
 func UploadFile() {
 	initApi()
-	client.UploadFile("D:/YTCoreService/cache/s3cache/test/FileZilla_3.49.1_win64-setup.exe", "test", "FileZilla_3.49.1_win64-setup.exe")
-	client.UploadFile("D:/YTCoreService/cache/s3cache/test/FileZilla_3.50.0_win64-setup.exe", "test", "FileZilla_3.50.0_win64-setup.exe")
+	client.UploadFile("D:/YTCoreService/cache/s3cache/test/Secop.rar", "test", "Secop.rar")
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
 		ii := cache.GetCacheSize()

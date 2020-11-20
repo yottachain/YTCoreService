@@ -38,12 +38,12 @@ func GetDBCache() string {
 	return GetCacheDir("dbcache")
 }
 
+func GetCache() string {
+	return CachePath
+}
+
 func GetCacheDir(name string) string {
-	path := CachePath
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
-	}
-	path = path + name + "/"
+	path := CachePath + name + "/"
 	os.MkdirAll(path, os.ModePerm)
 	return path
 }
@@ -56,6 +56,10 @@ func readClientProperties() {
 	}
 	cfg = config
 	CachePath = config.GetString("cache", YTFS_HOME+"cache")
+	CachePath = strings.ReplaceAll(CachePath, "\\", "/")
+	if !strings.HasSuffix(CachePath, "/") {
+		CachePath = CachePath + "/"
+	}
 	SyncMode = config.GetRangeInt("syncmode", 0, 1, 0)
 	Driver = strings.ToLower(config.GetString("driver", "yotta"))
 	size := config.GetRangeInt("cachemaxsize", 5, 1024*100, 20)
