@@ -37,6 +37,10 @@ func DelUploadObject(userid int32, buck, key string) {
 	UPLOADING.Delete(ss)
 }
 
+func GetCacheSize() int64 {
+	return atomic.LoadInt64(CurCacheSize)
+}
+
 func checkCacheSize() bool {
 	cachesize := atomic.LoadInt64(CurCacheSize)
 	if cachesize > 1024*1024*1024 {
@@ -163,13 +167,13 @@ func DoCache() {
 	for {
 		caches := Find(count)
 		if len(caches) == 0 {
-			cond.L.Lock()
-			cond.Wait()
-			cond.L.Unlock()
+			LoopCond.L.Lock()
+			LoopCond.Wait()
+			LoopCond.L.Unlock()
 		} else {
 			for _, ca := range caches {
 				<-CACHE_UP_CH
-				DoingList.Store(ca.K.ToString, ca)
+				DoingList.Store(ca.K.ToString(), ca)
 				go upload(ca)
 			}
 		}
@@ -198,10 +202,10 @@ func DoUpload(cache *Cache) *pkt.ErrorMessage {
 		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Client offline")
 	}
 	var obj UploadObjectBase
-	if env.Driver == "yotta" {
-		obj = NewUploadObject(c)
-	} else {
+	if env.Driver == "nas" {
 		obj = NewUploadObjectToDisk(c)
+	} else {
+		obj = NewUploadObject(c)
 	}
 	PutUploadObject(int32(c.UserId), cache.K.Bucket, cache.K.ObjectName, obj)
 	defer func() {
