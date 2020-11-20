@@ -118,10 +118,11 @@ message TaskDescriptionLRC{
     int32 parityShardCount=4;
     int32 recoverId=5;
 }
-
+ 
 message TaskList{
     repeated bytes tasklist=1;
     int64 expiredTime=2;
+    int32 srcNodeID=3;
 }
 
 message TaskDispatchList{
@@ -134,12 +135,13 @@ message TaskOpResult{
     bytes id = 1; 
     int32 RES=2;
 }
-
+ 
 message TaskOpResultList{
     repeated bytes id = 1; 
     repeated int32 RES=2;
     int32 nodeId=3;
     int64 expiredTime=4;
+    int32 srcNodeID=5;
 }
 
 message UploadFackShardReq{ 

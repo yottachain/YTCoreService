@@ -1,12 +1,14 @@
 package api
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -81,6 +83,115 @@ func (c *Client) MakeSign() error {
 		c.Sign = s
 		return nil
 	}
+}
+
+func (c *Client) GetProgress(bucketname, key string) int32 {
+	v := GetUploadObject(int32(c.UserId), bucketname, key)
+	if v != nil {
+		return v.GetProgress()
+	}
+	vv := cache.GetValue(int32(c.UserId), bucketname, key)
+	if vv != nil {
+		return 0
+	} else {
+		return 100
+	}
+}
+
+func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up UploadObjectBase
+	if env.SyncMode == 0 {
+		if env.Driver == "nas" {
+			up = NewUploadObjectToDisk(c)
+		} else {
+			up = NewUploadObject(c)
+		}
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		defer func() {
+			DelUploadObject(int32(c.UserId), bucketname, key)
+			Delete(path)
+		}()
+		err := up.UploadMultiFile(path)
+		if err != nil {
+			return nil, err
+		}
+		if r, ok := up.(*UploadObject); ok {
+			meta := MetaTobytes(up.GetLength(), up.GetMD5())
+			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return up.GetMD5(), nil
+	}
+	return UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
+}
+
+func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up UploadObjectBase
+	if env.SyncMode == 0 {
+		if env.Driver == "nas" {
+			up = NewUploadObjectToDisk(c)
+		} else {
+			up = NewUploadObject(c)
+		}
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		defer func() {
+			DelUploadObject(int32(c.UserId), bucketname, key)
+		}()
+		err := up.UploadBytes(data)
+		if err != nil {
+			return nil, err
+		}
+		if r, ok := up.(*UploadObject); ok {
+			meta := MetaTobytes(up.GetLength(), up.GetMD5())
+			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return up.GetMD5(), nil
+	}
+	return UploadBytesFile(int32(c.UserId), data, bucketname, key)
+}
+
+func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	bs := md5.New().Sum(nil)
+	meta := MetaTobytes(0, bs)
+	err := c.NewObjectAccessor().CreateObject(bucketname, key, primitive.NewObjectID(), meta)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
+
+func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up UploadObjectBase
+	if env.SyncMode == 0 {
+		if env.Driver == "nas" {
+			up = NewUploadObjectToDisk(c)
+		} else {
+			up = NewUploadObject(c)
+		}
+		PutUploadObject(int32(c.UserId), bucketname, key, up)
+		defer func() {
+			DelUploadObject(int32(c.UserId), bucketname, key)
+			Delete([]string{path})
+		}()
+		err := up.UploadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		if r, ok := up.(*UploadObject); ok {
+			meta := MetaTobytes(up.GetLength(), up.GetMD5())
+			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return up.GetMD5(), nil
+	}
+	return UploadSingleFile(int32(c.UserId), path, bucketname, key)
 }
 
 func (c *Client) NewUploadObject() *UploadObject {

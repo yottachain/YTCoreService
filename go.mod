@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974
+	github.com/boltdb/bolt v1.3.1
 	github.com/gobuffalo/packr/v2 v2.5.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
@@ -20,7 +21,7 @@ require (
 	github.com/yottachain/YTDNMgmt v0.0.0-20201020034239-37c5dac308b7
 	github.com/yottachain/YTHost v1.0.2-0.20201106071700-e14ba07acf15
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
-	github.com/yottachain/yotta-rebuilder v0.0.0-20200817030553-27f420cd9e39
+	github.com/yottachain/yotta-rebuilder v0.0.0-20201118133407-1f6241a7fae0
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	golang.org/x/mod v0.3.0 // indirect

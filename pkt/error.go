@@ -43,6 +43,7 @@ const TOO_MANY_CURSOR = 0x24
 const TOO_LOW_VERSION = 0x25
 const DN_IN_BLACKLIST = 0x26
 const BAD_MESSAGE = 0x27
+const CACHE_FULL = 0x28
 const INVALID_ARGS = 0x30
 const CONN_ERROR = 0x31
 

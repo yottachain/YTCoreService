@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -23,6 +24,7 @@ const MAX_CLIENT_NUM = 2000
 var clients = struct {
 	sync.RWMutex
 	clientlist map[string]*Client
+	clientids  sync.Map
 }{clientlist: make(map[string]*Client)}
 
 func NewClient(uname string, privkey string) (*Client, error) {
@@ -48,6 +50,7 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return nil, err
 	}
 	clients.clientlist[c.AccessorKey] = c
+	clients.clientids.Store(c.UserId, c)
 	NotifyAllocNode(false)
 	return c, nil
 }
@@ -62,6 +65,13 @@ func GetClients() []*Client {
 	return ls
 }
 
+func GetClientById(uid uint32) *Client {
+	if vv, ok := clients.clientids.Load(uid); ok {
+		return vv.(*Client)
+	}
+	return nil
+}
+
 func GetClient(key string) *Client {
 	clients.RLock()
 	defer clients.RUnlock()
@@ -71,7 +81,11 @@ func GetClient(key string) *Client {
 func DistoryClient(key string) {
 	clients.Lock()
 	defer clients.Unlock()
-	delete(clients.clientlist, key)
+	c := clients.clientlist[key]
+	if c != nil {
+		delete(clients.clientlist, key)
+		clients.clientids.Delete(c.UserId)
+	}
 }
 
 func StartApi() {
@@ -83,6 +97,7 @@ func StartApi() {
 	priv, _ := ytcrypto.CreateKey()
 	net.Start(0, 0, priv)
 	InitSuperList()
+	cache.InitDB()
 	go StartPreAllocNode()
 	env.PrintEnv()
 	PrintApiCfg()
@@ -92,6 +107,7 @@ func StartApi() {
 func PrintApiCfg () {
 	stat.Ccstat.Println("BLOCK_ROUTINE_CH", len(BLOCK_ROUTINE_CH))
 	stat.Ccstat.Println("SHARD_UP_CH", len(SHARD_UP_CH))
+	go DoCache()
 }
 
 func InitSuperList() {
