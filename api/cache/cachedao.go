@@ -1,4 +1,4 @@
-package api
+package cache
 
 import (
 	"bytes"
@@ -120,14 +120,14 @@ func (self *Value) ToBytes() []byte {
 	return bytebuf.Bytes()
 }
 
-func Find(count int) []*Cache {
+func Find(count int, isdoing func(key *Key) bool) []*Cache {
 	res := []*Cache{}
 	CacheDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)
 		cur := b.Cursor()
 		for k, v := cur.First(); k != nil; k, v = cur.Next() {
 			nk := NewKey(k)
-			if IsDoing(nk) {
+			if isdoing(nk) {
 				continue
 			}
 			c := &Cache{K: nk, V: NewValue(v)}
