@@ -64,11 +64,19 @@ func BytesToFileMetaMap(meta []byte, versionid primitive.ObjectID) (map[string]s
 	}
 }
 
+func MetaTobytes(length int64, md5 []byte) []byte {
+	bs1 := env.IdToBytes(length)
+	return bytes.Join([][]byte{bs1, md5}, []byte{})
+}
+
 func FileMetaMapTobytes(m map[string]string) ([]byte, error) {
 	s1, _ := m[ETagKey]
 	s1 = strings.ReplaceAll(s1, "\\", "")
 	bs2, err := hex.DecodeString(s1)
 	if err != nil {
+		return nil, errors.New(ETagKey + " value err.")
+	}
+	if len(bs2) != 16 {
 		return nil, errors.New(ETagKey + " value err.")
 	}
 	s2, _ := m[LengthKey]

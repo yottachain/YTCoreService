@@ -2,7 +2,6 @@ package test
 
 import (
 	"crypto/sha256"
-	"fmt"
 	"io"
 	"os"
 	"time"
@@ -15,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = false
+const yfnet = true
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
@@ -25,61 +24,31 @@ const savePath = "d:/test"
 var data []byte
 var client *api.Client
 
-func ListBucket() {
-	initApi()
-	buck := client.NewBucketAccessor()
-	ss, err := buck.ListBucket()
+func initApi() {
+	var user string
+	var pkey string
+	if yfnet {
+		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
+		//user = "username1234"
+		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
+		user = "devtestuser1"
+		pkey = "5KTF2yAamvcaoDu6juAvxT5nxTn3UGfNoY2CJn8VAQ4giAfma2a"
+		//user = "devvtest1111"
+		//pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
+	} else {
+		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
+		user = "ianmooneyy11"
+		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
+		//user = "nloadzooqwer"
+		//pkey = "5KRWqgvdYVomJhobea4AbXpi9nR2wj53Hzy2JgUpAgZAry8WyeG"
+	}
+	api.StartApi()
+	c, err := api.NewClient(user, pkey)
 	if err != nil {
-		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
+		logrus.Panicf("[NewClient]ERR:%s\n", err)
 	}
-	for _, s := range ss {
-		logrus.Infof("[ListBucket]:%s\n", s)
-	}
-
-	//delete
-	err = buck.DeleteBucket("1234")
-	if err != nil {
-		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
-	}
-	obj := client.NewObjectAccessor()
-	obj.ListObject("1234", "", "", false, primitive.NilObjectID, 1000)
-	ss, err = buck.ListBucket()
-	if err != nil {
-		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
-	}
-	for _, s := range ss {
-		logrus.Infof("[ListBucket]:%s\n", s)
-	}
-
-	//create
-	header := make(map[string]string)
-	header["version_status"] = "Enabled"
-	meta, err1 := api.BucketMetaMapToBytes(header)
-	if err1 != nil {
-		logrus.Panicf("[ListBucket]ERR:%s\n", err1)
-	}
-	err = buck.CreateBucket("1234", meta)
-	if err != nil {
-		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
-	}
-	ss, err = buck.ListBucket()
-	if err != nil {
-		logrus.Panicf("[ListBucket]ERR:%s\n", pkt.ToError(err))
-	}
-	for _, s := range ss {
-		logrus.Infof("[ListBucket]:%s\n", s)
-	}
-}
-
-func ListObj() {
-	initApi()
-	obj := client.NewObjectAccessor()
-	items, _ := obj.ListObject("test", "", "", false, primitive.NilObjectID, 1000)
-	item := items[100]
-	m, _ := api.BytesToFileMetaMap(item.Meta, primitive.NilObjectID)
-	fmt.Println(api.LengthKey + ":" + m[api.LengthKey])
-	info, _ := client.NewObjectMeta("test", item.FileName, primitive.NilObjectID)
-	fmt.Printf("%s:%d\n", api.LengthKey, info.Length)
+	client = c
+	data = env.MakeRandData(testsize)
 }
 
 func UpAndDownBytes() {
@@ -184,33 +153,6 @@ func uploadFile() []byte {
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
 	<-oksign
 	return vhw
-}
-
-func initApi() {
-	var user string
-	var pkey string
-	if yfnet {
-		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
-		//user = "username1234"
-		//pkey = "5KfbRow4L71fZnnu9XEnkmVqByi6CSmRiADJCx6asRS4TUEkU79"
-		user = "devtestuser1"
-		pkey = "5KTF2yAamvcaoDu6juAvxT5nxTn3UGfNoY2CJn8VAQ4giAfma2a"
-		//user = "devvtest1111"
-		//pkey = "5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"
-	} else {
-		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-		user = "ianmooneyy11"
-		pkey = "5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH"
-		//user = "nloadzooqwer"
-		//pkey = "5KRWqgvdYVomJhobea4AbXpi9nR2wj53Hzy2JgUpAgZAry8WyeG"
-	}
-	api.StartApi()
-	c, err := api.NewClient(user, pkey)
-	if err != nil {
-		logrus.Panicf("[NewClient]ERR:%s\n", err)
-	}
-	client = c
-	data = env.MakeRandData(testsize)
 }
 
 func upload() ([]byte, primitive.ObjectID) {

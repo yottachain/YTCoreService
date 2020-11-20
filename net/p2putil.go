@@ -2,6 +2,7 @@ package net
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -49,9 +50,15 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		log_pre = fmt.Sprintf("[%s][%d]%s", name, sn.ID, log_prefix)
 	}
 	retryTimes := 0
+	var resmsg *pkt.ErrorMessage
 	for {
 		if retryTimes > 1 {
-			logrus.Infof("[P2P]%sRetry...\n", log_pre)
+			if resmsg == nil {
+				logrus.Errorf("[P2P]%sRetry...\n", log_pre)
+			} else {
+				logrus.Errorf("[P2P]%s,ServiceError %d:%s,Retry...\n",
+					log_pre, resmsg.Code, strings.TrimSpace(resmsg.Msg))
+			}
 		}
 		client, err := NewClient(sn.NodeID)
 		if err != nil {
