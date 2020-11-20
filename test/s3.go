@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
+	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,9 +17,8 @@ func UploadFile() {
 	client.UploadFile("D:/YTCoreService/cache/s3cache/test/FileZilla_3.50.0_win64-setup.exe", "test", "FileZilla_3.50.0_win64-setup.exe")
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
-		ii := api.GetCacheSize()
+		ii := cache.GetCacheSize()
 		logrus.Infof("Cache size %d\n", ii)
-
 	}
 }
 

@@ -1,12 +1,14 @@
 package api
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -88,7 +90,7 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 	if v != nil {
 		return v.GetProgress()
 	}
-	vv := GetValue(int32(c.UserId), bucketname, key)
+	vv := cache.GetValue(int32(c.UserId), bucketname, key)
 	if vv != nil {
 		return 0
 	} else {
@@ -151,6 +153,16 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 		return up.GetMD5(), nil
 	}
 	return UploadBytesFile(int32(c.UserId), data, bucketname, key)
+}
+
+func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	bs := md5.New().Sum(nil)
+	meta := MetaTobytes(0, bs)
+	err := c.NewObjectAccessor().CreateObject(bucketname, key, primitive.NewObjectID(), meta)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
 }
 
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {

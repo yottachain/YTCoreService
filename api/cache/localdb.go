@@ -1,4 +1,4 @@
-package api
+package cache
 
 import (
 	"errors"
@@ -66,8 +66,14 @@ func InitDB() error {
 	return nil
 }
 
+var CurCacheSize *int64 = new(int64)
+
 func initCacheSize() {
 	sum := SumSpace()
 	logrus.Infof("Sum cache size %d\n", sum)
 	atomic.StoreInt64(CurCacheSize, sum)
+}
+
+func GetCacheSize() int64 {
+	return atomic.LoadInt64(CurCacheSize)
 }
