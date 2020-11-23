@@ -104,61 +104,79 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 	}
 }
 
-func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+func (c *Client) syncUploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	var up UploadObjectBase
-	if env.SyncMode == 0 {
-		if env.Driver == "nas" {
-			up = NewUploadObjectToDisk(c, bucketname, key)
-		} else {
-			up = NewUploadObject(c)
-		}
-		PutUploadObject(int32(c.UserId), bucketname, key, up)
-		defer func() {
-			DelUploadObject(int32(c.UserId), bucketname, key)
-			Delete(path)
-		}()
-		err := up.UploadMultiFile(path)
+	if env.Driver == "nas" {
+		up = NewUploadObjectToDisk(c, bucketname, key)
+	} else {
+		up = NewUploadObject(c)
+	}
+	PutUploadObject(int32(c.UserId), bucketname, key, up)
+	defer func() {
+		DelUploadObject(int32(c.UserId), bucketname, key)
+		Delete(path)
+	}()
+	err := up.UploadMultiFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if r, ok := up.(*UploadObject); ok {
+		meta := MetaTobytes(up.GetLength(), up.GetMD5())
+		err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
 		if err != nil {
 			return nil, err
 		}
-		if r, ok := up.(*UploadObject); ok {
-			meta := MetaTobytes(up.GetLength(), up.GetMD5())
-			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return up.GetMD5(), nil
 	}
-	return UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
+	return up.GetMD5(), nil
+}
+
+func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	if env.SyncMode == 0 {
+		return c.syncUploadMultiPartFile(path, bucketname, key)
+	}
+	md5, err := UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
+	if err.Code == pkt.CACHE_FULL {
+		return c.syncUploadMultiPartFile(path, bucketname, key)
+	} else {
+		return md5, err
+	}
+}
+
+func (c *Client) syncUploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	var up UploadObjectBase
+	if env.Driver == "nas" {
+		up = NewUploadObjectToDisk(c, bucketname, key)
+	} else {
+		up = NewUploadObject(c)
+	}
+	PutUploadObject(int32(c.UserId), bucketname, key, up)
+	defer func() {
+		DelUploadObject(int32(c.UserId), bucketname, key)
+	}()
+	err := up.UploadBytes(data)
+	if err != nil {
+		return nil, err
+	}
+	if r, ok := up.(*UploadObject); ok {
+		meta := MetaTobytes(up.GetLength(), up.GetMD5())
+		err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return up.GetMD5(), nil
 }
 
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	var up UploadObjectBase
 	if env.SyncMode == 0 {
-		if env.Driver == "nas" {
-			up = NewUploadObjectToDisk(c, bucketname, key)
-		} else {
-			up = NewUploadObject(c)
-		}
-		PutUploadObject(int32(c.UserId), bucketname, key, up)
-		defer func() {
-			DelUploadObject(int32(c.UserId), bucketname, key)
-		}()
-		err := up.UploadBytes(data)
-		if err != nil {
-			return nil, err
-		}
-		if r, ok := up.(*UploadObject); ok {
-			meta := MetaTobytes(up.GetLength(), up.GetMD5())
-			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return up.GetMD5(), nil
+		return c.syncUploadBytes(data, bucketname, key)
 	}
-	return UploadBytesFile(int32(c.UserId), data, bucketname, key)
+	md5, err := UploadBytesFile(int32(c.UserId), data, bucketname, key)
+	if err.Code == pkt.CACHE_FULL {
+		return c.syncUploadBytes(data, bucketname, key)
+	} else {
+		return md5, err
+	}
 }
 
 func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessage) {
@@ -171,33 +189,42 @@ func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessa
 	return bs, nil
 }
 
-func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+func (c *Client) syncUploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	var up UploadObjectBase
-	if env.SyncMode == 0 {
-		if env.Driver == "nas" {
-			up = NewUploadObjectToDisk(c, bucketname, key)
-		} else {
-			up = NewUploadObject(c)
-		}
-		PutUploadObject(int32(c.UserId), bucketname, key, up)
-		defer func() {
-			DelUploadObject(int32(c.UserId), bucketname, key)
-			Delete([]string{path})
-		}()
-		err := up.UploadFile(path)
+	if env.Driver == "nas" {
+		up = NewUploadObjectToDisk(c, bucketname, key)
+	} else {
+		up = NewUploadObject(c)
+	}
+	PutUploadObject(int32(c.UserId), bucketname, key, up)
+	defer func() {
+		DelUploadObject(int32(c.UserId), bucketname, key)
+		Delete([]string{path})
+	}()
+	err := up.UploadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if r, ok := up.(*UploadObject); ok {
+		meta := MetaTobytes(up.GetLength(), up.GetMD5())
+		err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
 		if err != nil {
 			return nil, err
 		}
-		if r, ok := up.(*UploadObject); ok {
-			meta := MetaTobytes(up.GetLength(), up.GetMD5())
-			err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return up.GetMD5(), nil
 	}
-	return UploadSingleFile(int32(c.UserId), path, bucketname, key)
+	return up.GetMD5(), nil
+}
+
+func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	if env.SyncMode == 0 {
+		return c.syncUploadFile(path, bucketname, key)
+	}
+	md5, err := UploadSingleFile(int32(c.UserId), path, bucketname, key)
+	if err.Code == pkt.CACHE_FULL {
+		return c.syncUploadFile(path, bucketname, key)
+	} else {
+		return md5, err
+	}
 }
 
 func FlushCache() {
