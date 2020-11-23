@@ -26,21 +26,34 @@ var clients = struct {
 	clientids  sync.Map
 }{clientlist: make(map[string]*Client)}
 
+func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
+	c := addClient(uid, keyNum, signstr)
+	cc, er := check(c)
+	if er != nil {
+		return nil, er
+	}
+	if cc != nil {
+		return cc, nil
+	}
+	clients.Lock()
+	defer clients.Unlock()
+	clients.clientlist[c.AccessorKey] = c
+	clients.clientids.Store(c.UserId, c)
+	NotifyAllocNode(false)
+	return c, nil
+}
+
 func NewClient(uname string, privkey string) (*Client, error) {
 	c, err := newClient(uname, privkey)
 	if err != nil {
 		return nil, err
 	}
-	size := 0
-	clients.RLock()
-	client := clients.clientlist[c.AccessorKey]
-	size = len(clients.clientlist)
-	clients.RUnlock()
-	if client != nil {
-		return client, nil
+	cc, er := check(c)
+	if er != nil {
+		return nil, er
 	}
-	if size > MAX_CLIENT_NUM {
-		return nil, errors.New("Maximum number of users reached.")
+	if cc != nil {
+		return cc, nil
 	}
 	clients.Lock()
 	defer clients.Unlock()
@@ -52,6 +65,21 @@ func NewClient(uname string, privkey string) (*Client, error) {
 	clients.clientids.Store(c.UserId, c)
 	NotifyAllocNode(false)
 	return c, nil
+}
+
+func check(c *Client) (*Client, error) {
+	size := 0
+	clients.RLock()
+	client := clients.clientlist[c.AccessorKey]
+	size = len(clients.clientlist)
+	clients.RUnlock()
+	if client != nil {
+		return client, nil
+	}
+	if size > MAX_CLIENT_NUM {
+		return nil, errors.New("Maximum number of users reached.")
+	}
+	return nil, nil
 }
 
 func GetClients() []*Client {

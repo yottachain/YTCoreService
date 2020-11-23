@@ -2,11 +2,9 @@ package test
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
-	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -14,11 +12,6 @@ import (
 func UploadFile() {
 	initApi()
 	client.UploadFile("D:/YTCoreService/cache/s3cache/test/Secop.rar", "test", "Secop.rar")
-	for {
-		time.Sleep(time.Duration(5) * time.Second)
-		ii := cache.GetCacheSize()
-		logrus.Infof("Cache size %d\n", ii)
-	}
 }
 
 func ListBucket() {

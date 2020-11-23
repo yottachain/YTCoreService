@@ -154,11 +154,12 @@ func DoCache() {
 	go func() {
 		for {
 			time.Sleep(time.Duration(15) * time.Second)
+			logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
 			LoopCond.Signal()
 		}
 	}()
 	for {
-		caches := cache.Find(count, IsDoing)
+		caches := cache.Find(count*2, IsDoing)
 		if len(caches) == 0 {
 			LoopCond.L.Lock()
 			LoopCond.Wait()

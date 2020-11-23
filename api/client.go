@@ -31,6 +31,12 @@ type Client struct {
 	Sign        string
 }
 
+func addClient(uid, keyNum uint32, signstr string) *Client {
+	sn := net.GetUserSuperNode(int32(uid))
+	priv, _ := ytcrypto.CreateKey()
+	return &Client{UserId: uid, KeyNumber: keyNum, Sign: signstr, SuperNode: sn, AccessorKey: priv}
+}
+
 func newClient(uname string, privkey string) (*Client, error) {
 	bs := base58.Decode(privkey)
 	if len(bs) != 37 {
@@ -192,6 +198,16 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 		return up.GetMD5(), nil
 	}
 	return UploadSingleFile(int32(c.UserId), path, bucketname, key)
+}
+
+func FlushCache() {
+	for {
+		if cache.GetCacheSize() > 0 {
+			time.Sleep(time.Duration(1) * time.Second)
+		} else {
+			break
+		}
+	}
 }
 
 func (c *Client) NewUploadObject() *UploadObject {
