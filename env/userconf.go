@@ -23,6 +23,7 @@ var CachePath string
 var MaxCacheSize int64
 var SyncMode int = 0
 var Driver string
+var StartSync = 0
 
 var cfg *Config
 
@@ -61,6 +62,7 @@ func readClientProperties() {
 		CachePath = CachePath + "/"
 	}
 	SyncMode = config.GetRangeInt("syncmode", 0, 1, 0)
+	StartSync = config.GetRangeInt("startSync", 0, 2, 0)
 	Driver = strings.ToLower(config.GetString("driver", "yotta"))
 	size := config.GetRangeInt("cachemaxsize", 5, 1024*100, 20)
 	MaxCacheSize = int64(size) * 1024 * 1024 * 1024

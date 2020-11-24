@@ -127,6 +127,7 @@ func StartApi() {
 	cache.InitDB()
 	go StartPreAllocNode()
 	go DoCache()
+	go StartSync()
 }
 
 func InitSuperList() {

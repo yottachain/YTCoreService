@@ -159,7 +159,7 @@ func DoCache() {
 		}
 	}()
 	for {
-		caches := cache.Find(count*2, IsDoing)
+		caches := cache.FindCache(count*2, IsDoing)
 		if len(caches) == 0 {
 			LoopCond.L.Lock()
 			LoopCond.Wait()
@@ -179,7 +179,7 @@ func upload(ca *cache.Cache) {
 		CACHE_UP_CH <- 1
 		DoingList.Delete(ca.K.ToString())
 	}()
-	emsg := DoUpload(ca)
+	emsg := doUpload(ca)
 	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
@@ -189,7 +189,7 @@ func upload(ca *cache.Cache) {
 	}
 }
 
-func DoUpload(ca *cache.Cache) *pkt.ErrorMessage {
+func doUpload(ca *cache.Cache) *pkt.ErrorMessage {
 	c := GetClientById(uint32(ca.K.UserID))
 	if c == nil {
 		logrus.Errorf("[AyncUpload]Client %d offline.\n", ca.K.UserID)

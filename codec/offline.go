@@ -8,24 +8,26 @@ import (
 )
 
 type DupBlockChecker interface {
-	Check(b *PlainBlock) (interface{}, error)
+	Check(b *PlainBlock) (*EncodedBlock, error)
 }
 
-type DupBlock struct {
+type EncodedBlock struct {
 	OriginalSize int64
 	RealSize     int64
 	VHP          []byte
 	KEU          []byte
+	IsDup        bool
 	VHB          []byte
-}
-
-type NODupBlock struct {
-	OriginalSize int64
-	RealSize     int64
-	VHP          []byte
-	KEU          []byte
 	KED          []byte
 	DATA         []byte
+}
+
+func (self *EncodedBlock) Length() int64 {
+	if self.IsDup {
+		return 0
+	} else {
+		return int64(len(self.DATA))
+	}
 }
 
 func ReadInt64(f io.Reader) (int64, error) {

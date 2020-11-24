@@ -121,7 +121,7 @@ func (self *Value) ToBytes() []byte {
 	return bytebuf.Bytes()
 }
 
-func Find(count int, isdoing func(key *Key) bool) []*Cache {
+func FindCache(count int, isdoing func(key *Key) bool) []*Cache {
 	res := []*Cache{}
 	CacheDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)

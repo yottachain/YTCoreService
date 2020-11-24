@@ -87,7 +87,7 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 	return nil
 }
 
-func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (interface{}, error) {
+func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (*codec.EncodedBlock, error) {
 	b.Sum()
 	SN := net.GetBlockSuperNode(b.VHP)
 	req := &pkt.CheckBlockDupReq{
@@ -111,7 +111,7 @@ func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (interface{}, error) 
 	if ok {
 		keu, vhb := self.CheckBlockDup(dupResp, b)
 		if keu != nil {
-			return &codec.DupBlock{OriginalSize: b.OriginalSize,
+			return &codec.EncodedBlock{IsDup: true, OriginalSize: b.OriginalSize,
 				RealSize: b.Length(), VHP: b.VHP, KEU: keu, VHB: vhb}, nil
 		}
 	}
@@ -123,7 +123,7 @@ func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (interface{}, error) 
 	return bb, nil
 }
 
-func (self *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.NODupBlock, error) {
+func (self *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.EncodedBlock, error) {
 	ks := codec.GenerateRandomKey()
 	rsize := b.Length()
 	aes := codec.NewBlockAESEncryptor(b, ks)
@@ -133,7 +133,7 @@ func (self *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.NODu
 	}
 	keu := codec.ECBEncryptNoPad(ks, self.UClient.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, b.KD)
-	return &codec.NODupBlock{OriginalSize: b.OriginalSize,
+	return &codec.EncodedBlock{IsDup: false, OriginalSize: b.OriginalSize,
 		RealSize: rsize, VHP: b.VHP, KEU: keu, KED: ked, DATA: eblk.Data}, nil
 }
 

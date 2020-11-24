@@ -83,11 +83,10 @@ func (self *Encoder) Handle(out string) error {
 			if err != nil {
 				return err
 			}
-			if nodup, ok := obj.(*NODupBlock); ok {
-				size, err = self.writeNoDupBlock(f, nodup)
-			}
-			if dup, ok := obj.(*DupBlock); ok {
-				size, err = self.writeDupBlock(f, dup)
+			if obj.IsDup {
+				size, err = self.writeDupBlock(f, obj)
+			} else {
+				size, err = self.writeNoDupBlock(f, obj)
 			}
 			if err != nil {
 				return err
@@ -109,7 +108,7 @@ func (self *Encoder) Handle(out string) error {
 	return nil
 }
 
-func (self *Encoder) writeDupBlock(f *os.File, b *DupBlock) (int64, error) {
+func (self *Encoder) writeDupBlock(f *os.File, b *EncodedBlock) (int64, error) {
 	bs1 := []byte{0x01}
 	bs2 := env.IdToBytes(b.OriginalSize)
 	bs3 := env.IdToBytes(b.RealSize)
@@ -121,7 +120,7 @@ func (self *Encoder) writeDupBlock(f *os.File, b *DupBlock) (int64, error) {
 	return 1 + 8 + 8 + 32 + 32 + 16, nil
 }
 
-func (self *Encoder) writeNoDupBlock(f *os.File, b *NODupBlock) (int64, error) {
+func (self *Encoder) writeNoDupBlock(f *os.File, b *EncodedBlock) (int64, error) {
 	bs1 := []byte{0x00}
 	bs2 := env.IdToBytes(b.OriginalSize)
 	bs3 := env.IdToBytes(b.RealSize)

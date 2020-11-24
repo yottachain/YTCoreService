@@ -21,6 +21,20 @@ func AddBlockMen(b *codec.Block) {
 	AddMem(length)
 }
 
+func AddSyncBlockMen(b *codec.EncodedBlock) {
+	size := len(b.DATA)
+	length := atomic.AddInt64(MemSize, int64(size))
+	AddMem(length)
+}
+
+func DecSyncBlockMen(b *codec.EncodedBlock) {
+	if b.DATA != nil {
+		size := int64(len(b.DATA))
+		atomic.AddInt64(MemSize, -size)
+		MemCond.Broadcast()
+	}
+}
+
 func DecBlockMen(b *codec.Block) {
 	if b.Data != nil {
 		size := int64(len(b.Data))
