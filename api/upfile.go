@@ -185,7 +185,15 @@ func upload(ca *cache.Cache) {
 	} else {
 		atomic.AddInt64(cache.CurCacheSize, -ca.V.Length)
 		cache.DeleteValue(ca.K)
-		Delete(ca.V.Path)
+		if emsg != nil {
+			if ca.V.Type > 0 {
+				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", ca.V.Path[0], pkt.ToError(emsg))
+			} else {
+				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", pkt.ToError(emsg))
+			}
+		} else {
+			Delete(ca.V.Path)
+		}
 	}
 }
 
@@ -214,11 +222,6 @@ func doUpload(ca *cache.Cache) *pkt.ErrorMessage {
 		emsg = obj.UploadMultiFile(ca.V.Path)
 	}
 	if emsg != nil {
-		if ca.V.Type > 0 {
-			logrus.Errorf("[AyncUpload]Upload ERR.\n", ca.V.Path[0])
-		} else {
-			logrus.Errorf("[AyncUpload]Upload ERR.\n")
-		}
 		return emsg
 	}
 	if !bytes.Equal(ca.V.Md5, obj.GetMD5()) {
