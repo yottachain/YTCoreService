@@ -14,7 +14,6 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
-	"github.com/yottachain/YTCoreService/stat"
 	"github.com/yottachain/YTDNMgmt"
 )
 
@@ -56,9 +55,6 @@ func (self *UploadBlock) DoFinish(size int64) {
 		env.TraceError("[UploadBlock]")
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 	}
-
-	stat.Ccstat.BlkCcSub()
-
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
 	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
@@ -68,8 +64,6 @@ func (self *UploadBlock) DoFinish(size int64) {
 
 func (self *UploadBlock) upload() {
 	size := self.BLK.Length()
-
-	stat.Ccstat.BlkCcAdd()
 	defer self.DoFinish(size)
 	err := self.BLK.Sum()
 	if err != nil {
@@ -251,30 +245,29 @@ func (self *UploadBlock) UploadBlockDedup() {
 	size := len(enc.Shards)
 	ress := make([]*UploadShardResult, size)
 	var ids []int32
+	keu := codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.AESKey)
+	ked := codec.ECBEncryptNoPad(ks, self.BLK.KD)
 	for {
-		//stat.Ccstat.BlkCcAdd()
-		blkls, err := self.UploadShards(ks, eblk.VHB, enc, &rsize, ress, ids)
+		blkls, err := self.UploadShards(keu, ked, eblk.VHB, enc, &rsize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
 				logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
 				NotifyAllocNode(true)
 				retrytimes++
-				//stat.Ccstat.BlkCcSub()
 				continue
 			}
-			if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" { //不可能发生,发生时严重告警
+			if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" {
 				time.Sleep(time.Duration(60) * time.Second)
 				continue
 			}
 			self.UPOBJ.ERR.Store(err)
 		}
-		//stat.Ccstat.BlkCcSub()
 		break
 	}
 }
 
-func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureEncoder, rsize *int32, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
+func (self *UploadBlock) UploadShards(keu, ked, vhb []byte, enc *codec.ErasureEncoder, rsize *int32, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
 	startTime := time.Now()
 	wgroup := sync.WaitGroup{}
@@ -311,8 +304,8 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 		Id:           &bid,
 		VHP:          self.BLK.VHP,
 		VHB:          vhb,
-		KEU:          codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.AESKey),
-		KED:          codec.ECBEncryptNoPad(ks, self.BLK.KD),
+		KEU:          keu,
+		KED:          ked,
 		Vnu:          vnu,
 		OriginalSize: &osize,
 		RealSize:     rsize,

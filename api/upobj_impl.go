@@ -113,12 +113,9 @@ func (self *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 		}
 	}()
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
-	err := self.initUpload()
+	err := self.initUpload(self.Encoder.GetVHW())
 	if err != nil {
 		return err
-	}
-	if self.UClient == nil {
-		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 	}
 	logrus.Infof("[UploadObject][%s]Start upload object...\n", self.VNU.Hex())
 	if self.Exist {
@@ -160,7 +157,7 @@ func (self *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 		if v != nil {
 			errmsg = v.(*pkt.ErrorMessage)
 		} else {
-			errmsg = self.complete()
+			errmsg = self.complete(self.Encoder.GetVHW())
 		}
 		if errmsg != nil {
 			logrus.Errorf("[UploadObject][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
@@ -206,14 +203,14 @@ func (self *UploadObject) active() {
 	}
 }
 
-func (self *UploadObject) complete() *pkt.ErrorMessage {
+func (self *UploadObject) complete(sha []byte) *pkt.ErrorMessage {
 	i1, i2, i3, i4 := pkt.ObjectIdParam(self.VNU)
 	vnu := &pkt.UploadObjectEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadObjectEndReqV2{
 		UserId:    &self.UClient.UserId,
 		SignData:  &self.UClient.Sign,
 		KeyNumber: &self.UClient.KeyNumber,
-		VHW:       self.Encoder.GetVHW(),
+		VHW:       sha,
 		Vnu:       vnu,
 	}
 	_, errmsg := net.RequestSN(req, self.UClient.SuperNode, self.VNU.Hex(), env.SN_RETRYTIMES, false)
@@ -223,13 +220,13 @@ func (self *UploadObject) complete() *pkt.ErrorMessage {
 	return nil
 }
 
-func (self *UploadObject) initUpload() *pkt.ErrorMessage {
+func (self *UploadObject) initUpload(sha []byte) *pkt.ErrorMessage {
 	size := uint64(self.Encoder.GetLength())
 	req := &pkt.UploadObjectInitReqV2{
 		UserId:    &self.UClient.UserId,
 		SignData:  &self.UClient.Sign,
 		KeyNumber: &self.UClient.KeyNumber,
-		VHW:       self.Encoder.GetVHW(),
+		VHW:       sha,
 		Length:    &size,
 	}
 	var initresp *pkt.UploadObjectInitResp

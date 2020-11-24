@@ -2,24 +2,16 @@ package test
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
-	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func UploadFile() {
 	initApi()
-	client.UploadFile("D:/YTCoreService/cache/s3cache/test/FileZilla_3.49.1_win64-setup.exe", "test", "FileZilla_3.49.1_win64-setup.exe")
-	client.UploadFile("D:/YTCoreService/cache/s3cache/test/FileZilla_3.50.0_win64-setup.exe", "test", "FileZilla_3.50.0_win64-setup.exe")
-	for {
-		time.Sleep(time.Duration(5) * time.Second)
-		ii := cache.GetCacheSize()
-		logrus.Infof("Cache size %d\n", ii)
-	}
+	client.UploadFile("D:/YTCoreService/cache/s3cache/test/Secop.rar", "test", "Secop.rar")
 }
 
 func ListBucket() {

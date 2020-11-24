@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/boltdb/bolt"
 	"github.com/yottachain/YTCoreService/env"
@@ -50,6 +51,19 @@ type Value struct {
 	Md5    []byte
 	Path   []string
 	Data   []byte
+}
+
+func (v *Value) PathString() string {
+	if v.Path == nil {
+		return ""
+	} else {
+		var content bytes.Buffer
+		for _, s := range v.Path {
+			content.WriteString(s)
+			content.WriteString(";")
+		}
+		return content.String()
+	}
 }
 
 func MultiPartFileValue(path []string, length int64, md5 []byte) *Value {
@@ -120,7 +134,7 @@ func (self *Value) ToBytes() []byte {
 	return bytebuf.Bytes()
 }
 
-func Find(count int, isdoing func(key *Key) bool) []*Cache {
+func FindCache(count int, isdoing func(key *Key) bool) []*Cache {
 	res := []*Cache{}
 	CacheDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TempBuck)
@@ -172,6 +186,7 @@ func InsertValue(k *Key, v *Value) error {
 		if err != nil {
 			return err
 		}
+		atomic.AddInt64(CurCacheSize, v.Length)
 		return nil
 	})
 }
