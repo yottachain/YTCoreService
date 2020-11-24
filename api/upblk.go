@@ -245,8 +245,10 @@ func (self *UploadBlock) UploadBlockDedup() {
 	size := len(enc.Shards)
 	ress := make([]*UploadShardResult, size)
 	var ids []int32
+	keu := codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.AESKey)
+	ked := codec.ECBEncryptNoPad(ks, self.BLK.KD)
 	for {
-		blkls, err := self.UploadShards(ks, eblk.VHB, enc, &rsize, ress, ids)
+		blkls, err := self.UploadShards(keu, ked, eblk.VHB, enc, &rsize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
@@ -255,7 +257,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 				retrytimes++
 				continue
 			}
-			if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" { //不可能发生,发生时严重告警
+			if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" {
 				time.Sleep(time.Duration(60) * time.Second)
 				continue
 			}
@@ -265,7 +267,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	}
 }
 
-func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureEncoder, rsize *int32, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
+func (self *UploadBlock) UploadShards(keu, ked, vhb []byte, enc *codec.ErasureEncoder, rsize *int32, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
 	startTime := time.Now()
 	wgroup := sync.WaitGroup{}
@@ -302,8 +304,8 @@ func (self *UploadBlock) UploadShards(ks []byte, vhb []byte, enc *codec.ErasureE
 		Id:           &bid,
 		VHP:          self.BLK.VHP,
 		VHB:          vhb,
-		KEU:          codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.AESKey),
-		KED:          codec.ECBEncryptNoPad(ks, self.BLK.KD),
+		KEU:          keu,
+		KED:          ked,
 		Vnu:          vnu,
 		OriginalSize: &osize,
 		RealSize:     rsize,

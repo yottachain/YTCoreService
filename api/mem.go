@@ -22,6 +22,9 @@ func AddBlockMen(b *codec.Block) {
 }
 
 func AddSyncBlockMen(b *codec.EncodedBlock) {
+	if b.DATA == nil {
+		return
+	}
 	size := len(b.DATA)
 	length := atomic.AddInt64(MemSize, int64(size))
 	AddMem(length)
