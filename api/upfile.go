@@ -214,6 +214,11 @@ func doUpload(ca *cache.Cache) *pkt.ErrorMessage {
 		emsg = obj.UploadMultiFile(ca.V.Path)
 	}
 	if emsg != nil {
+		if ca.V.Type > 0 {
+			logrus.Errorf("[AyncUpload]Upload ERR.\n", ca.V.Path[0])
+		} else {
+			logrus.Errorf("[AyncUpload]Upload ERR.\n")
+		}
 		return emsg
 	}
 	if !bytes.Equal(ca.V.Md5, obj.GetMD5()) {
