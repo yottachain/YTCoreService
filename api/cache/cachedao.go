@@ -53,6 +53,19 @@ type Value struct {
 	Data   []byte
 }
 
+func (v *Value) PathString() string {
+	if v.Path == nil {
+		return ""
+	} else {
+		var content bytes.Buffer
+		for _, s := range v.Path {
+			content.WriteString(s)
+			content.WriteString(";")
+		}
+		return content.String()
+	}
+}
+
 func MultiPartFileValue(path []string, length int64, md5 []byte) *Value {
 	return &Value{Type: 2, Length: length, Md5: md5, Path: path}
 }
