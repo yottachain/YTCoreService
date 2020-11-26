@@ -192,6 +192,12 @@ func (source *MetaBaseSource) GetShardRebuildColl() *mongo.Collection {
 
 const USER_BUCKET_TABLE_NAME = "buckets"
 const USER_BUCKET_INDEX_NAME = "BUKNAME"
+const USER_DIR_TABLE_NAME = "directorys"
+const USER_DIR_INDEX_NAME = "DIRNAME"
+const USER_FILE_TABLE_NAME = "files"
+const USER_FILE_INDEX_NAME = "FILENAME"
+const USER_OBJ_TABLE_NAME = "objs"
+const USER_OBJ_INDEX_NAME = "OBJNAME"
 
 type UserBaseSource struct {
 	db       *mongo.Database
@@ -211,11 +217,28 @@ func (source *UserBaseSource) initMetaDB() {
 	source.db = session.Database(USERDATABASENAME)
 	source.bucket_c = source.db.Collection(USER_BUCKET_TABLE_NAME)
 	index1 := mongo.IndexModel{
-		Keys:    bson.M{"UID": 1, "BName": 1},
+		Keys:    bson.M{"uid": 1, "buckname": 1},
 		Options: options.Index().SetUnique(true).SetName(USER_BUCKET_INDEX_NAME),
 	}
 	source.bucket_c.Indexes().CreateOne(context.Background(), index1)
-
+	source.dir_c = source.db.Collection(USER_DIR_TABLE_NAME)
+	index2 := mongo.IndexModel{
+		Keys:    bson.M{"pid": 1, "dirname": 1},
+		Options: options.Index().SetUnique(true).SetName(USER_DIR_INDEX_NAME),
+	}
+	source.dir_c.Indexes().CreateOne(context.Background(), index2)
+	source.file_c = source.db.Collection(USER_FILE_TABLE_NAME)
+	index3 := mongo.IndexModel{
+		Keys:    bson.M{"dirid": 1, "filename": 1},
+		Options: options.Index().SetUnique(true).SetName(USER_FILE_TABLE_NAME),
+	}
+	source.file_c.Indexes().CreateOne(context.Background(), index3)
+	source.object_c = source.db.Collection(USER_OBJ_TABLE_NAME)
+	index4 := mongo.IndexModel{
+		Keys:    bson.M{"uid": 1, "VHW": 1},
+		Options: options.Index().SetUnique(true).SetName(USER_OBJ_INDEX_NAME),
+	}
+	source.object_c.Indexes().CreateOne(context.Background(), index4)
 	logrus.Infof("[InitMongo]Create usermeta tables Success.\n")
 }
 

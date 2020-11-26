@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
@@ -22,13 +23,51 @@ const MAX_CLIENT_NUM = 2000
 var clients = struct {
 	sync.RWMutex
 	clientlist map[string]*Client
+	clientids  sync.Map
 }{clientlist: make(map[string]*Client)}
+
+func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
+	c := addClient(uid, keyNum, signstr)
+	cc, er := check(c)
+	if er != nil {
+		return nil, er
+	}
+	if cc != nil {
+		return cc, nil
+	}
+	clients.Lock()
+	defer clients.Unlock()
+	clients.clientlist[c.AccessorKey] = c
+	clients.clientids.Store(c.UserId, c)
+	NotifyAllocNode(false)
+	return c, nil
+}
 
 func NewClient(uname string, privkey string) (*Client, error) {
 	c, err := newClient(uname, privkey)
 	if err != nil {
 		return nil, err
 	}
+	cc, er := check(c)
+	if er != nil {
+		return nil, er
+	}
+	if cc != nil {
+		return cc, nil
+	}
+	clients.Lock()
+	defer clients.Unlock()
+	err = c.Regist()
+	if err != nil {
+		return nil, err
+	}
+	clients.clientlist[c.AccessorKey] = c
+	clients.clientids.Store(c.UserId, c)
+	NotifyAllocNode(false)
+	return c, nil
+}
+
+func check(c *Client) (*Client, error) {
 	size := 0
 	clients.RLock()
 	client := clients.clientlist[c.AccessorKey]
@@ -40,15 +79,7 @@ func NewClient(uname string, privkey string) (*Client, error) {
 	if size > MAX_CLIENT_NUM {
 		return nil, errors.New("Maximum number of users reached.")
 	}
-	clients.Lock()
-	defer clients.Unlock()
-	err = c.Regist()
-	if err != nil {
-		return nil, err
-	}
-	clients.clientlist[c.AccessorKey] = c
-	NotifyAllocNode(false)
-	return c, nil
+	return nil, nil
 }
 
 func GetClients() []*Client {
@@ -61,6 +92,13 @@ func GetClients() []*Client {
 	return ls
 }
 
+func GetClientById(uid uint32) *Client {
+	if vv, ok := clients.clientids.Load(uid); ok {
+		return vv.(*Client)
+	}
+	return nil
+}
+
 func GetClient(key string) *Client {
 	clients.RLock()
 	defer clients.RUnlock()
@@ -70,7 +108,11 @@ func GetClient(key string) *Client {
 func DistoryClient(key string) {
 	clients.Lock()
 	defer clients.Unlock()
-	delete(clients.clientlist, key)
+	c := clients.clientlist[key]
+	if c != nil {
+		delete(clients.clientlist, key)
+		clients.clientids.Delete(c.UserId)
+	}
 }
 
 func StartApi() {
@@ -82,7 +124,10 @@ func StartApi() {
 	priv, _ := ytcrypto.CreateKey()
 	net.Start(0, 0, priv)
 	InitSuperList()
+	cache.InitDB()
 	go StartPreAllocNode()
+	go DoCache()
+	go StartSync()
 }
 
 func InitSuperList() {

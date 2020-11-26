@@ -13,6 +13,7 @@ import (
 	ytnet "github.com/yottachain/YTCoreService/net"
 )
 
+var programName = "ytsn"
 var logger service.Logger
 var serviceConfig = &service.Config{
 	Name:        "ytsnd",
@@ -37,6 +38,7 @@ func (p *Program) run() {
 }
 
 func main() {
+	programName = os.Args[0]
 	prog := &Program{}
 	s, err := service.New(prog, serviceConfig)
 	if err != nil {
