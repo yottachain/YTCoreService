@@ -153,11 +153,15 @@ func DoCache() {
 	count := initCACHEUpPool()
 	go func() {
 		for {
+<<<<<<< HEAD
 			if env.SyncMode == 0 {
 				time.Sleep(time.Duration(120) * time.Second)
 			} else {
 				time.Sleep(time.Duration(15) * time.Second)
 			}
+=======
+			time.Sleep(time.Duration(15) * time.Second)
+>>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 			logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
 			LoopCond.Signal()
 		}
