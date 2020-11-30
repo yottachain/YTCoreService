@@ -22,9 +22,13 @@ type UploadObjectSync struct {
 
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
 	u.ActiveTime = new(int64)
 	u.activesign = make(chan int)
+=======
+	u := &UploadObjectSync{}
+>>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 =======
 	u := &UploadObjectSync{}
 >>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453

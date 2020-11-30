@@ -136,7 +136,11 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 	}
 	md5, err := UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	if err != nil && err.Code == pkt.CACHE_FULL {
+=======
+	if err.Code == pkt.CACHE_FULL {
+>>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 =======
 	if err.Code == pkt.CACHE_FULL {
 >>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
@@ -177,7 +181,11 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 	}
 	md5, err := UploadBytesFile(int32(c.UserId), data, bucketname, key)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	if err != nil && err.Code == pkt.CACHE_FULL {
+=======
+	if err.Code == pkt.CACHE_FULL {
+>>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 =======
 	if err.Code == pkt.CACHE_FULL {
 >>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
@@ -229,7 +237,11 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 	}
 	md5, err := UploadSingleFile(int32(c.UserId), path, bucketname, key)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	if err != nil && err.Code == pkt.CACHE_FULL {
+=======
+	if err.Code == pkt.CACHE_FULL {
+>>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 =======
 	if err.Code == pkt.CACHE_FULL {
 >>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
