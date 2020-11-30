@@ -1,4 +1,0 @@
-package env
-
-func ULimit() {
-}
