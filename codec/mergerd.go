@@ -4,7 +4,12 @@ import (
 	"errors"
 	"io"
 	"os"
+	"sync/atomic"
+
+	"github.com/sirupsen/logrus"
 )
+
+var OPEN_COUNTER *int32 = new(int32)
 
 type Part struct {
 	Path   string
@@ -28,6 +33,7 @@ func NewPart(path string) (*Part, error) {
 func (br *Part) close() {
 	if br.r != nil {
 		br.r.Close()
+		atomic.AddInt32(OPEN_COUNTER, -1)
 		br.r = nil
 	}
 }
@@ -36,8 +42,10 @@ func (br *Part) fill(rd *MergeReader) error {
 	if br.r == nil {
 		f, err := os.Open(br.Path)
 		if err != nil {
+			logrus.Errorf("[Mergerd]Open file ERR:%s,Open files %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
 			return err
 		}
+		atomic.AddInt32(OPEN_COUNTER, 1)
 		br.r = f
 	}
 	num, err1 := br.r.Read(rd.buf)
@@ -57,8 +65,10 @@ func (br *Part) back(offset int64) error {
 	if br.r == nil {
 		f, err := os.Open(br.Path)
 		if err != nil {
+			logrus.Errorf("[Mergerd]Open file ERR:%s,Open files %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
 			return err
 		}
+		atomic.AddInt32(OPEN_COUNTER, 1)
 		br.r = f
 		br.length = br.length + offset
 		_, err = br.r.Seek(br.length, io.SeekStart)
@@ -79,8 +89,10 @@ func (br *Part) forward(offset int64) error {
 	if br.r == nil {
 		f, err := os.Open(br.Path)
 		if err != nil {
+			logrus.Errorf("[Mergerd]Open file ERR:%s,Open files %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
 			return err
 		}
+		atomic.AddInt32(OPEN_COUNTER, 1)
 		br.r = f
 	}
 	if offset > 0 {

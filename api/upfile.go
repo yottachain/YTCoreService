@@ -196,8 +196,9 @@ func upload(ca *cache.Cache) {
 				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", pkt.ToError(emsg))
 			}
 		} else {
-			Delete(ca.V.Path)
+			//Delete(ca.V.Path)
 		}
+		Delete(ca.V.Path)
 	}
 }
 
