@@ -21,7 +21,9 @@ type UploadObjectSync struct {
 }
 
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
-	u := &UploadObjectSync{}
+	u := &UploadObjectSync{UploadObject: UploadObject{}}
+	u.ActiveTime = new(int64)
+	u.activesign = make(chan int)
 	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
 	err := u.createDecoder(sha256)
 	if err != nil {
