@@ -1,4 +1,4 @@
-FROM harbor1-c3-bj.yottachain.net/yt-common/alpine:3
+FROM harbor1-c3-bj.yottachain.net/yt-common/centos:7
 LABEL maintainer="yuanye@yottachain.io"
 LABEL desc="YTCoreService service"
 LABEL src="https://github.com/yottachain/YTCoreService.git"
