@@ -135,15 +135,7 @@ func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]b
 		return c.syncUploadMultiPartFile(path, bucketname, key)
 	}
 	md5, err := UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	if err != nil && err.Code == pkt.CACHE_FULL {
-=======
-	if err.Code == pkt.CACHE_FULL {
->>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
-=======
-	if err.Code == pkt.CACHE_FULL {
->>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 		return c.syncUploadMultiPartFile(path, bucketname, key)
 	} else {
 		return md5, err
@@ -180,15 +172,7 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 		return c.syncUploadBytes(data, bucketname, key)
 	}
 	md5, err := UploadBytesFile(int32(c.UserId), data, bucketname, key)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	if err != nil && err.Code == pkt.CACHE_FULL {
-=======
-	if err.Code == pkt.CACHE_FULL {
->>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
-=======
-	if err.Code == pkt.CACHE_FULL {
->>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 		return c.syncUploadBytes(data, bucketname, key)
 	} else {
 		return md5, err
@@ -236,15 +220,7 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 		return c.syncUploadFile(path, bucketname, key)
 	}
 	md5, err := UploadSingleFile(int32(c.UserId), path, bucketname, key)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	if err != nil && err.Code == pkt.CACHE_FULL {
-=======
-	if err.Code == pkt.CACHE_FULL {
->>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
-=======
-	if err.Code == pkt.CACHE_FULL {
->>>>>>> 19b9ab2bdb839380ad97ecce750e9201008ad453
 		return c.syncUploadFile(path, bucketname, key)
 	} else {
 		return md5, err
