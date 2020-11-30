@@ -42,9 +42,10 @@ func (br *Part) fill(rd *MergeReader) error {
 	if br.r == nil {
 		f, err := os.Open(br.Path)
 		if err != nil {
-			logrus.Errorf("[Mergerd]Open file ERR:%s,Open files %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
+			logrus.Errorf("[Mergerd]Open file ERR:%s,Number of handles: %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
 			return err
 		}
+		logrus.Infof("[Mergerd]Open file:%s,Number of handles: %d\n.", br.Path, atomic.LoadInt32(OPEN_COUNTER))
 		atomic.AddInt32(OPEN_COUNTER, 1)
 		br.r = f
 	}
@@ -65,9 +66,10 @@ func (br *Part) back(offset int64) error {
 	if br.r == nil {
 		f, err := os.Open(br.Path)
 		if err != nil {
-			logrus.Errorf("[Mergerd]Open file ERR:%s,Open files %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
+			logrus.Errorf("[Mergerd]Open file ERR:%s,Number of handles: %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
 			return err
 		}
+		logrus.Infof("[Mergerd]Open file:%s,Number of handles: %d\n.", br.Path, atomic.LoadInt32(OPEN_COUNTER))
 		atomic.AddInt32(OPEN_COUNTER, 1)
 		br.r = f
 		br.length = br.length + offset
@@ -89,9 +91,10 @@ func (br *Part) forward(offset int64) error {
 	if br.r == nil {
 		f, err := os.Open(br.Path)
 		if err != nil {
-			logrus.Errorf("[Mergerd]Open file ERR:%s,Open files %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
+			logrus.Errorf("[Mergerd]Open file ERR:%s,Number of handles: %d\n.", err, atomic.LoadInt32(OPEN_COUNTER))
 			return err
 		}
+		logrus.Infof("[Mergerd]Open file:%s,Number of handles: %d\n.", br.Path, atomic.LoadInt32(OPEN_COUNTER))
 		atomic.AddInt32(OPEN_COUNTER, 1)
 		br.r = f
 	}
