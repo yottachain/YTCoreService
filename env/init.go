@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -20,6 +21,25 @@ var YTSN_HOME string
 var YTFS_HOME string
 var LogLevel string
 var Console bool = false
+
+func SetLimit() {
+	var rLimit syscall.Rlimit
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		return
+	}
+	rLimit.Max = 999999
+	rLimit.Cur = 999999
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		return
+	}
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		return
+	}
+	logrus.Infof("[SetLimit]Ulimit -a %s\n", rLimit)
+}
 
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
@@ -68,6 +88,7 @@ func InitClient() {
 	}
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	logrus.Infof("[Init]Starting pprof server on address %s\n", addr)
+	SetLimit()
 	go http.ListenAndServe(addr, nil)
 }
 
@@ -87,6 +108,7 @@ func InitServer() {
 	initServerLog()
 	ReadExport(YTSN_HOME + "bin/ytsn.ev")
 	ReadExport(YTSN_HOME + "bin/ytsnd.sh")
+	SetLimit()
 }
 
 func initClientLog() {

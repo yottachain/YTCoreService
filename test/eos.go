@@ -11,7 +11,8 @@ func TestEOS() bool {
 	env.InitServer()
 	net.InitShadowPriKey()
 	net.EOSInit()
-	ii, err := net.GetBalance("username1234aa")
+	//ii, err := net.GetBalance("i5baoguxctpi")
+	ii, err := net.GetBalance("pollyzhang11")
 	if err != nil {
 		panic(err)
 	} else {
