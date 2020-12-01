@@ -22,11 +22,10 @@ var LogLevel string
 var Console bool = false
 
 func SetLimit() {
-	ULimit()
-	//sysType := runtime.GOOS
-	//if sysType == "linux" {
-	//	ULimit()
-	//}
+	sysType := runtime.GOOS
+	if sysType == "linux" {
+		ULimit()
+	}
 }
 
 func GetCurrentPath() string {
