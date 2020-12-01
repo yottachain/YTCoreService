@@ -19,13 +19,14 @@ var DownloadRetryTimes int = 3
 
 var DownloadThread int = 200
 
-var OptionMiners = 1000
-var WeightDivsor = 500
 var CachePath string
 var MaxCacheSize int64
 var SyncMode int = 0
 var Driver string
 var StartSync = 0
+var OptionMiners = 1000
+var WeightDivsor = 500
+var Openstat = false
 
 var cfg *Config
 
@@ -91,4 +92,5 @@ func readClientProperties() {
 
 	OptionMiners = config.GetRangeInt("optionMiners", 200, 3000, 1000)
 	WeightDivsor = config.GetRangeInt("WeightDivsor", 1, 500, 500)
+	Openstat = config.GetBool("OpenStat", false)
 }

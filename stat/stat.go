@@ -11,6 +11,7 @@ import (
 )
 
 type ccstat struct {
+	IsOpenStat bool
 	sync.Mutex
 	ccShardsG   int32
 	ccShards	int32
@@ -23,9 +24,12 @@ type ccstat struct {
 	fd 	*os.File
 }
 
-var Ccstat = &ccstat{ccShardsG:0, ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
+var Ccstat = &ccstat{IsOpenStat: env.Openstat, ccShardsG:0, ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
 
 func (ccs *ccstat) ShardCcAdd() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccShards++
@@ -33,6 +37,9 @@ func (ccs *ccstat) ShardCcAdd() {
 
 
 func (ccs *ccstat) ShardCcSub() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccShards--
@@ -40,6 +47,9 @@ func (ccs *ccstat) ShardCcSub() {
 
 //并发上传分片的协程数
 func (ccs *ccstat) ShardCcGAdd() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccShardsG++
@@ -47,60 +57,90 @@ func (ccs *ccstat) ShardCcGAdd() {
 
 //并发上传分片的协程数
 func (ccs *ccstat) ShardCcGSub() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccShardsG--
 }
 
 func (ccs *ccstat) Shards() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.sendShs++
 }
 
 func (ccs *ccstat) ShardSucs() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.sendShSucs++
 }
 
 func (ccs *ccstat) BlkCcAdd() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccBlks++
 }
 
 func (ccs *ccstat) BlkCcSub() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccBlks--
 }
 
 func (ccs *ccstat) GtCcAdd() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccGts++
 }
 
 func (ccs *ccstat) GtCcSub() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.ccGts--
 }
 
 func (ccs *ccstat) GtsAdd() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.gts++
 }
 
 func (ccs *ccstat) GtSucsAdd() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	ccs.Lock()
 	defer ccs.Unlock()
 	ccs.gtSucs++
 }
 
 func init() {
+	if !Ccstat.IsOpenStat {
+		return
+	}
 	fd, err := os.OpenFile(env.YTFS_HOME+"stat.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		log.Fatalln("open stat.log fail  "+ err.Error())
@@ -109,6 +149,9 @@ func init() {
 }
 
 func (ccs *ccstat) PrintCc() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	var sshs = uint64(0)
 	var sshsucs = uint64(0)
 	var gts = uint64(0)
@@ -136,6 +179,9 @@ func (ccs *ccstat) PrintCc() {
 }
 
 func (ccs *ccstat) Println(key string, v interface{}) {
+	if !ccs.IsOpenStat {
+		return
+	}
 	t := reflect.TypeOf(v)
 	vt := reflect.ValueOf(v)
 	var str = ""
@@ -157,6 +203,9 @@ func (ccs *ccstat) Println(key string, v interface{}) {
 }
 
 func (ccs *ccstat) Clean() {
+	if !ccs.IsOpenStat {
+		return
+	}
 	_ = ccs.fd.Close()
 }
 
