@@ -23,7 +23,7 @@ type ccstat struct {
 	fd 	*os.File
 }
 
-var Ccstat = ccstat{ccShardsG:0, ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
+var Ccstat = &ccstat{ccShardsG:0, ccShards:0, sendShs:0, sendShSucs:0, ccGts:0, ccBlks:0, gts:0, gtSucs:0}
 
 func (ccs *ccstat) ShardCcAdd() {
 	ccs.Lock()

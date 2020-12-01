@@ -116,12 +116,6 @@ func DistoryClient(key string) {
 	}
 }
 
-func PrintEnv() {
-	stat.Ccstat.Println("UploadFileMaxMemory", env.UploadFileMaxMemory)
-	stat.Ccstat.Println("UploadBlockThreadNum", env.UploadBlockThreadNum)
-	stat.Ccstat.Println("UploadShardThreadNum", env.UploadShardThreadNum)
-}
-
 func StartApi() {
 	env.InitClient()
 	codec.InitLRC()
@@ -144,6 +138,12 @@ func PrintApiCfg () {
 	stat.Ccstat.Println("BLOCK_ROUTINE_CH", len(BLOCK_ROUTINE_CH))
 	stat.Ccstat.Println("SHARD_UP_CH", len(SHARD_UP_CH))
 
+}
+
+func PrintEnv() {
+	stat.Ccstat.Println("UploadFileMaxMemory", env.UploadFileMaxMemory)
+	stat.Ccstat.Println("UploadBlockThreadNum", env.UploadBlockThreadNum)
+	stat.Ccstat.Println("UploadShardThreadNum", env.UploadShardThreadNum)
 }
 
 func InitSuperList() {
