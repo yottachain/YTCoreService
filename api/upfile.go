@@ -153,7 +153,11 @@ func DoCache() {
 	count := initCACHEUpPool()
 	go func() {
 		for {
-			time.Sleep(time.Duration(15) * time.Second)
+			if env.SyncMode == 0 {
+				time.Sleep(time.Duration(120) * time.Second)
+			} else {
+				time.Sleep(time.Duration(15) * time.Second)
+			}
 			logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
 			LoopCond.Signal()
 		}
@@ -192,8 +196,9 @@ func upload(ca *cache.Cache) {
 				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", pkt.ToError(emsg))
 			}
 		} else {
-			Delete(ca.V.Path)
+			//Delete(ca.V.Path)
 		}
+		Delete(ca.V.Path)
 	}
 }
 

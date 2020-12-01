@@ -21,6 +21,13 @@ var YTFS_HOME string
 var LogLevel string
 var Console bool = false
 
+func SetLimit() {
+	sysType := runtime.GOOS
+	if sysType == "linux" {
+		ULimit()
+	}
+}
+
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
 	if file == "" {
@@ -68,6 +75,7 @@ func InitClient() {
 	}
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	logrus.Infof("[Init]Starting pprof server on address %s\n", addr)
+	SetLimit()
 	go http.ListenAndServe(addr, nil)
 }
 
@@ -87,6 +95,7 @@ func InitServer() {
 	initServerLog()
 	ReadExport(YTSN_HOME + "bin/ytsn.ev")
 	ReadExport(YTSN_HOME + "bin/ytsnd.sh")
+	SetLimit()
 }
 
 func initClientLog() {
