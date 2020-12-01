@@ -135,14 +135,15 @@ func StartApi() {
 	go StartPreAllocNode()
 	PrintEnv()
 	PrintApiCfg()
+	go DoCache()
+	go StartSync()
 	go stat.Ccstat.PrintCc()
 }
 
 func PrintApiCfg () {
 	stat.Ccstat.Println("BLOCK_ROUTINE_CH", len(BLOCK_ROUTINE_CH))
 	stat.Ccstat.Println("SHARD_UP_CH", len(SHARD_UP_CH))
-	go DoCache()
-	go StartSync()
+
 }
 
 func InitSuperList() {
