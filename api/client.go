@@ -167,6 +167,10 @@ func (c *Client) syncUploadBytes(data []byte, bucketname, key string) ([]byte, *
 	return up.GetMD5(), nil
 }
 
+func (c *Client) UploadBytesForce(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	return c.syncUploadBytes(data, bucketname, key)
+}
+
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		return c.syncUploadBytes(data, bucketname, key)

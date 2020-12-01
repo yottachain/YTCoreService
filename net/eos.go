@@ -13,7 +13,7 @@ import (
 )
 
 type BalanceValue struct {
-	Balance uint64
+	Balance int64
 }
 
 var USER_Banlance_CACHE = cache.New(30*time.Second, 15*time.Second)
@@ -35,7 +35,7 @@ func HasSpace(length uint64, username string) (bool, error) {
 	} else {
 		balan = v.(BalanceValue)
 	}
-	needcost := env.UnitFirstCost * length / env.UnitSpace
+	needcost := int64(env.UnitFirstCost * length / env.UnitSpace)
 	return balan.Balance > needcost, nil
 }
 
@@ -97,7 +97,7 @@ type GetBalanceReq struct {
 	Caller eos.AccountName `json:"caller"`
 }
 
-func GetBalance(username string) (v uint64, err error) {
+func GetBalance(username string) (v int64, err error) {
 	if !env.BP_ENABLE {
 		return 10000000, nil
 	}

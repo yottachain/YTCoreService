@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api/cache"
@@ -68,22 +69,32 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
 	}()
-	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	s3key := self.Bucket + "/" + self.ObjectKey
-	enc := codec.NewEncoder(self.UClient.UserId, self.UClient.KeyNumber, self.UClient.Sign, s3key, self.Encoder, self)
-	enc.HandleProgress(self.PRO.ReadinLength, self.PRO.ReadOutLength, self.PRO.WriteLength)
-	logrus.Infof("[UploadObjectToDisk][%s]Start encode object...\n", s3key)
-	err := enc.Handle(makePath(enc.GetBaseSHA256()))
-	if err != nil {
-		logrus.Errorf("[UploadObjectToDisk][%s]Handle ERR:%s\n", s3key, err)
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
+	exist := cache.SyncObjectExists(self.Encoder.GetVHW())
+	p := makePath(base58.Encode(self.Encoder.GetVHW()))
+	if exist {
+		atomic.StoreInt64(self.PRO.ReadinLength, self.Encoder.GetLength())
+		atomic.StoreInt64(self.PRO.ReadOutLength, self.Encoder.GetLength())
+		atomic.StoreInt64(self.PRO.WriteLength, self.Encoder.GetLength())
+		codec.Append(s3key, p)
+		logrus.Infof("[UploadObjectToDisk][%s]Already exists.\n", s3key)
+	} else {
+		enc := codec.NewEncoder(self.UClient.UserId, self.UClient.KeyNumber, self.UClient.Sign, s3key, self.Encoder, self)
+		enc.HandleProgress(self.PRO.ReadinLength, self.PRO.ReadOutLength, self.PRO.WriteLength)
+		logrus.Infof("[UploadObjectToDisk][%s]Start encode object...\n", s3key)
+		err := enc.Handle(p)
+		if err != nil {
+			logrus.Errorf("[UploadObjectToDisk][%s]Handle ERR:%s\n", s3key, err)
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		}
+		err = cache.InsertSyncObject(enc.GetSHA256())
+		if err != nil {
+			logrus.Errorf("[UploadObjectToDisk][%s]InsertSyncObject ERR:%s\n", s3key, err)
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		}
+		logrus.Infof("[UploadObjectToDisk][%s]Upload object OK.\n", s3key)
 	}
-	err = cache.InsertSyncObject(enc.GetSHA256())
-	if err != nil {
-		logrus.Errorf("[UploadObjectToDisk][%s]InsertSyncObject ERR:%s\n", s3key, err)
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
-	}
-	logrus.Infof("[UploadObjectToDisk][%s]Upload object OK.\n", s3key)
 	return nil
 }
 
