@@ -8,10 +8,23 @@ type SyncObject struct {
 	Sha256 []byte
 }
 
+func SyncObjectExists(sha256 []byte) bool {
+	var val []byte
+	ObjectDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(SyncBuck)
+		val = b.Get(sha256)
+		return nil
+	})
+	if val == nil {
+		return false
+	}
+	return true
+}
+
 func InsertSyncObject(sha256 []byte) error {
 	return ObjectDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
-		err := b.Put(sha256, []byte(""))
+		err := b.Put(sha256, []byte("1"))
 		if err != nil {
 			return err
 		}

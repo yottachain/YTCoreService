@@ -14,10 +14,12 @@ func init() {
 func Test(t *testing.T) {
 	defer env.TracePanic("Test")
 
+	test.TestEOS()
+
 	//***********api test*********
 	//test.UpAndDownFile()
 	//test.DownLoadByKey()
-	test.UpAndDownBytes()
+	//test.UpAndDownBytes()
 
 	//************s3 test****************
 	//test.UploadFile()

@@ -22,5 +22,5 @@ func ULimit() {
 	if err != nil {
 		return
 	}
-	logrus.Infof("[SetLimit]Ulimit -a %s\n", rLimit)
+	logrus.Infof("[SetLimit]Ulimit -a,return %d\n", rLimit.Cur)
 }

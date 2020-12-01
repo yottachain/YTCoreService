@@ -12,7 +12,7 @@ func TestEOS() bool {
 	net.InitShadowPriKey()
 	net.EOSInit()
 	//ii, err := net.GetBalance("i5baoguxctpi")
-	ii, err := net.GetBalance("pollyzhang11")
+	ii, err := net.GetBalance("devtestuser1")
 	if err != nil {
 		panic(err)
 	} else {
