@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
@@ -9,9 +10,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func SyncFile() {
+	os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
+	api.StartApi()
+}
+
 func UploadFile() {
 	initApi()
-	client.UploadFile("D:/YTCoreService/cache/s3cache/test/Secop.rar", "test", "Secop.rar")
+	client.UploadFile("D:/go.zip", "test", "aaa.go.zip")
 }
 
 func ListBucket() {

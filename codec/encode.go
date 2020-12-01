@@ -57,7 +57,7 @@ func (self *Encoder) HandleProgress(Readin, ReadOut, Write *int64) {
 }
 
 func (self *Encoder) Handle(out string) error {
-	f, err := os.OpenFile(out+self.GetBaseSHA256(), os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	f, err := os.OpenFile(out, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}

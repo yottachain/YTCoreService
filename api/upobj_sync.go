@@ -17,7 +17,6 @@ import (
 type UploadObjectSync struct {
 	UploadObject
 	decoder *codec.Decoder
-	path    string
 }
 
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
@@ -34,7 +33,7 @@ func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 
 func (self *UploadObjectSync) createDecoder(sha256 []byte) error {
 	hash := base58.Encode(sha256)
-	p := env.GetCache() + hash[0:2] + "/" + hash[2:4]
+	p := env.GetCache() + hash[0:2] + "/" + hash[2:4] + "/" + hash
 	dec, err := codec.NewDecoder(p)
 	if err != nil {
 		logrus.Errorf("[SyncUpload][%s]NewDecoder err:%s\n", p, err)
@@ -59,11 +58,11 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 		}
 	}()
 	atomic.StoreInt64(self.PRO.Length, self.decoder.GetLength())
-	err := self.initUpload(self.GetSHA256())
+	err := self.initUpload(self.GetSHA256(), self.GetLength())
 	if err != nil {
 		return err
 	}
-	logrus.Infof("[SyncUpload][%s]Start upload object,Path:%s\n", self.VNU.Hex(), self.path)
+	logrus.Infof("[SyncUpload][%s]Start upload object,Path:%s\n", self.VNU.Hex(), self.decoder.GetPath())
 	if self.Exist {
 		atomic.StoreInt64(self.PRO.ReadinLength, self.decoder.GetLength())
 		atomic.StoreInt64(self.PRO.ReadOutLength, self.decoder.GetLength())
@@ -121,12 +120,12 @@ func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
 	for {
 		ss, err := self.decoder.ReadNextKey()
 		if err != nil {
-			logrus.Errorf("[SyncUpload][%s]Read key from %s ERR:%s.\n", self.VNU.Hex(), self.path, err)
+			logrus.Errorf("[SyncUpload][%s]Read key from %s ERR:%s.\n", self.VNU.Hex(), self.decoder.GetPath(), err)
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 		}
 		if ss == "" {
 			if env.StartSync == 2 {
-				os.Remove(self.path)
+				os.Remove(self.decoder.GetPath())
 			}
 			return nil
 		}

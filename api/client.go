@@ -130,6 +130,10 @@ func (c *Client) syncUploadMultiPartFile(path []string, bucketname, key string) 
 	return up.GetMD5(), nil
 }
 
+func (c *Client) UploadMultiPartFileForce(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	return c.syncUploadMultiPartFile(path, bucketname, key)
+}
+
 func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		return c.syncUploadMultiPartFile(path, bucketname, key)
@@ -219,6 +223,10 @@ func (c *Client) syncUploadFile(path string, bucketname, key string) ([]byte, *p
 	return up.GetMD5(), nil
 }
 
+func (c *Client) UploadFileForce(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+	return c.syncUploadFile(path, bucketname, key)
+}
+
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
 		return c.syncUploadFile(path, bucketname, key)
@@ -234,7 +242,7 @@ func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.E
 func FlushCache() {
 	for {
 		if cache.GetCacheSize() > 0 {
-			time.Sleep(time.Duration(1) * time.Second)
+			time.Sleep(time.Duration(5) * time.Second)
 		} else {
 			break
 		}

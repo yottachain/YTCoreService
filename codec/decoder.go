@@ -34,6 +34,10 @@ func NewDecoder(p string) (*Decoder, error) {
 	return de, nil
 }
 
+func (self *Decoder) GetPath() string {
+	return self.path
+}
+
 func (self *Decoder) GetLength() int64 {
 	return self.length
 }
@@ -206,17 +210,17 @@ func (self *Decoder) readHead() error {
 		return err
 	}
 	self.md5 = bs
-	i, err := ReadInt64(self.reader)
+	i, err := ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
 	self.UserId = uint32(i)
-	i, err = ReadInt64(self.reader)
+	i, err = ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
 	self.KeyNumber = uint32(i)
-	i, err = ReadInt64(self.reader)
+	i, err = ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}

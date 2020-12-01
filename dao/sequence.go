@@ -70,7 +70,7 @@ func GetSequence(inc int) int32 {
 func GenerateShardID(shardCount int) int64 {
 	h := time.Now().Unix()
 	l := int64(atomic.AddInt32(SHDID_SEQ, int32(shardCount)) - int32(shardCount))
-	high := (h & 0x000000ffffffff) << 32
+	high := (h & 0x00000000ffffffff) << 32
 	low := l & 0x00000000ffffffff
 	return high | low
 }
@@ -78,7 +78,7 @@ func GenerateShardID(shardCount int) int64 {
 func GenerateBlockID(shardCount int) int64 {
 	h := time.Now().Unix()
 	l := int64(GetSequence(shardCount) - int32(shardCount))
-	high := (h & 0x000000ffffffff) << 32
+	high := (h & 0x00000000ffffffff) << 32
 	low := l & 0x00000000ffffffff
 	return high | low
 }

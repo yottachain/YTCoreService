@@ -248,7 +248,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	keu := codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, self.BLK.KD)
 	for {
-		blkls, err := self.UploadShards(keu, ked, eblk.VHB, enc, &rsize, ress, ids)
+		blkls, err := self.UploadShards(self.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, self.BLK.OriginalSize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
@@ -267,7 +267,8 @@ func (self *UploadBlock) UploadBlockDedup() {
 	}
 }
 
-func (self *UploadBlock) UploadShards(keu, ked, vhb []byte, enc *codec.ErasureEncoder, rsize *int32, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
+func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.ErasureEncoder,
+	rsize *int32, originalSize int64, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
 	startTime := time.Now()
 	wgroup := sync.WaitGroup{}
@@ -288,7 +289,7 @@ func (self *UploadBlock) UploadShards(keu, ked, vhb []byte, enc *codec.ErasureEn
 	uid := int32(self.UPOBJ.UClient.UserId)
 	kn := int32(self.UPOBJ.UClient.KeyNumber)
 	bid := int32(self.ID)
-	osize := int64(self.BLK.OriginalSize)
+	osize := int64(originalSize)
 	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
 	vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	var ar int32 = 0
@@ -302,7 +303,7 @@ func (self *UploadBlock) UploadShards(keu, ked, vhb []byte, enc *codec.ErasureEn
 		SignData:     &self.UPOBJ.UClient.Sign,
 		KeyNumber:    &kn,
 		Id:           &bid,
-		VHP:          self.BLK.VHP,
+		VHP:          vhp,
 		VHB:          vhb,
 		KEU:          keu,
 		KED:          ked,

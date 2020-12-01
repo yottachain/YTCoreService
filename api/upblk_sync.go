@@ -29,7 +29,7 @@ func StartUploadBlockSync(id int16, b *codec.EncodedBlock, up *UploadObject, wg 
 	syncup := &UploadBlockSync{}
 	syncup.EncBLK = b
 	syncup.UploadBlock = ub
-	ub.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
+	syncup.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
 	<-BLOCK_ROUTINE_CH
 	go syncup.upload()
 }
@@ -141,7 +141,7 @@ func (self *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 	ress := make([]*UploadShardResult, size)
 	var ids []int32
 	for {
-		blkls, err := self.UploadShards(self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, ress, ids)
+		blkls, err := self.UploadShards(self.EncBLK.VHP, self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, self.EncBLK.OriginalSize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls

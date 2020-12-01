@@ -16,7 +16,7 @@ var SyncDoingList sync.Map
 
 func initSyncUpPool() int {
 	count := env.CheckInt(env.UploadBlockThreadNum/3, 10, 30)
-	CACHE_UP_CH = make(chan int, count)
+	SYNC_UP_CH = make(chan int, count)
 	for ii := 0; ii < count; ii++ {
 		SYNC_UP_CH <- 1
 	}
@@ -36,7 +36,7 @@ func StartSync() {
 	if env.StartSync == 0 {
 		return
 	}
-	logrus.Infof("[SyncUpload]Start sync...")
+	logrus.Infof("[SyncUpload]Start sync...\n")
 	count := initSyncUpPool()
 	go func() {
 		for {
@@ -63,13 +63,13 @@ func StartSync() {
 func syncUpload(key []byte) {
 	defer func() {
 		SYNC_UP_CH <- 1
-		SyncDoingList.Delete(key)
+		SyncDoingList.Delete(string(key))
 	}()
 	emsg := doSyncUpload(key)
 	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
-		cache.DeleteSyncObject(key)
+		//cache.DeleteSyncObject(key)
 	}
 }
 

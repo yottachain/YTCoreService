@@ -113,7 +113,7 @@ func (self *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 		}
 	}()
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
-	err := self.initUpload(self.Encoder.GetVHW())
+	err := self.initUpload(self.Encoder.GetVHW(), self.Encoder.GetLength())
 	if err != nil {
 		return err
 	}
@@ -220,8 +220,8 @@ func (self *UploadObject) complete(sha []byte) *pkt.ErrorMessage {
 	return nil
 }
 
-func (self *UploadObject) initUpload(sha []byte) *pkt.ErrorMessage {
-	size := uint64(self.Encoder.GetLength())
+func (self *UploadObject) initUpload(sha []byte, length int64) *pkt.ErrorMessage {
+	size := uint64(length)
 	req := &pkt.UploadObjectInitReqV2{
 		UserId:    &self.UClient.UserId,
 		SignData:  &self.UClient.Sign,
@@ -232,12 +232,12 @@ func (self *UploadObject) initUpload(sha []byte) *pkt.ErrorMessage {
 	var initresp *pkt.UploadObjectInitResp
 	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
 	if errmsg != nil {
-		logrus.Errorf("[UploadObject][%s]Init ERR:%s\n", base58.Encode(self.Encoder.GetVHW()), pkt.ToError(errmsg))
+		logrus.Errorf("[UploadObject][%s]Init ERR:%s\n", base58.Encode(sha), pkt.ToError(errmsg))
 		return errmsg
 	} else {
 		res, OK := resp.(*pkt.UploadObjectInitResp)
 		if !OK {
-			logrus.Errorf("[UploadObject][%s]Init ERR:RETURN_ERR_MSG\n", base58.Encode(self.Encoder.GetVHW()))
+			logrus.Errorf("[UploadObject][%s]Init ERR:RETURN_ERR_MSG\n", base58.Encode(sha))
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Return err msg type")
 		}
 		initresp = res
