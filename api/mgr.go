@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -27,6 +28,9 @@ var clients = struct {
 }{clientlist: make(map[string]*Client)}
 
 func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
+	if env.StartSync == 0 {
+		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
+	}
 	c := addClient(uid, keyNum, signstr)
 	cc, er := check(c)
 	if er != nil {
@@ -44,6 +48,9 @@ func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
 }
 
 func NewClient(uname string, privkey string) (*Client, error) {
+	if env.StartSync > 0 {
+		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
+	}
 	c, err := newClient(uname, privkey)
 	if err != nil {
 		return nil, err
