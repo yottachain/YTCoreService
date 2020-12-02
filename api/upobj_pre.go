@@ -62,12 +62,14 @@ func (self *UploadObjectToDisk) UploadBytes(data []byte) *pkt.ErrorMessage {
 }
 
 func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
+	l := cache.AddSyncList(self.Encoder.GetVHW())
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObjectToDisk]")
 			self.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
+		cache.DelSyncList(self.Encoder.GetVHW(), l)
 	}()
 	s3key := self.Bucket + "/" + self.ObjectKey
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())

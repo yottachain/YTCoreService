@@ -19,7 +19,7 @@ import (
 var BLK_SUMMER_CH chan *BlockSpaceSum
 
 func StartIterateUser() {
-	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount()*5)
+	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount())
 	for {
 		if env.SUM_USER_FEE == 0 && net.IsActive() {
 			time.Sleep(time.Duration(30) * time.Second)

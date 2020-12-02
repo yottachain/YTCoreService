@@ -69,7 +69,7 @@ func syncUpload(key []byte) {
 	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
-		//cache.DeleteSyncObject(key)
+		cache.DeleteSyncObject(key)
 	}
 }
 

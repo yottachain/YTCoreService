@@ -158,7 +158,10 @@ func DoCache() {
 			} else {
 				time.Sleep(time.Duration(15) * time.Second)
 			}
-			logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
+			size := cache.GetCacheSize()
+			if size > 0 {
+				logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
+			}
 			LoopCond.Signal()
 		}
 	}()
@@ -236,8 +239,13 @@ func doUpload(ca *cache.Cache) *pkt.ErrorMessage {
 	}
 	if r, ok := obj.(*UploadObject); ok {
 		meta := MetaTobytes(obj.GetLength(), obj.GetMD5())
-		return c.NewObjectAccessor().CreateObject(ca.K.Bucket, ca.K.ObjectName, r.VNU, meta)
-	} else {
-		return nil
+		err := c.NewObjectAccessor().CreateObject(ca.K.Bucket, ca.K.ObjectName, r.VNU, meta)
+		if err != nil {
+			logrus.Errorf("[AyncUpload]WriteMeta ERR:%s,%s/%s\n", pkt.ToError(err), ca.K.Bucket, ca.K.ObjectName)
+			return err
+		} else {
+			logrus.Infof("[AyncUpload]WriteMeta OK,%s/%s\n", ca.K.Bucket, ca.K.ObjectName)
+		}
 	}
+	return nil
 }

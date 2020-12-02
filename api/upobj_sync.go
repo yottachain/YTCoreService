@@ -56,6 +56,7 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			self.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
+		self.decoder.Close()
 	}()
 	atomic.StoreInt64(self.PRO.Length, self.decoder.GetLength())
 	err := self.initUpload(self.GetSHA256(), self.GetLength())
@@ -110,9 +111,8 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 		} else {
 			logrus.Infof("[SyncUpload][%s]Upload object OK.\n", self.VNU.Hex())
 		}
-		return self.writeMeta()
 	}
-	return nil
+	return self.writeMeta()
 }
 
 func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
@@ -133,8 +133,11 @@ func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
 		buck := ss[0:pos]
 		name := ss[pos+1:]
 		errmsg := self.UClient.NewObjectAccessor().CreateObject(buck, name, self.VNU, meta)
-		if err != nil {
+		if errmsg != nil {
+			logrus.Errorf("[SyncUpload][%s]WriteMeta ERR:%s,%s/%s\n", self.VNU, pkt.ToError(errmsg), buck, name)
 			return errmsg
+		} else {
+			logrus.Infof("[SyncUpload][%s]WriteMeta OK,%s/%s\n", self.VNU, buck, name)
 		}
 	}
 }

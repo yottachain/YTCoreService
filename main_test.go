@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
@@ -11,16 +12,18 @@ func init() {
 	env.Console = true
 }
 
+var SyncList sync.Map
+
 func Test(t *testing.T) {
 	defer env.TracePanic("Test")
 
 	//***********api test*********
 	//test.UpAndDownFile()
-	//test.DownLoadByKey()
+	test.DownLoadByKey()
 	//test.UpAndDownBytes()
 
 	//************s3 test****************
-	test.SyncFile()
+	//test.SyncFile()
 	//test.UploadFile()
 	//test.ListBucket()
 	//test.ListObj()

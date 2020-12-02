@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"sync"
+
 	"github.com/boltdb/bolt"
 )
 
@@ -19,6 +21,29 @@ func SyncObjectExists(sha256 []byte) bool {
 		return false
 	}
 	return true
+}
+
+var SyncList sync.Map
+
+func AddSyncList(sha256 []byte) *sync.Cond {
+	cond := sync.NewCond(new(sync.Mutex))
+	for {
+		c, ok := SyncList.LoadOrStore(string(sha256), cond)
+		if ok {
+			cc := c.(*sync.Cond)
+			cc.L.Lock()
+			cc.Wait()
+			cc.L.Unlock()
+			continue
+		} else {
+			return cond
+		}
+	}
+}
+
+func DelSyncList(sha256 []byte, c *sync.Cond) {
+	SyncList.Delete(string(sha256))
+	c.Broadcast()
 }
 
 func InsertSyncObject(sha256 []byte) error {

@@ -124,7 +124,10 @@ func (c *Client) syncUploadMultiPartFile(path []string, bucketname, key string) 
 		meta := MetaTobytes(up.GetLength(), up.GetMD5())
 		err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
 		if err != nil {
+			logrus.Errorf("[SyncUploadMultiPartFile]WriteMeta ERR:%s,%s/%s\n", pkt.ToError(err), bucketname, key)
 			return nil, err
+		} else {
+			logrus.Infof("[SyncUploadMultiPartFile]WriteMeta OK,%s/%s\n", bucketname, key)
 		}
 	}
 	return up.GetMD5(), nil
@@ -165,7 +168,10 @@ func (c *Client) syncUploadBytes(data []byte, bucketname, key string) ([]byte, *
 		meta := MetaTobytes(up.GetLength(), up.GetMD5())
 		err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
 		if err != nil {
+			logrus.Errorf("[SyncUploadBytes]WriteMeta ERR:%s,%s/%s\n", pkt.ToError(err), bucketname, key)
 			return nil, err
+		} else {
+			logrus.Infof("[SyncUploadBytes]WriteMeta OK,%s/%s\n", bucketname, key)
 		}
 	}
 	return up.GetMD5(), nil
@@ -217,7 +223,10 @@ func (c *Client) syncUploadFile(path string, bucketname, key string) ([]byte, *p
 		meta := MetaTobytes(up.GetLength(), up.GetMD5())
 		err = c.NewObjectAccessor().CreateObject(bucketname, key, r.VNU, meta)
 		if err != nil {
+			logrus.Errorf("[SyncUploadFile]WriteMeta ERR:%s,%s/%s\n", pkt.ToError(err), bucketname, key)
 			return nil, err
+		} else {
+			logrus.Infof("[SyncUploadFile]WriteMeta OK,%s/%s\n", bucketname, key)
 		}
 	}
 	return up.GetMD5(), nil
