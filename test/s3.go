@@ -17,9 +17,9 @@ func SyncFile() {
 
 func UploadFile() {
 	initApi()
-	client.UploadFile("D:/YTCoreService_2.0.0.0.gz", "test", "YTCoreService_2.0.0.0.gz")
-	client.UploadFile("D:/YTCoreService_2.0.0.1.gz", "test", "YTCoreService_2.0.0.1.gz")
-	client.UploadFile("D:/YTCoreService_2.0.0.2.gz", "test", "YTCoreService_2.0.0.2.gz")
+	//client.UploadFile("D:/YTCoreService_2.0.0.0.gz", "test", "YTCoreService_2.0.0.0.gz")
+	//client.UploadFile("D:/YTCoreService_2.0.0.1.gz", "test", "YTCoreService_2.0.0.1.gz")
+	//client.UploadFile("D:/YTCoreService_2.0.0.2.gz", "test", "YTCoreService_2.0.0.2.gz")
 }
 
 func ListBucket() {

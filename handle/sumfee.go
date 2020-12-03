@@ -140,11 +140,22 @@ func (me *UserObjectSum) SetCycleFee() {
 		if me.CostPerCycle == cost {
 			logrus.Infof("[SumFileUsedSpace]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
 		} else {
-			err = net.SetHfee(me.UserName, cost)
-			if err == nil {
-				logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			num := 0
+			for {
+				err = net.SetHfee(me.UserName, cost)
+				if err != nil {
+					num++
+					if num > 8 {
+						break
+					} else {
+						time.Sleep(time.Duration(15) * time.Second)
+					}
+				} else {
+					dao.UpdateUserCost(me.UserID, cost)
+					logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+					break
+				}
 			}
-			dao.UpdateUserCost(me.UserID, cost)
 		}
 	}
 	if err == nil {

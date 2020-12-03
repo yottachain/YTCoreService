@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
@@ -56,6 +57,7 @@ func deleteFile(parent string, f os.FileInfo) bool {
 		if err != nil {
 			return false
 		} else {
+			logrus.Infof("[Cache]Delete bad file %s\n", parent+f.Name())
 			return true
 		}
 	}

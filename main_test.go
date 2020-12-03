@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"path"
 	"sync"
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -17,10 +16,6 @@ var SyncList sync.Map
 
 func Test(t *testing.T) {
 	defer env.TracePanic("Test")
-
-	p := "/sd\\ssdsds//dfdf//s"
-	dir := path.Clean(p)
-	fmt.Println(dir)
 	//***********api test*********
 	//test.UpAndDownFile()
 	//test.DownLoadByKey()
@@ -28,7 +23,7 @@ func Test(t *testing.T) {
 
 	//************s3 test****************
 	//test.SyncFile()
-	//test.UploadFile()
+	test.UploadFile()
 	//test.ListBucket()
 	//test.ListObj()
 
