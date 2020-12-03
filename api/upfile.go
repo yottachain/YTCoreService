@@ -135,6 +135,9 @@ func IsDoing(key *cache.Key) bool {
 }
 
 func DoCache() {
+	if env.StartSync > 0 {
+		return
+	}
 	count := initCACHEUpPool()
 	go func() {
 		for {
