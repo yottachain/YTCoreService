@@ -114,7 +114,7 @@ func (c *Client) syncUploadMultiPartFile(path []string, bucketname, key string) 
 	PutUploadObject(int32(c.UserId), bucketname, key, up)
 	defer func() {
 		DelUploadObject(int32(c.UserId), bucketname, key)
-		Delete(path)
+		cache.Delete(path)
 	}()
 	err := up.UploadMultiFile(path)
 	if err != nil {
@@ -213,7 +213,7 @@ func (c *Client) syncUploadFile(path string, bucketname, key string) ([]byte, *p
 	PutUploadObject(int32(c.UserId), bucketname, key, up)
 	defer func() {
 		DelUploadObject(int32(c.UserId), bucketname, key)
-		Delete([]string{path})
+		cache.Delete([]string{path})
 	}()
 	err := up.UploadFile(path)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -58,15 +59,16 @@ func GetCurrentPath() string {
 }
 
 func InitClient() {
-	path := os.Getenv("YTFS_HOME")
-	if path == "" {
-		path = GetCurrentPath()
+	pathstr := os.Getenv("YTFS_HOME")
+	if pathstr == "" {
+		pathstr = GetCurrentPath()
 	}
-	path = strings.ReplaceAll(path, "\\", "/")
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
+	pathstr = strings.ReplaceAll(pathstr, "\\", "/")
+	pathstr = path.Clean(pathstr)
+	if !strings.HasSuffix(pathstr, "/") {
+		pathstr = pathstr + "/"
 	}
-	YTFS_HOME = path
+	YTFS_HOME = pathstr
 	readClientProperties()
 	initClientLog()
 	port, err := GetFreePort()
@@ -80,15 +82,16 @@ func InitClient() {
 }
 
 func InitServer() {
-	path := os.Getenv("YTSN_HOME")
-	if path == "" {
-		path = GetCurrentPath()
+	pathstr := os.Getenv("YTSN_HOME")
+	if pathstr == "" {
+		pathstr = GetCurrentPath()
 	}
-	path = strings.ReplaceAll(path, "\\", "/")
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
+	pathstr = strings.ReplaceAll(pathstr, "\\", "/")
+	pathstr = path.Clean(pathstr)
+	if !strings.HasSuffix(pathstr, "/") {
+		pathstr = pathstr + "/"
 	}
-	YTSN_HOME = path
+	YTSN_HOME = pathstr
 	os.Setenv("YTSN_HOME", YTSN_HOME)
 	os.Setenv("NODEMGMT_CONFIGDIR", YTSN_HOME+"conf")
 	readSnProperties()

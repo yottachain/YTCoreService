@@ -3,9 +3,6 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"path"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -115,18 +112,6 @@ func UploadBytesFile(userid int32, data []byte, bucketname, key string) ([]byte,
 	return enc.GetMD5(), nil
 }
 
-func Delete(paths []string) {
-	if paths != nil {
-		dir := ""
-		for _, p := range paths {
-			p = strings.ReplaceAll(p, "\\", "/")
-			dir = path.Dir(p)
-			os.Remove(p)
-		}
-		os.Remove(dir)
-	}
-}
-
 var CACHE_UP_CH chan int
 var LoopCond = sync.NewCond(new(sync.Mutex))
 var DoingList sync.Map
@@ -161,6 +146,8 @@ func DoCache() {
 			size := cache.GetCacheSize()
 			if size > 0 {
 				logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
+			} else {
+				cache.Clear()
 			}
 			LoopCond.Signal()
 		}
@@ -194,12 +181,12 @@ func upload(ca *cache.Cache) {
 		cache.DeleteValue(ca.K)
 		if emsg != nil {
 			if ca.V.Type > 0 {
-				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", ca.V.PathString(), pkt.ToError(emsg))
+				logrus.Errorf("[AyncUpload]%s,Upload ERR:%s\n", ca.V.PathString(), pkt.ToError(emsg))
 			} else {
 				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", pkt.ToError(emsg))
 			}
 		}
-		Delete(ca.V.Path)
+		cache.Delete(ca.V.Path)
 	}
 }
 
