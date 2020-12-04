@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/yottachain/YTCoreService/stat"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -60,10 +61,12 @@ func (self *UploadBlock) DoFinish(size int64) {
 	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
 	DecBlockMen(&self.BLK.Block)
 	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, size)
+	stat.Ccstat.BlkCcSub()
 }
 
 func (self *UploadBlock) upload() {
 	size := self.BLK.Length()
+	stat.Ccstat.BlkCcAdd()
 	defer self.DoFinish(size)
 	err := self.BLK.Sum()
 	if err != nil {
