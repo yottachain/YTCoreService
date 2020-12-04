@@ -138,9 +138,6 @@ func (ccs *ccstat) GtSucsAdd() {
 }
 
 func init() {
-	if !Ccstat.IsOpenStat {
-		return
-	}
 	fd, err := os.OpenFile(env.YTFS_HOME+"stat.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		log.Fatalln("open stat.log fail  "+ err.Error())
@@ -149,9 +146,6 @@ func init() {
 }
 
 func (ccs *ccstat) PrintCc() {
-	if !ccs.IsOpenStat {
-		return
-	}
 	var sshs = uint64(0)
 	var sshsucs = uint64(0)
 	var gts = uint64(0)
@@ -159,6 +153,9 @@ func (ccs *ccstat) PrintCc() {
 
 	for {
 		<- time.After(time.Second*1)
+		if !ccs.IsOpenStat {
+			continue
+		}
 		ccs.Lock()
 		_, _ = fmt.Fprintf(ccs.fd, "send-blk-goroutine-cc=%d get-token-cc=%d send-shard-go-cc=%d send-shard-rungo-cc=%d\n",
 			ccs.ccBlks, ccs.ccGts, ccs.ccShards, ccs.ccShardsG)
