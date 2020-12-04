@@ -153,6 +153,7 @@ func (ccs *ccstat) PrintCc() {
 
 	for {
 		<- time.After(time.Second*1)
+		ccs.IsOpenStat = env.Openstat
 		if !ccs.IsOpenStat {
 			continue
 		}
@@ -176,6 +177,7 @@ func (ccs *ccstat) PrintCc() {
 }
 
 func (ccs *ccstat) Println(key string, v interface{}) {
+	ccs.IsOpenStat = env.Openstat
 	if !ccs.IsOpenStat {
 		return
 	}
