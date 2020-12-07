@@ -68,7 +68,7 @@ func UpAndDownFile() {
 
 func DownLoadByKey() {
 	initApi()
-	dn, errmsg := client.NewDownloadFile("newjava", "tmpfile_newjava_60978c.txt1", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("test", "YTCoreService_2.0.0.1.gz", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
@@ -84,7 +84,7 @@ func DownLoadByKey() {
 			}
 		}
 	}()
-	dn.SaveToPath(savePath)
+	//dn.SaveToPath(savePath)
 	err := dn.SaveToPath(savePath)
 	if err != nil {
 		logrus.Error("[DownloadFile]ERR:%s.\n", err)

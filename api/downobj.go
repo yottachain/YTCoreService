@@ -135,7 +135,7 @@ func (self *DownloadObject) SaveToPath(path string) error {
 			return errors.New("The specified path is not a directory.")
 		}
 	}
-	self.Progress.Path = path
+	self.Progress.Path = strings.ReplaceAll(path, "\\", "/")
 	if !strings.HasSuffix(path, "/") {
 		self.Progress.Path = path + "/"
 	}

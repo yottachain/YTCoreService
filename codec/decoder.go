@@ -9,26 +9,53 @@ import (
 )
 
 type Decoder struct {
-	path      string
-	length    int64
-	md5       []byte
-	sha       []byte
-	reader    io.Reader
-	file      *os.File
-	pos       int64
-	readin    int64
-	UserId    uint32
-	KeyNumber uint32
-	Sign      string
+	path         string
+	length       int64
+	md5          []byte
+	sha          []byte
+	reader       io.Reader
+	file         *os.File
+	pos          int64
+	readin       int64
+	UserId       uint32
+	KeyNumber    uint32
+	Sign         string
+	readinTotal  int64
+	readoutTotal int64
 }
 
 func NewDecoder(p string) (*Decoder, error) {
-	de := &Decoder{path: p, readin: 0}
+	de := &Decoder{path: p, readin: 0, readinTotal: 0, readoutTotal: 0}
 	err := de.readHead()
 	if err != nil {
+		de.Close()
 		return nil, err
 	}
 	return de, nil
+}
+
+func (self *Decoder) GetPath() string {
+	return self.path
+}
+
+func (self *Decoder) GetLength() int64 {
+	return self.length
+}
+
+func (self *Decoder) GetMD5() []byte {
+	return self.md5
+}
+
+func (self *Decoder) GetVHW() []byte {
+	return self.sha
+}
+
+func (self *Decoder) GetReadinTotal() int64 {
+	return self.readinTotal
+}
+
+func (self *Decoder) GetReadoutTotal() int64 {
+	return self.readoutTotal
 }
 
 func (self *Decoder) Close() {
@@ -36,6 +63,35 @@ func (self *Decoder) Close() {
 		self.file.Close()
 		self.file = nil
 	}
+}
+
+func (self *Decoder) ReadNextKey() (string, error) {
+	if self.readin < self.pos {
+		self.Close()
+		f, err := os.OpenFile(self.path, os.O_RDONLY, 0644)
+		if err != nil {
+			return "", err
+		}
+		self.file = f
+		_, err = self.file.Seek(self.pos, io.SeekStart)
+		if err != nil {
+			return "", err
+		}
+		self.reader = bufio.NewReader(self.file)
+	}
+	ii, err := ReadInt32(self.reader)
+	if err != nil {
+		if err == io.EOF {
+			return "", nil
+		}
+		return "", err
+	}
+	bs := make([]byte, ii)
+	err = ReadFull(self.reader, bs)
+	if err != nil {
+		return "", err
+	}
+	return string(bs), nil
 }
 
 func (self *Decoder) HasNextBlock() bool {
@@ -46,7 +102,21 @@ func (self *Decoder) HasNextBlock() bool {
 	}
 }
 
-func (self *Decoder) NextBlock() (interface{}, error) {
+func (self *Decoder) ReadNext() (*EncodedBlock, error) {
+	if self.HasNextBlock() {
+		b, err := self.NextBlock()
+		if err != nil {
+			return nil, err
+		}
+		self.readinTotal = self.readinTotal + b.OriginalSize
+		self.readoutTotal = self.readoutTotal + b.Length()
+		return b, nil
+	} else {
+		return nil, nil
+	}
+}
+
+func (self *Decoder) NextBlock() (*EncodedBlock, error) {
 	b, err := ReadBool(self.reader)
 	if err != nil {
 		return nil, err
@@ -59,7 +129,7 @@ func (self *Decoder) NextBlock() (interface{}, error) {
 	}
 }
 
-func (self *Decoder) NextNODupBlock() (*NODupBlock, error) {
+func (self *Decoder) NextNODupBlock() (*EncodedBlock, error) {
 	ii1, err := ReadInt64(self.reader)
 	if err != nil {
 		return nil, err
@@ -92,11 +162,12 @@ func (self *Decoder) NextNODupBlock() (*NODupBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	b := &NODupBlock{OriginalSize: ii1, RealSize: ii2, VHP: bs1, KEU: bs2, KED: bs3, DATA: bs4}
+	self.readin = self.readin + 8 + 8 + 8 + 32 + 32 + 32 + ii3
+	b := &EncodedBlock{OriginalSize: ii1, RealSize: ii2, VHP: bs1, KEU: bs2, KED: bs3, DATA: bs4, IsDup: false}
 	return b, nil
 }
 
-func (self *Decoder) NextDupBlock() (*DupBlock, error) {
+func (self *Decoder) NextDupBlock() (*EncodedBlock, error) {
 	ii1, err := ReadInt64(self.reader)
 	if err != nil {
 		return nil, err
@@ -105,7 +176,7 @@ func (self *Decoder) NextDupBlock() (*DupBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	b := &DupBlock{OriginalSize: ii1, RealSize: ii2}
+	b := &EncodedBlock{OriginalSize: ii1, RealSize: ii2, IsDup: true}
 	bs1 := make([]byte, 32)
 	err = ReadFull(self.reader, bs1)
 	if err != nil {
@@ -153,17 +224,17 @@ func (self *Decoder) readHead() error {
 		return err
 	}
 	self.md5 = bs
-	i, err := ReadInt64(self.reader)
+	i, err := ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
 	self.UserId = uint32(i)
-	i, err = ReadInt64(self.reader)
+	i, err = ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
 	self.KeyNumber = uint32(i)
-	i, err = ReadInt64(self.reader)
+	i, err = ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
