@@ -60,6 +60,9 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return nil, er
 	}
 	if cc != nil {
+		if cc.Username != uname {
+			return nil, errors.New("Same privatekey, different username " + cc.Username)
+		}
 		return cc, nil
 	}
 	clients.Lock()
@@ -145,7 +148,7 @@ func InitSuperList() {
 		path = env.YTFS_HOME + path
 	}
 	data, err := ioutil.ReadFile(path)
-	if err != nil {
+	if err != nil { //
 		logrus.Panicf("Failed to read snlist.properties:%s\n", err)
 	}
 	type JsonSuperNode struct {

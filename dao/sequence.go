@@ -46,6 +46,20 @@ func GenerateUserID() uint32 {
 	return atomic.AddUint32(USERID_SEQ, uint32(net.GetSuperNodeCount()))
 }
 
+func GetSequence1(inc int) int32 {
+	id := atomic.AddInt32(BLKID_SEQ, int32(inc))
+	if id == 0 {
+		id = atomic.AddInt32(BLKID_SEQ, int32(inc))
+	}
+	h := int32(env.SuperNodeID)
+	if env.IsBackup != 0 {
+		h = int32(env.SuperNodeID + net.GetSuperNodeCount())
+	}
+	high := (h & 0x00ffffff) << 24
+	low := id & 0x00ffffff
+	return high | low
+}
+
 func GetSequence(inc int) int32 {
 	id := atomic.AddInt32(BLKID_SEQ, int32(inc))
 	if id == 0 {

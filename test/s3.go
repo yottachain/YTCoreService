@@ -17,7 +17,8 @@ func SyncFile() {
 
 func UploadFile() {
 	initApi()
-	//client.UploadFile("D:/YTCoreService_2.0.0.0.gz", "test", "YTCoreService_2.0.0.0.gz")
+	client.UploadFile("D:/Secop.rar", "test", "Secop2.rar")
+	//client.UploadFile("D:/Secop.rar", "test", "Secop.rar")
 	//client.UploadFile("D:/YTCoreService_2.0.0.1.gz", "test", "YTCoreService_2.0.0.1.gz")
 	//client.UploadFile("D:/YTCoreService_2.0.0.2.gz", "test", "YTCoreService_2.0.0.2.gz")
 }
