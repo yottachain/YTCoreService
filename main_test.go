@@ -23,8 +23,8 @@ func Test(t *testing.T) {
 	//test.UpAndDownBytes()
 
 	//************s3 test****************
-	test.SyncFile()
-	//test.UploadFile()
+	//test.SyncFile()
+	test.UploadFile()
 	//test.ListBucket()
 	//test.ListObj()
 
