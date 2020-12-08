@@ -40,9 +40,9 @@ func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	defer clients.Unlock()
 	clients.clientlist[c.AccessorKey] = c
 	clients.clientids.Store(c.UserId, c)
+	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
 }
@@ -66,13 +66,14 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	defer clients.Unlock()
 	err = c.Regist()
 	if err != nil {
+		clients.Unlock()
 		return nil, err
 	}
 	clients.clientlist[c.AccessorKey] = c
 	clients.clientids.Store(c.UserId, c)
+	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
 }

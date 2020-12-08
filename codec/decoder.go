@@ -92,6 +92,7 @@ func (self *Decoder) ReadNextKey() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	self.readin = self.readin + 4 + int64(ii)
 	return string(bs), nil
 }
 

@@ -37,6 +37,7 @@ func Clear() {
 	if time.Now().Unix()-LastCleanTime < FileExpiredTime {
 		return
 	}
+	logrus.Infof("[Cache]Clearing expired files...\n")
 	rd, err := ioutil.ReadDir(env.GetS3Cache())
 	if err != nil {
 		return

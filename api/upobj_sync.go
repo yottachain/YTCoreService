@@ -1,7 +1,6 @@
 package api
 
 import (
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -124,9 +123,6 @@ func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 		}
 		if ss == "" {
-			if env.StartSync == 2 {
-				os.Remove(self.decoder.GetPath())
-			}
 			return nil
 		}
 		pos := strings.Index(ss, "/")

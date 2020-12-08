@@ -68,7 +68,7 @@ func readClientProperties() {
 	MkCacheDir(s3cache_dir)
 	MkCacheDir(dbcache_dir)
 	SyncMode = config.GetRangeInt("syncmode", 0, 1, 0)
-	StartSync = config.GetRangeInt("startSync", 0, 2, 0)
+	StartSync = config.GetRangeInt("startSync", 0, 1, 0)
 	Driver = strings.ToLower(config.GetString("driver", "yotta"))
 	size := config.GetRangeInt("cachemaxsize", 5, 1024*100, 20)
 	MaxCacheSize = int64(size) * 1024 * 1024 * 1024
