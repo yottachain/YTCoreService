@@ -129,7 +129,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 				newid, len(metas), len(h.m.Id), time.Now().Sub(startTime).Milliseconds())
 		}
 	} else {
-		logrus.Warnf("[DNRebuidRep]ExpiredTime:%d<%d.\n", h.m.ExpiredTime, time.Now().Unix())
+		logrus.Warnf("[DNRebuidRep][%d]ExpiredTime:%d<%d.\n", newid, h.m.ExpiredTime, time.Now().Unix())
 	}
 	return &pkt.VoidResp{}
 }
