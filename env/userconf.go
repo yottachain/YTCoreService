@@ -49,7 +49,10 @@ func GetCache() string {
 
 func MkCacheDir(name string) {
 	path := CachePath + name + "/"
-	os.MkdirAll(path, os.ModePerm)
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		log.Panicf("[Init]Cache path ERR:%s\n", err)
+	}
 }
 
 func readClientProperties() {
@@ -61,6 +64,7 @@ func readClientProperties() {
 	cfg = config
 	CachePath = config.GetString("cache", YTFS_HOME+"cache")
 	CachePath = strings.ReplaceAll(CachePath, "\\", "/")
+	CachePath = strings.ReplaceAll(CachePath, "\"", "")
 	CachePath = path.Clean(CachePath)
 	if !strings.HasSuffix(CachePath, "/") {
 		CachePath = CachePath + "/"
