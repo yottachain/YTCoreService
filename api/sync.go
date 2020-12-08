@@ -87,6 +87,9 @@ func doSyncUpload(key []byte) *pkt.ErrorMessage {
 	if err != nil {
 		return err
 	}
-	os.Remove(up.decoder.GetPath())
+	err1 := os.Remove(up.decoder.GetPath())
+	if err1 != nil {
+		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", up.decoder.GetPath(), err1)
+	}
 	return nil
 }
