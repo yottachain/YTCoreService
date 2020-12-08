@@ -1,6 +1,7 @@
 package api
 
 import (
+	"os"
 	"sync"
 	"time"
 
@@ -66,7 +67,7 @@ func syncUpload(key []byte) {
 		SyncDoingList.Delete(string(key))
 	}()
 	emsg := doSyncUpload(key)
-	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
+	if emsg != nil {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
 		cache.DeleteSyncObject(key)
@@ -82,5 +83,6 @@ func doSyncUpload(key []byte) *pkt.ErrorMessage {
 	if err != nil {
 		return err
 	}
+	os.Remove(up.decoder.GetPath())
 	return nil
 }

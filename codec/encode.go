@@ -67,11 +67,13 @@ func (self *Encoder) Handle(out string) error {
 		return err
 	}
 	var lastpos int64 = size
+	id := 0
 	for {
 		b, err := self.fc.ReadNext()
 		if err != nil {
 			return err
 		}
+		id++
 		if self.ReadinLength != nil {
 			atomic.StoreInt64(self.ReadinLength, self.fc.GetReadinTotal())
 			atomic.StoreInt64(self.ReadOutLength, self.fc.GetReadoutTotal())
@@ -79,7 +81,7 @@ func (self *Encoder) Handle(out string) error {
 		if b == nil {
 			break
 		} else {
-			obj, err := self.checker.Check(b)
+			obj, err := self.checker.Check(b, id)
 			if err != nil {
 				return err
 			}

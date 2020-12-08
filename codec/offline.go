@@ -8,7 +8,7 @@ import (
 )
 
 type DupBlockChecker interface {
-	Check(b *PlainBlock) (*EncodedBlock, error)
+	Check(b *PlainBlock, id int) (*EncodedBlock, error)
 }
 
 type EncodedBlock struct {

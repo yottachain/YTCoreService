@@ -100,7 +100,7 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 	return nil
 }
 
-func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (*codec.EncodedBlock, error) {
+func (self *UploadObjectToDisk) Check(b *codec.PlainBlock, id int) (*codec.EncodedBlock, error) {
 	b.Sum()
 	SN := net.GetBlockSuperNode(b.VHP)
 	req := &pkt.CheckBlockDupReq{
@@ -124,6 +124,7 @@ func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (*codec.EncodedBlock,
 	if ok {
 		keu, vhb := self.CheckBlockDup(dupResp, b)
 		if keu != nil {
+			logrus.Infof("[UploadObjectToDisk][%s/%s]Write Block %d:repeat\n", self.Bucket, self.ObjectKey, id)
 			return &codec.EncodedBlock{IsDup: true, OriginalSize: b.OriginalSize,
 				RealSize: b.Length(), VHP: b.VHP, KEU: keu, VHB: vhb}, nil
 		}
@@ -133,6 +134,7 @@ func (self *UploadObjectToDisk) Check(b *codec.PlainBlock) (*codec.EncodedBlock,
 		logrus.Warnf("[UploadObjectToDisk][%s/%s]MakeNODupBlock ERR:%s\n", self.Bucket, self.ObjectKey, err)
 		return nil, err
 	}
+	logrus.Infof("[UploadObjectToDisk][%s/%s]Write Block %d:no-repeat\n", self.Bucket, self.ObjectKey, id)
 	return bb, nil
 }
 

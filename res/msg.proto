@@ -123,6 +123,7 @@ message TaskList{
     repeated bytes tasklist=1;
     int64 expiredTime=2;
     int32 srcNodeID=3;
+    int32 expiredTimeGap=4;
 }
 
 message TaskDispatchList{

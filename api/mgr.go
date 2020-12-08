@@ -40,9 +40,9 @@ func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	defer clients.Unlock()
 	clients.clientlist[c.AccessorKey] = c
 	clients.clientids.Store(c.UserId, c)
+	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
 }
@@ -60,16 +60,20 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return nil, er
 	}
 	if cc != nil {
+		if cc.Username != uname {
+			return nil, errors.New("Same privatekey, different username " + cc.Username)
+		}
 		return cc, nil
 	}
 	clients.Lock()
-	defer clients.Unlock()
 	err = c.Regist()
 	if err != nil {
+		clients.Unlock()
 		return nil, err
 	}
 	clients.clientlist[c.AccessorKey] = c
 	clients.clientids.Store(c.UserId, c)
+	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
 }
@@ -145,7 +149,7 @@ func InitSuperList() {
 		path = env.YTFS_HOME + path
 	}
 	data, err := ioutil.ReadFile(path)
-	if err != nil {
+	if err != nil { //
 		logrus.Panicf("Failed to read snlist.properties:%s\n", err)
 	}
 	type JsonSuperNode struct {

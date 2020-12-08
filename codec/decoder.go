@@ -77,6 +77,7 @@ func (self *Decoder) ReadNextKey() (string, error) {
 		if err != nil {
 			return "", err
 		}
+		self.readin = self.pos
 		self.reader = bufio.NewReader(self.file)
 	}
 	ii, err := ReadInt32(self.reader)
@@ -91,6 +92,7 @@ func (self *Decoder) ReadNextKey() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	self.readin = self.readin + 4 + int64(ii)
 	return string(bs), nil
 }
 

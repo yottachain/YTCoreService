@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const yfnet = true
+const yfnet = false
 const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
@@ -55,7 +55,7 @@ func UpAndDownBytes() {
 	initApi()
 	vhw, _ := upload()
 	download(vhw)
-	downloadRange(vhw)
+	//downloadRange(vhw)
 	//client.NewObjectAccessor().DeleteObjectV2(vnu)
 }
 

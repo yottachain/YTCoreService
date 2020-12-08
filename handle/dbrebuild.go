@@ -56,7 +56,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 		return
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
-	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime, SrcNodeID: ls.SrcNodeID}
+	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime, SrcNodeID: ls.SrcNodeID, ExpiredTimeGap: ls.ExpiredTimeGap}
 	_, e := net.RequestDN(req, node, "")
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
@@ -129,7 +129,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 				newid, len(metas), len(h.m.Id), time.Now().Sub(startTime).Milliseconds())
 		}
 	} else {
-		logrus.Warnf("[DNRebuidRep]ExpiredTime:%d<%d.\n", h.m.ExpiredTime, time.Now().Unix())
+		logrus.Warnf("[DNRebuidRep][%d]ExpiredTime:%d<%d.\n", newid, h.m.ExpiredTime, time.Now().Unix())
 	}
 	return &pkt.VoidResp{}
 }

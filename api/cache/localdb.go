@@ -72,6 +72,9 @@ func initCacheSize() {
 	sum := SumSpace()
 	logrus.Infof("[Cache]Sum cache size %d\n", sum)
 	atomic.StoreInt64(CurCacheSize, sum)
+	if sum == 0 {
+		Clear()
+	}
 }
 
 func GetCacheSize() int64 {
