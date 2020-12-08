@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/pkt"
 )
 
 type DupBlockChecker interface {
-	Check(b *PlainBlock, id int) (*EncodedBlock, error)
+	Check(b *PlainBlock, id int) (*EncodedBlock, *pkt.ErrorMessage)
 }
 
 type EncodedBlock struct {

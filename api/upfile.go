@@ -177,7 +177,7 @@ func upload(ca *cache.Cache) {
 		DoingList.Delete(ca.K.ToString())
 	}()
 	emsg := doUpload(ca)
-	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
+	if emsg != nil && !(emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
 		atomic.AddInt64(cache.CurCacheSize, -ca.V.Length)

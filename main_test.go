@@ -18,13 +18,12 @@ func Test(t *testing.T) {
 	defer env.TracePanic("Test")
 
 	//***********api test*********
-	//test.UpAndDownFile()
-	//test.DownLoadByKey()
 	//test.UpAndDownBytes()
 
 	//************s3 test****************
-	//test.SyncFile()
-	test.UploadFile()
+	test.SyncFile()
+	//test.UploadFile()
+	//test.DownLoadFile()
 	//test.ListBucket()
 	//test.ListObj()
 
