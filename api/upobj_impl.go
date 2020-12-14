@@ -59,7 +59,7 @@ func (self *UploadObject) UploadMultiFile(path []string) *pkt.ErrorMessage {
 	enc, err := codec.NewMultiFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", err)
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
@@ -70,7 +70,7 @@ func (self *UploadObject) UploadFile(path string) *pkt.ErrorMessage {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewFileEncoder]Path:%s,ERR:%s\n", path, err)
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
@@ -81,7 +81,7 @@ func (self *UploadObject) UploadBytes(data []byte) *pkt.ErrorMessage {
 	enc, err := codec.NewBytesEncoder(data)
 	if err != nil {
 		logrus.Errorf("[NewBytesEncoder]ERR:%s\n", err)
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	self.Encoder = enc
 	defer enc.Close()
@@ -131,7 +131,7 @@ func (self *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 		for {
 			b, err := self.Encoder.ReadNext()
 			if err != nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+				return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 			}
 			if b == nil {
 				break

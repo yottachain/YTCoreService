@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
@@ -11,16 +12,49 @@ import (
 )
 
 func SyncFile() {
-	os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
+	if yfnet {
+		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
+	} else {
+		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
+	}
 	api.StartApi()
 }
 
 func UploadFile() {
 	initApi()
-	client.UploadFile("D:/aaa.mkv", "test", "aaa.mkv")
+	client.UploadFile("D:/Adobe_Reader_XI_zh_CN.exe", "test", "Adobe_Reader_XI_zh_CN.exe")
 	//client.UploadFile("D:/Secop.rar", "test", "Secop.rar")
 	//client.UploadFile("D:/YTCoreService_2.0.0.1.gz", "test", "YTCoreService_2.0.0.1.gz")
 	//client.UploadFile("D:/YTCoreService_2.0.0.2.gz", "test", "YTCoreService_2.0.0.2.gz")
+}
+
+func DownLoadFile() {
+	outpath := "D:/YTSDK.ok.rar"
+	initApi()
+	dn, errmsg := client.NewDownloadFile("test", "YTSDK.rar", primitive.NilObjectID)
+	if errmsg != nil {
+		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
+	}
+	oksign := make(chan int)
+	go func() {
+		for {
+			timeout := time.After(time.Second * 5)
+			select {
+			case oksign <- 1:
+				return
+			case <-timeout:
+				logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
+			}
+		}
+	}()
+	err := dn.SaveToFile(outpath)
+	if err != nil {
+		logrus.Errorf("[DownloadFile]ERR:%s.\n", err)
+	} else {
+		logrus.Infof("[DownloadFile]Progress:%d\n", dn.GetProgress())
+		logrus.Infof("[DownloadFile]OK.\n")
+	}
+	<-oksign
 }
 
 func ListBucket() {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/mr-tron/base58/base58"
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/pkt"
 )
 
 type Encoder struct {
@@ -56,22 +57,22 @@ func (self *Encoder) HandleProgress(Readin, ReadOut, Write *int64) {
 	self.WriteLength = Write
 }
 
-func (self *Encoder) Handle(out string) error {
+func (self *Encoder) Handle(out string) *pkt.ErrorMessage {
 	f, err := os.OpenFile(out, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	defer f.Close()
 	size, err := self.writeHead(f)
 	if err != nil {
-		return err
+		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	var lastpos int64 = size
 	id := 0
 	for {
 		b, err := self.fc.ReadNext()
 		if err != nil {
-			return err
+			return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 		}
 		id++
 		if self.ReadinLength != nil {
@@ -85,13 +86,14 @@ func (self *Encoder) Handle(out string) error {
 			if err != nil {
 				return err
 			}
+			var werr error
 			if obj.IsDup {
-				size, err = self.writeDupBlock(f, obj)
+				size, werr = self.writeDupBlock(f, obj)
 			} else {
-				size, err = self.writeNoDupBlock(f, obj)
+				size, werr = self.writeNoDupBlock(f, obj)
 			}
-			if err != nil {
-				return err
+			if werr != nil {
+				return pkt.NewErrorMsg(pkt.SERVER_ERROR, werr.Error())
 			}
 			if self.WriteLength != nil {
 				atomic.AddInt64(self.WriteLength, b.Length())
@@ -101,11 +103,11 @@ func (self *Encoder) Handle(out string) error {
 	}
 	err = self.writeKey(f)
 	if err != nil {
-		return err
+		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	}
 	err = self.writeBottonPos(f, lastpos)
 	if err != nil {
-		return err
+		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	}
 	return nil
 }

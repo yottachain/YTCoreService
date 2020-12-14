@@ -136,6 +136,12 @@ message TaskOpResult{
     bytes id = 1; 
     int32 RES=2;
 }
+
+
+message MultiTaskOpResultRes{
+   int32 errCode=1;
+   int32 succNum=2;
+}
  
 message TaskOpResultList{
     repeated bytes id = 1; 

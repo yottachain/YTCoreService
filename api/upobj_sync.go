@@ -25,7 +25,7 @@ func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
 	err := u.createDecoder(sha256)
 	if err != nil {
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	return u, nil
 }
@@ -76,7 +76,7 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 		for {
 			b, err := self.decoder.ReadNext()
 			if err != nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+				return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 			}
 			if b == nil {
 				break
@@ -120,7 +120,7 @@ func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
 		ss, err := self.decoder.ReadNextKey()
 		if err != nil {
 			logrus.Errorf("[SyncUpload][%s]Read key from %s ERR:%s.\n", self.VNU.Hex(), self.decoder.GetPath(), err)
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+			return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 		}
 		if ss == "" {
 			return nil

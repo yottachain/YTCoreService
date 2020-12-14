@@ -40,6 +40,28 @@ func (self *ObjectMeta) GetAndUpdateNlink() error {
 	return nil
 }
 
+func (self *ObjectMeta) ChecekVNUExists() (bool, error) {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"VNU": self.VNU}
+	opt := options.FindOne().SetProjection(bson.M{"NLINK": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := source.GetObjectColl().FindOne(ctx, filter, opt).Decode(self)
+	if err != nil {
+		if err == mongo.ErrNilDocument {
+			return false, nil
+		} else {
+			logrus.Errorf("[ObjectMeta]ChecekVNUExists ERR:%s\n", err)
+			return false, err
+		}
+	}
+	if self.NLINK < 1 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
 func (self *ObjectMeta) IsExists() (bool, error) {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"_id": self.VHW}

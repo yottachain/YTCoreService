@@ -68,7 +68,11 @@ func syncUpload(key []byte) {
 	}()
 	emsg := doSyncUpload(key)
 	if emsg != nil {
-		time.Sleep(time.Duration(15) * time.Second)
+		if emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS {
+			cache.DeleteSyncObject(key)
+		} else {
+			time.Sleep(time.Duration(15) * time.Second)
+		}
 	} else {
 		cache.DeleteSyncObject(key)
 	}
@@ -83,6 +87,9 @@ func doSyncUpload(key []byte) *pkt.ErrorMessage {
 	if err != nil {
 		return err
 	}
-	os.Remove(up.decoder.GetPath())
+	err1 := os.Remove(up.decoder.GetPath())
+	if err1 != nil {
+		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", up.decoder.GetPath(), err1)
+	}
 	return nil
 }
