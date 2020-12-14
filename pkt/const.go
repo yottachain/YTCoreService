@@ -39,6 +39,7 @@ func init_id_class() {
 	ID_CLASS_MAP[0x2cb0]=func() proto.Message { return &TaskList{} }
 	ID_CLASS_MAP[0x8b4d]=func() proto.Message { return &TaskDispatchList{} }
 	ID_CLASS_MAP[0x16f3]=func() proto.Message { return &TaskOpResult{} }
+	ID_CLASS_MAP[0x93e4]=func() proto.Message { return &MultiTaskOpResultRes{} }
 	ID_CLASS_MAP[0x1b31]=func() proto.Message { return &TaskOpResultList{} }
 	ID_CLASS_MAP[0xe75c]=func() proto.Message { return &UploadFackShardReq{} }
 	ID_CLASS_MAP[0x1978]=func() proto.Message { return &UploadShard2CResp{} }
@@ -155,6 +156,7 @@ func init_class_id() {
 	CLASS_ID_MAP["TaskList"]=0x2cb0
 	CLASS_ID_MAP["TaskDispatchList"]=0x8b4d
 	CLASS_ID_MAP["TaskOpResult"]=0x16f3
+	CLASS_ID_MAP["MultiTaskOpResultRes"]=0x93e4
 	CLASS_ID_MAP["TaskOpResultList"]=0x1b31
 	CLASS_ID_MAP["UploadFackShardReq"]=0xe75c
 	CLASS_ID_MAP["UploadShard2CResp"]=0x1978

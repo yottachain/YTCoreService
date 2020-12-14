@@ -94,11 +94,11 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
 		logrus.Errorf("[DNRebuidRep][%d]Rebuild task OpResultList is empty.\n", newid)
-		return &pkt.VoidResp{}
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "RES NULL")
 	}
 	if REBUILDER_SERVICE == nil {
 		logrus.Errorf("[DNRebuidRep][%d]Rebuild server Not started.\n", newid)
-		return &pkt.VoidResp{}
+		return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: 0}
 	}
 	okList := []int64{}
 	for index, idbs := range h.m.Id {
@@ -109,12 +109,12 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	}
 	metas, err := dao.GetShardNodes(okList)
 	if err != nil {
-		return &pkt.VoidResp{}
+		return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
 	}
 	if time.Now().Unix() < h.m.ExpiredTime {
 		err := SaveRep(newid, metas)
 		if err != nil {
-			return &pkt.VoidResp{}
+			return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
 		}
 		startTime := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
@@ -124,14 +124,17 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		if err != nil {
 			logrus.Errorf("[DNRebuidRep][%d]Update rebuild TaskStatus,count:%d/%d,ERR:%s,take times %d ms\n",
 				newid, len(metas), len(h.m.Id), err, time.Now().Sub(startTime).Milliseconds())
+			return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
 		} else {
 			logrus.Infof("[DNRebuidRep][%d]Update rebuild TaskStatus OK,count:%d/%d,take times %d ms\n",
 				newid, len(metas), len(h.m.Id), time.Now().Sub(startTime).Milliseconds())
+			return &pkt.MultiTaskOpResultRes{ErrCode: 0, SuccNum: int32(len(metas))}
 		}
 	} else {
 		logrus.Warnf("[DNRebuidRep][%d]ExpiredTime:%d<%d.\n", newid, h.m.ExpiredTime, time.Now().Unix())
+		return &pkt.MultiTaskOpResultRes{ErrCode: 1, SuccNum: int32(len(metas))}
 	}
-	return &pkt.VoidResp{}
+
 }
 
 func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
