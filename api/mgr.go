@@ -149,7 +149,7 @@ func InitSuperList() {
 		path = env.YTFS_HOME + path
 	}
 	data, err := ioutil.ReadFile(path)
-	if err != nil { //
+	if err != nil {
 		logrus.Panicf("Failed to read snlist.properties:%s\n", err)
 	}
 	type JsonSuperNode struct {

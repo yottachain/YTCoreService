@@ -50,7 +50,7 @@ func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 }
 
 func (h *UploadFileHandler) Handle() proto.Message {
-	logrus.Infof("[CreateOBJ]UID:%d,BucketName:%s,FileName:%s\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
+	logrus.Infof("[CreateOBJ]UID:%d,%s/%s...\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
 	meta, _ := dao.GetBucketIdFromCache(*h.m.Bucketname, h.user.UserID)
 	if meta == nil {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
@@ -59,8 +59,17 @@ func (h *UploadFileHandler) Handle() proto.Message {
 	if h.m.Meta != nil {
 		m = h.m.Meta
 	}
+	ometa := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.vnu}
+	b, err := ometa.ChecekVNUExists()
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	if !b {
+		logrus.Errorf("[CreateOBJ]UID:%d,%s/%s ERR:INVALID_UPLOAD_ID,\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
+		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
+	}
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName, VersionId: h.vnu, Meta: m, Acl: []byte{}}
-	err := fmeta.SaveFileMeta()
+	err = fmeta.SaveFileMeta()
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
@@ -107,17 +116,7 @@ func (h *CopyObjectHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.INVALID_OBJECT_NAME)
 	}
-	m, err := pkt.UnmarshalMap(fmeta.Meta)
-	if err != nil {
-		m = make(map[string]string)
-	}
-	timestr := strconv.FormatInt(time.Now().Unix(), 10)
-	m["x-amz-date"] = timestr
-	m["date"] = timestr
-	meta, err := pkt.MarshalMap(m)
-	if err != nil {
-		meta = []byte{}
-	}
+	meta := fmeta.Meta
 	nmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: dstmeta.BucketId, FileName: *h.m.DestObjectKey,
 		Meta: meta, VersionId: fmeta.VersionId, Acl: []byte{}}
 	err = nmeta.SaveFileMeta()
