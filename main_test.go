@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -15,13 +16,13 @@ var SyncList sync.Map
 
 func Test(t *testing.T) {
 	defer env.TracePanic("Test")
-	Make()
+	//Make()
 	//***********api test*********
 	//test.UpAndDownBytes()
 
 	//************s3 test****************
 
-	//test.SyncFile()
+	test.SyncFile()
 	//test.UploadFile()
 	//test.DownLoadFile()
 	//test.ListBucket()

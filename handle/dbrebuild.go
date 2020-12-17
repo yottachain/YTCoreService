@@ -134,7 +134,6 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		logrus.Warnf("[DNRebuidRep][%d]ExpiredTime:%d<%d.\n", newid, h.m.ExpiredTime, time.Now().Unix())
 		return &pkt.MultiTaskOpResultRes{ErrCode: 1, SuccNum: int32(len(metas))}
 	}
-
 }
 
 func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {

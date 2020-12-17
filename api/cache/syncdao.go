@@ -3,6 +3,7 @@ package cache
 import (
 	"sync"
 
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/boltdb/bolt"
 )
 
@@ -57,16 +58,17 @@ func InsertSyncObject(sha256 []byte) error {
 	})
 }
 
-func FindSyncObject(count int, isdoing func(key []byte) bool) [][]byte {
-	res := [][]byte{}
+func FindSyncObject(count int, isdoing func(key string) bool) []string {
+	res := []string{}
 	ObjectDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
 		cur := b.Cursor()
 		for k, _ := cur.First(); k != nil; k, _ = cur.Next() {
-			if isdoing(k) {
+			ss := base58.Encode(k)
+			if isdoing(ss) {
 				continue
 			}
-			res = append(res, k)
+			res = append(res, ss)
 			if len(res) >= count {
 				break
 			}
@@ -77,6 +79,9 @@ func FindSyncObject(count int, isdoing func(key []byte) bool) [][]byte {
 }
 
 func DeleteSyncObject(k []byte) {
+	if k == nil {
+		return
+	}
 	ObjectDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
 		b.Delete(k)

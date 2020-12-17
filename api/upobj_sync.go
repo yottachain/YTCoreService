@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
@@ -18,20 +17,19 @@ type UploadObjectSync struct {
 	decoder *codec.Decoder
 }
 
-func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
+func NewUploadObjectSync(hashstr string) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
 	u.ActiveTime = new(int64)
 	u.activesign = make(chan int)
 	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
-	err := u.createDecoder(sha256)
+	err := u.createDecoder(hashstr)
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	return u, nil
 }
 
-func (self *UploadObjectSync) createDecoder(sha256 []byte) error {
-	hash := base58.Encode(sha256)
+func (self *UploadObjectSync) createDecoder(hash string) error {
 	p := env.GetCache() + hash[0:2] + "/" + hash[2:4] + "/" + hash
 	dec, err := codec.NewDecoder(p)
 	if err != nil {
@@ -105,10 +103,10 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			errmsg = self.complete(self.GetSHA256())
 		}
 		if errmsg != nil {
-			logrus.Errorf("[SyncUpload][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
+			logrus.Errorf("[SyncUpload][%s]Upload object %s,ERR:%s\n", self.VNU.Hex(), self.decoder.GetPath(), pkt.ToError(errmsg))
 			return errmsg
 		} else {
-			logrus.Infof("[SyncUpload][%s]Upload object OK.\n", self.VNU.Hex())
+			logrus.Infof("[SyncUpload][%s]Upload object %s OK.\n", self.VNU.Hex(), self.decoder.GetPath())
 		}
 	}
 	return self.writeMeta()

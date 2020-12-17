@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/env"
@@ -28,8 +29,8 @@ func NotifyLoop() {
 	LoopSyncCond.Signal()
 }
 
-func isSyncDoing(key []byte) bool {
-	_, ok := SyncDoingList.Load(string(key))
+func isSyncDoing(key string) bool {
+	_, ok := SyncDoingList.Load(key)
 	return ok
 }
 
@@ -41,7 +42,7 @@ func StartSync() {
 	count := initSyncUpPool()
 	go func() {
 		for {
-			time.Sleep(time.Duration(15) * time.Second)
+			time.Sleep(time.Duration(2) * time.Second)
 			LoopSyncCond.Signal()
 		}
 	}()
@@ -61,35 +62,38 @@ func StartSync() {
 	}
 }
 
-func syncUpload(key []byte) {
+func syncUpload(key string) {
 	defer func() {
-		SYNC_UP_CH <- 1
 		SyncDoingList.Delete(string(key))
+		SYNC_UP_CH <- 1
 	}()
-	emsg := doSyncUpload(key)
+	hash, emsg := doSyncUpload(key)
 	if emsg != nil {
 		if emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS {
-			cache.DeleteSyncObject(key)
+			if hash == nil {
+				hash = base58.Decode(key)
+			}
+			cache.DeleteSyncObject(hash)
 		} else {
 			time.Sleep(time.Duration(15) * time.Second)
 		}
 	} else {
-		cache.DeleteSyncObject(key)
+		cache.DeleteSyncObject(hash)
 	}
 }
 
-func doSyncUpload(key []byte) *pkt.ErrorMessage {
+func doSyncUpload(key string) ([]byte, *pkt.ErrorMessage) {
 	up, err := NewUploadObjectSync(key)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = up.Upload()
 	if err != nil {
-		return err
+		return up.decoder.GetVHW(), err
 	}
 	err1 := os.Remove(up.decoder.GetPath())
 	if err1 != nil {
 		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", up.decoder.GetPath(), err1)
 	}
-	return nil
+	return up.decoder.GetVHW(), nil
 }

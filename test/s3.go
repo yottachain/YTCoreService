@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -12,6 +13,11 @@ import (
 )
 
 func SyncFile() {
+	ss := "AHpNHxA1RycrYwY89AgPbuYvhkopsMFnMbAmt5ma7Tg8"
+	bs := base58.Decode(ss)
+	_ = string(bs)
+	ss1 := base58.Encode(bs)
+	fmt.Print(ss1)
 	if yfnet {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 	} else {
