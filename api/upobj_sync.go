@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
@@ -17,19 +18,20 @@ type UploadObjectSync struct {
 	decoder *codec.Decoder
 }
 
-func NewUploadObjectSync(hashstr string) (*UploadObjectSync, *pkt.ErrorMessage) {
+func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
 	u.ActiveTime = new(int64)
 	u.activesign = make(chan int)
 	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
-	err := u.createDecoder(hashstr)
+	err := u.createDecoder(sha256)
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	return u, nil
 }
 
-func (self *UploadObjectSync) createDecoder(hash string) error {
+func (self *UploadObjectSync) createDecoder(sha256 []byte) error {
+	hash := base58.Encode(sha256)
 	p := env.GetCache() + hash[0:2] + "/" + hash[2:4] + "/" + hash
 	dec, err := codec.NewDecoder(p)
 	if err != nil {

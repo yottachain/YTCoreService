@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/env"
@@ -30,7 +29,7 @@ func NotifyLoop() {
 }
 
 func isSyncDoing(key string) bool {
-	_, ok := SyncDoingList.Load(key)
+	_, ok := SyncDoingList.Load(string(key))
 	return ok
 }
 
@@ -42,7 +41,7 @@ func StartSync() {
 	count := initSyncUpPool()
 	go func() {
 		for {
-			time.Sleep(time.Duration(2) * time.Second)
+			time.Sleep(time.Duration(15) * time.Second)
 			LoopSyncCond.Signal()
 		}
 	}()
@@ -55,45 +54,49 @@ func StartSync() {
 		} else {
 			for _, ca := range caches {
 				<-SYNC_UP_CH
-				SyncDoingList.Store(string(ca), "")
-				go syncUpload(ca)
+				SyncDoingList.Store(ca, "")
+				syncUpload([]byte(ca))
 			}
 		}
 	}
 }
 
-func syncUpload(key string) {
+func syncUpload(key []byte) {
 	defer func() {
-		SyncDoingList.Delete(string(key))
 		SYNC_UP_CH <- 1
+		SyncDoingList.Delete(string(key))
 	}()
-	hash, emsg := doSyncUpload(key)
+	path, emsg := doSyncUpload(key)
 	if emsg != nil {
 		if emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS {
-			if hash == nil {
-				hash = base58.Decode(key)
-			}
-			cache.DeleteSyncObject(hash)
+			deleteItem(key, path)
 		} else {
 			time.Sleep(time.Duration(15) * time.Second)
 		}
 	} else {
-		cache.DeleteSyncObject(hash)
+		deleteItem(key, path)
 	}
 }
 
-func doSyncUpload(key string) ([]byte, *pkt.ErrorMessage) {
+func deleteItem(key []byte, path string) {
+	err := cache.DeleteSyncObject(key)
+	if err != nil || path == "" {
+		return
+	}
+	err1 := os.Remove(path)
+	if err1 != nil {
+		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", path, err1)
+	}
+}
+
+func doSyncUpload(key []byte) (string, *pkt.ErrorMessage) {
 	up, err := NewUploadObjectSync(key)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	err = up.Upload()
 	if err != nil {
-		return up.decoder.GetVHW(), err
+		return up.decoder.GetPath(), err
 	}
-	err1 := os.Remove(up.decoder.GetPath())
-	if err1 != nil {
-		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", up.decoder.GetPath(), err1)
-	}
-	return up.decoder.GetVHW(), nil
+	return up.decoder.GetPath(), nil
 }
