@@ -26,6 +26,13 @@ func NotifyAllocNode(reset bool) {
 		time.Sleep(time.Duration(60) * time.Second)
 	} else {
 		cond.Signal()
+		for {
+			if DNList.Len() > 0 {
+				break
+			} else {
+				time.Sleep(time.Duration(1) * time.Second)
+			}
+		}
 	}
 }
 

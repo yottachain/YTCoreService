@@ -29,7 +29,7 @@ func StartUploadBlockSync(id int16, b *codec.EncodedBlock, up *UploadObject, wg 
 	syncup := &UploadBlockSync{}
 	syncup.EncBLK = b
 	syncup.UploadBlock = ub
-	ub.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
+	syncup.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
 	<-BLOCK_ROUTINE_CH
 	go syncup.upload()
 }
@@ -68,7 +68,7 @@ func (self *UploadBlockSync) upload() {
 func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 	startTime := time.Now()
 	bid := uint32(self.ID)
-	osize := uint64(self.BLK.OriginalSize)
+	osize := uint64(self.EncBLK.OriginalSize)
 	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
 	vnu := &pkt.UploadBlockDBReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadBlockDBReqV2{
@@ -77,7 +77,7 @@ func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 		KeyNumber:    &self.UPOBJ.UClient.KeyNumber,
 		Id:           &bid,
 		Vnu:          vnu,
-		VHP:          self.BLK.VHP,
+		VHP:          self.EncBLK.VHP,
 		VHB:          b.VHB,
 		KEU:          self.EncBLK.KEU,
 		KED:          self.EncBLK.KED,
@@ -87,7 +87,7 @@ func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg == nil {
 		logrus.Infof("[SyncBlock]%sUpload block to DB,VHP:%s,take times %d ms.\n", self.logPrefix,
-			base58.Encode(self.BLK.VHP), time.Now().Sub(startTime).Milliseconds())
+			base58.Encode(self.EncBLK.VHP), time.Now().Sub(startTime).Milliseconds())
 	} else {
 		self.UPOBJ.ERR.Store(errmsg)
 	}
@@ -108,7 +108,7 @@ func (self *UploadBlockSync) uploadDup() {
 	osize := uint64(self.EncBLK.OriginalSize)
 	rsize := uint32(self.EncBLK.RealSize)
 	dupReq.Id = &bid
-	dupReq.VHP = self.BLK.VHP
+	dupReq.VHP = self.EncBLK.VHP
 	dupReq.OriginalSize = &osize
 	dupReq.RealSize = &rsize
 	dupReq.Vnu = v
@@ -141,7 +141,7 @@ func (self *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 	ress := make([]*UploadShardResult, size)
 	var ids []int32
 	for {
-		blkls, err := self.UploadShards(self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, ress, ids)
+		blkls, err := self.UploadShards(self.EncBLK.VHP, self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, self.EncBLK.OriginalSize, ress, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls

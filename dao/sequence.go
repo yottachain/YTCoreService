@@ -46,6 +46,20 @@ func GenerateUserID() uint32 {
 	return atomic.AddUint32(USERID_SEQ, uint32(net.GetSuperNodeCount()))
 }
 
+func GetSequence1(inc int) int32 {
+	id := atomic.AddInt32(BLKID_SEQ, int32(inc))
+	if id == 0 {
+		id = atomic.AddInt32(BLKID_SEQ, int32(inc))
+	}
+	h := int32(env.SuperNodeID)
+	if env.IsBackup != 0 {
+		h = int32(env.SuperNodeID + net.GetSuperNodeCount())
+	}
+	high := (h & 0x00ffffff) << 24
+	low := id & 0x00ffffff
+	return high | low
+}
+
 func GetSequence(inc int) int32 {
 	id := atomic.AddInt32(BLKID_SEQ, int32(inc))
 	if id == 0 {
@@ -70,7 +84,7 @@ func GetSequence(inc int) int32 {
 func GenerateShardID(shardCount int) int64 {
 	h := time.Now().Unix()
 	l := int64(atomic.AddInt32(SHDID_SEQ, int32(shardCount)) - int32(shardCount))
-	high := (h & 0x000000ffffffff) << 32
+	high := (h & 0x00000000ffffffff) << 32
 	low := l & 0x00000000ffffffff
 	return high | low
 }
@@ -78,7 +92,7 @@ func GenerateShardID(shardCount int) int64 {
 func GenerateBlockID(shardCount int) int64 {
 	h := time.Now().Unix()
 	l := int64(GetSequence(shardCount) - int32(shardCount))
-	high := (h & 0x000000ffffffff) << 32
+	high := (h & 0x00000000ffffffff) << 32
 	low := l & 0x00000000ffffffff
 	return high | low
 }

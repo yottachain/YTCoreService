@@ -46,6 +46,7 @@ const BAD_MESSAGE = 0x27
 const CACHE_FULL = 0x28
 const INVALID_ARGS = 0x30
 const CONN_ERROR = 0x31
+const CODEC_ERROR = 0x32
 
 var BUSY_ERROR = NewErrorMsg(SERVER_ERROR, "Too many routines")
 

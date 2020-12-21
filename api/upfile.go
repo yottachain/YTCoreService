@@ -3,9 +3,6 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"path"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -115,18 +112,6 @@ func UploadBytesFile(userid int32, data []byte, bucketname, key string) ([]byte,
 	return enc.GetMD5(), nil
 }
 
-func Delete(paths []string) {
-	if paths != nil {
-		dir := ""
-		for _, p := range paths {
-			p = strings.ReplaceAll(p, "\\", "/")
-			dir = path.Dir(p)
-			os.Remove(p)
-		}
-		os.Remove(dir)
-	}
-}
-
 var CACHE_UP_CH chan int
 var LoopCond = sync.NewCond(new(sync.Mutex))
 var DoingList sync.Map
@@ -150,6 +135,9 @@ func IsDoing(key *cache.Key) bool {
 }
 
 func DoCache() {
+	if env.StartSync > 0 {
+		return
+	}
 	count := initCACHEUpPool()
 	go func() {
 		for {
@@ -158,7 +146,12 @@ func DoCache() {
 			} else {
 				time.Sleep(time.Duration(15) * time.Second)
 			}
-			logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
+			size := cache.GetCacheSize()
+			if size > 0 {
+				logrus.Infof("[AyncUpload]Cache size %d\n", cache.GetCacheSize())
+			} else {
+				cache.Clear()
+			}
 			LoopCond.Signal()
 		}
 	}()
@@ -184,21 +177,19 @@ func upload(ca *cache.Cache) {
 		DoingList.Delete(ca.K.ToString())
 	}()
 	emsg := doUpload(ca)
-	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
+	if emsg != nil && !(emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
 		atomic.AddInt64(cache.CurCacheSize, -ca.V.Length)
 		cache.DeleteValue(ca.K)
 		if emsg != nil {
 			if ca.V.Type > 0 {
-				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", ca.V.PathString(), pkt.ToError(emsg))
+				logrus.Errorf("[AyncUpload]%s,Upload ERR:%s\n", ca.V.PathString(), pkt.ToError(emsg))
 			} else {
 				logrus.Errorf("[AyncUpload]Upload ERR:%s\n", pkt.ToError(emsg))
 			}
-		} else {
-			//Delete(ca.V.Path)
 		}
-		Delete(ca.V.Path)
+		cache.Delete(ca.V.Path)
 	}
 }
 
@@ -238,8 +229,13 @@ func doUpload(ca *cache.Cache) *pkt.ErrorMessage {
 	}
 	if r, ok := obj.(*UploadObject); ok {
 		meta := MetaTobytes(obj.GetLength(), obj.GetMD5())
-		return c.NewObjectAccessor().CreateObject(ca.K.Bucket, ca.K.ObjectName, r.VNU, meta)
-	} else {
-		return nil
+		err := c.NewObjectAccessor().CreateObject(ca.K.Bucket, ca.K.ObjectName, r.VNU, meta)
+		if err != nil {
+			logrus.Errorf("[AyncUpload]WriteMeta ERR:%s,%s/%s\n", pkt.ToError(err), ca.K.Bucket, ca.K.ObjectName)
+			return err
+		} else {
+			logrus.Infof("[AyncUpload]WriteMeta OK,%s/%s\n", ca.K.Bucket, ca.K.ObjectName)
+		}
 	}
+	return nil
 }

@@ -54,7 +54,7 @@ func BytesToFileMetaMap(meta []byte, versionid primitive.ObjectID) (map[string]s
 		hash := meta[8:]
 		m = make(map[string]string)
 		m[LengthKey] = strconv.Itoa(int(id))
-		m[ETagKey] = "\\" + hex.EncodeToString(hash) + "\\"
+		m[ETagKey] = hex.EncodeToString(hash)
 		if versionid != primitive.NilObjectID {
 			m[DateKey] = versionid.Timestamp().String()
 		}
