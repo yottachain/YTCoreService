@@ -150,7 +150,7 @@ func (self *UploadShard) DoSend() {
 			node.DecCount()
 			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
 			logrus.Errorf("[UploadShard]%sGetNodeCapacity:%s,%s to %d,retry %d times,take times %d ms,retry next node %d\n",
-				self.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
+				self.logPrefix, err.Error(), base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
 			node = n
 			continue
 		}
