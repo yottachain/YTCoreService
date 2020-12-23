@@ -317,7 +317,7 @@ func (h *ListObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 			h.compress = *h.m.Compress
 		}
 		h.HashKey = h.ReqHashCode(h.nextfileName, h.nextid)
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, READ_ROUTINE_NUM, h.user.Routine
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

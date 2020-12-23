@@ -17,14 +17,18 @@ func Delete(paths []string) {
 		for _, p := range paths {
 			p = strings.ReplaceAll(p, "\\", "/")
 			dir = path.Dir(p)
-			os.Remove(p)
+			if strings.HasPrefix(dir, env.GetS3Cache()) {
+				os.Remove(p)
+			}
 		}
 		dir = path.Clean(dir)
 		if !strings.HasSuffix(dir, "/") {
 			dir = dir + "/"
 		}
 		if dir != env.GetS3Cache() {
-			os.Remove(dir)
+			if strings.HasPrefix(dir, env.GetS3Cache()) {
+				os.Remove(dir)
+			}
 		}
 	}
 }

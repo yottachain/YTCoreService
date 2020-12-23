@@ -159,7 +159,9 @@ func readSuperNodeList(ls []*YTDNMgmt.SuperNode) {
 		}
 		superNodeMap[pkey] = sn
 	}
-	logrus.Infof("[NodeMgr]Snlist init ok,Size:%d\n", len(superNodeMap))
+	size := len(superNodeMap)
+	env.MAX_SUMFEE_ROUTINE = int32(size) * 2
+	logrus.Infof("[NodeMgr]Snlist init ok,Size:%d\n", size)
 }
 
 func GetSelfIp() string {
