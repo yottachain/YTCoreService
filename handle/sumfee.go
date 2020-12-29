@@ -229,7 +229,7 @@ func (h *BlockUsedSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*p
 		if h.m.Id == nil || len(h.m.Id) == 0 {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, SUMFEE_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

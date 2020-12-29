@@ -104,7 +104,7 @@ func (c *Client) GetProgress(bucketname, key string) int32 {
 	}
 }
 
-func (c *Client) syncUploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+func (c *Client) SyncUploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	var up UploadObjectBase
 	if env.Driver == "nas" {
 		up = NewUploadObjectToDisk(c, bucketname, key)
@@ -133,23 +133,19 @@ func (c *Client) syncUploadMultiPartFile(path []string, bucketname, key string) 
 	return up.GetMD5(), nil
 }
 
-func (c *Client) UploadMultiPartFileForce(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	return c.syncUploadMultiPartFile(path, bucketname, key)
-}
-
 func (c *Client) UploadMultiPartFile(path []string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
-		return c.syncUploadMultiPartFile(path, bucketname, key)
+		return c.SyncUploadMultiPartFile(path, bucketname, key)
 	}
 	md5, err := UploadMultiPartFile(int32(c.UserId), path, bucketname, key)
 	if err != nil && err.Code == pkt.CACHE_FULL {
-		return c.syncUploadMultiPartFile(path, bucketname, key)
+		return c.SyncUploadMultiPartFile(path, bucketname, key)
 	} else {
 		return md5, err
 	}
 }
 
-func (c *Client) syncUploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+func (c *Client) SyncUploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	var up UploadObjectBase
 	if env.Driver == "nas" {
 		up = NewUploadObjectToDisk(c, bucketname, key)
@@ -177,17 +173,13 @@ func (c *Client) syncUploadBytes(data []byte, bucketname, key string) ([]byte, *
 	return up.GetMD5(), nil
 }
 
-func (c *Client) UploadBytesForce(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	return c.syncUploadBytes(data, bucketname, key)
-}
-
 func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
-		return c.syncUploadBytes(data, bucketname, key)
+		return c.SyncUploadBytes(data, bucketname, key)
 	}
 	md5, err := UploadBytesFile(int32(c.UserId), data, bucketname, key)
 	if err != nil && err.Code == pkt.CACHE_FULL {
-		return c.syncUploadBytes(data, bucketname, key)
+		return c.SyncUploadBytes(data, bucketname, key)
 	} else {
 		return md5, err
 	}
@@ -203,7 +195,7 @@ func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessa
 	return bs, nil
 }
 
-func (c *Client) syncUploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
+func (c *Client) SyncUploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	var up UploadObjectBase
 	if env.Driver == "nas" {
 		up = NewUploadObjectToDisk(c, bucketname, key)
@@ -232,17 +224,13 @@ func (c *Client) syncUploadFile(path string, bucketname, key string) ([]byte, *p
 	return up.GetMD5(), nil
 }
 
-func (c *Client) UploadFileForce(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
-	return c.syncUploadFile(path, bucketname, key)
-}
-
 func (c *Client) UploadFile(path string, bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	if env.SyncMode == 0 {
-		return c.syncUploadFile(path, bucketname, key)
+		return c.SyncUploadFile(path, bucketname, key)
 	}
 	md5, err := UploadSingleFile(int32(c.UserId), path, bucketname, key)
 	if err != nil && err.Code == pkt.CACHE_FULL {
-		return c.syncUploadFile(path, bucketname, key)
+		return c.SyncUploadFile(path, bucketname, key)
 	} else {
 		return md5, err
 	}

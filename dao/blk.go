@@ -119,6 +119,7 @@ func SaveBlockMeta(meta *BlockMeta) error {
 			return err
 		}
 	}
+	IncBlockCount()
 	return nil
 }
 

@@ -57,16 +57,17 @@ func InsertSyncObject(sha256 []byte) error {
 	})
 }
 
-func FindSyncObject(count int, isdoing func(key []byte) bool) [][]byte {
-	res := [][]byte{}
+func FindSyncObject(count int, isdoing func(key string) bool) []string {
+	res := []string{}
 	ObjectDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
 		cur := b.Cursor()
 		for k, _ := cur.First(); k != nil; k, _ = cur.Next() {
-			if isdoing(k) {
+			ss := string(k)
+			if isdoing(ss) {
 				continue
 			}
-			res = append(res, k)
+			res = append(res, ss)
 			if len(res) >= count {
 				break
 			}
@@ -76,10 +77,13 @@ func FindSyncObject(count int, isdoing func(key []byte) bool) [][]byte {
 	return res
 }
 
-func DeleteSyncObject(k []byte) {
-	ObjectDB.Update(func(tx *bolt.Tx) error {
+func DeleteSyncObject(k []byte) error {
+	return ObjectDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
-		b.Delete(k)
+		err := b.Delete(k)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }

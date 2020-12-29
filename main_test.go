@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -15,7 +16,7 @@ var SyncList sync.Map
 
 func Test(t *testing.T) {
 	defer env.TracePanic("Test")
-	Make()
+	//Make()
 	//***********api test*********
 	//test.UpAndDownBytes()
 
@@ -32,5 +33,8 @@ func Test(t *testing.T) {
 	//test.TestMultiCutFile()
 	//test.TestCutFile()
 	//test.TestLRC()
+
+	//**************************
+	test.TestEOS()
 	select {}
 }

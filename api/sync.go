@@ -28,7 +28,7 @@ func NotifyLoop() {
 	LoopSyncCond.Signal()
 }
 
-func isSyncDoing(key []byte) bool {
+func isSyncDoing(key string) bool {
 	_, ok := SyncDoingList.Load(string(key))
 	return ok
 }
@@ -54,8 +54,8 @@ func StartSync() {
 		} else {
 			for _, ca := range caches {
 				<-SYNC_UP_CH
-				SyncDoingList.Store(string(ca), "")
-				go syncUpload(ca)
+				SyncDoingList.Store(ca, "")
+				syncUpload([]byte(ca))
 			}
 		}
 	}
@@ -66,30 +66,37 @@ func syncUpload(key []byte) {
 		SYNC_UP_CH <- 1
 		SyncDoingList.Delete(string(key))
 	}()
-	emsg := doSyncUpload(key)
+	path, emsg := doSyncUpload(key)
 	if emsg != nil {
 		if emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS {
-			cache.DeleteSyncObject(key)
+			deleteItem(key, path)
 		} else {
 			time.Sleep(time.Duration(15) * time.Second)
 		}
 	} else {
-		cache.DeleteSyncObject(key)
+		deleteItem(key, path)
 	}
 }
 
-func doSyncUpload(key []byte) *pkt.ErrorMessage {
+func deleteItem(key []byte, path string) {
+	err := cache.DeleteSyncObject(key)
+	if err != nil || path == "" {
+		return
+	}
+	err1 := os.Remove(path)
+	if err1 != nil {
+		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", path, err1)
+	}
+}
+
+func doSyncUpload(key []byte) (string, *pkt.ErrorMessage) {
 	up, err := NewUploadObjectSync(key)
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = up.Upload()
 	if err != nil {
-		return err
+		return up.decoder.GetPath(), err
 	}
-	err1 := os.Remove(up.decoder.GetPath())
-	if err1 != nil {
-		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", up.decoder.GetPath(), err1)
-	}
-	return nil
+	return up.decoder.GetPath(), nil
 }

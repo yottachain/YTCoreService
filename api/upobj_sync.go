@@ -105,10 +105,10 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			errmsg = self.complete(self.GetSHA256())
 		}
 		if errmsg != nil {
-			logrus.Errorf("[SyncUpload][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
+			logrus.Errorf("[SyncUpload][%s]Upload object %s,ERR:%s\n", self.VNU.Hex(), self.decoder.GetPath(), pkt.ToError(errmsg))
 			return errmsg
 		} else {
-			logrus.Infof("[SyncUpload][%s]Upload object OK.\n", self.VNU.Hex())
+			logrus.Infof("[SyncUpload][%s]Upload object %s OK.\n", self.VNU.Hex(), self.decoder.GetPath())
 		}
 	}
 	return self.writeMeta()
