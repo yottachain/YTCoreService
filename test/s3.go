@@ -1,6 +1,7 @@
 package test
 
 import (
+	"crypto/md5"
 	"fmt"
 	"os"
 	"time"
@@ -24,7 +25,13 @@ func SyncFile() {
 
 func UploadFile() {
 	initApi()
-	client.UploadFile("D:/Adobe_Reader_XI_zh_CN.exe", "test", "Adobe_Reader_XI_zh_CN.exe")
+
+	meta := api.MetaTobytes(0, md5.New().Sum(nil))
+	err := client.NewObjectAccessor().CreateObject("test", "uris", primitive.NewObjectID(), meta)
+	if err != nil {
+		logrus.Panicf("%s", err)
+	}
+	//client.UploadFile("D:/Adobe_Reader_XI_zh_CN.exe", "test", "Adobe_Reader_XI_zh_CN.exe")
 	//client.UploadFile("D:/Secop.rar", "test", "Secop.rar")
 	//client.UploadFile("D:/YTCoreService_2.0.0.1.gz", "test", "YTCoreService_2.0.0.1.gz")
 	//client.UploadFile("D:/YTCoreService_2.0.0.2.gz", "test", "YTCoreService_2.0.0.2.gz")
