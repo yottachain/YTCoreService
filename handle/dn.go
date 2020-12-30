@@ -148,14 +148,16 @@ func (h *StatusRepHandler) Handle() proto.Message {
 		productiveSpace = newnode.ProductiveSpace
 	}
 	relayUrl := ""
-	if newnode.Addrs != nil && len(newnode.Addrs) > 0 {
+	if newnode != nil && newnode.Addrs != nil && len(newnode.Addrs) > 0 {
 		relayUrl = newnode.Addrs[0]
 	}
 	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: productiveSpace, RelayUrl: relayUrl}
 	newnode.Addrs = YTDNMgmt.CheckPublicAddrs(node.Addrs, net.NodeMgr.Config.Misc.ExcludeAddrPrefix)
-	//NodeStatSync(newnode)
-	SendSpotCheck(newnode)
-	SendRebuildTask(newnode)
+	if relayUrl != "" {
+		//NodeStatSync(newnode)
+		SendSpotCheck(newnode)
+		SendRebuildTask(newnode)
+	}
 	logrus.Infof("[DNStatusRep]Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	return statusRepResp
 }
