@@ -178,9 +178,7 @@ func AddUser(user *User) error {
 
 func ListUsers(lastId int32, limit int, fields bson.M) ([]*User, error) {
 	source := NewBaseSource()
-	mod := bson.M{"_id": bson.M{"$mod": []interface{}{net.GetSuperNodeCount(), env.SuperNodeID}}}
-	gt := bson.M{"_id": bson.M{"$gt": lastId}}
-	filter := bson.M{"$and": []bson.M{mod, gt}}
+	filter := bson.M{"_id": bson.M{"$gt": lastId}}
 	opt := options.Find().SetProjection(fields)
 	opt = opt.SetSort(bson.M{"_id": 1}).SetLimit(int64(limit))
 	var result = []*User{}
@@ -199,7 +197,10 @@ func ListUsers(lastId int32, limit int, fields bson.M) ([]*User, error) {
 			logrus.Errorf("[UserMeta]ListUsers Decode ERR:%s\n", err)
 			return nil, err
 		}
-		result = append(result, res)
+		index := uint32(res.UserID) % uint32(net.GetSuperNodeCount())
+		if env.SuperNodeID == int(index) {
+			result = append(result, res)
+		}
 	}
 	if err := cur.Err(); err != nil {
 		logrus.Errorf("[UserMeta]ListUsers Cursor ERR:%s\n", err)
