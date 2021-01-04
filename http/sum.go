@@ -195,8 +195,13 @@ func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-var DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
-var USER_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
+var DEFAULT_EXPIRE_TIME time.Duration
+var USER_LIST_CACHE *cache.Cache
+
+func InitCache() {
+	DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
+	USER_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
+}
 
 func ListHandle(w http.ResponseWriter, req *http.Request) {
 	b := checkRoutine()

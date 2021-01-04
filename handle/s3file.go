@@ -59,17 +59,19 @@ func (h *UploadFileHandler) Handle() proto.Message {
 	if h.m.Meta != nil {
 		m = h.m.Meta
 	}
-	ometa := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.vnu}
-	b, err := ometa.ChecekVNUExists()
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	if !b {
-		logrus.Errorf("[CreateOBJ]UID:%d,%s/%s ERR:INVALID_UPLOAD_ID,\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
-		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
+	if !env.IsZeroLenFileID(h.vnu) {
+		ometa := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.vnu}
+		b, err := ometa.ChecekVNUExists()
+		if err != nil {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		}
+		if !b {
+			logrus.Errorf("[CreateOBJ]UID:%d,%s/%s ERR:INVALID_UPLOAD_ID\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
+			return pkt.NewError(pkt.INVALID_UPLOAD_ID)
+		}
 	}
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName, VersionId: h.vnu, Meta: m, Acl: []byte{}}
-	err = fmeta.SaveFileMeta()
+	err := fmeta.SaveFileMeta()
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
