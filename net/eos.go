@@ -97,6 +97,70 @@ type GetBalanceReq struct {
 	Caller eos.AccountName `json:"caller"`
 }
 
+func LoginInfo(username, privkey string) (string, error) {
+	obj := GetBalanceReq{Owner: eos.AN(username),
+		UType: 1, Caller: eos.AN(username)}
+	URI := NewEOSURI("http://localhost:8888")
+	api, err := URI.NewUserApi(privkey)
+	if err != nil {
+		logrus.Errorf("[EOS]LoginInfo,url:%s,ERR:%s\n", URI.Url, err)
+		return "", err
+	}
+	action := &eos.Action{
+		Account: eos.AN(env.ContractAccount),
+		Name:    eos.ActN(username),
+		Authorization: []eos.PermissionLevel{
+			{Actor: eos.AN(username), Permission: eos.PN("active")},
+		},
+		ActionData: eos.NewActionData(obj),
+	}
+	txOpts := &eos.TxOptions{}
+	/*
+
+		if err = txOpts.FillFromChain(api); err != nil {
+			logrus.Errorf("[EOS]Filling tx opts: %s\n", err)
+			return "", err
+		}
+	*/
+	tx := eos.NewTransaction([]*eos.Action{action}, txOpts)
+	tx.SetExpiration(URI.GetExpiration())
+	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
+	if err != nil {
+		logrus.Errorf("[EOS]Sign transaction: %s\n", err)
+		return "", err
+	}
+	txt, err := json.Marshal(packedTx)
+	if err != nil {
+		logrus.Errorf("[EOS]Marshal packedTx: %s\n", err)
+		return "", err
+	}
+	return string(txt), nil
+}
+
+func PushLogin(tx string) error {
+	if !env.BP_ENABLE {
+		return nil
+	}
+	res, err := PushTxWRetry(tx, 3)
+	if err != nil {
+		return err
+	} else {
+		console := res.Processed.ActionTraces[0].Console
+		index := strings.Index(console, "{\"balance\":")
+		console = console[index:]
+		index = strings.Index(console, "}")
+		console = console[:index+1]
+		balance := &BalanceValue{}
+		err = json.Unmarshal([]byte(console), balance)
+		if err != nil {
+			logrus.Errorf("[EOS]Unmarshal '%s' ERR:%s\n", console, err)
+			return err
+		}
+		logrus.Infof("[EOS]PushLogin %s,pass:%d\n", tx, balance.Balance)
+		return nil
+	}
+}
+
 func Login(username, privkey string) error {
 	if !env.BP_ENABLE {
 		return nil
@@ -118,7 +182,7 @@ func Login(username, privkey string) error {
 			logrus.Errorf("[EOS]Unmarshal '%s' ERR:%s\n", console, err)
 			return err
 		}
-		logrus.Infof("[EOS]User %d login pass:%d\n", username, balance.Balance)
+		logrus.Infof("[EOS]User %s login pass:%d\n", username, balance.Balance)
 		return nil
 	}
 }
@@ -209,6 +273,43 @@ func Request(actname string, obj interface{}, URI *EOSURI, privkey, username str
 	res, err := api.PushTransaction(packedTx)
 	if err != nil {
 		logrus.Errorf("[EOS]Push %s transaction: %s\n", actname, err)
+		return nil, err
+	}
+	return res, nil
+}
+
+func PushTxWRetry(txstr string, retrytimes int) (*eos.PushTransactionFullResp, error) {
+	tx := &eos.PackedTransaction{}
+	err := json.Unmarshal([]byte(txstr), tx)
+	if err != nil {
+		logrus.Error("[EOS]Unmarshal %s Err:%s\n", txstr, err)
+		return nil, err
+	}
+	count := 0
+	for {
+		URI := GetEOSURI()
+		res, err := Pushtx(txstr, tx, URI)
+		if err != nil {
+			URI.SetErr(err)
+			count++
+			if count >= retrytimes {
+				return nil, err
+			}
+		} else {
+			return res, nil
+		}
+	}
+}
+
+func Pushtx(txstr string, tx *eos.PackedTransaction, URI *EOSURI) (*eos.PushTransactionFullResp, error) {
+	api, err := URI.NewApi()
+	if err != nil {
+		logrus.Errorf("[EOS]New Api,url:%s,ERR:%s\n", URI.Url, err)
+		return nil, err
+	}
+	res, err := api.PushTransaction(tx)
+	if err != nil {
+		logrus.Errorf("[EOS]Push %s transaction: %s\n", txstr, err)
 		return nil, err
 	}
 	return res, nil

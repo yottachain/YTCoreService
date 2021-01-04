@@ -59,17 +59,19 @@ func (h *UploadFileHandler) Handle() proto.Message {
 	if h.m.Meta != nil {
 		m = h.m.Meta
 	}
-	ometa := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.vnu}
-	b, err := ometa.ChecekVNUExists()
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	if !b {
-		logrus.Errorf("[CreateOBJ]UID:%d,%s/%s ERR:INVALID_UPLOAD_ID,\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
-		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
+	if !env.IsZeroLenFileID(h.vnu) {
+		ometa := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.vnu}
+		b, err := ometa.ChecekVNUExists()
+		if err != nil {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		}
+		if !b {
+			logrus.Errorf("[CreateOBJ]UID:%d,%s/%s ERR:INVALID_UPLOAD_ID\n", h.user.UserID, *h.m.Bucketname, *h.m.FileName)
+			return pkt.NewError(pkt.INVALID_UPLOAD_ID)
+		}
 	}
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName, VersionId: h.vnu, Meta: m, Acl: []byte{}}
-	err = fmeta.SaveFileMeta()
+	err := fmeta.SaveFileMeta()
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
@@ -170,57 +172,39 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 	}
 	var err error
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName, VersionId: h.verid}
+	var metaWVer *dao.FileMetaWithVersion
 	if h.verid == primitive.NilObjectID {
-		err = fmeta.DeleteFileMeta()
+		metaWVer, err = fmeta.DeleteFileMeta()
 	} else {
-		err = fmeta.DeleteLastFileMeta()
+		metaWVer, err = fmeta.DeleteFileMetaByVersion()
 	}
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
+	if metaWVer == nil {
+		return &pkt.VoidResp{}
+	}
+	h.decObjectNLink(metaWVer)
 	OBJ_DEL_LIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), time.Now())
 	return &pkt.VoidResp{}
 }
 
-type DeleteObjectHandler struct {
-	pkey  string
-	m     *pkt.DeleteObjectReqV2
-	user  *dao.User
-	verid primitive.ObjectID
-}
-
-func (h *DeleteObjectHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
-	h.pkey = pubkey
-	req, ok := msg.(*pkt.DeleteObjectReqV2)
-	if ok {
-		h.m = req
-		if h.m.Vnu == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+func (h *DeleteFileHandler) decObjectNLink(metaWVer *dao.FileMetaWithVersion) {
+	var usedspace int64 = 0
+	var length int64 = 0
+	var filecount int64 = 0
+	for _, ver := range metaWVer.Version {
+		fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: ver.VersionId}
+		fmeta.DECObjectNLINK()
+		if fmeta.Usedspace > 0 {
+			usedspace = usedspace + int64(fmeta.Usedspace)
+			filecount = filecount + 1
+			length = length + int64(fmeta.Length)
 		}
-		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
-		}
-		h.verid = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
-		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
-		}
-		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
-		if h.user == nil {
-			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
-		}
-		return nil, WRITE_ROUTINE_NUM, nil
-	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
-}
-
-func (h *DeleteObjectHandler) Handle() proto.Message {
-	fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: h.verid}
-	err := fmeta.GetAndDelete()
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
+	if usedspace > 0 {
+		dao.UpdateUserSpace(h.user.UserID, -usedspace, -filecount, -length)
 	}
-	return &pkt.VoidResp{}
 }
 
 type GetObjectHandler struct {
