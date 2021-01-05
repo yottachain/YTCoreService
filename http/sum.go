@@ -218,7 +218,7 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 	queryForm, err := url.ParseQuery(req.URL.RawQuery)
 	if err == nil && len(queryForm["lastId"]) > 0 && len(queryForm["count"]) > 0 {
 		*lsreq.LastId = int32(env.ToInt(queryForm["lastId"][0], -1))
-		*lsreq.Count = int32(env.StringToInt(queryForm["lastId"][0], 100, 1000, 1000))
+		*lsreq.Count = int32(env.StringToInt(queryForm["count"][0], 100, 10000, 10000))
 	}
 	key := "0"
 	res, _ := proto.Marshal(lsreq)

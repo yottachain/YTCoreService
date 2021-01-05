@@ -5,6 +5,7 @@ import (
 
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
+	ytcrypto "github.com/yottachain/YTCrypto"
 )
 
 func TestEOS() bool {
@@ -12,26 +13,20 @@ func TestEOS() bool {
 	net.InitShadowPriKey()
 	net.EOSInit()
 	//ii, err := net.GetBalance("i5baoguxctpi")
-	ii, err := net.GetBalance("wendytest123")
+	//ii, err := net.GetBalance("pollyzhang11")
+	//if err != nil {
+	//	panic(err)
+	//} else {
+	//	fmt.Printf("balance:%d", ii)
+	//}
+	publickey, _ := ytcrypto.GetPublicKeyByPrivateKey("5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw")
+	//		user = "pollyzhang11"
+	//pkey = "5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw"
+	ss, err := net.GetUserInfoWRetry(publickey, 1)
 	if err != nil {
 		panic(err)
 	} else {
-		fmt.Printf("balance:%d", ii)
+		fmt.Printf("result:%s", ss)
 	}
-	err = net.Login("wendytest123", "5Hy2inA8sZ1Ygk3SWSmF9UegqZ7A2eMyC65W62Y6i6aQ9ry7egf")
-	//err = net.Login("devtestuser1", "5KTF2yAamvcaoDu6juAvxT5nxTn3UGfNoY2CJn8VAQ4giAfma2a")
-	if err != nil {
-		panic(err)
-	}
-
-	tx, err := net.LoginInfo("wendytest123", "5Hy2inA8sZ1Ygk3SWSmF9UegqZ7A2eMyC65W62Y6i6aQ9ry7egf")
-	if err != nil {
-		panic(err)
-	}
-	err = net.PushLogin(tx)
-	if err != nil {
-		panic(err)
-	}
-
 	return false
 }
