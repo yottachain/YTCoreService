@@ -3,6 +3,9 @@ package net
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -11,6 +14,45 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
+
+func GetUserInfoWRetry(publickey string, retrytimes int) (string, error) {
+	count := 0
+	for {
+		URI := GetEOSURI()
+		res, err := GetUserInfo(publickey, URI)
+		if err != nil {
+			URI.SetErr(err)
+			count++
+			if count >= retrytimes {
+				return "", err
+			}
+		} else {
+			return res, nil
+		}
+	}
+}
+
+var BASE_URI string = "v1/history/get_key_accounts"
+
+func GetUserInfo(publickey string, URI *EOSURI) (string, error) {
+	jsonkey := fmt.Sprintf("{\"public_key\":\"%s%s\"}", "YTA", publickey)
+	var urlstr string
+	if strings.HasSuffix(URI.Url, "/") {
+		urlstr = URI.Url + BASE_URI
+	} else {
+		urlstr = URI.Url + "/" + BASE_URI
+	}
+	resp, err := http.Post(urlstr, "application/x-www-form-urlencoded", strings.NewReader(jsonkey))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
 
 type BalanceValue struct {
 	Balance int64
@@ -51,7 +93,7 @@ func SetHfee(username string, cost uint64) error {
 	}
 	obj := SetHfeeReq{Owner: eos.AN(username), Cost: cost,
 		Caller: eos.AN(env.BPAccount)}
-	_, err := RequestWRetry("sethfee", obj, 8, "", env.ShadowAccount)
+	_, err := RequestWRetry("sethfee", obj, 8)
 	return err
 }
 
@@ -69,7 +111,7 @@ func AddUsedSpace(username string, length uint64) error {
 		}
 		obj := AddUsedSpaceReq{Owner: eos.AN(username), Length: length,
 			Caller: eos.AN(env.BPAccount)}
-		_, err := RequestWRetry("addhspace", obj, 8,"",env.ShadowAccount)
+		_, err := RequestWRetry("addhspace", obj, 8)
 		return err
 	*/
 }
@@ -87,7 +129,7 @@ func SubBalance(username string, cost uint64) error {
 	}
 	obj := SubBalanceReq{Owner: eos.AN(username), Cost: cost,
 		UType: 2, Caller: eos.AN(env.BPAccount)}
-	_, err := RequestWRetry("subbalance", obj, 8, "", env.ShadowAccount)
+	_, err := RequestWRetry("subbalance", obj, 8)
 	return err
 }
 
@@ -95,96 +137,6 @@ type GetBalanceReq struct {
 	Owner  eos.AccountName `json:"owner"`
 	UType  uint8           `json:"utype"`
 	Caller eos.AccountName `json:"caller"`
-}
-
-func LoginInfo(username, privkey string) (string, error) {
-	obj := GetBalanceReq{Owner: eos.AN(username),
-		UType: 1, Caller: eos.AN(username)}
-	URI := NewEOSURI("http://localhost:8888")
-	api, err := URI.NewUserApi(privkey)
-	if err != nil {
-		logrus.Errorf("[EOS]LoginInfo,url:%s,ERR:%s\n", URI.Url, err)
-		return "", err
-	}
-	action := &eos.Action{
-		Account: eos.AN(env.ContractAccount),
-		Name:    eos.ActN(username),
-		Authorization: []eos.PermissionLevel{
-			{Actor: eos.AN(username), Permission: eos.PN("active")},
-		},
-		ActionData: eos.NewActionData(obj),
-	}
-	txOpts := &eos.TxOptions{}
-	/*
-
-		if err = txOpts.FillFromChain(api); err != nil {
-			logrus.Errorf("[EOS]Filling tx opts: %s\n", err)
-			return "", err
-		}
-	*/
-	tx := eos.NewTransaction([]*eos.Action{action}, txOpts)
-	tx.SetExpiration(URI.GetExpiration())
-	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
-	if err != nil {
-		logrus.Errorf("[EOS]Sign transaction: %s\n", err)
-		return "", err
-	}
-	txt, err := json.Marshal(packedTx)
-	if err != nil {
-		logrus.Errorf("[EOS]Marshal packedTx: %s\n", err)
-		return "", err
-	}
-	return string(txt), nil
-}
-
-func PushLogin(tx string) error {
-	if !env.BP_ENABLE {
-		return nil
-	}
-	res, err := PushTxWRetry(tx, 3)
-	if err != nil {
-		return err
-	} else {
-		console := res.Processed.ActionTraces[0].Console
-		index := strings.Index(console, "{\"balance\":")
-		console = console[index:]
-		index = strings.Index(console, "}")
-		console = console[:index+1]
-		balance := &BalanceValue{}
-		err = json.Unmarshal([]byte(console), balance)
-		if err != nil {
-			logrus.Errorf("[EOS]Unmarshal '%s' ERR:%s\n", console, err)
-			return err
-		}
-		logrus.Infof("[EOS]PushLogin %s,pass:%d\n", tx, balance.Balance)
-		return nil
-	}
-}
-
-func Login(username, privkey string) error {
-	if !env.BP_ENABLE {
-		return nil
-	}
-	obj := GetBalanceReq{Owner: eos.AN(username),
-		UType: 1, Caller: eos.AN(username)}
-	res, err := RequestWRetry("getbalance", obj, 3, privkey, username)
-	if err != nil {
-		return err
-	} else {
-		console := res.Processed.ActionTraces[0].Console
-		index := strings.Index(console, "{\"balance\":")
-		console = console[index:]
-		index = strings.Index(console, "}")
-		console = console[:index+1]
-		balance := &BalanceValue{}
-		err = json.Unmarshal([]byte(console), balance)
-		if err != nil {
-			logrus.Errorf("[EOS]Unmarshal '%s' ERR:%s\n", console, err)
-			return err
-		}
-		logrus.Infof("[EOS]User %s login pass:%d\n", username, balance.Balance)
-		return nil
-	}
 }
 
 func GetBalance(username string) (v int64, err error) {
@@ -200,7 +152,7 @@ func GetBalance(username string) (v int64, err error) {
 	}()
 	obj := GetBalanceReq{Owner: eos.AN(username),
 		UType: 2, Caller: eos.AN(env.BPAccount)}
-	res, err := RequestWRetry("getbalance", obj, 3, "", env.ShadowAccount)
+	res, err := RequestWRetry("getbalance", obj, 3)
 	if err != nil {
 		return 0, err
 	}
@@ -218,11 +170,11 @@ func GetBalance(username string) (v int64, err error) {
 	return balance.Balance, nil
 }
 
-func RequestWRetry(actname string, obj interface{}, retrytimes int, privkey, username string) (*eos.PushTransactionFullResp, error) {
+func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTransactionFullResp, error) {
 	count := 0
 	for {
 		URI := GetEOSURI()
-		res, err := Request(actname, obj, URI, privkey, username)
+		res, err := Request(actname, obj, URI)
 		if err != nil {
 			if strings.ContainsAny(err.Error(), "the fee is the same") {
 				return nil, nil
@@ -238,14 +190,8 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int, privkey, use
 	}
 }
 
-func Request(actname string, obj interface{}, URI *EOSURI, privkey, username string) (*eos.PushTransactionFullResp, error) {
-	var api *eos.API
-	var err error
-	if privkey == "" {
-		api, err = URI.NewApi()
-	} else {
-		api, err = URI.NewUserApi(privkey)
-	}
+func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransactionFullResp, error) {
+	api, err := URI.NewApi()
 	if err != nil {
 		logrus.Errorf("[EOS]New Api,url:%s,ERR:%s\n", URI.Url, err)
 		return nil, err
@@ -254,7 +200,7 @@ func Request(actname string, obj interface{}, URI *EOSURI, privkey, username str
 		Account: eos.AN(env.ContractAccount),
 		Name:    eos.ActN(actname),
 		Authorization: []eos.PermissionLevel{
-			{Actor: eos.AN(username), Permission: eos.PN("active")},
+			{Actor: eos.AN(env.ShadowAccount), Permission: eos.PN("active")},
 		},
 		ActionData: eos.NewActionData(obj),
 	}
@@ -273,43 +219,6 @@ func Request(actname string, obj interface{}, URI *EOSURI, privkey, username str
 	res, err := api.PushTransaction(packedTx)
 	if err != nil {
 		logrus.Errorf("[EOS]Push %s transaction: %s\n", actname, err)
-		return nil, err
-	}
-	return res, nil
-}
-
-func PushTxWRetry(txstr string, retrytimes int) (*eos.PushTransactionFullResp, error) {
-	tx := &eos.PackedTransaction{}
-	err := json.Unmarshal([]byte(txstr), tx)
-	if err != nil {
-		logrus.Error("[EOS]Unmarshal %s Err:%s\n", txstr, err)
-		return nil, err
-	}
-	count := 0
-	for {
-		URI := GetEOSURI()
-		res, err := Pushtx(txstr, tx, URI)
-		if err != nil {
-			URI.SetErr(err)
-			count++
-			if count >= retrytimes {
-				return nil, err
-			}
-		} else {
-			return res, nil
-		}
-	}
-}
-
-func Pushtx(txstr string, tx *eos.PackedTransaction, URI *EOSURI) (*eos.PushTransactionFullResp, error) {
-	api, err := URI.NewApi()
-	if err != nil {
-		logrus.Errorf("[EOS]New Api,url:%s,ERR:%s\n", URI.Url, err)
-		return nil, err
-	}
-	res, err := api.PushTransaction(tx)
-	if err != nil {
-		logrus.Errorf("[EOS]Push %s transaction: %s\n", txstr, err)
 		return nil, err
 	}
 	return res, nil

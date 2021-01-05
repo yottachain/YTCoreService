@@ -111,22 +111,6 @@ type EOSURI struct {
 	apivalue   atomic.Value
 }
 
-func (self *EOSURI) NewUserApi(privkey string) (*eos.API, error) {
-	api := eos.New(self.Url)
-	keyBag := &eos.KeyBag{}
-	err := keyBag.ImportPrivateKey(privkey)
-	if err != nil {
-		return nil, fmt.Errorf("import private key: %s", err)
-	}
-	api.SetSigner(keyBag)
-	api.SetCustomGetRequiredKeys(func(tx *eos.Transaction) ([]ecc.PublicKey, error) {
-		publickey, _ := ytcrypto.GetPublicKeyByPrivateKey(privkey)
-		pubkey, _ := ecc.NewPublicKey(fmt.Sprintf("%s%s", "YTA", publickey))
-		return []ecc.PublicKey{pubkey}, nil
-	})
-	return api, nil
-}
-
 func (self *EOSURI) NewApi() (*eos.API, error) {
 	v := self.apivalue.Load()
 	if v != nil {
