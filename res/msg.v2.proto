@@ -51,7 +51,13 @@ message PreAllocNodeReqV2{
 }
 
 message QueryUserReqV2{
-    optional string pubkey=1;
+    repeated string pubkey=1;
+    optional string username=2;
+    optional int32 UserId = 3;
+}
+
+message SyncUserReq{
+    repeated bytes pubkey=1;
     optional string username=2;
     optional int32 UserId = 3;
 }
@@ -62,6 +68,11 @@ message RegUserReqV2{
     optional string versionId=3;
 }
 
+message RegUserReqV3{
+    repeated string pubKey=1;
+    optional string username=2;
+    optional string versionId=3;
+}
 
 message UploadBlockDBReqV2{
     optional uint32 userId=1;

@@ -71,7 +71,7 @@ func StartPreAllocNode() {
 
 func PreAllocNode(c *Client) error {
 	defer env.TracePanic("[PreAllocNode]")
-	req := &pkt.PreAllocNodeReqV2{UserId: &c.UserId, SignData: &c.Sign, KeyNumber: &c.KeyNumber, Count: new(uint32)}
+	req := &pkt.PreAllocNodeReqV2{UserId: &c.UserId, SignData: &c.SignKey.Sign, KeyNumber: &c.SignKey.KeyNumber, Count: new(uint32)}
 	*req.Count = uint32(env.PNN)
 	req.Excludes = ErrorList()
 	res, err := net.RequestSN(req, c.SuperNode, "", 0, false)

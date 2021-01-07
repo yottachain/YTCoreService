@@ -116,7 +116,7 @@ message QueryUserReq{
 
 message QueryUserResp{
     optional int32 userId=1;
-    optional uint32 keyNumber=2;
+    repeated bytes pubkey=2;
 }
 
 message RegUserReq{
@@ -131,6 +131,15 @@ message RegUserResp{
     optional uint32 userId=4;
     optional uint32 keyNumber=5;
 }
+
+message RegUserRespV2{
+    optional uint32 superNodeNum=1;
+    optional string superNodeID=2;
+    repeated string superNodeAddrs=3;
+    optional uint32 userId=4;
+    repeated uint32 keyNumber=5;
+}
+
 
 message UploadBlockDBReq{
     optional uint32 id=1;

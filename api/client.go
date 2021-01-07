@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
+	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
@@ -14,27 +14,48 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTCrypto"
-	ytcrypto "github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTDNMgmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Key struct {
+	PrivateKey string
+	PublicKey  string
+	KUSp       []byte
+	AESKey     []byte
+	KeyNumber  uint32
+	Sign       string
+}
+
+func (c *Key) MakeSign(uid uint32) error {
+	data := fmt.Sprintf("%d%d", uid, c.KeyNumber)
+	s, err := YTCrypto.Sign(c.PrivateKey, []byte(data))
+	if err != nil {
+		logrus.Errorf("[Regist]Sign ERR:%s\n", err)
+		return err
+	} else {
+		c.Sign = s
+		return nil
+	}
+}
+
 type Client struct {
-	Username    string
-	PrivateKey  string
-	KUSp        []byte
-	AESKey      []byte
-	UserId      uint32
-	KeyNumber   uint32
-	SuperNode   *YTDNMgmt.SuperNode
-	AccessorKey string
-	Sign        string
+	Username  string
+	UserId    uint32
+	SuperNode *YTDNMgmt.SuperNode
+
+	SignKey  *Key
+	StoreKey *Key
+	KeyMap   map[uint32]*Key
 }
 
 func addClient(uid, keyNum uint32, signstr string) *Client {
 	sn := net.GetUserSuperNode(int32(uid))
-	priv, _ := ytcrypto.CreateKey()
-	return &Client{UserId: uid, KeyNumber: keyNum, Sign: signstr, SuperNode: sn, AccessorKey: priv}
+	pubv, _ := YTCrypto.CreateKey()
+	k := &Key{KeyNumber: keyNum, Sign: signstr, PrivateKey: pubv, PublicKey: pubv}
+	m := make(map[uint32]*Key)
+	m[k.KeyNumber] = k
+	return &Client{UserId: uid, SuperNode: sn, SignKey: k, StoreKey: k, KeyMap: m}
 }
 
 func newClient(uname string, privkey string) (*Client, error) {
@@ -43,18 +64,20 @@ func newClient(uname string, privkey string) (*Client, error) {
 		return nil, errors.New("Invalid private key.")
 	}
 	aeskey := codec.GenerateUserKey(bs)
-	pubkey, err := ytcrypto.GetPublicKeyByPrivateKey(privkey)
+	pubkey, err := YTCrypto.GetPublicKeyByPrivateKey(privkey)
 	if err != nil {
 		return nil, err
 	}
-	c := &Client{Username: uname, PrivateKey: privkey, KUSp: bs, AESKey: aeskey, AccessorKey: pubkey}
+	k := &Key{PrivateKey: privkey, KUSp: bs, AESKey: aeskey, PublicKey: pubkey}
+	m := make(map[uint32]*Key)
+	c := &Client{Username: uname, SignKey: k, StoreKey: k, KeyMap: m}
 	return c, nil
 }
 
 func (c *Client) Regist() error {
 	ii := int(time.Now().UnixNano() % int64(net.GetSuperNodeCount()))
 	sn := net.GetSuperNode(ii)
-	req := &pkt.RegUserReqV2{Username: &c.Username, PubKey: &c.AccessorKey, VersionId: &env.VersionID}
+	req := &pkt.RegUserReqV2{Username: &c.Username, PubKey: &c.SignKey.PublicKey, VersionId: &env.VersionID}
 	res, err := net.RequestSN(req, sn, "", 0, false)
 	if err != nil {
 		emsg := fmt.Sprintf("User '%s' registration failed!%s", c.Username, pkt.ToError(err))
@@ -67,27 +90,16 @@ func (c *Client) Regist() error {
 				if *resp.SuperNodeNum >= 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) {
 					c.SuperNode = net.GetSuperNode(int(*resp.SuperNodeNum))
 					c.UserId = *resp.UserId
-					c.KeyNumber = *resp.KeyNumber
+					c.SignKey.KeyNumber = *resp.KeyNumber
+					c.KeyMap[c.SignKey.KeyNumber] = c.SignKey
 					logrus.Infof("[Regist]User '%s' registration successful,ID-KeyNumber:%d/%d,at sn %d\n",
-						c.Username, c.UserId, c.KeyNumber, c.SuperNode.ID)
-					return c.MakeSign()
+						c.Username, c.UserId, c.SignKey.KeyNumber, c.SuperNode.ID)
+					return c.SignKey.MakeSign(c.UserId)
 				}
 			}
 		}
 		logrus.Errorf("[Regist]Return err msg.\n")
 		return errors.New("Return err msg")
-	}
-}
-
-func (c *Client) MakeSign() error {
-	data := fmt.Sprintf("%d%d", c.UserId, c.KeyNumber)
-	s, err := YTCrypto.Sign(c.PrivateKey, []byte(data))
-	if err != nil {
-		logrus.Errorf("[Regist]Sign ERR:%s\n", err)
-		return err
-	} else {
-		c.Sign = s
-		return nil
 	}
 }
 

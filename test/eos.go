@@ -19,14 +19,12 @@ func TestEOS() bool {
 	//} else {
 	//	fmt.Printf("balance:%d", ii)
 	//}
-	publickey, _ := ytcrypto.GetPublicKeyByPrivateKey("5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw")
+
+	publickey, _ := ytcrypto.GetPublicKeyByPrivateKey("5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9")
 	//		user = "pollyzhang11"
 	//pkey = "5JVwTWuJWcmXy22f12YzjjpKiiqQyJnqoSjx4Mk2JxtgQYAb3Fw"
-	ss, err := net.GetUserInfoWRetry(publickey, 1)
-	if err != nil {
-		panic(err)
-	} else {
-		fmt.Printf("result:%s", ss)
-	}
+	b := net.AuthUserInfo(publickey, "devvtest1111", 1)
+	fmt.Print("pass:", b)
+
 	return false
 }

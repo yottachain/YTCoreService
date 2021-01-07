@@ -91,8 +91,8 @@ func FileMetaMapTobytes(m map[string]string) ([]byte, error) {
 func (self *ObjectAccessor) CreateObject(bucketname, filename string, VNU primitive.ObjectID, meta []byte) *pkt.ErrorMessage {
 	req := &pkt.UploadFileReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		Bucketname: &bucketname,
 		FileName:   &filename,
 		Meta:       meta,
@@ -118,8 +118,8 @@ func (self *ObjectAccessor) CreateObject(bucketname, filename string, VNU primit
 func (self *ObjectAccessor) CopyObject(srcbuck, srckey, destbuck, destkey string) (*FileItem, *pkt.ErrorMessage) {
 	req := &pkt.CopyObjectReqV2{
 		UserId:        &self.UClient.UserId,
-		SignData:      &self.UClient.Sign,
-		KeyNumber:     &self.UClient.KeyNumber,
+		SignData:      &self.UClient.SignKey.Sign,
+		KeyNumber:     &self.UClient.SignKey.KeyNumber,
 		SrcBucket:     &srcbuck,
 		SrcObjectKey:  &srckey,
 		DestBucket:    &destbuck,
@@ -160,8 +160,8 @@ var List_Compress bool = true
 func (self *ObjectAccessor) ListObject(buck, fileName, prefix string, wversion bool, nVerid primitive.ObjectID, limit uint32) ([]*FileItem, *pkt.ErrorMessage) {
 	req := &pkt.ListObjectReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &buck,
 		FileName:   &fileName,
 		Prefix:     &prefix,
@@ -258,8 +258,8 @@ func (self *ObjectAccessor) GetListRespV2(resp *pkt.ListObjectRespV2) ([]*FileIt
 func (self *ObjectAccessor) DeleteObject(buck, fileName string, Verid primitive.ObjectID) *pkt.ErrorMessage {
 	req := &pkt.DeleteFileReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &buck,
 		FileName:   &fileName,
 	}
@@ -310,8 +310,8 @@ func (self *ObjectAccessor) GetObject(buck, fileName string) (*FileItem, *pkt.Er
 	}
 	req := &pkt.GetObjectReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &buck,
 		FileName:   &fileName,
 	}

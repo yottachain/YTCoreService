@@ -22,8 +22,8 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 	vbi := uint64(self.Ref.VBI)
 	req := &pkt.DownloadBlockInitReqV2{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 		VBI:       &vbi,
 	}
 	sn := net.GetSuperNode(int(self.Ref.SuperID))
@@ -66,7 +66,7 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 }
 
 func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
-	KS := codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.AESKey)
+	KS := codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.StoreKey.AESKey)
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()
 	if errmsg != nil {

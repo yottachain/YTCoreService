@@ -9,8 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/gogo/protobuf/proto"
-	"github.com/mr-tron/base58"
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
@@ -215,10 +215,16 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	lsreq := &pkt.UserListReq{LastId: new(int32), Count: new(int32)}
+	*lsreq.LastId = -1
+	*lsreq.Count = 1000
 	queryForm, err := url.ParseQuery(req.URL.RawQuery)
-	if err == nil && len(queryForm["lastId"]) > 0 && len(queryForm["count"]) > 0 {
-		*lsreq.LastId = int32(env.ToInt(queryForm["lastId"][0], -1))
-		*lsreq.Count = int32(env.StringToInt(queryForm["count"][0], 100, 10000, 10000))
+	if err == nil {
+		if len(queryForm["lastId"]) > 0 {
+			*lsreq.LastId = int32(env.ToInt(queryForm["lastId"][0], -1))
+		}
+		if len(queryForm["count"]) > 0 {
+			*lsreq.Count = int32(env.StringToInt(queryForm["count"][0], 100, 10000, 10000))
+		}
 	}
 	key := "0"
 	res, _ := proto.Marshal(lsreq)

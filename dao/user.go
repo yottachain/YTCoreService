@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/mr-tron/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
@@ -43,16 +44,15 @@ func (user *User) GetTotalJson() string {
 
 var USER_CACHE = cache.New(10*time.Minute, 5*time.Minute)
 
-func AddUserCache(userid int32, keyNumber int, user *User) {
-	key := fmt.Sprintf("%d-%d", userid, keyNumber)
-	user.KUEp = [][]byte{user.KUEp[keyNumber]}
+func AddUserCache(userid int32, user *User) {
+	key := strconv.Itoa(int(userid))
 	user.Routine = new(int32)
 	*user.Routine = 0
 	USER_CACHE.Set(key, user, cache.DefaultExpiration)
 }
 
 func GetUserCache(userid int32, keyNumber int, signdata string) *User {
-	key := fmt.Sprintf("%d-%d", userid, keyNumber)
+	key := strconv.Itoa(int(userid))
 	var user *User
 	v, found := USER_CACHE.Get(key)
 	if !found {
@@ -60,7 +60,6 @@ func GetUserCache(userid int32, keyNumber int, signdata string) *User {
 		if user == nil {
 			return nil
 		} else {
-			user.KUEp = [][]byte{user.KUEp[keyNumber]}
 			user.Routine = new(int32)
 			*user.Routine = 0
 			USER_CACHE.Set(key, user, cache.DefaultExpiration)
@@ -68,8 +67,12 @@ func GetUserCache(userid int32, keyNumber int, signdata string) *User {
 	} else {
 		user = v.(*User)
 	}
+	if keyNumber < 0 || keyNumber > len(user.KUEp)-1 {
+		logrus.Errorf("[UserMeta]GetUserCache failed,keyNumber:%d,UserId:%d\n", keyNumber, userid)
+		return nil
+	}
 	data := fmt.Sprintf("%d%d", userid, keyNumber)
-	pkey := base58.Encode(user.KUEp[0])
+	pkey := base58.Encode(user.KUEp[keyNumber])
 	pass := YTCrypto.Verify(pkey, []byte(data), signdata)
 	if !pass {
 		logrus.Errorf("[UserMeta]GetUserCache Signature verification failed,UserId:%d\n", userid)
@@ -159,6 +162,19 @@ func UpdateUserSpace(userid int32, usedSpace int64, fileTotal int64, spaceTotal 
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, data)
 	if err != nil {
 		logrus.Errorf("[UserMeta]UpdateUserSpace UserID:%d,ERR:%s\n", userid, err)
+		return err
+	}
+	return nil
+}
+
+func UpdateUser(user *User) error {
+	source := NewBaseSource()
+	filter := bson.M{"_id": user.UserID}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetUserColl().UpdateOne(ctx, filter, user)
+	if err != nil {
+		logrus.Errorf("[UserMeta]UpdateUser UserID:%d,ERR:%s\n", user.UserID, err)
 		return err
 	}
 	return nil

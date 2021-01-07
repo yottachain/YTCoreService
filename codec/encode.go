@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/mr-tron/base58/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 )

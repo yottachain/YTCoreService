@@ -73,8 +73,8 @@ func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 	vnu := &pkt.UploadBlockDBReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadBlockDBReqV2{
 		UserId:       &self.UPOBJ.UClient.UserId,
-		SignData:     &self.UPOBJ.UClient.Sign,
-		KeyNumber:    &self.UPOBJ.UClient.KeyNumber,
+		SignData:     &self.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber:    &self.UPOBJ.UClient.SignKey.KeyNumber,
 		Id:           &bid,
 		Vnu:          vnu,
 		VHP:          self.EncBLK.VHP,
@@ -99,8 +99,8 @@ func (self *UploadBlockSync) uploadDup() {
 	v := &pkt.UploadBlockDupReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	dupReq := &pkt.UploadBlockDupReqV2{
 		UserId:    &self.UPOBJ.UClient.UserId,
-		SignData:  &self.UPOBJ.UClient.Sign,
-		KeyNumber: &self.UPOBJ.UClient.KeyNumber,
+		SignData:  &self.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
 		VHB:       self.EncBLK.VHB,
 		KEU:       self.EncBLK.KEU,
 	}

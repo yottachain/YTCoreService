@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aurawing/eos-go"
-	"github.com/mr-tron/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
+	"github.com/eoscanada/eos-go"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
@@ -26,10 +26,10 @@ var SelfIP = ""
 func InitShadowPriKey() error {
 	if strings.HasPrefix(env.ShadowPriKey, "yotta:") {
 		keystr := strings.ReplaceAll(env.ShadowPriKey, "yotta:", "")
-		data, err := base58.Decode(keystr)
-		if err != nil {
-			logrus.Errorf("[NodeMgr]Base58.Decode 'ShadowPriKey' ERR%s\n", err.Error())
-			return err
+		data := base58.Decode(keystr)
+		if data == nil || len(data) == 0 {
+			logrus.Errorf("[NodeMgr]Base58.Decode 'ShadowPriKey' ERR!%s\n")
+			return errors.New("Base58.Decode 'ShadowPriKey' ERR")
 		}
 		key, err := readKey()
 		if err != nil {

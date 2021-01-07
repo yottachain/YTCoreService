@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/mr-tron/base58/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
@@ -192,8 +192,8 @@ func (self *UploadObject) active() {
 		vnu := &pkt.ActiveCacheV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 		req := &pkt.ActiveCacheV2{
 			UserId:    &self.UClient.UserId,
-			SignData:  &self.UClient.Sign,
-			KeyNumber: &self.UClient.KeyNumber,
+			SignData:  &self.UClient.SignKey.Sign,
+			KeyNumber: &self.UClient.SignKey.KeyNumber,
 			Vnu:       vnu,
 		}
 		_, err := net.RequestSN(req, self.UClient.SuperNode, self.VNU.Hex(), env.SN_RETRYTIMES, false)
@@ -208,8 +208,8 @@ func (self *UploadObject) complete(sha []byte) *pkt.ErrorMessage {
 	vnu := &pkt.UploadObjectEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadObjectEndReqV2{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 		VHW:       sha,
 		Vnu:       vnu,
 	}
@@ -224,8 +224,8 @@ func (self *UploadObject) initUpload(sha []byte, length int64) *pkt.ErrorMessage
 	size := uint64(length)
 	req := &pkt.UploadObjectInitReqV2{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 		VHW:       sha,
 		Length:    &size,
 	}

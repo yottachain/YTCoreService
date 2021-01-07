@@ -14,8 +14,8 @@ type UserInfo struct {
 	EncKeyNumber  int32
 }
 
-func ReadUserProperties() {
-	path := YTFS_HOME + "userlist.cfg"
+func ReadUserProperties() []*UserInfo {
+	path := YTFS_HOME + "conf/userlist.cfg"
 	bs, err := ioutil.ReadFile(path)
 	if err != nil {
 		logrus.Warnf("[Init]Read userlist.cfg ERR:%s\n", err)
@@ -23,6 +23,7 @@ func ReadUserProperties() {
 	infos := []*UserInfo{}
 	err = json.Unmarshal(bs, &infos)
 	if err != nil {
-		logrus.Error("[Init]Unmarshal userlist.cfg ERR:%s\n", err)
+		logrus.Errorf("[Init]Unmarshal userlist.cfg ERR:%s\n", err)
 	}
+	return infos
 }

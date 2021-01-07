@@ -15,43 +15,38 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-func GetUserInfoWRetry(publickey string, retrytimes int) (string, error) {
+func AuthUserInfo(publickey, name string, retrytimes int) bool {
 	count := 0
 	for {
-		URI := GetEOSURI()
-		res, err := GetUserInfo(publickey, URI)
+		res, err := checkUserInfo(publickey, name)
 		if err != nil {
-			URI.SetErr(err)
+			time.Sleep(time.Duration(1000) * time.Millisecond)
 			count++
 			if count >= retrytimes {
-				return "", err
+				logrus.Errorf("[EOS]AuthUser:%s,publickey:%d,ERR:%s\n", name, publickey, err)
+				return false
 			}
 		} else {
-			return res, nil
+			return res
 		}
 	}
 }
 
-var BASE_URI string = "v1/history/get_key_accounts"
-
-func GetUserInfo(publickey string, URI *EOSURI) (string, error) {
+func checkUserInfo(publickey, name string) (bool, error) {
 	jsonkey := fmt.Sprintf("{\"public_key\":\"%s%s\"}", "YTA", publickey)
-	var urlstr string
-	if strings.HasSuffix(URI.Url, "/") {
-		urlstr = URI.Url + BASE_URI
-	} else {
-		urlstr = URI.Url + "/" + BASE_URI
-	}
-	resp, err := http.Post(urlstr, "application/x-www-form-urlencoded", strings.NewReader(jsonkey))
+	resp, err := http.Post(env.EOSAPI, "application/x-www-form-urlencoded", strings.NewReader(jsonkey))
 	if err != nil {
-		return "", err
+		return false, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return false, err
 	}
-	return string(body), nil
+	if strings.Contains(string(body), "\""+name+"\"") {
+		return true, nil
+	}
+	return false, nil
 }
 
 type BalanceValue struct {

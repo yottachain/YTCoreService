@@ -27,8 +27,8 @@ func BucketMetaMapToBytes(m map[string]string) ([]byte, error) {
 func (self *BucketAccessor) CreateBucket(name string, meta []byte) *pkt.ErrorMessage {
 	req := &pkt.CreateBucketReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &name,
 		Meta:       meta,
 	}
@@ -45,8 +45,8 @@ func (self *BucketAccessor) CreateBucket(name string, meta []byte) *pkt.ErrorMes
 func (self *BucketAccessor) UpdateBucket(name string, meta []byte) *pkt.ErrorMessage {
 	req := &pkt.UpdateBucketReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &name,
 		Meta:       meta,
 	}
@@ -63,8 +63,8 @@ func (self *BucketAccessor) UpdateBucket(name string, meta []byte) *pkt.ErrorMes
 func (self *BucketAccessor) ListBucket() ([]string, *pkt.ErrorMessage) {
 	req := &pkt.ListBucketReqV2{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 	}
 	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
 	if errmsg != nil {
@@ -87,8 +87,8 @@ func (self *BucketAccessor) ListBucket() ([]string, *pkt.ErrorMessage) {
 func (self *BucketAccessor) GetBucket(name string) ([]byte, *pkt.ErrorMessage) {
 	req := &pkt.GetBucketReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &name,
 	}
 	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
@@ -112,8 +112,8 @@ func (self *BucketAccessor) GetBucket(name string) ([]byte, *pkt.ErrorMessage) {
 func (self *BucketAccessor) DeleteBucket(name string) *pkt.ErrorMessage {
 	req := &pkt.DeleteBucketReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		BucketName: &name,
 	}
 	_, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)

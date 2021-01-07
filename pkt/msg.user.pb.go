@@ -635,8 +635,8 @@ type QueryUserResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId    *int32  `protobuf:"varint,1,opt,name=userId" json:"userId,omitempty"`
-	KeyNumber *uint32 `protobuf:"varint,2,opt,name=keyNumber" json:"keyNumber,omitempty"`
+	UserId *int32   `protobuf:"varint,1,opt,name=userId" json:"userId,omitempty"`
+	Pubkey [][]byte `protobuf:"bytes,2,rep,name=pubkey" json:"pubkey,omitempty"`
 }
 
 func (x *QueryUserResp) Reset() {
@@ -678,11 +678,11 @@ func (x *QueryUserResp) GetUserId() int32 {
 	return 0
 }
 
-func (x *QueryUserResp) GetKeyNumber() uint32 {
-	if x != nil && x.KeyNumber != nil {
-		return *x.KeyNumber
+func (x *QueryUserResp) GetPubkey() [][]byte {
+	if x != nil {
+		return x.Pubkey
 	}
-	return 0
+	return nil
 }
 
 type RegUserReq struct {
@@ -819,6 +819,85 @@ func (x *RegUserResp) GetKeyNumber() uint32 {
 	return 0
 }
 
+type RegUserRespV2 struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SuperNodeNum   *uint32  `protobuf:"varint,1,opt,name=superNodeNum" json:"superNodeNum,omitempty"`
+	SuperNodeID    *string  `protobuf:"bytes,2,opt,name=superNodeID" json:"superNodeID,omitempty"`
+	SuperNodeAddrs []string `protobuf:"bytes,3,rep,name=superNodeAddrs" json:"superNodeAddrs,omitempty"`
+	UserId         *uint32  `protobuf:"varint,4,opt,name=userId" json:"userId,omitempty"`
+	KeyNumber      []uint32 `protobuf:"varint,5,rep,name=keyNumber" json:"keyNumber,omitempty"`
+}
+
+func (x *RegUserRespV2) Reset() {
+	*x = RegUserRespV2{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_msg_user_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegUserRespV2) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegUserRespV2) ProtoMessage() {}
+
+func (x *RegUserRespV2) ProtoReflect() protoreflect.Message {
+	mi := &file_msg_user_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegUserRespV2.ProtoReflect.Descriptor instead.
+func (*RegUserRespV2) Descriptor() ([]byte, []int) {
+	return file_msg_user_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *RegUserRespV2) GetSuperNodeNum() uint32 {
+	if x != nil && x.SuperNodeNum != nil {
+		return *x.SuperNodeNum
+	}
+	return 0
+}
+
+func (x *RegUserRespV2) GetSuperNodeID() string {
+	if x != nil && x.SuperNodeID != nil {
+		return *x.SuperNodeID
+	}
+	return ""
+}
+
+func (x *RegUserRespV2) GetSuperNodeAddrs() []string {
+	if x != nil {
+		return x.SuperNodeAddrs
+	}
+	return nil
+}
+
+func (x *RegUserRespV2) GetUserId() uint32 {
+	if x != nil && x.UserId != nil {
+		return *x.UserId
+	}
+	return 0
+}
+
+func (x *RegUserRespV2) GetKeyNumber() []uint32 {
+	if x != nil {
+		return x.KeyNumber
+	}
+	return nil
+}
+
 type UploadBlockDBReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -837,7 +916,7 @@ type UploadBlockDBReq struct {
 func (x *UploadBlockDBReq) Reset() {
 	*x = UploadBlockDBReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[14]
+		mi := &file_msg_user_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -850,7 +929,7 @@ func (x *UploadBlockDBReq) String() string {
 func (*UploadBlockDBReq) ProtoMessage() {}
 
 func (x *UploadBlockDBReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[14]
+	mi := &file_msg_user_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +942,7 @@ func (x *UploadBlockDBReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDBReq.ProtoReflect.Descriptor instead.
 func (*UploadBlockDBReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{14}
+	return file_msg_user_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UploadBlockDBReq) GetId() uint32 {
@@ -939,7 +1018,7 @@ type UploadBlockDupReq struct {
 func (x *UploadBlockDupReq) Reset() {
 	*x = UploadBlockDupReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[15]
+		mi := &file_msg_user_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -952,7 +1031,7 @@ func (x *UploadBlockDupReq) String() string {
 func (*UploadBlockDupReq) ProtoMessage() {}
 
 func (x *UploadBlockDupReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[15]
+	mi := &file_msg_user_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -965,7 +1044,7 @@ func (x *UploadBlockDupReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDupReq.ProtoReflect.Descriptor instead.
 func (*UploadBlockDupReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{15}
+	return file_msg_user_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UploadBlockDupReq) GetId() uint32 {
@@ -1031,7 +1110,7 @@ type UploadBlockDupResp struct {
 func (x *UploadBlockDupResp) Reset() {
 	*x = UploadBlockDupResp{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[16]
+		mi := &file_msg_user_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1044,7 +1123,7 @@ func (x *UploadBlockDupResp) String() string {
 func (*UploadBlockDupResp) ProtoMessage() {}
 
 func (x *UploadBlockDupResp) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[16]
+	mi := &file_msg_user_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1057,7 +1136,7 @@ func (x *UploadBlockDupResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDupResp.ProtoReflect.Descriptor instead.
 func (*UploadBlockDupResp) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{16}
+	return file_msg_user_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UploadBlockDupResp) GetVhbs() *UploadBlockDupResp_VHBS {
@@ -1108,7 +1187,7 @@ type UploadBlockEndReq struct {
 func (x *UploadBlockEndReq) Reset() {
 	*x = UploadBlockEndReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[17]
+		mi := &file_msg_user_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1121,7 +1200,7 @@ func (x *UploadBlockEndReq) String() string {
 func (*UploadBlockEndReq) ProtoMessage() {}
 
 func (x *UploadBlockEndReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[17]
+	mi := &file_msg_user_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1134,7 +1213,7 @@ func (x *UploadBlockEndReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndReq.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{17}
+	return file_msg_user_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UploadBlockEndReq) GetId() uint32 {
@@ -1219,7 +1298,7 @@ type UploadBlockEndResp struct {
 func (x *UploadBlockEndResp) Reset() {
 	*x = UploadBlockEndResp{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[18]
+		mi := &file_msg_user_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1232,7 +1311,7 @@ func (x *UploadBlockEndResp) String() string {
 func (*UploadBlockEndResp) ProtoMessage() {}
 
 func (x *UploadBlockEndResp) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[18]
+	mi := &file_msg_user_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1245,7 +1324,7 @@ func (x *UploadBlockEndResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndResp.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndResp) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{18}
+	return file_msg_user_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UploadBlockEndResp) GetHost() string {
@@ -1283,7 +1362,7 @@ type UploadBlockEndSyncReq struct {
 func (x *UploadBlockEndSyncReq) Reset() {
 	*x = UploadBlockEndSyncReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[19]
+		mi := &file_msg_user_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1296,7 +1375,7 @@ func (x *UploadBlockEndSyncReq) String() string {
 func (*UploadBlockEndSyncReq) ProtoMessage() {}
 
 func (x *UploadBlockEndSyncReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[19]
+	mi := &file_msg_user_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1309,7 +1388,7 @@ func (x *UploadBlockEndSyncReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndSyncReq.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndSyncReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{19}
+	return file_msg_user_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *UploadBlockEndSyncReq) GetId() uint32 {
@@ -1402,7 +1481,7 @@ type UploadBlockInitReq struct {
 func (x *UploadBlockInitReq) Reset() {
 	*x = UploadBlockInitReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[20]
+		mi := &file_msg_user_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1415,7 +1494,7 @@ func (x *UploadBlockInitReq) String() string {
 func (*UploadBlockInitReq) ProtoMessage() {}
 
 func (x *UploadBlockInitReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[20]
+	mi := &file_msg_user_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1428,7 +1507,7 @@ func (x *UploadBlockInitReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockInitReq.ProtoReflect.Descriptor instead.
 func (*UploadBlockInitReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{20}
+	return file_msg_user_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *UploadBlockInitReq) GetVHP() []byte {
@@ -1463,7 +1542,7 @@ type UploadBlockInitResp struct {
 func (x *UploadBlockInitResp) Reset() {
 	*x = UploadBlockInitResp{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[21]
+		mi := &file_msg_user_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1476,7 +1555,7 @@ func (x *UploadBlockInitResp) String() string {
 func (*UploadBlockInitResp) ProtoMessage() {}
 
 func (x *UploadBlockInitResp) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[21]
+	mi := &file_msg_user_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1489,7 +1568,7 @@ func (x *UploadBlockInitResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockInitResp.ProtoReflect.Descriptor instead.
 func (*UploadBlockInitResp) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{21}
+	return file_msg_user_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UploadBlockInitResp) GetStartTime() uint64 {
@@ -1512,7 +1591,7 @@ type UploadObjectEndReq struct {
 func (x *UploadObjectEndReq) Reset() {
 	*x = UploadObjectEndReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[22]
+		mi := &file_msg_user_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1525,7 +1604,7 @@ func (x *UploadObjectEndReq) String() string {
 func (*UploadObjectEndReq) ProtoMessage() {}
 
 func (x *UploadObjectEndReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[22]
+	mi := &file_msg_user_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1538,7 +1617,7 @@ func (x *UploadObjectEndReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadObjectEndReq.ProtoReflect.Descriptor instead.
 func (*UploadObjectEndReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{22}
+	return file_msg_user_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *UploadObjectEndReq) GetVnu() *UploadObjectEndReq_VNU {
@@ -1574,7 +1653,7 @@ type UploadObjectInitReq struct {
 func (x *UploadObjectInitReq) Reset() {
 	*x = UploadObjectInitReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[23]
+		mi := &file_msg_user_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1587,7 +1666,7 @@ func (x *UploadObjectInitReq) String() string {
 func (*UploadObjectInitReq) ProtoMessage() {}
 
 func (x *UploadObjectInitReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[23]
+	mi := &file_msg_user_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1600,7 +1679,7 @@ func (x *UploadObjectInitReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadObjectInitReq.ProtoReflect.Descriptor instead.
 func (*UploadObjectInitReq) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{23}
+	return file_msg_user_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UploadObjectInitReq) GetVHW() []byte {
@@ -1632,7 +1711,7 @@ type UploadObjectInitResp struct {
 func (x *UploadObjectInitResp) Reset() {
 	*x = UploadObjectInitResp{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[24]
+		mi := &file_msg_user_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1645,7 +1724,7 @@ func (x *UploadObjectInitResp) String() string {
 func (*UploadObjectInitResp) ProtoMessage() {}
 
 func (x *UploadObjectInitResp) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[24]
+	mi := &file_msg_user_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1658,7 +1737,7 @@ func (x *UploadObjectInitResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadObjectInitResp.ProtoReflect.Descriptor instead.
 func (*UploadObjectInitResp) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{24}
+	return file_msg_user_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UploadObjectInitResp) GetRepeat() bool {
@@ -1708,7 +1787,7 @@ type DownloadObjectInitResp_RefList struct {
 func (x *DownloadObjectInitResp_RefList) Reset() {
 	*x = DownloadObjectInitResp_RefList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[25]
+		mi := &file_msg_user_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1721,7 +1800,7 @@ func (x *DownloadObjectInitResp_RefList) String() string {
 func (*DownloadObjectInitResp_RefList) ProtoMessage() {}
 
 func (x *DownloadObjectInitResp_RefList) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[25]
+	mi := &file_msg_user_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1763,7 +1842,7 @@ type DownloadBlockInitResp_NList struct {
 func (x *DownloadBlockInitResp_NList) Reset() {
 	*x = DownloadBlockInitResp_NList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[26]
+		mi := &file_msg_user_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1776,7 +1855,7 @@ func (x *DownloadBlockInitResp_NList) String() string {
 func (*DownloadBlockInitResp_NList) ProtoMessage() {}
 
 func (x *DownloadBlockInitResp_NList) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[26]
+	mi := &file_msg_user_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1818,7 +1897,7 @@ type DownloadBlockInitResp_VHFS struct {
 func (x *DownloadBlockInitResp_VHFS) Reset() {
 	*x = DownloadBlockInitResp_VHFS{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[27]
+		mi := &file_msg_user_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1831,7 +1910,7 @@ func (x *DownloadBlockInitResp_VHFS) String() string {
 func (*DownloadBlockInitResp_VHFS) ProtoMessage() {}
 
 func (x *DownloadBlockInitResp_VHFS) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[27]
+	mi := &file_msg_user_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1873,7 +1952,7 @@ type DownloadBlockInitResp_Nids struct {
 func (x *DownloadBlockInitResp_Nids) Reset() {
 	*x = DownloadBlockInitResp_Nids{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[28]
+		mi := &file_msg_user_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1886,7 +1965,7 @@ func (x *DownloadBlockInitResp_Nids) String() string {
 func (*DownloadBlockInitResp_Nids) ProtoMessage() {}
 
 func (x *DownloadBlockInitResp_Nids) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[28]
+	mi := &file_msg_user_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1953,7 +2032,7 @@ type DownloadBlockInitResp_NList_Ns struct {
 func (x *DownloadBlockInitResp_NList_Ns) Reset() {
 	*x = DownloadBlockInitResp_NList_Ns{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[29]
+		mi := &file_msg_user_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1966,7 +2045,7 @@ func (x *DownloadBlockInitResp_NList_Ns) String() string {
 func (*DownloadBlockInitResp_NList_Ns) ProtoMessage() {}
 
 func (x *DownloadBlockInitResp_NList_Ns) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[29]
+	mi := &file_msg_user_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2183,7 +2262,7 @@ type ListSuperNodeResp_SuperNodes struct {
 func (x *ListSuperNodeResp_SuperNodes) Reset() {
 	*x = ListSuperNodeResp_SuperNodes{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[30]
+		mi := &file_msg_user_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2196,7 +2275,7 @@ func (x *ListSuperNodeResp_SuperNodes) String() string {
 func (*ListSuperNodeResp_SuperNodes) ProtoMessage() {}
 
 func (x *ListSuperNodeResp_SuperNodes) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[30]
+	mi := &file_msg_user_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2241,7 +2320,7 @@ type ListSuperNodeResp_SuperNodes_SuperNode struct {
 func (x *ListSuperNodeResp_SuperNodes_SuperNode) Reset() {
 	*x = ListSuperNodeResp_SuperNodes_SuperNode{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[31]
+		mi := &file_msg_user_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2254,7 +2333,7 @@ func (x *ListSuperNodeResp_SuperNodes_SuperNode) String() string {
 func (*ListSuperNodeResp_SuperNodes_SuperNode) ProtoMessage() {}
 
 func (x *ListSuperNodeResp_SuperNodes_SuperNode) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[31]
+	mi := &file_msg_user_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2322,7 +2401,7 @@ type PreAllocNodeResp_PreAllocNode struct {
 func (x *PreAllocNodeResp_PreAllocNode) Reset() {
 	*x = PreAllocNodeResp_PreAllocNode{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[32]
+		mi := &file_msg_user_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2335,7 +2414,7 @@ func (x *PreAllocNodeResp_PreAllocNode) String() string {
 func (*PreAllocNodeResp_PreAllocNode) ProtoMessage() {}
 
 func (x *PreAllocNodeResp_PreAllocNode) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[32]
+	mi := &file_msg_user_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2414,7 +2493,7 @@ type UploadBlockDBReq_VNU struct {
 func (x *UploadBlockDBReq_VNU) Reset() {
 	*x = UploadBlockDBReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[33]
+		mi := &file_msg_user_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2427,7 +2506,7 @@ func (x *UploadBlockDBReq_VNU) String() string {
 func (*UploadBlockDBReq_VNU) ProtoMessage() {}
 
 func (x *UploadBlockDBReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[33]
+	mi := &file_msg_user_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2440,7 +2519,7 @@ func (x *UploadBlockDBReq_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDBReq_VNU.ProtoReflect.Descriptor instead.
 func (*UploadBlockDBReq_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{14, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{15, 0}
 }
 
 func (x *UploadBlockDBReq_VNU) GetTimestamp() uint32 {
@@ -2485,7 +2564,7 @@ type UploadBlockDupReq_VNU struct {
 func (x *UploadBlockDupReq_VNU) Reset() {
 	*x = UploadBlockDupReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[34]
+		mi := &file_msg_user_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2498,7 +2577,7 @@ func (x *UploadBlockDupReq_VNU) String() string {
 func (*UploadBlockDupReq_VNU) ProtoMessage() {}
 
 func (x *UploadBlockDupReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[34]
+	mi := &file_msg_user_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2511,7 +2590,7 @@ func (x *UploadBlockDupReq_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDupReq_VNU.ProtoReflect.Descriptor instead.
 func (*UploadBlockDupReq_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{15, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{16, 0}
 }
 
 func (x *UploadBlockDupReq_VNU) GetTimestamp() uint32 {
@@ -2554,7 +2633,7 @@ type UploadBlockDupResp_VHBS struct {
 func (x *UploadBlockDupResp_VHBS) Reset() {
 	*x = UploadBlockDupResp_VHBS{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[35]
+		mi := &file_msg_user_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2567,7 +2646,7 @@ func (x *UploadBlockDupResp_VHBS) String() string {
 func (*UploadBlockDupResp_VHBS) ProtoMessage() {}
 
 func (x *UploadBlockDupResp_VHBS) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[35]
+	mi := &file_msg_user_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2580,7 +2659,7 @@ func (x *UploadBlockDupResp_VHBS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDupResp_VHBS.ProtoReflect.Descriptor instead.
 func (*UploadBlockDupResp_VHBS) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{16, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{17, 0}
 }
 
 func (x *UploadBlockDupResp_VHBS) GetCount() uint32 {
@@ -2609,7 +2688,7 @@ type UploadBlockDupResp_KEDS struct {
 func (x *UploadBlockDupResp_KEDS) Reset() {
 	*x = UploadBlockDupResp_KEDS{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[36]
+		mi := &file_msg_user_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2622,7 +2701,7 @@ func (x *UploadBlockDupResp_KEDS) String() string {
 func (*UploadBlockDupResp_KEDS) ProtoMessage() {}
 
 func (x *UploadBlockDupResp_KEDS) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[36]
+	mi := &file_msg_user_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2635,7 +2714,7 @@ func (x *UploadBlockDupResp_KEDS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDupResp_KEDS.ProtoReflect.Descriptor instead.
 func (*UploadBlockDupResp_KEDS) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{16, 1}
+	return file_msg_user_proto_rawDescGZIP(), []int{17, 1}
 }
 
 func (x *UploadBlockDupResp_KEDS) GetCount() uint32 {
@@ -2664,7 +2743,7 @@ type UploadBlockDupResp_ARS struct {
 func (x *UploadBlockDupResp_ARS) Reset() {
 	*x = UploadBlockDupResp_ARS{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[37]
+		mi := &file_msg_user_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2677,7 +2756,7 @@ func (x *UploadBlockDupResp_ARS) String() string {
 func (*UploadBlockDupResp_ARS) ProtoMessage() {}
 
 func (x *UploadBlockDupResp_ARS) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[37]
+	mi := &file_msg_user_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2690,7 +2769,7 @@ func (x *UploadBlockDupResp_ARS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockDupResp_ARS.ProtoReflect.Descriptor instead.
 func (*UploadBlockDupResp_ARS) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{16, 2}
+	return file_msg_user_proto_rawDescGZIP(), []int{17, 2}
 }
 
 func (x *UploadBlockDupResp_ARS) GetCount() uint32 {
@@ -2721,7 +2800,7 @@ type UploadBlockEndReq_VNU struct {
 func (x *UploadBlockEndReq_VNU) Reset() {
 	*x = UploadBlockEndReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[38]
+		mi := &file_msg_user_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2734,7 +2813,7 @@ func (x *UploadBlockEndReq_VNU) String() string {
 func (*UploadBlockEndReq_VNU) ProtoMessage() {}
 
 func (x *UploadBlockEndReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[38]
+	mi := &file_msg_user_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2747,7 +2826,7 @@ func (x *UploadBlockEndReq_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndReq_VNU.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndReq_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{17, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{18, 0}
 }
 
 func (x *UploadBlockEndReq_VNU) GetTimestamp() uint32 {
@@ -2792,7 +2871,7 @@ type UploadBlockEndReq_OkList struct {
 func (x *UploadBlockEndReq_OkList) Reset() {
 	*x = UploadBlockEndReq_OkList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[39]
+		mi := &file_msg_user_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2805,7 +2884,7 @@ func (x *UploadBlockEndReq_OkList) String() string {
 func (*UploadBlockEndReq_OkList) ProtoMessage() {}
 
 func (x *UploadBlockEndReq_OkList) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[39]
+	mi := &file_msg_user_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2818,7 +2897,7 @@ func (x *UploadBlockEndReq_OkList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndReq_OkList.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndReq_OkList) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{17, 1}
+	return file_msg_user_proto_rawDescGZIP(), []int{18, 1}
 }
 
 func (x *UploadBlockEndReq_OkList) GetSHARDID() uint32 {
@@ -2863,7 +2942,7 @@ type UploadBlockEndSyncReq_VNU struct {
 func (x *UploadBlockEndSyncReq_VNU) Reset() {
 	*x = UploadBlockEndSyncReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[40]
+		mi := &file_msg_user_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2876,7 +2955,7 @@ func (x *UploadBlockEndSyncReq_VNU) String() string {
 func (*UploadBlockEndSyncReq_VNU) ProtoMessage() {}
 
 func (x *UploadBlockEndSyncReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[40]
+	mi := &file_msg_user_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2889,7 +2968,7 @@ func (x *UploadBlockEndSyncReq_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndSyncReq_VNU.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndSyncReq_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{19, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{20, 0}
 }
 
 func (x *UploadBlockEndSyncReq_VNU) GetTimestamp() uint32 {
@@ -2934,7 +3013,7 @@ type UploadBlockEndSyncReq_OkList struct {
 func (x *UploadBlockEndSyncReq_OkList) Reset() {
 	*x = UploadBlockEndSyncReq_OkList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[41]
+		mi := &file_msg_user_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2947,7 +3026,7 @@ func (x *UploadBlockEndSyncReq_OkList) String() string {
 func (*UploadBlockEndSyncReq_OkList) ProtoMessage() {}
 
 func (x *UploadBlockEndSyncReq_OkList) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[41]
+	mi := &file_msg_user_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2960,7 +3039,7 @@ func (x *UploadBlockEndSyncReq_OkList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockEndSyncReq_OkList.ProtoReflect.Descriptor instead.
 func (*UploadBlockEndSyncReq_OkList) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{19, 1}
+	return file_msg_user_proto_rawDescGZIP(), []int{20, 1}
 }
 
 func (x *UploadBlockEndSyncReq_OkList) GetSHARDID() uint32 {
@@ -3005,7 +3084,7 @@ type UploadBlockInitReq_VNU struct {
 func (x *UploadBlockInitReq_VNU) Reset() {
 	*x = UploadBlockInitReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[42]
+		mi := &file_msg_user_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3018,7 +3097,7 @@ func (x *UploadBlockInitReq_VNU) String() string {
 func (*UploadBlockInitReq_VNU) ProtoMessage() {}
 
 func (x *UploadBlockInitReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[42]
+	mi := &file_msg_user_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3031,7 +3110,7 @@ func (x *UploadBlockInitReq_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadBlockInitReq_VNU.ProtoReflect.Descriptor instead.
 func (*UploadBlockInitReq_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{20, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{21, 0}
 }
 
 func (x *UploadBlockInitReq_VNU) GetTimestamp() uint32 {
@@ -3076,7 +3155,7 @@ type UploadObjectEndReq_VNU struct {
 func (x *UploadObjectEndReq_VNU) Reset() {
 	*x = UploadObjectEndReq_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[43]
+		mi := &file_msg_user_proto_msgTypes[44]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3089,7 +3168,7 @@ func (x *UploadObjectEndReq_VNU) String() string {
 func (*UploadObjectEndReq_VNU) ProtoMessage() {}
 
 func (x *UploadObjectEndReq_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[43]
+	mi := &file_msg_user_proto_msgTypes[44]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3102,7 +3181,7 @@ func (x *UploadObjectEndReq_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadObjectEndReq_VNU.ProtoReflect.Descriptor instead.
 func (*UploadObjectEndReq_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{22, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{23, 0}
 }
 
 func (x *UploadObjectEndReq_VNU) GetTimestamp() uint32 {
@@ -3147,7 +3226,7 @@ type UploadObjectInitResp_VNU struct {
 func (x *UploadObjectInitResp_VNU) Reset() {
 	*x = UploadObjectInitResp_VNU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[44]
+		mi := &file_msg_user_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3160,7 +3239,7 @@ func (x *UploadObjectInitResp_VNU) String() string {
 func (*UploadObjectInitResp_VNU) ProtoMessage() {}
 
 func (x *UploadObjectInitResp_VNU) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[44]
+	mi := &file_msg_user_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3173,7 +3252,7 @@ func (x *UploadObjectInitResp_VNU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadObjectInitResp_VNU.ProtoReflect.Descriptor instead.
 func (*UploadObjectInitResp_VNU) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{24, 0}
+	return file_msg_user_proto_rawDescGZIP(), []int{25, 0}
 }
 
 func (x *UploadObjectInitResp_VNU) GetTimestamp() uint32 {
@@ -3216,7 +3295,7 @@ type UploadObjectInitResp_Blocks struct {
 func (x *UploadObjectInitResp_Blocks) Reset() {
 	*x = UploadObjectInitResp_Blocks{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_user_proto_msgTypes[45]
+		mi := &file_msg_user_proto_msgTypes[46]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3229,7 +3308,7 @@ func (x *UploadObjectInitResp_Blocks) String() string {
 func (*UploadObjectInitResp_Blocks) ProtoMessage() {}
 
 func (x *UploadObjectInitResp_Blocks) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_user_proto_msgTypes[45]
+	mi := &file_msg_user_proto_msgTypes[46]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3242,7 +3321,7 @@ func (x *UploadObjectInitResp_Blocks) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadObjectInitResp_Blocks.ProtoReflect.Descriptor instead.
 func (*UploadObjectInitResp_Blocks) Descriptor() ([]byte, []int) {
-	return file_msg_user_proto_rawDescGZIP(), []int{24, 1}
+	return file_msg_user_proto_rawDescGZIP(), []int{25, 1}
 }
 
 func (x *UploadObjectInitResp_Blocks) GetCount() uint32 {
@@ -3408,17 +3487,28 @@ var file_msg_user_proto_rawDesc = []byte{
 	0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x63, 0x61, 0x63, 0x68, 0x65,
 	0x4b, 0x65, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x63, 0x61, 0x63, 0x68, 0x65,
 	0x4b, 0x65, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x45, 0x0a, 0x0d, 0x51,
+	0x01, 0x28, 0x05, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x3f, 0x0a, 0x0d, 0x51,
 	0x75, 0x65, 0x72, 0x79, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x12, 0x16, 0x0a, 0x06,
 	0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73,
+	0x65, 0x72, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x75, 0x62, 0x6b, 0x65, 0x79, 0x18, 0x02,
+	0x20, 0x03, 0x28, 0x0c, 0x52, 0x06, 0x70, 0x75, 0x62, 0x6b, 0x65, 0x79, 0x22, 0x40, 0x0a, 0x0a,
+	0x52, 0x65, 0x67, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x71, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x75,
+	0x62, 0x4b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x70, 0x75, 0x62, 0x4b,
+	0x65, 0x79, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0xb1,
+	0x01, 0x0a, 0x0b, 0x52, 0x65, 0x67, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x12, 0x22,
+	0x0a, 0x0c, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64, 0x65, 0x4e, 0x75, 0x6d, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64, 0x65, 0x4e,
+	0x75, 0x6d, 0x12, 0x20, 0x0a, 0x0b, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64, 0x65, 0x49,
+	0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f,
+	0x64, 0x65, 0x49, 0x44, 0x12, 0x26, 0x0a, 0x0e, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64,
+	0x65, 0x41, 0x64, 0x64, 0x72, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0e, 0x73, 0x75,
+	0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64, 0x65, 0x41, 0x64, 0x64, 0x72, 0x73, 0x12, 0x16, 0x0a, 0x06,
+	0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x06, 0x75, 0x73,
 	0x65, 0x72, 0x49, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x6b, 0x65, 0x79, 0x4e, 0x75, 0x6d, 0x62, 0x65,
-	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x09, 0x6b, 0x65, 0x79, 0x4e, 0x75, 0x6d, 0x62,
-	0x65, 0x72, 0x22, 0x40, 0x0a, 0x0a, 0x52, 0x65, 0x67, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x71,
-	0x12, 0x16, 0x0a, 0x06, 0x70, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x06, 0x70, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72,
-	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72,
-	0x6e, 0x61, 0x6d, 0x65, 0x22, 0xb1, 0x01, 0x0a, 0x0b, 0x52, 0x65, 0x67, 0x55, 0x73, 0x65, 0x72,
-	0x52, 0x65, 0x73, 0x70, 0x12, 0x22, 0x0a, 0x0c, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64,
+	0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x09, 0x6b, 0x65, 0x79, 0x4e, 0x75, 0x6d, 0x62,
+	0x65, 0x72, 0x22, 0xb3, 0x01, 0x0a, 0x0d, 0x52, 0x65, 0x67, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65,
+	0x73, 0x70, 0x56, 0x32, 0x12, 0x22, 0x0a, 0x0c, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64,
 	0x65, 0x4e, 0x75, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c, 0x73, 0x75, 0x70, 0x65,
 	0x72, 0x4e, 0x6f, 0x64, 0x65, 0x4e, 0x75, 0x6d, 0x12, 0x20, 0x0a, 0x0b, 0x73, 0x75, 0x70, 0x65,
 	0x72, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73,
@@ -3427,7 +3517,7 @@ var file_msg_user_proto_rawDesc = []byte{
 	0x28, 0x09, 0x52, 0x0e, 0x73, 0x75, 0x70, 0x65, 0x72, 0x4e, 0x6f, 0x64, 0x65, 0x41, 0x64, 0x64,
 	0x72, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x04, 0x20, 0x01,
 	0x28, 0x0d, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x6b, 0x65,
-	0x79, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x09, 0x6b,
+	0x79, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0d, 0x52, 0x09, 0x6b,
 	0x65, 0x79, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x22, 0xeb, 0x02, 0x0a, 0x10, 0x55, 0x70, 0x6c,
 	0x6f, 0x61, 0x64, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x42, 0x52, 0x65, 0x71, 0x12, 0x0e, 0x0a,
 	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x2b, 0x0a,
@@ -3650,7 +3740,7 @@ func file_msg_user_proto_rawDescGZIP() []byte {
 	return file_msg_user_proto_rawDescData
 }
 
-var file_msg_user_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_msg_user_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
 var file_msg_user_proto_goTypes = []interface{}{
 	(*DownloadBlockDBResp)(nil),                    // 0: pkt.DownloadBlockDBResp
 	(*DownloadBlockInitReq)(nil),                   // 1: pkt.DownloadBlockInitReq
@@ -3666,61 +3756,62 @@ var file_msg_user_proto_goTypes = []interface{}{
 	(*QueryUserResp)(nil),                          // 11: pkt.QueryUserResp
 	(*RegUserReq)(nil),                             // 12: pkt.RegUserReq
 	(*RegUserResp)(nil),                            // 13: pkt.RegUserResp
-	(*UploadBlockDBReq)(nil),                       // 14: pkt.UploadBlockDBReq
-	(*UploadBlockDupReq)(nil),                      // 15: pkt.UploadBlockDupReq
-	(*UploadBlockDupResp)(nil),                     // 16: pkt.UploadBlockDupResp
-	(*UploadBlockEndReq)(nil),                      // 17: pkt.UploadBlockEndReq
-	(*UploadBlockEndResp)(nil),                     // 18: pkt.UploadBlockEndResp
-	(*UploadBlockEndSyncReq)(nil),                  // 19: pkt.UploadBlockEndSyncReq
-	(*UploadBlockInitReq)(nil),                     // 20: pkt.UploadBlockInitReq
-	(*UploadBlockInitResp)(nil),                    // 21: pkt.UploadBlockInitResp
-	(*UploadObjectEndReq)(nil),                     // 22: pkt.UploadObjectEndReq
-	(*UploadObjectInitReq)(nil),                    // 23: pkt.UploadObjectInitReq
-	(*UploadObjectInitResp)(nil),                   // 24: pkt.UploadObjectInitResp
-	(*DownloadObjectInitResp_RefList)(nil),         // 25: pkt.DownloadObjectInitResp.RefList
-	(*DownloadBlockInitResp_NList)(nil),            // 26: pkt.DownloadBlockInitResp.NList
-	(*DownloadBlockInitResp_VHFS)(nil),             // 27: pkt.DownloadBlockInitResp.VHFS
-	(*DownloadBlockInitResp_Nids)(nil),             // 28: pkt.DownloadBlockInitResp.Nids
-	(*DownloadBlockInitResp_NList_Ns)(nil),         // 29: pkt.DownloadBlockInitResp.NList.Ns
-	(*ListSuperNodeResp_SuperNodes)(nil),           // 30: pkt.ListSuperNodeResp.SuperNodes
-	(*ListSuperNodeResp_SuperNodes_SuperNode)(nil), // 31: pkt.ListSuperNodeResp.SuperNodes.SuperNode
-	(*PreAllocNodeResp_PreAllocNode)(nil),          // 32: pkt.PreAllocNodeResp.PreAllocNode
-	(*UploadBlockDBReq_VNU)(nil),                   // 33: pkt.UploadBlockDBReq.VNU
-	(*UploadBlockDupReq_VNU)(nil),                  // 34: pkt.UploadBlockDupReq.VNU
-	(*UploadBlockDupResp_VHBS)(nil),                // 35: pkt.UploadBlockDupResp.VHBS
-	(*UploadBlockDupResp_KEDS)(nil),                // 36: pkt.UploadBlockDupResp.KEDS
-	(*UploadBlockDupResp_ARS)(nil),                 // 37: pkt.UploadBlockDupResp.ARS
-	(*UploadBlockEndReq_VNU)(nil),                  // 38: pkt.UploadBlockEndReq.VNU
-	(*UploadBlockEndReq_OkList)(nil),               // 39: pkt.UploadBlockEndReq.OkList
-	(*UploadBlockEndSyncReq_VNU)(nil),              // 40: pkt.UploadBlockEndSyncReq.VNU
-	(*UploadBlockEndSyncReq_OkList)(nil),           // 41: pkt.UploadBlockEndSyncReq.OkList
-	(*UploadBlockInitReq_VNU)(nil),                 // 42: pkt.UploadBlockInitReq.VNU
-	(*UploadObjectEndReq_VNU)(nil),                 // 43: pkt.UploadObjectEndReq.VNU
-	(*UploadObjectInitResp_VNU)(nil),               // 44: pkt.UploadObjectInitResp.VNU
-	(*UploadObjectInitResp_Blocks)(nil),            // 45: pkt.UploadObjectInitResp.Blocks
+	(*RegUserRespV2)(nil),                          // 14: pkt.RegUserRespV2
+	(*UploadBlockDBReq)(nil),                       // 15: pkt.UploadBlockDBReq
+	(*UploadBlockDupReq)(nil),                      // 16: pkt.UploadBlockDupReq
+	(*UploadBlockDupResp)(nil),                     // 17: pkt.UploadBlockDupResp
+	(*UploadBlockEndReq)(nil),                      // 18: pkt.UploadBlockEndReq
+	(*UploadBlockEndResp)(nil),                     // 19: pkt.UploadBlockEndResp
+	(*UploadBlockEndSyncReq)(nil),                  // 20: pkt.UploadBlockEndSyncReq
+	(*UploadBlockInitReq)(nil),                     // 21: pkt.UploadBlockInitReq
+	(*UploadBlockInitResp)(nil),                    // 22: pkt.UploadBlockInitResp
+	(*UploadObjectEndReq)(nil),                     // 23: pkt.UploadObjectEndReq
+	(*UploadObjectInitReq)(nil),                    // 24: pkt.UploadObjectInitReq
+	(*UploadObjectInitResp)(nil),                   // 25: pkt.UploadObjectInitResp
+	(*DownloadObjectInitResp_RefList)(nil),         // 26: pkt.DownloadObjectInitResp.RefList
+	(*DownloadBlockInitResp_NList)(nil),            // 27: pkt.DownloadBlockInitResp.NList
+	(*DownloadBlockInitResp_VHFS)(nil),             // 28: pkt.DownloadBlockInitResp.VHFS
+	(*DownloadBlockInitResp_Nids)(nil),             // 29: pkt.DownloadBlockInitResp.Nids
+	(*DownloadBlockInitResp_NList_Ns)(nil),         // 30: pkt.DownloadBlockInitResp.NList.Ns
+	(*ListSuperNodeResp_SuperNodes)(nil),           // 31: pkt.ListSuperNodeResp.SuperNodes
+	(*ListSuperNodeResp_SuperNodes_SuperNode)(nil), // 32: pkt.ListSuperNodeResp.SuperNodes.SuperNode
+	(*PreAllocNodeResp_PreAllocNode)(nil),          // 33: pkt.PreAllocNodeResp.PreAllocNode
+	(*UploadBlockDBReq_VNU)(nil),                   // 34: pkt.UploadBlockDBReq.VNU
+	(*UploadBlockDupReq_VNU)(nil),                  // 35: pkt.UploadBlockDupReq.VNU
+	(*UploadBlockDupResp_VHBS)(nil),                // 36: pkt.UploadBlockDupResp.VHBS
+	(*UploadBlockDupResp_KEDS)(nil),                // 37: pkt.UploadBlockDupResp.KEDS
+	(*UploadBlockDupResp_ARS)(nil),                 // 38: pkt.UploadBlockDupResp.ARS
+	(*UploadBlockEndReq_VNU)(nil),                  // 39: pkt.UploadBlockEndReq.VNU
+	(*UploadBlockEndReq_OkList)(nil),               // 40: pkt.UploadBlockEndReq.OkList
+	(*UploadBlockEndSyncReq_VNU)(nil),              // 41: pkt.UploadBlockEndSyncReq.VNU
+	(*UploadBlockEndSyncReq_OkList)(nil),           // 42: pkt.UploadBlockEndSyncReq.OkList
+	(*UploadBlockInitReq_VNU)(nil),                 // 43: pkt.UploadBlockInitReq.VNU
+	(*UploadObjectEndReq_VNU)(nil),                 // 44: pkt.UploadObjectEndReq.VNU
+	(*UploadObjectInitResp_VNU)(nil),               // 45: pkt.UploadObjectInitResp.VNU
+	(*UploadObjectInitResp_Blocks)(nil),            // 46: pkt.UploadObjectInitResp.Blocks
 }
 var file_msg_user_proto_depIdxs = []int32{
-	25, // 0: pkt.DownloadObjectInitResp.reflist:type_name -> pkt.DownloadObjectInitResp.RefList
-	26, // 1: pkt.DownloadBlockInitResp.nlist:type_name -> pkt.DownloadBlockInitResp.NList
-	27, // 2: pkt.DownloadBlockInitResp.vhfs:type_name -> pkt.DownloadBlockInitResp.VHFS
-	28, // 3: pkt.DownloadBlockInitResp.nids:type_name -> pkt.DownloadBlockInitResp.Nids
-	30, // 4: pkt.ListSuperNodeResp.supernodes:type_name -> pkt.ListSuperNodeResp.SuperNodes
-	32, // 5: pkt.PreAllocNodeResp.preallocnode:type_name -> pkt.PreAllocNodeResp.PreAllocNode
-	33, // 6: pkt.UploadBlockDBReq.vnu:type_name -> pkt.UploadBlockDBReq.VNU
-	34, // 7: pkt.UploadBlockDupReq.vnu:type_name -> pkt.UploadBlockDupReq.VNU
-	35, // 8: pkt.UploadBlockDupResp.vhbs:type_name -> pkt.UploadBlockDupResp.VHBS
-	36, // 9: pkt.UploadBlockDupResp.keds:type_name -> pkt.UploadBlockDupResp.KEDS
-	37, // 10: pkt.UploadBlockDupResp.ars:type_name -> pkt.UploadBlockDupResp.ARS
-	38, // 11: pkt.UploadBlockEndReq.vnu:type_name -> pkt.UploadBlockEndReq.VNU
-	39, // 12: pkt.UploadBlockEndReq.oklist:type_name -> pkt.UploadBlockEndReq.OkList
-	40, // 13: pkt.UploadBlockEndSyncReq.vnu:type_name -> pkt.UploadBlockEndSyncReq.VNU
-	41, // 14: pkt.UploadBlockEndSyncReq.oklist:type_name -> pkt.UploadBlockEndSyncReq.OkList
-	42, // 15: pkt.UploadBlockInitReq.vnu:type_name -> pkt.UploadBlockInitReq.VNU
-	43, // 16: pkt.UploadObjectEndReq.vnu:type_name -> pkt.UploadObjectEndReq.VNU
-	44, // 17: pkt.UploadObjectInitResp.vnu:type_name -> pkt.UploadObjectInitResp.VNU
-	45, // 18: pkt.UploadObjectInitResp.blocks:type_name -> pkt.UploadObjectInitResp.Blocks
-	29, // 19: pkt.DownloadBlockInitResp.NList.ns:type_name -> pkt.DownloadBlockInitResp.NList.Ns
-	31, // 20: pkt.ListSuperNodeResp.SuperNodes.supernode:type_name -> pkt.ListSuperNodeResp.SuperNodes.SuperNode
+	26, // 0: pkt.DownloadObjectInitResp.reflist:type_name -> pkt.DownloadObjectInitResp.RefList
+	27, // 1: pkt.DownloadBlockInitResp.nlist:type_name -> pkt.DownloadBlockInitResp.NList
+	28, // 2: pkt.DownloadBlockInitResp.vhfs:type_name -> pkt.DownloadBlockInitResp.VHFS
+	29, // 3: pkt.DownloadBlockInitResp.nids:type_name -> pkt.DownloadBlockInitResp.Nids
+	31, // 4: pkt.ListSuperNodeResp.supernodes:type_name -> pkt.ListSuperNodeResp.SuperNodes
+	33, // 5: pkt.PreAllocNodeResp.preallocnode:type_name -> pkt.PreAllocNodeResp.PreAllocNode
+	34, // 6: pkt.UploadBlockDBReq.vnu:type_name -> pkt.UploadBlockDBReq.VNU
+	35, // 7: pkt.UploadBlockDupReq.vnu:type_name -> pkt.UploadBlockDupReq.VNU
+	36, // 8: pkt.UploadBlockDupResp.vhbs:type_name -> pkt.UploadBlockDupResp.VHBS
+	37, // 9: pkt.UploadBlockDupResp.keds:type_name -> pkt.UploadBlockDupResp.KEDS
+	38, // 10: pkt.UploadBlockDupResp.ars:type_name -> pkt.UploadBlockDupResp.ARS
+	39, // 11: pkt.UploadBlockEndReq.vnu:type_name -> pkt.UploadBlockEndReq.VNU
+	40, // 12: pkt.UploadBlockEndReq.oklist:type_name -> pkt.UploadBlockEndReq.OkList
+	41, // 13: pkt.UploadBlockEndSyncReq.vnu:type_name -> pkt.UploadBlockEndSyncReq.VNU
+	42, // 14: pkt.UploadBlockEndSyncReq.oklist:type_name -> pkt.UploadBlockEndSyncReq.OkList
+	43, // 15: pkt.UploadBlockInitReq.vnu:type_name -> pkt.UploadBlockInitReq.VNU
+	44, // 16: pkt.UploadObjectEndReq.vnu:type_name -> pkt.UploadObjectEndReq.VNU
+	45, // 17: pkt.UploadObjectInitResp.vnu:type_name -> pkt.UploadObjectInitResp.VNU
+	46, // 18: pkt.UploadObjectInitResp.blocks:type_name -> pkt.UploadObjectInitResp.Blocks
+	30, // 19: pkt.DownloadBlockInitResp.NList.ns:type_name -> pkt.DownloadBlockInitResp.NList.Ns
+	32, // 20: pkt.ListSuperNodeResp.SuperNodes.supernode:type_name -> pkt.ListSuperNodeResp.SuperNodes.SuperNode
 	21, // [21:21] is the sub-list for method output_type
 	21, // [21:21] is the sub-list for method input_type
 	21, // [21:21] is the sub-list for extension type_name
@@ -3903,7 +3994,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDBReq); i {
+			switch v := v.(*RegUserRespV2); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3915,7 +4006,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDupReq); i {
+			switch v := v.(*UploadBlockDBReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3927,7 +4018,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDupResp); i {
+			switch v := v.(*UploadBlockDupReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3939,7 +4030,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndReq); i {
+			switch v := v.(*UploadBlockDupResp); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3951,7 +4042,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndResp); i {
+			switch v := v.(*UploadBlockEndReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3963,7 +4054,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndSyncReq); i {
+			switch v := v.(*UploadBlockEndResp); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3975,7 +4066,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockInitReq); i {
+			switch v := v.(*UploadBlockEndSyncReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3987,7 +4078,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockInitResp); i {
+			switch v := v.(*UploadBlockInitReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3999,7 +4090,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadObjectEndReq); i {
+			switch v := v.(*UploadBlockInitResp); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4011,7 +4102,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadObjectInitReq); i {
+			switch v := v.(*UploadObjectEndReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4023,7 +4114,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadObjectInitResp); i {
+			switch v := v.(*UploadObjectInitReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4035,7 +4126,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadObjectInitResp_RefList); i {
+			switch v := v.(*UploadObjectInitResp); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4047,7 +4138,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadBlockInitResp_NList); i {
+			switch v := v.(*DownloadObjectInitResp_RefList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4059,7 +4150,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadBlockInitResp_VHFS); i {
+			switch v := v.(*DownloadBlockInitResp_NList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4071,7 +4162,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadBlockInitResp_Nids); i {
+			switch v := v.(*DownloadBlockInitResp_VHFS); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4083,7 +4174,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadBlockInitResp_NList_Ns); i {
+			switch v := v.(*DownloadBlockInitResp_Nids); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4095,7 +4186,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListSuperNodeResp_SuperNodes); i {
+			switch v := v.(*DownloadBlockInitResp_NList_Ns); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4107,7 +4198,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListSuperNodeResp_SuperNodes_SuperNode); i {
+			switch v := v.(*ListSuperNodeResp_SuperNodes); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4119,7 +4210,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PreAllocNodeResp_PreAllocNode); i {
+			switch v := v.(*ListSuperNodeResp_SuperNodes_SuperNode); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4131,7 +4222,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDBReq_VNU); i {
+			switch v := v.(*PreAllocNodeResp_PreAllocNode); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4143,7 +4234,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDupReq_VNU); i {
+			switch v := v.(*UploadBlockDBReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4155,7 +4246,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDupResp_VHBS); i {
+			switch v := v.(*UploadBlockDupReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4167,7 +4258,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDupResp_KEDS); i {
+			switch v := v.(*UploadBlockDupResp_VHBS); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4179,7 +4270,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockDupResp_ARS); i {
+			switch v := v.(*UploadBlockDupResp_KEDS); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4191,7 +4282,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndReq_VNU); i {
+			switch v := v.(*UploadBlockDupResp_ARS); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4203,7 +4294,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndReq_OkList); i {
+			switch v := v.(*UploadBlockEndReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4215,7 +4306,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndSyncReq_VNU); i {
+			switch v := v.(*UploadBlockEndReq_OkList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4227,7 +4318,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockEndSyncReq_OkList); i {
+			switch v := v.(*UploadBlockEndSyncReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4239,7 +4330,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadBlockInitReq_VNU); i {
+			switch v := v.(*UploadBlockEndSyncReq_OkList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4251,7 +4342,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadObjectEndReq_VNU); i {
+			switch v := v.(*UploadBlockInitReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4263,7 +4354,7 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UploadObjectInitResp_VNU); i {
+			switch v := v.(*UploadObjectEndReq_VNU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4275,6 +4366,18 @@ func file_msg_user_proto_init() {
 			}
 		}
 		file_msg_user_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UploadObjectInitResp_VNU); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_msg_user_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UploadObjectInitResp_Blocks); i {
 			case 0:
 				return &v.state
@@ -4293,7 +4396,7 @@ func file_msg_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_msg_user_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   46,
+			NumMessages:   47,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

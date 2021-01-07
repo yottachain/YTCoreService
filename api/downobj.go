@@ -48,8 +48,8 @@ func (self *DownloadObject) GetProgress() int32 {
 func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
 	req := &pkt.DownloadObjectInitReqV2{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 		VHW:       vhw,
 	}
 	return self.init(req, base58.Encode(vhw))
@@ -58,8 +58,8 @@ func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
 func (self *DownloadObject) InitByKey(bucketName, filename string, version primitive.ObjectID) *pkt.ErrorMessage {
 	req := &pkt.DownloadFileReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		Bucketname: &bucketName,
 		FileName:   &filename,
 	}

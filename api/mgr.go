@@ -40,7 +40,7 @@ func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	clients.clientlist[c.AccessorKey] = c
+	clients.clientlist[c.SignKey.PublicKey] = c
 	clients.clientids.Store(c.UserId, c)
 	clients.Unlock()
 	NotifyAllocNode(false)
@@ -71,7 +71,7 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		clients.Unlock()
 		return nil, err
 	}
-	clients.clientlist[c.AccessorKey] = c
+	clients.clientlist[c.SignKey.PublicKey] = c
 	clients.clientids.Store(c.UserId, c)
 	clients.Unlock()
 	NotifyAllocNode(false)
@@ -81,7 +81,7 @@ func NewClient(uname string, privkey string) (*Client, error) {
 func check(c *Client) (*Client, error) {
 	size := 0
 	clients.RLock()
-	client := clients.clientlist[c.AccessorKey]
+	client := clients.clientlist[c.SignKey.PublicKey]
 	size = len(clients.clientlist)
 	clients.RUnlock()
 	if client != nil {
@@ -139,6 +139,15 @@ func StartApi() {
 	go StartPreAllocNode()
 	go DoCache()
 	go StartSync()
+	go AutoReg()
+}
+
+func AutoReg() {
+	if env.StartSync > 0 {
+		return
+	}
+	infos := env.ReadUserProperties()
+	logrus.Infof("%d", len(infos))
 }
 
 func InitSuperList() {
