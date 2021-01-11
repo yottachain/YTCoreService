@@ -2,7 +2,6 @@ package codec
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"os"
 
@@ -29,9 +28,14 @@ func NewDecoder(p string) (*Decoder, error) {
 	de := &Decoder{path: p, readin: 0, readinTotal: 0, readoutTotal: 0}
 	err := de.readHead()
 	if err != nil {
+		de.Close()
 		return nil, err
 	}
 	return de, nil
+}
+
+func (self *Decoder) GetPath() string {
+	return self.path
 }
 
 func (self *Decoder) GetLength() int64 {
@@ -62,19 +66,34 @@ func (self *Decoder) Close() {
 }
 
 func (self *Decoder) ReadNextKey() (string, error) {
-	if self.readin >= self.pos {
-		ii, err := ReadInt32(self.reader)
+	if self.readin < self.pos {
+		self.Close()
+		f, err := os.OpenFile(self.path, os.O_RDONLY, 0644)
 		if err != nil {
 			return "", err
 		}
-		bs := make([]byte, ii)
-		err = ReadFull(self.reader, bs)
+		self.file = f
+		_, err = self.file.Seek(self.pos, io.SeekStart)
 		if err != nil {
 			return "", err
 		}
-		return string(bs), nil
+		self.readin = self.pos
+		self.reader = bufio.NewReader(self.file)
 	}
-	return "", errors.New("pos Err")
+	ii, err := ReadInt32(self.reader)
+	if err != nil {
+		if err == io.EOF {
+			return "", nil
+		}
+		return "", err
+	}
+	bs := make([]byte, ii)
+	err = ReadFull(self.reader, bs)
+	if err != nil {
+		return "", err
+	}
+	self.readin = self.readin + 4 + int64(ii)
+	return string(bs), nil
 }
 
 func (self *Decoder) HasNextBlock() bool {
@@ -145,6 +164,7 @@ func (self *Decoder) NextNODupBlock() (*EncodedBlock, error) {
 	if err != nil {
 		return nil, err
 	}
+	self.readin = self.readin + 8 + 8 + 8 + 32 + 32 + 32 + ii3
 	b := &EncodedBlock{OriginalSize: ii1, RealSize: ii2, VHP: bs1, KEU: bs2, KED: bs3, DATA: bs4, IsDup: false}
 	return b, nil
 }
@@ -206,17 +226,17 @@ func (self *Decoder) readHead() error {
 		return err
 	}
 	self.md5 = bs
-	i, err := ReadInt64(self.reader)
+	i, err := ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
 	self.UserId = uint32(i)
-	i, err = ReadInt64(self.reader)
+	i, err = ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}
 	self.KeyNumber = uint32(i)
-	i, err = ReadInt64(self.reader)
+	i, err = ReadInt32(self.reader)
 	if err != nil {
 		return err
 	}

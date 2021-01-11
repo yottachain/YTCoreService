@@ -89,11 +89,12 @@ message StatusRepReq {
    int64 realSpace=12;  
    int64 tx=13;  
    int64 rx=14;   
-   string other=15;                   
+   string other=15;    
+   string hash=16;               
 }
 
 message StatusRepResp {
-   uint64 productiveSpace=1; 
+   int64 productiveSpace=1; 
    string relayUrl=2;                   
 }
 
@@ -123,6 +124,7 @@ message TaskList{
     repeated bytes tasklist=1;
     int64 expiredTime=2;
     int32 srcNodeID=3;
+    int32 expiredTimeGap=4;
 }
 
 message TaskDispatchList{
@@ -134,6 +136,12 @@ message TaskDispatchList{
 message TaskOpResult{
     bytes id = 1; 
     int32 RES=2;
+}
+
+
+message MultiTaskOpResultRes{
+   int32 errCode=1;
+   int32 succNum=2;
 }
  
 message TaskOpResultList{

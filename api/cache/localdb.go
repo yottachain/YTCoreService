@@ -61,7 +61,7 @@ func InitDB() error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("LocalDB init...Path:%s\n", path)
+	logrus.Infof("[Cache]LocalDB init...Path:%s\n", path)
 	initCacheSize()
 	return nil
 }
@@ -70,8 +70,11 @@ var CurCacheSize *int64 = new(int64)
 
 func initCacheSize() {
 	sum := SumSpace()
-	logrus.Infof("Sum cache size %d\n", sum)
+	logrus.Infof("[Cache]Sum cache size %d\n", sum)
 	atomic.StoreInt64(CurCacheSize, sum)
+	if sum == 0 {
+		Clear()
+	}
 }
 
 func GetCacheSize() int64 {

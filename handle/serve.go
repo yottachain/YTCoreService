@@ -19,6 +19,7 @@ var READ_ROUTINE_NUM *int32 = new(int32)
 var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
 var HTTP_ROUTINE_NUM *int32 = new(int32)
+var SUMFEE_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
 	InitCache()
@@ -28,6 +29,7 @@ func Start() {
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
 	atomic.StoreInt32(HTTP_ROUTINE_NUM, 0)
+	atomic.StoreInt32(SUMFEE_ROUTINE_NUM, 0)
 	if env.STAT_SERVICE {
 		InitSpotCheckService()
 		InitRebuildService()
@@ -139,6 +141,10 @@ func CheckRoutine(rnum *int32) error {
 	} else if HTTP_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(HTTP_ROUTINE_NUM) > env.MAX_HTTP_ROUTINE {
 			return errors.New("HTTP_ROUTINE:Too many routines")
+		}
+	} else if SUMFEE_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(SUMFEE_ROUTINE_NUM) > env.MAX_SUMFEE_ROUTINE {
+			return errors.New("SUMFEE_ROUTINE:Too many routines")
 		}
 	} else {
 		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {

@@ -195,8 +195,13 @@ func UserTotalHandle(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-var DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
-var USER_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
+var DEFAULT_EXPIRE_TIME time.Duration
+var USER_LIST_CACHE *cache.Cache
+
+func InitCache() {
+	DEFAULT_EXPIRE_TIME = time.Duration(env.LsCacheExpireTime) * time.Second
+	USER_LIST_CACHE = cache.New(DEFAULT_EXPIRE_TIME, time.Duration(5)*time.Second)
+}
 
 func ListHandle(w http.ResponseWriter, req *http.Request) {
 	b := checkRoutine()
@@ -213,7 +218,7 @@ func ListHandle(w http.ResponseWriter, req *http.Request) {
 	queryForm, err := url.ParseQuery(req.URL.RawQuery)
 	if err == nil && len(queryForm["lastId"]) > 0 && len(queryForm["count"]) > 0 {
 		*lsreq.LastId = int32(env.ToInt(queryForm["lastId"][0], -1))
-		*lsreq.Count = int32(env.StringToInt(queryForm["lastId"][0], 100, 1000, 1000))
+		*lsreq.Count = int32(env.StringToInt(queryForm["count"][0], 100, 10000, 10000))
 	}
 	key := "0"
 	res, _ := proto.Marshal(lsreq)

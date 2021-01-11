@@ -40,6 +40,28 @@ func (self *ObjectMeta) GetAndUpdateNlink() error {
 	return nil
 }
 
+func (self *ObjectMeta) ChecekVNUExists() (bool, error) {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"VNU": self.VNU}
+	opt := options.FindOne().SetProjection(bson.M{"NLINK": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := source.GetObjectColl().FindOne(ctx, filter, opt).Decode(self)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		} else {
+			logrus.Errorf("[ObjectMeta]ChecekVNUExists ERR:%s\n", err)
+			return false, err
+		}
+	}
+	if self.NLINK < 1 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
 func (self *ObjectMeta) IsExists() (bool, error) {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"_id": self.VHW}
@@ -80,6 +102,26 @@ func (self *ObjectMeta) Insert() error {
 	if err != nil {
 		logrus.Errorf("[ObjectMeta]Insert ERR:%s\n", err)
 		return err
+	}
+	return nil
+}
+
+func (self *ObjectMeta) DECObjectNLINK() error {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"VNU": self.VNU, "NLINK": bson.M{"$gt": 0}}
+	update := bson.M{"$inc": bson.M{"NLINK": -1}}
+	opt := options.FindOneAndUpdate().SetProjection(bson.M{"_id": 1, "usedspace": 1, "length": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := source.GetObjectColl().FindOneAndUpdate(ctx, filter, update, opt).Decode(self)
+	if err != nil {
+		self.Usedspace = 0
+		if err == mongo.ErrNoDocuments {
+			return nil
+		} else {
+			logrus.Errorf("[ObjectMeta]DECObjectNLINK ERR:%s\n", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -137,19 +179,6 @@ func (self *ObjectMeta) GetAndUpdate() error {
 	err := source.GetObjectColl().FindOneAndUpdate(ctx, filter, update, opt).Decode(self)
 	if err != nil {
 		logrus.Errorf("[ObjectMeta]GetAndUpdate ERR:%s\n", err)
-		return err
-	}
-	return nil
-}
-
-func (self *ObjectMeta) GetAndDelete() error {
-	source := NewUserMetaSource(uint32(self.UserId))
-	filter := bson.M{"VNU": self.VNU}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	err := source.GetObjectColl().FindOneAndDelete(ctx, filter).Decode(self)
-	if err != nil {
-		logrus.Errorf("[ObjectMeta]GetAndDelete ERR:%s\n", err)
 		return err
 	}
 	return nil

@@ -3,8 +3,12 @@ package env
 import (
 	"log"
 	"os"
+	"path"
 	"strings"
 )
+
+const s3cache_dir = "s3cache"
+const dbcache_dir = "dbcache"
 
 var PNN int = 328 * 2
 var PTR int = 2
@@ -32,21 +36,23 @@ func GetConfig() *Config {
 }
 
 func GetS3Cache() string {
-	return GetCacheDir("s3cache")
+	return CachePath + s3cache_dir + "/"
 }
 
 func GetDBCache() string {
-	return GetCacheDir("dbcache")
+	return CachePath + dbcache_dir + "/"
 }
 
 func GetCache() string {
 	return CachePath
 }
 
-func GetCacheDir(name string) string {
+func MkCacheDir(name string) {
 	path := CachePath + name + "/"
-	os.MkdirAll(path, os.ModePerm)
-	return path
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		log.Panicf("[Init]Cache path ERR:%s\n", err)
+	}
 }
 
 func readClientProperties() {
@@ -58,11 +64,15 @@ func readClientProperties() {
 	cfg = config
 	CachePath = config.GetString("cache", YTFS_HOME+"cache")
 	CachePath = strings.ReplaceAll(CachePath, "\\", "/")
+	CachePath = strings.ReplaceAll(CachePath, "\"", "")
+	CachePath = path.Clean(CachePath)
 	if !strings.HasSuffix(CachePath, "/") {
 		CachePath = CachePath + "/"
 	}
+	MkCacheDir(s3cache_dir)
+	MkCacheDir(dbcache_dir)
 	SyncMode = config.GetRangeInt("syncmode", 0, 1, 0)
-	StartSync = config.GetRangeInt("startSync", 0, 2, 0)
+	StartSync = config.GetRangeInt("startSync", 0, 1, 0)
 	Driver = strings.ToLower(config.GetString("driver", "yotta"))
 	size := config.GetRangeInt("cachemaxsize", 5, 1024*100, 20)
 	MaxCacheSize = int64(size) * 1024 * 1024 * 1024

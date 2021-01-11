@@ -1,7 +1,6 @@
 package api
 
 import (
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -17,22 +16,23 @@ import (
 type UploadObjectSync struct {
 	UploadObject
 	decoder *codec.Decoder
-	path    string
 }
 
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
-	u := &UploadObjectSync{}
+	u := &UploadObjectSync{UploadObject: UploadObject{}}
+	u.ActiveTime = new(int64)
+	u.activesign = make(chan int)
 	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
 	err := u.createDecoder(sha256)
 	if err != nil {
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	return u, nil
 }
 
 func (self *UploadObjectSync) createDecoder(sha256 []byte) error {
 	hash := base58.Encode(sha256)
-	p := env.GetCache() + hash[0:2] + "/" + hash[2:4]
+	p := env.GetCache() + hash[0:2] + "/" + hash[2:4] + "/" + hash
 	dec, err := codec.NewDecoder(p)
 	if err != nil {
 		logrus.Errorf("[SyncUpload][%s]NewDecoder err:%s\n", p, err)
@@ -55,13 +55,14 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			self.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
+		self.decoder.Close()
 	}()
 	atomic.StoreInt64(self.PRO.Length, self.decoder.GetLength())
-	err := self.initUpload(self.GetSHA256())
+	err := self.initUpload(self.GetSHA256(), self.GetLength())
 	if err != nil {
 		return err
 	}
-	logrus.Infof("[SyncUpload][%s]Start upload object,Path:%s\n", self.VNU.Hex(), self.path)
+	logrus.Infof("[SyncUpload][%s]Start upload object,Path:%s\n", self.VNU.Hex(), self.decoder.GetPath())
 	if self.Exist {
 		atomic.StoreInt64(self.PRO.ReadinLength, self.decoder.GetLength())
 		atomic.StoreInt64(self.PRO.ReadOutLength, self.decoder.GetLength())
@@ -75,7 +76,7 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 		for {
 			b, err := self.decoder.ReadNext()
 			if err != nil {
-				return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+				return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 			}
 			if b == nil {
 				break
@@ -104,14 +105,13 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			errmsg = self.complete(self.GetSHA256())
 		}
 		if errmsg != nil {
-			logrus.Errorf("[SyncUpload][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
+			logrus.Errorf("[SyncUpload][%s]Upload object %s,ERR:%s\n", self.VNU.Hex(), self.decoder.GetPath(), pkt.ToError(errmsg))
 			return errmsg
 		} else {
-			logrus.Infof("[SyncUpload][%s]Upload object OK.\n", self.VNU.Hex())
+			logrus.Infof("[SyncUpload][%s]Upload object %s OK.\n", self.VNU.Hex(), self.decoder.GetPath())
 		}
-		return self.writeMeta()
 	}
-	return nil
+	return self.writeMeta()
 }
 
 func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
@@ -119,21 +119,21 @@ func (self *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
 	for {
 		ss, err := self.decoder.ReadNextKey()
 		if err != nil {
-			logrus.Errorf("[SyncUpload][%s]Read key from %s ERR:%s.\n", self.VNU.Hex(), self.path, err)
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
+			logrus.Errorf("[SyncUpload][%s]Read key from %s ERR:%s.\n", self.VNU.Hex(), self.decoder.GetPath(), err)
+			return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 		}
 		if ss == "" {
-			if env.StartSync == 2 {
-				os.Remove(self.path)
-			}
 			return nil
 		}
 		pos := strings.Index(ss, "/")
 		buck := ss[0:pos]
 		name := ss[pos+1:]
 		errmsg := self.UClient.NewObjectAccessor().CreateObject(buck, name, self.VNU, meta)
-		if err != nil {
+		if errmsg != nil {
+			logrus.Errorf("[SyncUpload][%s]WriteMeta ERR:%s,%s/%s\n", self.VNU, pkt.ToError(errmsg), buck, name)
 			return errmsg
+		} else {
+			logrus.Infof("[SyncUpload][%s]WriteMeta OK,%s/%s\n", self.VNU, buck, name)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"os"
 	"sync"
 	"time"
 
@@ -16,7 +17,7 @@ var SyncDoingList sync.Map
 
 func initSyncUpPool() int {
 	count := env.CheckInt(env.UploadBlockThreadNum/3, 10, 30)
-	CACHE_UP_CH = make(chan int, count)
+	SYNC_UP_CH = make(chan int, count)
 	for ii := 0; ii < count; ii++ {
 		SYNC_UP_CH <- 1
 	}
@@ -27,7 +28,7 @@ func NotifyLoop() {
 	LoopSyncCond.Signal()
 }
 
-func isSyncDoing(key []byte) bool {
+func isSyncDoing(key string) bool {
 	_, ok := SyncDoingList.Load(string(key))
 	return ok
 }
@@ -36,7 +37,7 @@ func StartSync() {
 	if env.StartSync == 0 {
 		return
 	}
-	logrus.Infof("[SyncUpload]Start sync...")
+	logrus.Infof("[SyncUpload]Start sync...\n")
 	count := initSyncUpPool()
 	go func() {
 		for {
@@ -53,8 +54,8 @@ func StartSync() {
 		} else {
 			for _, ca := range caches {
 				<-SYNC_UP_CH
-				SyncDoingList.Store(string(ca), "")
-				go syncUpload(ca)
+				SyncDoingList.Store(ca, "")
+				syncUpload([]byte(ca))
 			}
 		}
 	}
@@ -63,24 +64,39 @@ func StartSync() {
 func syncUpload(key []byte) {
 	defer func() {
 		SYNC_UP_CH <- 1
-		SyncDoingList.Delete(key)
+		SyncDoingList.Delete(string(key))
 	}()
-	emsg := doSyncUpload(key)
-	if emsg != nil && (emsg.Code == pkt.CONN_ERROR || emsg.Code == pkt.INVALID_USER_ID || emsg.Code == pkt.SERVER_ERROR || emsg.Code == pkt.COMM_ERROR) {
-		time.Sleep(time.Duration(15) * time.Second)
+	path, emsg := doSyncUpload(key)
+	if emsg != nil {
+		if emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS {
+			deleteItem(key, path)
+		} else {
+			time.Sleep(time.Duration(15) * time.Second)
+		}
 	} else {
-		cache.DeleteSyncObject(key)
+		deleteItem(key, path)
 	}
 }
 
-func doSyncUpload(key []byte) *pkt.ErrorMessage {
+func deleteItem(key []byte, path string) {
+	err := cache.DeleteSyncObject(key)
+	if err != nil || path == "" {
+		return
+	}
+	err1 := os.Remove(path)
+	if err1 != nil {
+		logrus.Infof("[SyncUpload]Delete file %s ERR:%s\n", path, err1)
+	}
+}
+
+func doSyncUpload(key []byte) (string, *pkt.ErrorMessage) {
 	up, err := NewUploadObjectSync(key)
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = up.Upload()
 	if err != nil {
-		return err
+		return up.decoder.GetPath(), err
 	}
-	return nil
+	return up.decoder.GetPath(), nil
 }

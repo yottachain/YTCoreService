@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -27,6 +28,9 @@ var clients = struct {
 }{clientlist: make(map[string]*Client)}
 
 func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
+	if env.StartSync == 0 {
+		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
+	}
 	c := addClient(uid, keyNum, signstr)
 	cc, er := check(c)
 	if er != nil {
@@ -36,14 +40,17 @@ func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	defer clients.Unlock()
 	clients.clientlist[c.AccessorKey] = c
 	clients.clientids.Store(c.UserId, c)
+	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
 }
 
 func NewClient(uname string, privkey string) (*Client, error) {
+	if env.StartSync > 0 {
+		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
+	}
 	c, err := newClient(uname, privkey)
 	if err != nil {
 		return nil, err
@@ -53,16 +60,20 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return nil, er
 	}
 	if cc != nil {
+		if cc.Username != uname {
+			return nil, errors.New("Same privatekey, different username " + cc.Username)
+		}
 		return cc, nil
 	}
 	clients.Lock()
-	defer clients.Unlock()
 	err = c.Regist()
 	if err != nil {
+		clients.Unlock()
 		return nil, err
 	}
 	clients.clientlist[c.AccessorKey] = c
 	clients.clientids.Store(c.UserId, c)
+	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
 }

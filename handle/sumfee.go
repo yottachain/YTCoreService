@@ -19,7 +19,7 @@ import (
 var BLK_SUMMER_CH chan *BlockSpaceSum
 
 func StartIterateUser() {
-	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount()*5)
+	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount())
 	for {
 		if env.SUM_USER_FEE == 0 && net.IsActive() {
 			time.Sleep(time.Duration(30) * time.Second)
@@ -140,11 +140,22 @@ func (me *UserObjectSum) SetCycleFee() {
 		if me.CostPerCycle == cost {
 			logrus.Infof("[SumFileUsedSpace]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
 		} else {
-			err = net.SetHfee(me.UserName, cost)
-			if err == nil {
-				logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			num := 0
+			for {
+				err = net.SetHfee(me.UserName, cost)
+				if err != nil {
+					num++
+					if num > 8 {
+						break
+					} else {
+						time.Sleep(time.Duration(15) * time.Second)
+					}
+				} else {
+					dao.UpdateUserCost(me.UserID, cost)
+					logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+					break
+				}
 			}
-			dao.UpdateUserCost(me.UserID, cost)
 		}
 	}
 	if err == nil {
@@ -218,7 +229,7 @@ func (h *BlockUsedSpaceHandler) SetMessage(pubkey string, msg proto.Message) (*p
 		if h.m.Id == nil || len(h.m.Id) == 0 {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, SUMFEE_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

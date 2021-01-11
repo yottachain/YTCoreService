@@ -3,6 +3,9 @@ package net
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -12,8 +15,47 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
+func GetUserInfoWRetry(publickey string, retrytimes int) (string, error) {
+	count := 0
+	for {
+		URI := GetEOSURI()
+		res, err := GetUserInfo(publickey, URI)
+		if err != nil {
+			URI.SetErr(err)
+			count++
+			if count >= retrytimes {
+				return "", err
+			}
+		} else {
+			return res, nil
+		}
+	}
+}
+
+var BASE_URI string = "v1/history/get_key_accounts"
+
+func GetUserInfo(publickey string, URI *EOSURI) (string, error) {
+	jsonkey := fmt.Sprintf("{\"public_key\":\"%s%s\"}", "YTA", publickey)
+	var urlstr string
+	if strings.HasSuffix(URI.Url, "/") {
+		urlstr = URI.Url + BASE_URI
+	} else {
+		urlstr = URI.Url + "/" + BASE_URI
+	}
+	resp, err := http.Post(urlstr, "application/x-www-form-urlencoded", strings.NewReader(jsonkey))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
+
 type BalanceValue struct {
-	Balance uint64
+	Balance int64
 }
 
 var USER_Banlance_CACHE = cache.New(30*time.Second, 15*time.Second)
@@ -35,7 +77,7 @@ func HasSpace(length uint64, username string) (bool, error) {
 	} else {
 		balan = v.(BalanceValue)
 	}
-	needcost := env.UnitFirstCost * length / env.UnitSpace
+	needcost := int64(env.UnitFirstCost * length / env.UnitSpace)
 	return balan.Balance > needcost, nil
 }
 
@@ -97,7 +139,7 @@ type GetBalanceReq struct {
 	Caller eos.AccountName `json:"caller"`
 }
 
-func GetBalance(username string) (v uint64, err error) {
+func GetBalance(username string) (v int64, err error) {
 	if !env.BP_ENABLE {
 		return 10000000, nil
 	}
@@ -134,6 +176,9 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTr
 		URI := GetEOSURI()
 		res, err := Request(actname, obj, URI)
 		if err != nil {
+			if strings.ContainsAny(err.Error(), "the fee is the same") {
+				return nil, nil
+			}
 			URI.SetErr(err)
 			count++
 			if count >= retrytimes {

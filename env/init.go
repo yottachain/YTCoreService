@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -20,6 +21,13 @@ var YTSN_HOME string
 var YTFS_HOME string
 var LogLevel string
 var Console bool = false
+
+func SetLimit() {
+	sysType := runtime.GOOS
+	if sysType == "linux" {
+		ULimit()
+	}
+}
 
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
@@ -51,15 +59,16 @@ func GetCurrentPath() string {
 }
 
 func InitClient() {
-	path := os.Getenv("YTFS_HOME")
-	if path == "" {
-		path = GetCurrentPath()
+	pathstr := os.Getenv("YTFS_HOME")
+	if pathstr == "" {
+		pathstr = GetCurrentPath()
 	}
-	path = strings.ReplaceAll(path, "\\", "/")
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
+	pathstr = strings.ReplaceAll(pathstr, "\\", "/")
+	pathstr = path.Clean(pathstr)
+	if !strings.HasSuffix(pathstr, "/") {
+		pathstr = pathstr + "/"
 	}
-	YTFS_HOME = path
+	YTFS_HOME = pathstr
 	readClientProperties()
 	initClientLog()
 	port, err := GetFreePort()
@@ -68,25 +77,28 @@ func InitClient() {
 	}
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	logrus.Infof("[Init]Starting pprof server on address %s\n", addr)
+	SetLimit()
 	go http.ListenAndServe(addr, nil)
 }
 
 func InitServer() {
-	path := os.Getenv("YTSN_HOME")
-	if path == "" {
-		path = GetCurrentPath()
+	pathstr := os.Getenv("YTSN_HOME")
+	if pathstr == "" {
+		pathstr = GetCurrentPath()
 	}
-	path = strings.ReplaceAll(path, "\\", "/")
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
+	pathstr = strings.ReplaceAll(pathstr, "\\", "/")
+	pathstr = path.Clean(pathstr)
+	if !strings.HasSuffix(pathstr, "/") {
+		pathstr = pathstr + "/"
 	}
-	YTSN_HOME = path
+	YTSN_HOME = pathstr
 	os.Setenv("YTSN_HOME", YTSN_HOME)
 	os.Setenv("NODEMGMT_CONFIGDIR", YTSN_HOME+"conf")
 	readSnProperties()
 	initServerLog()
 	ReadExport(YTSN_HOME + "bin/ytsn.ev")
 	ReadExport(YTSN_HOME + "bin/ytsnd.sh")
+	SetLimit()
 }
 
 func initClientLog() {
