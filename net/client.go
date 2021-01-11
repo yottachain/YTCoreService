@@ -116,7 +116,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	//输出地址
 	addrString := AddrsToString(addrs)
 	logmsg := fmt.Sprintf("[client] connect addrs=%s \n", addrString)
-	logrus.Infof(logmsg)
+	logrus.Debug(logmsg)
 
 	maddrs, Err := StringListToMaddrs(addrs)
 	if Err != nil {
@@ -125,18 +125,18 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 	}
 
-	logrus.Printf("maddrs lenth is %d\n", len(maddrs))
+	logrus.Debugf("maddrs lenth is %d\n", len(maddrs))
 	isHttp := false
 	for _, maddr := range maddrs {
 		 if _, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
 		 	isHttp = true
-		 	logrus.Printf("maddr support HTTP \n")
+		 	logrus.Debugf("maddr support HTTP \n")
 		 	break
 		 }
 	}
 
 	if !isHttp {
-		logrus.Printf("maddr not support HTTP \n")
+		logrus.Debugf("maddr not support HTTP \n")
 		err := client.connect(addrs, log_pre, nowait)
 		if err != nil {
 			return nil, err
