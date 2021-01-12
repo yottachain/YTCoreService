@@ -154,7 +154,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		res, serr := p2phst.SendMsgAuto(ctx, client.PeerId, msgid, maddr, data)
 		if serr != nil {
 			addrString := AddrsToString(addrs)
-			logmsg := fmt.Sprintf("[P2P]%s%s COMM_ERROR:%s\n", log_pre, addrString, serr.Error())
+			logmsg = fmt.Sprintf("[P2P]%s%s COMM_ERROR:%s\n", log_pre, addrString, serr.Error())
 			logrus.Errorf(logmsg)
 			if atomic.LoadInt32(client.statu) != 2 {
 				atomic.StoreInt64(client.connectedTime, 0)
@@ -170,13 +170,13 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 
 	if sSuc {
 		if errmsg, ok := msg.(*pkt.ErrorMessage); ok {
-			logrus.Errorf("return msg error %s%s: %s\n", log_pre, addrString, errmsg.Msg)
+			logrus.Errorf("%s%s return msg error %s\n", log_pre, addrString, errmsg.Msg)
 			return nil, errmsg
 		} else {
 			return msg, nil
 		}
 	}else {
-		return  nil, pkt.NewErrorMsg(pkt.BAD_MESSAGE, "")
+		return  nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 }
 
