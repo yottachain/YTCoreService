@@ -170,7 +170,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 
 	if sSuc {
 		if errmsg, ok := msg.(*pkt.ErrorMessage); ok {
-			logrus.Errorf("%s%s return msg error %s\n", log_pre, addrString, errmsg.Msg)
+			logrus.Errorf("%s%s return msg error %s data hex=%x\n", log_pre, addrString, errmsg.Msg, data)
 			return nil, errmsg
 		} else {
 			return msg, nil
