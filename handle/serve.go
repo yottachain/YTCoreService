@@ -114,6 +114,10 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	startTime := time.Now()
 	res := handler.Handle()
+	badmsgerr, OK := res.(*pkt.ErrorMessage)
+	if OK && badmsgerr.Code == pkt.INVALID_ARGS {
+		logrus.Errorf("[OnMessage]Bad req %s,len:%d, hex:%x\n", name, len(data), data)
+	}
 	stime := time.Now().Sub(startTime).Milliseconds()
 	if stime > int64(env.SLOW_OP_TIMES) {
 		logrus.Infof("[OnMessage]%s,routine num %d,take times %d ms\n", name, curRouteNum, stime)

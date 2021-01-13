@@ -73,7 +73,7 @@ func MessageHandler(requestData []byte, head service.Head) ([]byte, error) {
 	sum := hasher.Sum(nil)
 	pkarr = append(pkarr, sum[0:4]...)
 	publicKey := base58.Encode(pkarr)
-	logrus.Infof("[P2P receive msg size]=%d\n", len(requestData))
+	//logrus.Infof("[P2P receive msg size]=%d\n", len(requestData))
 	res := callback(uint16(head.MsgId), requestData, publicKey)
 	return res, nil
 }
