@@ -13,6 +13,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTDNMgmt"
 )
 
 var REG_PEER_CACHE = cache.New(5*time.Second, 5*time.Second)
@@ -44,7 +45,36 @@ func (h *RegUserV3Handler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 }
 
 func (h *RegUserV3Handler) Handle() proto.Message {
-	return nil
+	logrus.Infof("[RegUser]Name:%s\n", *h.m.Username)
+	if env.S3Version != "" {
+		if *h.m.VersionId == "" || bytes.Compare([]byte(*h.m.VersionId), []byte(env.S3Version)) < 0 {
+			errmsg := fmt.Sprintf("[RegUser]Name:%s,ERR:TOO_LOW_VERSION?%s\n", *h.m.Username, *h.m.VersionId)
+			logrus.Errorf(errmsg)
+			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
+		}
+	}
+	queryUserResp, sn, err := RegUser(*h.m.Username, h.m.PubKey)
+	if err != nil {
+		return err
+	}
+	resp := &pkt.RegUserRespV2{SuperNodeNum: new(uint32),
+		SuperNodeID: &sn.NodeID, SuperNodeAddrs: sn.Addrs,
+		UserId: new(uint32),
+	}
+	*resp.SuperNodeNum = uint32(sn.ID)
+	*resp.UserId = uint32(*queryUserResp.UserId)
+	resp.KeyNumber = make([]int32, len(h.m.PubKey))
+	for index, pk := range h.m.PubKey {
+		resp.KeyNumber[index] = -1
+		KUEp := base58.Decode(pk)
+		for ii, pk := range queryUserResp.Pubkey {
+			if bytes.Equal(pk, KUEp) {
+				resp.KeyNumber[index] = int32(ii)
+				break
+			}
+		}
+	}
+	return resp
 }
 
 type RegUserHandler struct {
@@ -82,55 +112,9 @@ func (h *RegUserHandler) Handle() proto.Message {
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, errmsg)
 		}
 	}
-	sn := net.GetRegSuperNode(*h.m.Username)
-	queryUserReqV2 := &pkt.QueryUserReqV2{
-		Pubkey:   []string{*h.m.PubKey},
-		Username: h.m.Username,
-		UserId:   new(int32),
-	}
-	*queryUserReqV2.UserId = -1
-	var res proto.Message
-	if sn.ID == int32(env.SuperNodeID) {
-		handler := &QueryUserHandler{pkey: sn.PubKey, m: queryUserReqV2}
-		res = handler.Handle()
-		if serr, ok := res.(*pkt.ErrorMessage); ok {
-			return serr
-		}
-	} else {
-		var serr *pkt.ErrorMessage
-		res, serr = net.RequestSN(queryUserReqV2, sn, "", 0, true)
-		if serr != nil {
-			return serr
-		}
-	}
-	queryUserResp, ok := res.(*pkt.QueryUserResp)
-	if !ok {
-		logrus.Errorf("[RegUser]Return error type.\n")
-		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Error type")
-	}
-	logrus.Infof("[RegUser][%s] is registered @ SN-%d,userID:%d\n", *h.m.Username, sn.ID, *queryUserResp.UserId)
-	syncUserReq := &pkt.SyncUserReq{
-		Pubkey:   queryUserResp.Pubkey,
-		Username: h.m.Username,
-		UserId:   queryUserResp.UserId,
-	}
-	syncres, err := SyncRequest(syncUserReq, int(sn.ID), 0)
+	queryUserResp, sn, err := RegUser(*h.m.Username, []string{*h.m.PubKey})
 	if err != nil {
-		logrus.Errorf("[RegUser]SyncRequest err:%s\n", err)
-		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Error type")
-	}
-	for _, snresp := range syncres {
-		if snresp != nil {
-			if snresp.Error() != nil {
-				logrus.Errorf("[RegUser]Sync userinfo ERR:%d\n", snresp.Error().Code)
-				return snresp.Error()
-			}
-		}
-	}
-	newsn := net.GetUserSuperNode(*queryUserResp.UserId)
-	if newsn.ID != sn.ID {
-		logrus.Errorf("[RegUser]SuperID inconsistency[%d!=%d]\n", newsn.ID, sn.ID)
-		return pkt.NewError(pkt.SERVER_ERROR)
+		return err
 	}
 	resp := &pkt.RegUserResp{SuperNodeNum: new(uint32),
 		SuperNodeID: &sn.NodeID, SuperNodeAddrs: sn.Addrs,
@@ -151,6 +135,59 @@ func (h *RegUserHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	return resp
+}
+
+func RegUser(username string, pubkeys []string) (*pkt.QueryUserResp, *YTDNMgmt.SuperNode, *pkt.ErrorMessage) {
+	sn := net.GetRegSuperNode(username)
+	queryUserReqV2 := &pkt.QueryUserReqV2{
+		Pubkey:   pubkeys,
+		Username: &username,
+		UserId:   new(int32),
+	}
+	var res proto.Message
+	if sn.ID == int32(env.SuperNodeID) {
+		handler := &QueryUserHandler{pkey: sn.PubKey, m: queryUserReqV2}
+		res = handler.Handle()
+		if serr, ok := res.(*pkt.ErrorMessage); ok {
+			return nil, sn, serr
+		}
+	} else {
+		var serr *pkt.ErrorMessage
+		res, serr = net.RequestSN(queryUserReqV2, sn, "", 0, true)
+		if serr != nil {
+			return nil, sn, serr
+		}
+	}
+	queryUserResp, ok := res.(*pkt.QueryUserResp)
+	if !ok {
+		logrus.Errorf("[RegUser]Return error type.\n")
+		return nil, sn, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Error type")
+	}
+	logrus.Infof("[RegUser][%s] is registered @ SN-%d,userID:%d\n", username, sn.ID, *queryUserResp.UserId)
+	syncUserReq := &pkt.SyncUserReq{
+		Pubkey:   queryUserResp.Pubkey,
+		Username: &username,
+		UserId:   queryUserResp.UserId,
+	}
+	syncres, err := SyncRequest(syncUserReq, int(sn.ID), 0)
+	if err != nil {
+		logrus.Errorf("[RegUser]SyncRequest err:%s\n", err)
+		return nil, sn, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Error type")
+	}
+	for _, snresp := range syncres {
+		if snresp != nil {
+			if snresp.Error() != nil {
+				logrus.Errorf("[RegUser]Sync userinfo ERR:%d\n", snresp.Error().Code)
+				return nil, sn, snresp.Error()
+			}
+		}
+	}
+	newsn := net.GetUserSuperNode(*queryUserResp.UserId)
+	if newsn.ID != sn.ID {
+		logrus.Errorf("[RegUser]SuperID inconsistency[%d!=%d]\n", newsn.ID, sn.ID)
+		return nil, sn, pkt.NewError(pkt.SERVER_ERROR)
+	}
+	return queryUserResp, sn, nil
 }
 
 type QueryUserHandler struct {

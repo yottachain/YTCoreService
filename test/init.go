@@ -7,7 +7,7 @@ import (
 	"github.com/yottachain/YTCoreService/api"
 )
 
-const yfnet = false
+const yfnet = true
 
 var client *api.Client
 

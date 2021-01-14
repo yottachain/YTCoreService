@@ -40,5 +40,9 @@ func TestPkt() {
 	if err != nil {
 		return
 	}
+	err = proto.Unmarshal(bs, msg)
+	if err != nil {
+		return
+	}
 	fmt.Printf("Map:%d\n", len(msg.Keys))
 }

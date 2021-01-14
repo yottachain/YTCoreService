@@ -40,7 +40,7 @@ func (h *UploadFileHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.E
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
 		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
-			return pkt.NewErrorMsg(pkt.INVALID_UPLOAD_ID, "Invalid request:Null value"), nil, nil
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
 		return nil, WRITE_ROUTINE_NUM, nil
@@ -428,6 +428,7 @@ func (h *ListObjectHandler) checkCache() proto.Message {
 	}
 	return nil
 }
+
 func (h *ListObjectHandler) doResponse(resp []*dao.FileMetaWithVersion) (proto.Message, int64) {
 	var count int64 = 0
 	linecount := 0

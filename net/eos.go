@@ -33,6 +33,9 @@ func AuthUserInfo(publickey, name string, retrytimes int) bool {
 }
 
 func checkUserInfo(publickey, name string) (bool, error) {
+	if env.EOSAPI == "NA" {
+		return true, nil
+	}
 	jsonkey := fmt.Sprintf("{\"public_key\":\"%s%s\"}", "YTA", publickey)
 	resp, err := http.Post(env.EOSAPI, "application/x-www-form-urlencoded", strings.NewReader(jsonkey))
 	if err != nil {
