@@ -153,7 +153,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		res, serr := p2phst.SendMsgAuto(ctx, client.PeerId, msgid, maddr, data)
 		if serr != nil {
-			addrString := AddrsToString(addrs)
+			addrString = AddrsToString(addrs)
 			logmsg = fmt.Sprintf("[P2P]%s%s COMM_ERROR:%s\n", log_pre, addrString, serr.Error())
 			logrus.Errorf(logmsg)
 			if atomic.LoadInt32(client.statu) != 2 {

@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
@@ -92,6 +93,9 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	err2, rnum, urnum := handler.SetMessage(pubkey, msg)
 	if err2 != nil {
+		 if err2.Code == pkt.INVALID_ARGS {
+				logrus.Errorf("[OnMessage]Bad req %s,len:%d,DATA:", name, len(data), hex.EncodeToString(data))
+			}
 		return pkt.MarshalMsgBytes(err2)
 	}
 	var curRouteNum int32 = 0
