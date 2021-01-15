@@ -70,6 +70,9 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 				return nil, err
 			}
 			if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR) {
+				if err.Code == pkt.INVALID_ARGS {
+					logrus.Errorf("%s [RequestSN]return msg error %s data hex=%x\n", log_pre, err.Msg, data)
+				}
 				return nil, err
 			}
 			if retryTimes != 0 {
