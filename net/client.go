@@ -107,6 +107,42 @@ func (client *TcpClient) IsActive() bool {
 func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
 	if atomic.LoadInt32(client.statu) == 1 {
 		addrString := AddrsToString(addrs)
+		logmsg := fmt.Sprintf("%s Connection destroyed!", addrString)
+		logrus.Errorf("[P2P]%s%s\n", log_pre, logmsg)
+		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
+	}
+	atomic.StoreInt64(client.lastTime, time.Now().Unix())
+	err := client.connect(addrs, log_pre, nowait)
+	if err != nil {
+		return nil, err
+	}
+	timeout := time.Millisecond * time.Duration(env.Writetimeout)
+	if nowait {
+		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	res, serr := p2phst.SendMsg(ctx, client.PeerId, msgid, data)
+	if serr != nil {
+		addrString := AddrsToString(addrs)
+		logmsg := fmt.Sprintf("%s COMM_ERROR:%s", addrString, serr.Error())
+		logrus.Errorf("[P2P]%s%s\n", log_pre, logmsg)
+		if atomic.LoadInt32(client.statu) != 2 {
+			atomic.StoreInt64(client.connectedTime, 0)
+		}
+		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
+	}
+	msg := pkt.UnmarshalMsg(res)
+	if errmsg, ok := msg.(*pkt.ErrorMessage); ok {
+		return nil, errmsg
+	} else {
+		return msg, nil
+	}
+}
+
+func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
+	if atomic.LoadInt32(client.statu) == 1 {
+		addrString := AddrsToString(addrs)
 		logmsg := fmt.Sprintf("[P2P]%s%s Connection destroyed!\n", log_pre, addrString)
 		logrus.Errorf(logmsg)
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
