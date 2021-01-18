@@ -140,7 +140,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	}
 }
 
-func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
+func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, maddrs [] ma.Multiaddr , log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
 	if atomic.LoadInt32(client.statu) == 1 {
 		addrString := AddrsToString(addrs)
 		logmsg := fmt.Sprintf("[P2P]%s%s Connection destroyed!\n", log_pre, addrString)
@@ -154,15 +154,15 @@ func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, log
 	//logmsg := fmt.Sprintf("[client] connect addrs=%s \n", addrString)
 	//logrus.Debug(logmsg)
 
-	maddrs, Err := StringListToMaddrs(addrs)
-	if Err != nil {
-		addrString := AddrsToString(addrs)
-		logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
-		logrus.Errorf(logmsg)
-		return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
-	}
-
+	//maddrs, Err := StringListToMaddrs(addrs)
+	//if Err != nil {
+	//	addrString := AddrsToString(addrs)
+	//	logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
+	//	logrus.Errorf(logmsg)
+	//	return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
+	//}
 	logrus.Debugf("maddrs lenth is %d\n", len(maddrs))
+
 	isHttp := false
 	for _, maddr := range maddrs {
 		 if _, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
