@@ -171,12 +171,14 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 
 	if sSuc {
 		if errmsg, ok := msg.(*pkt.ErrorMessage); ok {
+			addrString := AddrsToString(addrs)
 			logrus.Errorf("%s%s return msg error %s data hex=%x\n", log_pre, addrString, errmsg.Msg, data)
 			return nil, errmsg
 		} else {
 			return msg, nil
 		}
 	}else {
+		logmsg := fmt.Sprintf("[P2P]%s COMM_ERROR: all send fail\n", log_pre)
 		return  nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 }
