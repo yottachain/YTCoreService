@@ -149,19 +149,10 @@ func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, mad
 	}
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
 
-	//输出地址
-	//addrString := AddrsToString(addrs)
-	//logmsg := fmt.Sprintf("[client] connect addrs=%s \n", addrString)
-	//logrus.Debug(logmsg)
-
-	//maddrs, Err := StringListToMaddrs(addrs)
-	//if Err != nil {
-	//	addrString := AddrsToString(addrs)
-	//	logmsg := fmt.Sprintf("[P2P]%sAddrs %s ERR:%s\n", log_pre, addrString, Err.Error())
-	//	logrus.Errorf(logmsg)
-	//	return  nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
-	//}
-	logrus.Debugf("maddrs lenth is %d\n", len(maddrs))
+	if nil == maddrs {
+		logmsg := fmt.Sprintf("[P2P]%s COMM_ERROR: maddrs is nil\n", log_pre)
+		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
+	}
 
 	isHttp := false
 	for _, maddr := range maddrs {
