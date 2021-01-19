@@ -179,6 +179,8 @@ func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, mad
 	var sSuc = false
 	for _, maddr := range maddrs {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		logmsg := fmt.Sprintf("[P2P]%s msg id:%d\n", log_pre, msgid)
+		logrus.Debugf(logmsg)
 		res, serr := p2phst.SendMsgAuto(ctx, client.PeerId, msgid, maddr, data)
 		if serr != nil {
 			addrString := AddrsToString(addrs)
