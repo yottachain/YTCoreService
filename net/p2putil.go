@@ -64,7 +64,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		if err != nil {
 			return nil, err
 		}
-		resmsg, err := client.Request(int32(msgtype), data, sn.Addrs, log_pre, nowait)
+		resmsg, err := client.RequestSN(int32(msgtype), data, sn.Addrs, sn.Multiaddrs, log_pre, nowait)
 		if err != nil {
 			if nowait || retryTimes >= retry {
 				return nil, err
