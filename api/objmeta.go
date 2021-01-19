@@ -13,7 +13,7 @@ var Object_Info_CACHE = cache.New(time.Duration(60)*time.Second, time.Duration(6
 
 type ObjectInfo struct {
 	Length     int64
-	UClient    *Client
+	uClient    *Client
 	REFS       map[int32]*BlockInfo
 	ADDR       map[int32][]string
 	ShardCount int32
@@ -36,7 +36,7 @@ func NewObjectMeta(c *Client, bucketName, filename string, version primitive.Obj
 	if err != nil {
 		return nil, err
 	}
-	meta := &ObjectInfo{Length: do.Length, UClient: c, ADDR: make(map[int32][]string)}
+	meta := &ObjectInfo{Length: do.Length, uClient: c, ADDR: make(map[int32][]string)}
 	refmap := make(map[int32]*BlockInfo)
 	count := 0
 	for _, ref := range do.REFS {
@@ -56,7 +56,7 @@ func NewObjectMeta(c *Client, bucketName, filename string, version primitive.Obj
 }
 
 func (self *ObjectInfo) GetBlockInfo(refer *pkt.Refer) (*BlockInfo, *pkt.ErrorMessage) {
-	b := &DownloadBlock{UClient: self.UClient, Ref: refer}
+	b := &DownloadBlock{UClient: self.uClient, Ref: refer}
 	resp, err := b.LoadMeta()
 	if err != nil {
 		return nil, err

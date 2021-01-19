@@ -49,6 +49,15 @@ type Client struct {
 	KeyMap   map[uint32]*Key
 }
 
+func (c *Client) GetKey(pubkey string) *Key {
+	for _, k := range c.KeyMap {
+		if k.PublicKey == pubkey {
+			return k
+		}
+	}
+	return nil
+}
+
 func addClient(uid, keyNum uint32, signstr string) *Client {
 	sn := net.GetUserSuperNode(int32(uid))
 	pubv, _ := YTCrypto.CreateKey()
@@ -202,7 +211,10 @@ func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessa
 	meta := MetaTobytes(0, bs)
 	err := c.NewObjectAccessor().CreateObject(bucketname, key, env.ZeroLenFileID(), meta)
 	if err != nil {
+		logrus.Errorf("[UploadZeroFile]WriteMeta ERR:%s,%s/%s\n", pkt.ToError(err), bucketname, key)
 		return nil, err
+	} else {
+		logrus.Infof("[UploadZeroFile]WriteMeta OK,%s/%s\n", bucketname, key)
 	}
 	return bs, nil
 }
@@ -274,6 +286,27 @@ func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessa
 
 func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.ObjectID) (*DownloadObject, *pkt.ErrorMessage) {
 	do := &DownloadObject{UClient: c, Progress: &DownProgress{}}
+	err := do.InitByKey(bucketName, filename, version)
+	if err != nil {
+		return nil, err
+	} else {
+		return do, nil
+	}
+}
+
+func (c *Client) ImporterAuth(bucketName, filename string) *AuthImporter {
+	do := &AuthImporter{UClient: c}
+	do.bucketName = bucketName
+	do.filename = filename
+	return do
+}
+
+func (c *Client) ExporterAuth(bucketName, filename string) (*AuthExporter, *pkt.ErrorMessage) {
+	return c.ExporterAuthByVer(bucketName, filename, primitive.NilObjectID)
+}
+
+func (c *Client) ExporterAuthByVer(bucketName, filename string, version primitive.ObjectID) (*AuthExporter, *pkt.ErrorMessage) {
+	do := &AuthExporter{UClient: c}
 	err := do.InitByKey(bucketName, filename, version)
 	if err != nil {
 		return nil, err

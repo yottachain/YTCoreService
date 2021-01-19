@@ -2,6 +2,44 @@ syntax = "proto2";
  
 package pkt;
 
+
+message GetFileAuthReq{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional string bucketname=4;
+    optional string fileName=5;
+    optional group VersionId=6{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;
+    }
+}
+
+message GetFileAuthResp{
+    optional group RefList=1{
+        optional uint32 count=1;
+        repeated bytes refers=2;
+    }
+    optional uint64 length=2;
+    optional bytes VHW=3;
+    optional bytes Meta=4;
+}
+
+message UploadBlockAuthReq{
+    optional uint32 userId=1;
+    optional string signData=2;
+    optional uint32 keyNumber=3;
+    optional group VNU=4{
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;     
+    }
+    optional bytes Refer=5;
+}
+
 message DownloadBlockDBResp{
     optional bytes data=1;
 }
@@ -187,6 +225,8 @@ message UploadBlockDupResp{
     }
     optional uint64 startTime=4;
 }
+
+
 
 message UploadBlockEndReq{
     optional uint32 id=1;

@@ -16,6 +16,7 @@ type DownloadBlock struct {
 	UClient *Client
 	Ref     *pkt.Refer
 	Path    string
+	KS      []byte
 }
 
 func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
@@ -66,7 +67,10 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 }
 
 func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
-	KS := codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.StoreKey.AESKey)
+	KS := self.KS
+	if KS == nil {
+		KS = codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.StoreKey.AESKey)
+	}
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()
 	if errmsg != nil {

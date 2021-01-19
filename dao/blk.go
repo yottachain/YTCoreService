@@ -107,6 +107,24 @@ func GetBlockByVHP_VHB(vhp []byte, vhb []byte) (*BlockMeta, error) {
 	return result, nil
 }
 
+func INCBlockNLINK(meta *BlockMeta) error {
+	if meta.NLINK >= 0xFFFFFF {
+		return nil
+	}
+	source := NewBaseSource()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	filter := bson.M{"_id": meta.VBI}
+	update := bson.M{"$inc": bson.M{"NLINK": 1}}
+	_, err := source.GetBlockColl().UpdateOne(ctx, filter, update)
+	if err != nil {
+		logrus.Errorf("[BlockMeta]INCBlockNLINK ERR:%s\n", err)
+		return err
+	}
+	IncBlockNlinkCount()
+	return nil
+}
+
 func SaveBlockMeta(meta *BlockMeta) error {
 	source := NewBaseSource()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

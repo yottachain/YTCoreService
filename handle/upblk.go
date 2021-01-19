@@ -270,7 +270,7 @@ func (h *UploadBlockDupHandler) Handle() proto.Message {
 	}
 	usedSpace := env.PCM
 	if meta.AR != codec.AR_DB_MODE {
-		usedSpace = env.PFL * uint64(meta.VNF) * uint64(env.Space_factor) / 100
+		usedSpace = env.PFL * uint64(meta.VNF+1) * uint64(env.Space_factor) / 100
 	}
 	vnustr := h.vnu.Hex()
 	ref := &pkt.Refer{VBI: meta.VBI, SuperID: uint8(env.SuperNodeID), OriginalSize: int64(*h.m.OriginalSize),
@@ -286,7 +286,7 @@ func (h *UploadBlockDupHandler) Handle() proto.Message {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
 				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 			} else {
-				dao.IncBlockNlinkCount()
+				dao.INCBlockNLINK(meta)
 			}
 		}
 	}

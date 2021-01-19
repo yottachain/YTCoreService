@@ -26,6 +26,7 @@ type DownLoadReader struct {
 	end        int64
 	referIndex int32
 	bin        io.Reader
+	KSS        [][]byte
 }
 
 func NewDownLoadReader(dobj *DownloadObject, st, ed int64) *DownLoadReader {
@@ -36,6 +37,7 @@ func NewDownLoadReader(dobj *DownloadObject, st, ed int64) *DownLoadReader {
 		id := int32(ref.Id) & 0xFFFF
 		refmap[id] = ref
 	}
+	reader.KSS = dobj.RSS
 	reader.Refs = refmap
 	return reader
 }
@@ -63,6 +65,11 @@ func (me *DownLoadReader) readBlock() error {
 				p = p + "/"
 			}
 			dn := &DownloadBlock{UClient: me.UClient, Ref: refer, Path: p}
+			if me.KSS != nil {
+				if int(me.referIndex) < len(me.KSS) {
+					dn.KS = me.KSS[me.referIndex]
+				}
+			}
 			plainblock, err := dn.Load()
 			if err != nil {
 				return me.ReadCaller(pkt.ToError(err))

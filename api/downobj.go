@@ -20,6 +20,7 @@ type DownloadObject struct {
 	UClient  *Client
 	Length   int64
 	REFS     []*pkt.Refer
+	RSS      [][]byte
 	BkCall   BackupCaller
 	Progress *DownProgress
 }
@@ -109,12 +110,12 @@ func (self *DownloadObject) init(req proto.Message, key string) *pkt.ErrorMessag
 	return nil
 }
 
-func (self *DownloadObject) Load() io.Reader {
+func (self *DownloadObject) Load() io.ReadCloser {
 	rd := NewDownLoadReader(self, 0, self.Length)
 	return rd
 }
 
-func (self *DownloadObject) LoadRange(start, end int64) io.Reader {
+func (self *DownloadObject) LoadRange(start, end int64) io.ReadCloser {
 	rd := NewDownLoadReader(self, start, end)
 	return rd
 }
