@@ -180,7 +180,8 @@ func InitSuperList() {
 	}
 	ls := make([]*YTDNMgmt.SuperNode, len(list))
 	for index, jsonsn := range list {
-		sn := &YTDNMgmt.SuperNode{ID: jsonsn.Number, NodeID: jsonsn.ID, Addrs: jsonsn.Addrs}
+		maddr, _ := net.StringListToMaddrs(jsonsn.Addrs)
+		sn := &YTDNMgmt.SuperNode{ID: jsonsn.Number, NodeID: jsonsn.ID, Addrs: jsonsn.Addrs, Multiaddrs:maddr}
 		ls[index] = sn
 	}
 	GetSuperList(ls)
@@ -201,7 +202,8 @@ func GetSuperList(ls []*YTDNMgmt.SuperNode) {
 					list := []*YTDNMgmt.SuperNode{}
 					for _, s := range sns {
 						if s.Addrs != nil && s.Id != nil && s.Nodeid != nil && s.Pubkey != nil {
-							list = append(list, &YTDNMgmt.SuperNode{ID: *s.Id, NodeID: *s.Nodeid, PubKey: *s.Pubkey, Addrs: s.Addrs})
+							maddrs, _ := net.StringListToMaddrs(s.Addrs)
+							list = append(list, &YTDNMgmt.SuperNode{ID: *s.Id, NodeID: *s.Nodeid, PubKey: *s.Pubkey, Addrs: s.Addrs, Multiaddrs:maddrs})
 						}
 					}
 					if uint32(len(list)) == *resp.Supernodes.Count {

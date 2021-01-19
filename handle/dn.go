@@ -131,20 +131,28 @@ func (h *StatusRepHandler) Handle() proto.Message {
 		Rx:            h.m.Rx,
 		Ext:           h.m.Other,
 		Timestamp:     time.Now().Unix(),
+		HashID:        h.m.Hash,
 	}
 	startTime := time.Now()
+	var productiveSpace int64
 	newnode, err := net.NodeMgr.UpdateNodeStatus(node)
 	if err != nil {
 		emsg := fmt.Sprintf("[DNStatusRep]ERR:%s,ID:%d,take times %d ms\n", err.Error(), h.m.Id, time.Now().Sub(startTime).Milliseconds())
 		logrus.Errorf(emsg)
-		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
+		if err == YTDNMgmt.IdentifyError {
+			productiveSpace = -1
+		} else {
+			productiveSpace = -2
+		}
+		return &pkt.StatusRepResp{ProductiveSpace: productiveSpace, RelayUrl: ""}
+	} else {
+		productiveSpace = newnode.ProductiveSpace
 	}
-	productiveSpace := newnode.ProductiveSpace
 	relayUrl := ""
 	if newnode.Addrs != nil && len(newnode.Addrs) > 0 {
 		relayUrl = newnode.Addrs[0]
 	}
-	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: uint64(productiveSpace), RelayUrl: relayUrl}
+	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: productiveSpace, RelayUrl: relayUrl}
 	newnode.Addrs = YTDNMgmt.CheckPublicAddrs(node.Addrs, net.NodeMgr.Config.Misc.ExcludeAddrPrefix)
 	//NodeStatSync(newnode)
 	SendSpotCheck(newnode)

@@ -59,6 +59,7 @@ func Start(port int) error {
 	http.HandleFunc("/ChangeDepAcc", ChangeDepAccHandle)
 	http.HandleFunc("/ChangeDeposit", ChangeDepositHandle)
 	http.HandleFunc("/", RootHandle)
+	InitCache()
 	server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  15 * time.Second,

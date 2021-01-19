@@ -188,7 +188,7 @@ func (c *Client) UploadBytes(data []byte, bucketname, key string) ([]byte, *pkt.
 func (c *Client) UploadZeroFile(bucketname, key string) ([]byte, *pkt.ErrorMessage) {
 	bs := md5.New().Sum(nil)
 	meta := MetaTobytes(0, bs)
-	err := c.NewObjectAccessor().CreateObject(bucketname, key, primitive.NewObjectID(), meta)
+	err := c.NewObjectAccessor().CreateObject(bucketname, key, env.ZeroLenFileID(), meta)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,9 @@ package net
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -11,6 +14,45 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
+
+func GetUserInfoWRetry(publickey string, retrytimes int) (string, error) {
+	count := 0
+	for {
+		URI := GetEOSURI()
+		res, err := GetUserInfo(publickey, URI)
+		if err != nil {
+			URI.SetErr(err)
+			count++
+			if count >= retrytimes {
+				return "", err
+			}
+		} else {
+			return res, nil
+		}
+	}
+}
+
+var BASE_URI string = "v1/history/get_key_accounts"
+
+func GetUserInfo(publickey string, URI *EOSURI) (string, error) {
+	jsonkey := fmt.Sprintf("{\"public_key\":\"%s%s\"}", "YTA", publickey)
+	var urlstr string
+	if strings.HasSuffix(URI.Url, "/") {
+		urlstr = URI.Url + BASE_URI
+	} else {
+		urlstr = URI.Url + "/" + BASE_URI
+	}
+	resp, err := http.Post(urlstr, "application/x-www-form-urlencoded", strings.NewReader(jsonkey))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
 
 type BalanceValue struct {
 	Balance int64
@@ -134,6 +176,9 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTr
 		URI := GetEOSURI()
 		res, err := Request(actname, obj, URI)
 		if err != nil {
+			if strings.ContainsAny(err.Error(), "the fee is the same") {
+				return nil, nil
+			}
 			URI.SetErr(err)
 			count++
 			if count >= retrytimes {

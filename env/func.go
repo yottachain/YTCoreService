@@ -9,7 +9,30 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func ZeroLenFileID() primitive.ObjectID {
+	id := primitive.NewObjectID()
+	id[4] = 0
+	id[5] = 0
+	id[6] = 0
+	id[7] = 0
+	id[8] = 0
+	id[9] = 0
+	id[10] = 0
+	id[11] = 0
+	return id
+}
+
+func IsZeroLenFileID(id primitive.ObjectID) bool {
+	for ii := 4; ii < 12; ii++ {
+		if id[ii] != 0 {
+			return false
+		}
+	}
+	return true
+}
 
 func BytesToId(bs []byte) int64 {
 	vbi := int64(bs[0] & 0xFF)

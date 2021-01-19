@@ -22,7 +22,7 @@ func Test(t *testing.T) {
 
 	//************s3 test****************
 
-	test.SyncFile()
+	//test.SyncFile()
 	//test.UploadFile()
 	//test.DownLoadFile()
 	//test.ListBucket()
@@ -33,5 +33,8 @@ func Test(t *testing.T) {
 	//test.TestMultiCutFile()
 	//test.TestCutFile()
 	//test.TestLRC()
+
+	//**************************
+	test.TestEOS()
 	select {}
 }

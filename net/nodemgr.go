@@ -152,6 +152,9 @@ func readSuperNodeList(ls []*YTDNMgmt.SuperNode) {
 		if sn == nil || sn.Addrs == nil || len(sn.Addrs) == 0 {
 			logrus.Panicf("[NodeMgr]:No 'SN%d' in yotta.SuperNode.\n", index)
 		}
+		maddrs, _ := StringListToMaddrs(sn.Addrs)
+		sn.Multiaddrs = maddrs
+
 		pkey := sn.PubKey
 		if pkey != "" && strings.HasPrefix(strings.ToUpper(pkey), "EOS") {
 			pkey = pkey[3:]
@@ -159,7 +162,9 @@ func readSuperNodeList(ls []*YTDNMgmt.SuperNode) {
 		}
 		superNodeMap[pkey] = sn
 	}
-	logrus.Infof("[NodeMgr]Snlist init ok,Size:%d\n", len(superNodeMap))
+	size := len(superNodeMap)
+	env.MAX_SUMFEE_ROUTINE = int32(size) * 2
+	logrus.Infof("[NodeMgr]Snlist init ok,Size:%d\n", size)
 }
 
 func GetSelfIp() string {

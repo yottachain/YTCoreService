@@ -55,7 +55,7 @@ func (h *RelationshipSumHandler) SetMessage(pubkey string, msg proto.Message) (*
 		if h.m.Mowner == nil || h.m.Usedspace == nil || len(h.m.Mowner) != len(h.m.Usedspace) {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, READ_ROUTINE_NUM, nil
+		return nil, SUMFEE_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}

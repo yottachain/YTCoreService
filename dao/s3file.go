@@ -64,20 +64,7 @@ func (self *FileMeta) GetLastFileMeta(justversion bool) error {
 	return nil
 }
 
-func (self *FileMeta) DeleteFileMeta() error {
-	source := NewUserMetaSource(uint32(self.UserId))
-	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, err := source.GetFileColl().DeleteOne(ctx, filter)
-	if err != nil {
-		logrus.Errorf("[S3FileMeta]DeleteFileMeta UserID:%d,ERR:%s\n", self.UserId, err)
-		return err
-	}
-	return nil
-}
-
-func (self *FileMeta) DeleteObjectMeta() (*FileMetaWithVersion, error) {
+func (self *FileMeta) DeleteFileMeta() (*FileMetaWithVersion, error) {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName}
 	opt := options.FindOneAndDelete().SetProjection(bson.M{"_id": 1, "version.versionId": 1})
@@ -89,29 +76,58 @@ func (self *FileMeta) DeleteObjectMeta() (*FileMetaWithVersion, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		} else {
-			logrus.Errorf("[S3FileMeta]DeleteObjectMeta %s/%s ERR:%s\n", self.BucketId.Hex(), self.FileName, err)
+			logrus.Errorf("[S3FileMeta]DeleteFileMeta UserID:%d,ERR:%s\n", self.UserId, err)
 			return nil, err
 		}
 	}
 	return res, nil
 }
 
-func (self *FileMeta) DeleteLastFileMeta() error {
+func (self *FileMeta) DeleteFileMetaByVersion() (*FileMetaWithVersion, error) {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName}
+	opt := options.FindOneAndUpdate().SetProjection(bson.M{"_id": 1, "version.versionId": 1})
 	update := bson.M{"$pull": bson.M{"version": bson.M{"versionId": self.VersionId}}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := source.GetFileColl().UpdateOne(ctx, filter, update)
+	res := &FileMetaWithVersion{}
+	err := source.GetFileColl().FindOneAndUpdate(ctx, filter, update, opt).Decode(res)
 	if err != nil {
-		logrus.Errorf("[S3FileMeta]DeleteLastFileMeta UserID:%d,ERR:%s\n", self.UserId, err)
-		return err
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		} else {
+			logrus.Errorf("[S3FileMeta]DeleteFileMetaByVersion UserID:%d,ERR:%s\n", self.UserId, err)
+			return nil, err
+		}
 	}
-	filter = bson.M{"bucketId": self.BucketId, "fileName": self.FileName, "version": bson.M{"$size": 0}}
+	if res.Version == nil && len(res.Version) == 0 {
+		self.deleteFileMeta(source)
+		return nil, nil
+	} else {
+		var curver *FileVerion = nil
+		for _, ver := range res.Version {
+			if ver.VersionId == self.VersionId {
+				curver = ver
+				break
+			}
+		}
+		if curver != nil {
+			if len(res.Version) == 1 {
+				self.deleteFileMeta(source)
+			}
+			res.Version = []*FileVerion{curver}
+			return res, nil
+		} else {
+			return nil, nil
+		}
+	}
+}
+
+func (self *FileMeta) deleteFileMeta(source *UserMetaSource) {
+	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName, "version": bson.M{"$size": 0}}
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel1()
 	source.GetFileColl().DeleteOne(ctx1, filter)
-	return nil
 }
 
 func (self *FileMeta) SaveFileMeta() error {

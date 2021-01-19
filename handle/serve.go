@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
@@ -19,6 +20,7 @@ var READ_ROUTINE_NUM *int32 = new(int32)
 var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
 var HTTP_ROUTINE_NUM *int32 = new(int32)
+var SUMFEE_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
 	InitCache()
@@ -28,6 +30,7 @@ func Start() {
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
 	atomic.StoreInt32(HTTP_ROUTINE_NUM, 0)
+	atomic.StoreInt32(SUMFEE_ROUTINE_NUM, 0)
 	if env.STAT_SERVICE {
 		InitSpotCheckService()
 		InitRebuildService()
@@ -90,6 +93,9 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	err2, rnum, urnum := handler.SetMessage(pubkey, msg)
 	if err2 != nil {
+		 if err2.Code == pkt.INVALID_ARGS {
+				logrus.Errorf("[OnMessage]Bad req %s,len:%d,DATA:", name, len(data), hex.EncodeToString(data))
+			}
 		return pkt.MarshalMsgBytes(err2)
 	}
 	var curRouteNum int32 = 0
@@ -112,6 +118,14 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	startTime := time.Now()
 	res := handler.Handle()
+	//badmsgerr, OK := res.(*pkt.ErrorMessage)
+	//if OK && badmsgerr.Code == pkt.INVALID_ARGS {
+	//	logrus.Errorf("[OnMessage]Bad req %s, len:%d, hex:%x", name, len(data), data)
+	//}
+	_, OK := res.(*pkt.ErrorMessage)
+	if OK {
+		logrus.Errorf("[OnMessage]Bad req %s, len:%d, hex:%x", name, len(data), data)
+	}
 	stime := time.Now().Sub(startTime).Milliseconds()
 	if stime > int64(env.SLOW_OP_TIMES) {
 		logrus.Infof("[OnMessage]%s,routine num %d,take times %d ms\n", name, curRouteNum, stime)
@@ -139,6 +153,10 @@ func CheckRoutine(rnum *int32) error {
 	} else if HTTP_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(HTTP_ROUTINE_NUM) > env.MAX_HTTP_ROUTINE {
 			return errors.New("HTTP_ROUTINE:Too many routines")
+		}
+	} else if SUMFEE_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(SUMFEE_ROUTINE_NUM) > env.MAX_SUMFEE_ROUTINE {
+			return errors.New("SUMFEE_ROUTINE:Too many routines")
 		}
 	} else {
 		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
