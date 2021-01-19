@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func init() {
@@ -18,7 +19,7 @@ func Test(t *testing.T) {
 	//Make()
 	//***********api test*********
 
-	//test.UpAndDownBytes()
+	test.UpAndDownBytes()
 
 	//************s3 test****************
 

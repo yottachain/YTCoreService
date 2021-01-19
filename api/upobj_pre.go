@@ -82,7 +82,8 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 		codec.Append(s3key, p)
 		logrus.Infof("[UploadObjectToDisk][%s]Already exists.\n", s3key)
 	} else {
-		enc := codec.NewEncoder(self.UClient.UserId, self.UClient.SignKey.KeyNumber, self.UClient.SignKey.Sign, s3key, self.Encoder, self)
+		enc := codec.NewEncoder(self.UClient.UserId, self.UClient.SignKey.KeyNumber,
+			self.UClient.StoreKey.KeyNumber, self.UClient.SignKey.Sign, s3key, self.Encoder, self)
 		enc.HandleProgress(self.PRO.ReadinLength, self.PRO.ReadOutLength, self.PRO.WriteLength)
 		logrus.Infof("[UploadObjectToDisk][%s]Start encode object...\n", s3key)
 		err := enc.Handle(p)

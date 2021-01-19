@@ -84,6 +84,10 @@ func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 		OriginalSize: &osize,
 		Data:         self.EncBLK.DATA,
 	}
+	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+		req.SignData = &sign
+	}
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg == nil {
 		logrus.Infof("[SyncBlock]%sUpload block to DB,VHP:%s,take times %d ms.\n", self.logPrefix,
@@ -103,6 +107,10 @@ func (self *UploadBlockSync) uploadDup() {
 		KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
 		VHB:       self.EncBLK.VHB,
 		KEU:       self.EncBLK.KEU,
+	}
+	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+		dupReq.SignData = &sign
 	}
 	bid := uint32(self.ID)
 	osize := uint64(self.EncBLK.OriginalSize)

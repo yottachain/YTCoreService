@@ -158,6 +158,10 @@ func (self *UploadBlock) UploadBlockDB() {
 			OriginalSize: &osize,
 			Data:         eblk.Data,
 		}
+		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+			req.SignData = &sign
+		}
 		_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 		if errmsg != nil {
 			self.UPOBJ.ERR.Store(errmsg)
@@ -212,6 +216,10 @@ func (self *UploadBlock) CheckBlockDup(resp *pkt.UploadBlockDupResp) *pkt.Upload
 				KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
 				VHB:       vhb,
 				KEU:       keu,
+			}
+			if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+				sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+				req.SignData = &sign
 			}
 			return req
 		}
@@ -313,6 +321,10 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 		AR:           &ar,
 		Oklist:       ToUploadBlockEndReqV2_OkList(ress),
 	}
+	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+		req.SignData = &sign
+	}
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		var ids []int32
@@ -367,4 +379,18 @@ func ToUploadBlockEndReqV2_OkList(res []*UploadShardResult) []*pkt.UploadBlockEn
 		}
 	}
 	return oklist
+}
+
+func SetStoreNumber(signdata string, storenumber int32) (string, error) {
+	type SignData struct {
+		Number int32
+		Sign   string
+	}
+	data := &SignData{Number: storenumber, Sign: signdata}
+	bs, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	} else {
+		return string(bs), nil
+	}
 }

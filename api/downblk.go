@@ -69,7 +69,13 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	KS := self.KS
 	if KS == nil {
-		KS = codec.ECBDecryptNoPad(self.Ref.KEU, self.UClient.StoreKey.AESKey)
+		k, ok := self.UClient.KeyMap[uint32(self.Ref.KeyNumber)]
+		if !ok {
+			emsg := fmt.Sprintf("The user did not enter a private key with number%d", self.Ref.KeyNumber)
+			logrus.Errorf("[DownloadBlock]%s\n", emsg)
+			return nil, pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
+		}
+		KS = codec.ECBDecryptNoPad(self.Ref.KEU, k.AESKey)
 	}
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()

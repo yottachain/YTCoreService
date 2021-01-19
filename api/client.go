@@ -2,42 +2,15 @@ package api
 
 import (
 	"crypto/md5"
-	"errors"
-	"fmt"
 	"time"
 
-	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api/cache"
-	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
-	"github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTDNMgmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
-type Key struct {
-	PrivateKey string
-	PublicKey  string
-	KUSp       []byte
-	AESKey     []byte
-	KeyNumber  uint32
-	Sign       string
-}
-
-func (c *Key) MakeSign(uid uint32) error {
-	data := fmt.Sprintf("%d%d", uid, c.KeyNumber)
-	s, err := YTCrypto.Sign(c.PrivateKey, []byte(data))
-	if err != nil {
-		logrus.Errorf("[Regist]Sign ERR:%s\n", err)
-		return err
-	} else {
-		c.Sign = s
-		return nil
-	}
-}
 
 type Client struct {
 	Username  string
@@ -56,60 +29,6 @@ func (c *Client) GetKey(pubkey string) *Key {
 		}
 	}
 	return nil
-}
-
-func addClient(uid, keyNum uint32, signstr string) *Client {
-	sn := net.GetUserSuperNode(int32(uid))
-	pubv, _ := YTCrypto.CreateKey()
-	k := &Key{KeyNumber: keyNum, Sign: signstr, PrivateKey: pubv, PublicKey: pubv}
-	m := make(map[uint32]*Key)
-	m[k.KeyNumber] = k
-	return &Client{UserId: uid, SuperNode: sn, SignKey: k, StoreKey: k, KeyMap: m}
-}
-
-func newClient(uname string, privkey string) (*Client, error) {
-	bs := base58.Decode(privkey)
-	if len(bs) != 37 {
-		return nil, errors.New("Invalid private key.")
-	}
-	aeskey := codec.GenerateUserKey(bs)
-	pubkey, err := YTCrypto.GetPublicKeyByPrivateKey(privkey)
-	if err != nil {
-		return nil, err
-	}
-	k := &Key{PrivateKey: privkey, KUSp: bs, AESKey: aeskey, PublicKey: pubkey}
-	m := make(map[uint32]*Key)
-	c := &Client{Username: uname, SignKey: k, StoreKey: k, KeyMap: m}
-	return c, nil
-}
-
-func (c *Client) Regist() error {
-	ii := int(time.Now().UnixNano() % int64(net.GetSuperNodeCount()))
-	sn := net.GetSuperNode(ii)
-	req := &pkt.RegUserReqV2{Username: &c.Username, PubKey: &c.SignKey.PublicKey, VersionId: &env.VersionID}
-	res, err := net.RequestSN(req, sn, "", 0, false)
-	if err != nil {
-		emsg := fmt.Sprintf("User '%s' registration failed!%s", c.Username, pkt.ToError(err))
-		logrus.Errorf("[Regist]%s\n", emsg)
-		return errors.New(emsg)
-	} else {
-		resp, ok := res.(*pkt.RegUserResp)
-		if ok {
-			if resp.SuperNodeNum != nil && resp.UserId != nil && resp.KeyNumber != nil {
-				if *resp.SuperNodeNum >= 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) {
-					c.SuperNode = net.GetSuperNode(int(*resp.SuperNodeNum))
-					c.UserId = *resp.UserId
-					c.SignKey.KeyNumber = *resp.KeyNumber
-					c.KeyMap[c.SignKey.KeyNumber] = c.SignKey
-					logrus.Infof("[Regist]User '%s' registration successful,ID-KeyNumber:%d/%d,at sn %d\n",
-						c.Username, c.UserId, c.SignKey.KeyNumber, c.SuperNode.ID)
-					return c.SignKey.MakeSign(c.UserId)
-				}
-			}
-		}
-		logrus.Errorf("[Regist]Return err msg.\n")
-		return errors.New("Return err msg")
-	}
 }
 
 func (c *Client) GetProgress(bucketname, key string) int32 {

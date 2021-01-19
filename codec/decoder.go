@@ -19,6 +19,7 @@ type Decoder struct {
 	readin       int64
 	UserId       uint32
 	KeyNumber    uint32
+	StoreNumber  uint32
 	Sign         string
 	readinTotal  int64
 	readoutTotal int64
@@ -240,12 +241,17 @@ func (self *Decoder) readHead() error {
 	if err != nil {
 		return err
 	}
+	self.StoreNumber = uint32(i)
+	i, err = ReadInt32(self.reader)
+	if err != nil {
+		return err
+	}
 	bss := make([]byte, i)
 	err = ReadFull(self.reader, bss)
 	if err != nil {
 		return err
 	}
 	self.Sign = string(bss)
-	self.readin = 8 + 8 + 16 + 4 + 4 + 4 + int64(len(bss))
+	self.readin = 8 + 8 + 16 + 4 + 4 + 4 + 4 + int64(len(bss))
 	return nil
 }

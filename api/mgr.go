@@ -3,18 +3,21 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTCrypto"
 	ytcrypto "github.com/yottachain/YTCrypto"
 	"github.com/yottachain/YTDNMgmt"
 )
@@ -24,14 +27,79 @@ const MAX_CLIENT_NUM = 2000
 var clients = struct {
 	sync.RWMutex
 	clientlist map[string]*Client
-	clientids  sync.Map
-}{clientlist: make(map[string]*Client)}
+	clientids  map[uint32]*Client
+}{clientlist: make(map[string]*Client),
+	clientids: make(map[uint32]*Client)}
 
-func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
+type Register struct {
+	username string
+	privkey  string
+	c        *Client
+}
+
+func NewRegister(uname string, prikey string) *Register {
+	return &Register{username: uname, privkey: prikey}
+}
+
+func (me *Register) newClient() error {
+	bs := base58.Decode(me.privkey)
+	if len(bs) != 37 {
+		return errors.New("Invalid private key.")
+	}
+	aeskey := codec.GenerateUserKey(bs)
+	pubkey, err := YTCrypto.GetPublicKeyByPrivateKey(me.privkey)
+	if err != nil {
+		return err
+	}
+	k := &Key{PrivateKey: me.privkey, KUSp: bs, AESKey: aeskey, PublicKey: pubkey}
+	m := make(map[uint32]*Key)
+	me.c = &Client{Username: me.username, SignKey: k, StoreKey: k, KeyMap: m}
+	return nil
+}
+
+func (me *Register) regist() error {
+	ii := int(time.Now().UnixNano() % int64(net.GetSuperNodeCount()))
+	sn := net.GetSuperNode(ii)
+	req := &pkt.RegUserReqV2{Username: &me.username, PubKey: &me.c.SignKey.PublicKey, VersionId: &env.VersionID}
+	res, err := net.RequestSN(req, sn, "", 0, false)
+	if err != nil {
+		emsg := fmt.Sprintf("User '%s' registration failed!%s", me.c.Username, pkt.ToError(err))
+		logrus.Errorf("[Regist]%s\n", emsg)
+		return errors.New(emsg)
+	} else {
+		resp, ok := res.(*pkt.RegUserResp)
+		if ok {
+			if resp.SuperNodeNum != nil && resp.UserId != nil && resp.KeyNumber != nil {
+				if *resp.SuperNodeNum >= 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) {
+					me.c.SuperNode = net.GetSuperNode(int(*resp.SuperNodeNum))
+					me.c.UserId = *resp.UserId
+					me.c.SignKey.KeyNumber = *resp.KeyNumber
+					me.c.KeyMap[me.c.SignKey.KeyNumber] = me.c.SignKey
+					logrus.Infof("[Regist]User '%s' registration successful,ID-KeyNumber:%d/%d,at sn %d\n",
+						me.c.Username, me.c.UserId, me.c.SignKey.KeyNumber, me.c.SuperNode.ID)
+					return me.c.SignKey.MakeSign(me.c.UserId)
+				}
+			}
+		}
+		logrus.Errorf("[Regist]Return err msg.\n")
+		return errors.New("Return err msg")
+	}
+}
+
+func AddClient(uid, keyNum, storeNum uint32, signstr string) (*Client, error) {
 	if env.StartSync == 0 {
 		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
 	}
-	c := addClient(uid, keyNum, signstr)
+	sn := net.GetUserSuperNode(int32(uid))
+	k := &Key{KeyNumber: keyNum, Sign: signstr}
+	m := make(map[uint32]*Key)
+	m[k.KeyNumber] = k
+	storeK := k
+	if keyNum != storeNum {
+		storeK = &Key{KeyNumber: storeNum, Sign: signstr}
+		m[storeK.KeyNumber] = storeK
+	}
+	c := &Client{UserId: uid, SuperNode: sn, SignKey: k, StoreKey: storeK, KeyMap: m}
 	cc, er := check(c)
 	if er != nil {
 		return nil, er
@@ -40,8 +108,7 @@ func AddClient(uid, keyNum uint32, signstr string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	clients.clientlist[c.SignKey.PublicKey] = c
-	clients.clientids.Store(c.UserId, c)
+	clients.clientids[c.UserId] = c
 	clients.Unlock()
 	NotifyAllocNode(false)
 	return c, nil
@@ -51,11 +118,12 @@ func NewClient(uname string, privkey string) (*Client, error) {
 	if env.StartSync > 0 {
 		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
 	}
-	c, err := newClient(uname, privkey)
+	reg := NewRegister(uname, privkey)
+	err := reg.newClient()
 	if err != nil {
 		return nil, err
 	}
-	cc, er := check(c)
+	cc, er := check(reg.c)
 	if er != nil {
 		return nil, er
 	}
@@ -66,29 +134,35 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	err = c.Regist()
+	err = reg.regist()
 	if err != nil {
 		clients.Unlock()
 		return nil, err
 	}
-	clients.clientlist[c.SignKey.PublicKey] = c
-	clients.clientids.Store(c.UserId, c)
+	for _, v := range reg.c.KeyMap {
+		clients.clientlist[v.PublicKey] = reg.c
+	}
+	clients.clientids[reg.c.UserId] = reg.c
 	clients.Unlock()
 	NotifyAllocNode(false)
-	return c, nil
+	return reg.c, nil
 }
 
 func check(c *Client) (*Client, error) {
-	size := 0
 	clients.RLock()
-	client := clients.clientlist[c.SignKey.PublicKey]
-	size = len(clients.clientlist)
-	clients.RUnlock()
-	if client != nil {
-		return client, nil
-	}
+	defer clients.RUnlock()
+	size := len(clients.clientids)
 	if size > MAX_CLIENT_NUM {
 		return nil, errors.New("Maximum number of users reached.")
+	}
+	for _, v := range c.KeyMap {
+		if v.PublicKey == "" {
+			continue
+		}
+		client := clients.clientlist[v.PublicKey]
+		if client != nil {
+			return client, nil
+		}
 	}
 	return nil, nil
 }
@@ -104,10 +178,9 @@ func GetClients() []*Client {
 }
 
 func GetClientById(uid uint32) *Client {
-	if vv, ok := clients.clientids.Load(uid); ok {
-		return vv.(*Client)
-	}
-	return nil
+	clients.RLock()
+	defer clients.RUnlock()
+	return clients.clientids[uid]
 }
 
 func GetClient(key string) *Client {
@@ -122,7 +195,7 @@ func DistoryClient(key string) {
 	c := clients.clientlist[key]
 	if c != nil {
 		delete(clients.clientlist, key)
-		clients.clientids.Delete(c.UserId)
+		delete(clients.clientids, c.UserId)
 	}
 }
 
@@ -140,14 +213,6 @@ func StartApi() {
 	go DoCache()
 	go StartSync()
 	go AutoReg()
-}
-
-func AutoReg() {
-	if env.StartSync > 0 {
-		return
-	}
-	infos := env.ReadUserProperties()
-	logrus.Infof("%d", len(infos))
 }
 
 func InitSuperList() {

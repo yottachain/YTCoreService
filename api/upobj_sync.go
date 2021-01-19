@@ -39,7 +39,7 @@ func (self *UploadObjectSync) createDecoder(sha256 []byte) error {
 		return err
 	}
 	self.decoder = dec
-	c, err := AddClient(dec.UserId, dec.KeyNumber, dec.Sign)
+	c, err := AddClient(dec.UserId, dec.KeyNumber, dec.StoreNumber, dec.Sign)
 	if err != nil {
 		logrus.Errorf("[SyncUpload][%s]AddClient err:%s\n", p, err)
 		return err
