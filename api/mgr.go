@@ -26,10 +26,14 @@ const MAX_CLIENT_NUM = 2000
 
 var clients = struct {
 	sync.RWMutex
-	clientlist map[string]*Client
-	clientids  map[uint32]*Client
-}{clientlist: make(map[string]*Client),
-	clientids: make(map[uint32]*Client)}
+	clientlist  map[string]*Client
+	clientids   map[uint32]*Client
+	clientnames map[string]*Client
+}{
+	clientlist:  make(map[string]*Client),
+	clientids:   make(map[uint32]*Client),
+	clientnames: make(map[string]*Client),
+}
 
 type Register struct {
 	username string
@@ -143,6 +147,7 @@ func NewClient(uname string, privkey string) (*Client, error) {
 		clients.clientlist[v.PublicKey] = reg.c
 	}
 	clients.clientids[reg.c.UserId] = reg.c
+	clients.clientnames[reg.username] = reg.c
 	clients.Unlock()
 	NotifyAllocNode(false)
 	return reg.c, nil
@@ -159,8 +164,8 @@ func check(c *Client) (*Client, error) {
 		if v.PublicKey == "" {
 			continue
 		}
-		client := clients.clientlist[v.PublicKey]
-		if client != nil {
+		client, ok := clients.clientlist[v.PublicKey]
+		if ok {
 			return client, nil
 		}
 	}
@@ -171,10 +176,16 @@ func GetClients() []*Client {
 	clients.RLock()
 	defer clients.RUnlock()
 	ls := []*Client{}
-	for _, v := range clients.clientlist {
+	for _, v := range clients.clientids {
 		ls = append(ls, v)
 	}
 	return ls
+}
+
+func GetClientByName(username string) *Client {
+	clients.RLock()
+	defer clients.RUnlock()
+	return clients.clientnames[username]
 }
 
 func GetClientById(uid uint32) *Client {
@@ -194,7 +205,10 @@ func DistoryClient(key string) {
 	defer clients.Unlock()
 	c := clients.clientlist[key]
 	if c != nil {
-		delete(clients.clientlist, key)
+		for _, k := range c.KeyMap {
+			delete(clients.clientlist, k.PublicKey)
+		}
+		delete(clients.clientnames, c.Username)
 		delete(clients.clientids, c.UserId)
 	}
 }

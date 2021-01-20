@@ -65,6 +65,7 @@ func NewClientV2(user *env.UserInfo) (*Client, error) {
 		clients.clientlist[v.PublicKey] = reg.c
 	}
 	clients.clientids[reg.c.UserId] = reg.c
+	clients.clientnames[reg.c.Username] = reg.c
 	clients.Unlock()
 	NotifyAllocNode(false)
 	return reg.c, nil
