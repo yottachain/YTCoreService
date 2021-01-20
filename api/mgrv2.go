@@ -142,12 +142,13 @@ func (me *RegisterV2) regist() error {
 		resp, ok := res.(*pkt.RegUserRespV2)
 		if ok {
 			if resp.SuperNodeNum != nil && resp.UserId != nil && resp.KeyNumber != nil {
-				if *resp.SuperNodeNum >= 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) && len(me.keys) != len(resp.KeyNumber) {
+				if *resp.SuperNodeNum >= 0 && *resp.SuperNodeNum < uint32(net.GetSuperNodeCount()) && len(me.keys) == len(resp.KeyNumber) {
 					me.c.SuperNode = net.GetSuperNode(int(*resp.SuperNodeNum))
 					c.UserId = *resp.UserId
 					for index, k := range me.keys {
 						num := resp.KeyNumber[index]
 						if num == -1 {
+							logrus.Infof("[RegistV2]User '%s',publickey %s authentication error\n", c.Username, k.PublicKey)
 							continue
 						}
 						k.KeyNumber = uint32(num)
@@ -159,6 +160,7 @@ func (me *RegisterV2) regist() error {
 					}
 					logrus.Infof("[RegistV2]User '%s' registration successful,ID:%d,at sn %d\n",
 						c.Username, c.UserId, c.SuperNode.ID)
+					return nil
 				}
 			}
 		}
@@ -173,9 +175,6 @@ func AutoReg() {
 	}
 	infos := env.ReadUserProperties()
 	for {
-		if len(infos) == 0 {
-			break
-		}
 		users := []*env.UserInfo{}
 		for _, user := range infos {
 			_, err := NewClientV2(user)
@@ -188,6 +187,10 @@ func AutoReg() {
 			}
 		}
 		infos = users
+		if len(infos) == 0 {
+			break
+		}
 		time.Sleep(time.Duration(10) * time.Second)
 	}
+	logrus.Info("[Init]Reguser OK!\n")
 }

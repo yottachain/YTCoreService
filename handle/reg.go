@@ -223,6 +223,7 @@ func (h *QueryUserHandler) Handle() proto.Message {
 			pubkeymap[pkey] = true
 			pass = true
 		} else {
+			logrus.Warnf("[QueryUser]User %s failed to authenticate public key %s\n", *h.m.Username, pkey)
 			pubkeymap[pkey] = false
 		}
 	}

@@ -42,6 +42,9 @@ func init() {
 	ID_HANDLER_MAP[0xc23f] = func() MessageEvent { return MessageEvent(&ListObjectHandler{}) }
 
 
+	ID_HANDLER_MAP[0x1c45] = func() MessageEvent { return MessageEvent(&GetFileMetaHandler{}) }
+	ID_HANDLER_MAP[0x6b4e] = func() MessageEvent { return MessageEvent(&UploadBlockAuthHandler{}) }
+
 	ID_HANDLER_MAP[0x71ae] = func() MessageEvent { return MessageEvent(&TotalHandler{}) }
 	ID_HANDLER_MAP[0x78c3] = func() MessageEvent { return MessageEvent(&UserSpaceHandler{}) }
 	ID_HANDLER_MAP[0x4d27] = func() MessageEvent { return MessageEvent(&UserListHandler{}) }

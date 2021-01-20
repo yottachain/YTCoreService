@@ -2,8 +2,8 @@ package test
 
 import (
 	"os"
+	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
 )
 
@@ -22,8 +22,13 @@ func initApi() {
 	}
 	api.StartApi()
 	clients := api.GetClients()
-	if len(clients) == 0 {
-		logrus.Panic("[NewClient]No registered users\n")
+	for {
+		if len(clients) > 0 {
+			break
+		} else {
+			time.Sleep(time.Duration(1) * time.Second)
+			clients = api.GetClients()
+		}
 	}
 	client = clients[0]
 	if len(clients) > 1 {

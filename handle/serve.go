@@ -88,7 +88,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	handler, err1 := findHandler(msg, msgType)
 	if err1 != nil {
-		logrus.Errorf("[OnMessage]FindHandler%s %s\n", name, pkt.ToError(err1))
+		logrus.Errorf("[OnMessage]FindHandler %s %s\n", name, pkt.ToError(err1))
 		return pkt.MarshalError(err1)
 	}
 	err2, rnum, urnum := handler.SetMessage(pubkey, msg)
