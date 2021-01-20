@@ -50,32 +50,38 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		log_pre = fmt.Sprintf("[%s][%d]%s", name, sn.ID, log_prefix)
 	}
 	retryTimes := 0
-	var resmsg *pkt.ErrorMessage
+
 	for {
-		if retryTimes > 1 {
-			if resmsg == nil {
-				logrus.Errorf("[P2P]%sRetry...\n", log_pre)
-			} else {
-				logrus.Errorf("[P2P]%s,ServiceError %d:%s,Retry...\n",
-					log_pre, resmsg.Code, strings.TrimSpace(resmsg.Msg))
-			}
-		}
-		client, err := NewClient(sn.NodeID)
+		snclient, err := NewSNClient(sn)
 		if err != nil {
 			return nil, err
 		}
-		resmsg, err := client.Request(int32(msgtype), data, sn.Addrs, log_pre, nowait)
-		if err != nil {
-			if nowait || retryTimes >= retry {
+		var resmsg proto.Message
+		var errmsg *pkt.ErrorMessage
+		if snclient.HttpSupported {
+			resmsg, errmsg = snclient.Request(int32(msgtype), data, log_pre, nowait)
+		} else {
+			client, err := NewClient(sn.NodeID)
+			if err != nil {
 				return nil, err
 			}
-			if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR) {
-				return nil, err
+			resmsg, errmsg = client.Request(int32(msgtype), data, snclient.TcpAddr, log_pre, nowait)
+		}
+		if errmsg != nil {
+			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {
+				logrus.Errorf("[P2P]%sServiceError %d:%s\n", log_pre, errmsg.Code, strings.TrimSpace(errmsg.Msg))
+				return nil, errmsg
 			}
 			if retryTimes != 0 {
 				time.Sleep(time.Duration(env.SN_RETRY_WAIT) * time.Second)
 			}
 			retryTimes++
+			if nowait || retryTimes >= retry {
+				logrus.Errorf("[P2P]%sServiceError %d:%s\n", log_pre, errmsg.Code, strings.TrimSpace(errmsg.Msg))
+				return nil, errmsg
+			} else {
+				logrus.Errorf("[P2P]%sServiceError %d:%s,Retry...\n", log_pre, errmsg.Code, strings.TrimSpace(errmsg.Msg))
+			}
 		} else {
 			return resmsg, nil
 		}

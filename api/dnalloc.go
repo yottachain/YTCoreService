@@ -78,6 +78,7 @@ func PreAllocNode(c *Client) error {
 	req.Excludes = ErrorList()
 	res, err := net.RequestSN(req, c.SuperNode, "", 0, false)
 	if err != nil {
+		logrus.Debugf("[PreAllocNode]Return ERR:%d-%s\n", err.GetCode(), err.GetMsg())
 		return errors.New(fmt.Sprintf("%d-%s", err.GetCode(), err.GetMsg()))
 	}
 	resp, ok := res.(*pkt.PreAllocNodeResp)

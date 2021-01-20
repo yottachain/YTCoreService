@@ -131,7 +131,7 @@ func (me *RegisterV2) regist() error {
 	req := &pkt.RegUserReqV3{VersionId: &env.VersionID, Username: &me.users.UserName, PubKey: me.pubkeys}
 	res, err := net.RequestSN(req, sn, "", 0, false)
 	if err != nil {
-		emsg := fmt.Sprintf("User '%s' registration failed!%s", " c.Username", pkt.ToError(err))
+		emsg := fmt.Sprintf("User '%s' registration failed!%s", c.Username, pkt.ToError(err))
 		logrus.Errorf("[RegistV2]%s\n", emsg)
 		if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR) {
 			return errors.New(emsg)
@@ -179,7 +179,6 @@ func AutoReg() {
 		for _, user := range infos {
 			_, err := NewClientV2(user)
 			if err != nil {
-				logrus.Errorf("[Init]Reguser %s ERR:%s\n", user.UserName, err)
 				_, ok := err.(*RetrieableError)
 				if ok {
 					users = append(users, user)
@@ -192,5 +191,4 @@ func AutoReg() {
 		}
 		time.Sleep(time.Duration(10) * time.Second)
 	}
-	logrus.Info("[Init]Reguser OK!\n")
 }
