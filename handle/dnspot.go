@@ -106,7 +106,7 @@ func ExecSendSpotCheck() {
 		}
 		SPOT_NODE_LIST.RUnlock()
 		for _, n := range nodes {
-			_, err := net.RequestDN(req, n, "")
+			_, err := net.RequestDN(req, n, "", false)
 			if err != nil {
 				logrus.Errorf("[SendTask][%d]Send spotcheck task [%s] ERR:%d--%s\n", n.Id, req.TaskId, err.Code, err.Msg)
 			} else {
