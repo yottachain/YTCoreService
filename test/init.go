@@ -16,7 +16,7 @@ func initApi() {
 		os.Setenv("YTFS.userlist", "conf/userlistYF.cfg")
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-		os.Setenv("YTFS.userlist", "conf/userlistYF.cfg")
+		os.Setenv("YTFS.userlist", "conf/userlistZW.cfg")
 	}
-	api.StartApi()
+	api.InitApi()
 }

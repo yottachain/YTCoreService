@@ -72,7 +72,7 @@ func initCacheSize() {
 	sum := SumSpace()
 	logrus.Infof("[Cache]Sum cache size %d\n", sum)
 	atomic.StoreInt64(CurCacheSize, sum)
-	if sum == 0 || IS_S3_Server {
+	if sum == 0 {
 		Clear()
 	}
 }

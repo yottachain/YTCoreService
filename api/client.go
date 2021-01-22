@@ -205,6 +205,7 @@ func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessa
 		return do, nil
 	}
 }
+
 func (c *Client) NewDownloadLastVersion(bucketName, filename string) (*DownloadObject, *pkt.ErrorMessage) {
 	return c.NewDownloadFile(bucketName, filename, primitive.NilObjectID)
 }
