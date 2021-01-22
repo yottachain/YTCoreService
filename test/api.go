@@ -3,9 +3,11 @@ package test
 import (
 	"crypto/sha256"
 	"io"
+	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,6 +20,16 @@ const epos = 1024*1024*8 + 12
 var data []byte = env.MakeRandData(testsize)
 
 func UpAndDownBytes() {
+	clients := api.GetClients()
+	for {
+		if len(clients) > 0 {
+			break
+		} else {
+			time.Sleep(time.Duration(1) * time.Second)
+			clients = api.GetClients()
+		}
+	}
+	client = clients[0]
 	initApi()
 	vhw, _ := upload()
 	download(vhw)

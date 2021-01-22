@@ -36,7 +36,7 @@ func (c *Key) MakeSign(uid uint32) error {
 	}
 }
 
-func NewClientV2(user *env.UserInfo) (*Client, error) {
+func NewClientV2(user *env.UserInfo, retrytime int) (*Client, error) {
 	if env.StartSync > 0 {
 		return nil, errors.New("StartSync mode " + strconv.Itoa(env.StartSync))
 	}
@@ -56,7 +56,7 @@ func NewClientV2(user *env.UserInfo) (*Client, error) {
 		return cc, nil
 	}
 	clients.Lock()
-	err = reg.regist()
+	err = reg.regist(retrytime)
 	if err != nil {
 		clients.Unlock()
 		return nil, err
@@ -124,16 +124,16 @@ func (me *RetrieableError) Error() string {
 	return me.msg
 }
 
-func (me *RegisterV2) regist() error {
+func (me *RegisterV2) regist(retrytimes int) error {
 	c := me.c
 	ii := int(time.Now().UnixNano() % int64(net.GetSuperNodeCount()))
 	sn := net.GetSuperNode(ii)
 	req := &pkt.RegUserReqV3{VersionId: &env.VersionID, Username: &me.users.UserName, PubKey: me.pubkeys}
-	res, err := net.RequestSN(req, sn, "", 0, false)
+	res, err := net.RequestSN(req, sn, "", retrytimes, false)
 	if err != nil {
 		emsg := fmt.Sprintf("User '%s' registration failed!%s", c.Username, pkt.ToError(err))
 		logrus.Errorf("[RegistV2]%s\n", emsg)
-		if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR) {
+		if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR || err.Code == pkt.TOO_MANY_CURSOR) {
 			return errors.New(emsg)
 		} else {
 			return &RetrieableError{msg: emsg}
@@ -149,7 +149,11 @@ func (me *RegisterV2) regist() error {
 						num := resp.KeyNumber[index]
 						if num == -1 {
 							logrus.Infof("[RegistV2]User '%s',publickey %s authentication error\n", c.Username, k.PublicKey)
-							continue
+							if c.SignKey == k || c.StoreKey == k {
+								return errors.New("Publickey authentication error.")
+							} else {
+								continue
+							}
 						}
 						k.KeyNumber = uint32(num)
 						c.KeyMap[k.KeyNumber] = k
@@ -169,26 +173,29 @@ func (me *RegisterV2) regist() error {
 	}
 }
 
+var AUTO_REG_FLAG = true
+
 func AutoReg() {
-	if env.StartSync > 0 {
+	if env.StartSync > 0 || AUTO_REG_FLAG == false {
 		return
 	}
 	infos := env.ReadUserProperties()
 	for {
 		users := []*env.UserInfo{}
 		for _, user := range infos {
-			_, err := NewClientV2(user)
+			_, err := NewClientV2(user, 1)
 			if err != nil {
 				_, ok := err.(*RetrieableError)
 				if ok {
 					users = append(users, user)
 				}
 			}
+			time.Sleep(time.Duration(1) * time.Second)
 		}
 		infos = users
 		if len(infos) == 0 {
 			break
 		}
-		time.Sleep(time.Duration(10) * time.Second)
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 }

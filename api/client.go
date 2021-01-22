@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"crypto/md5"
+	"crypto/sha256"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -22,9 +24,10 @@ type Client struct {
 	KeyMap   map[uint32]*Key
 }
 
-func (c *Client) GetKey(pubkey string) *Key {
+func (c *Client) GetKey(pubkeyhash []byte) *Key {
 	for _, k := range c.KeyMap {
-		if k.PublicKey == pubkey {
+		bs := sha256.Sum256([]byte(k.PublicKey))
+		if bytes.Equal(bs[:], pubkeyhash) {
 			return k
 		}
 	}
@@ -201,6 +204,9 @@ func (c *Client) NewDownloadObject(vhw []byte) (*DownloadObject, *pkt.ErrorMessa
 	} else {
 		return do, nil
 	}
+}
+func (c *Client) NewDownloadLastVersion(bucketName, filename string) (*DownloadObject, *pkt.ErrorMessage) {
+	return c.NewDownloadFile(bucketName, filename, primitive.NilObjectID)
 }
 
 func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.ObjectID) (*DownloadObject, *pkt.ErrorMessage) {

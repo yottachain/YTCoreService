@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/md5"
 	"errors"
 	"io"
 	"os"
@@ -120,20 +121,20 @@ func (self *DownloadObject) LoadRange(start, end int64) io.ReadCloser {
 	return rd
 }
 
-func (self *DownloadObject) SaveToPath(path string) error {
+func (self *DownloadObject) SaveToPath(path string) ([]byte, error) {
 	s, err := os.Stat(path)
 	if err != nil {
 		if !os.IsExist(err) {
 			err = os.MkdirAll(path, os.ModePerm)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
-			return err
+			return nil, err
 		}
 	} else {
 		if !s.IsDir() {
-			return errors.New("The specified path is not a directory.")
+			return nil, errors.New("The specified path is not a directory.")
 		}
 	}
 	self.Progress.Path = strings.ReplaceAll(path, "\\", "/")
@@ -143,27 +144,29 @@ func (self *DownloadObject) SaveToPath(path string) error {
 	return self.SaveToFile(self.Progress.Path + "source.dat")
 }
 
-func (self *DownloadObject) SaveToFile(path string) error {
+func (self *DownloadObject) SaveToFile(path string) ([]byte, error) {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 	read := NewDownLoadReader(self, 0, self.Length)
 	readbuf := make([]byte, 8192)
+	md5Digest := md5.New()
 	for {
 		num, err := read.Read(readbuf)
 		if err != nil && err != io.EOF {
-			return err
+			return nil, err
 		}
 		if num > 0 {
 			bs := readbuf[0:num]
 			f.Write(bs)
+			md5Digest.Write(bs)
 		}
 		if err != nil && err == io.EOF {
 			break
 		}
 	}
 	self.Progress.Complete = true
-	return nil
+	return md5Digest.Sum(nil), nil
 }

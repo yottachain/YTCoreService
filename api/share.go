@@ -28,18 +28,20 @@ type AuthImporter struct {
 	filename   string
 }
 
-func (self *AuthImporter) Export(AuthorizedKey string, data []byte) *pkt.ErrorMessage {
-	k := self.UClient.GetKey(AuthorizedKey)
-	if k == nil {
-		emsg := fmt.Sprintf("The public key '%s' of user '%s' does not exist or is not imported", AuthorizedKey, self.UClient.Username)
-		logrus.Errorf("[AuthImporter]%s\n", emsg)
-		return pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
-	}
+func (self *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
 	if data == nil || len(data) < 32+16+32 {
 		logrus.Error("[AuthImporter]Auth data err.\n")
 		return pkt.NewErrorMsg(pkt.BAD_FILE, "Auth data err")
 	}
 	databuf := bytes.NewBuffer(data)
+	pubkeyHash := make([]byte, 32)
+	databuf.Read(pubkeyHash)
+	k := self.UClient.GetKey(pubkeyHash)
+	if k == nil {
+		emsg := fmt.Sprintf("The public key  of user '%s' does not exist or is not imported", self.UClient.Username)
+		logrus.Errorf("[AuthImporter]%s\n", emsg)
+		return pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
+	}
 	size := int32(0)
 	binary.Read(databuf, binary.BigEndian, &size)
 	KEL := make([]byte, size)
@@ -68,11 +70,11 @@ func (self *AuthImporter) Export(AuthorizedKey string, data []byte) *pkt.ErrorMe
 	self.KSS = [][]byte{}
 	for {
 		bs := make([]byte, 54)
-		databuf.Read(bs)
-		ref := pkt.NewRefer(bs)
-		if ref == nil {
+		n, _ := databuf.Read(bs)
+		if n < 54 {
 			break
 		}
+		ref := pkt.NewRefer(bs)
 		l = l + ref.OriginalSize
 		KS := codec.ECBDecryptNoPad(ref.KEU, KL)
 		ref.KEU = codec.ECBEncryptNoPad(KS, k.AESKey)
@@ -84,7 +86,7 @@ func (self *AuthImporter) Export(AuthorizedKey string, data []byte) *pkt.ErrorMe
 		logrus.Error("[AuthImporter]Auth data err:Unequal length.\n")
 		return pkt.NewErrorMsg(pkt.BAD_FILE, "Unequal length")
 	}
-	return nil
+	return self.upload()
 }
 
 func (self *AuthImporter) upload() *pkt.ErrorMessage {
@@ -172,6 +174,8 @@ func (self *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessag
 		referIndex++
 	}
 	data := bytes.NewBuffer([]byte{})
+	bs := sha256.Sum256([]byte(AuthorizedKey))
+	data.Write(bs[:])
 	size := int32(len(KEL))
 	binary.Write(data, binary.BigEndian, size)
 	data.Write(KEL)

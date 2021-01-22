@@ -19,7 +19,7 @@ func Test(t *testing.T) {
 	//Make()
 	//***********api test*********
 
-	test.UpAndDownBytes()
+	//test.UpAndDownBytes()
 
 	//************s3 test****************
 
@@ -28,6 +28,7 @@ func Test(t *testing.T) {
 	//test.DownLoadFile()
 	//test.ListBucket()
 	//test.ListObj()
+	test.Auth()
 
 	//**********code test**********
 	//env.InitClient()

@@ -27,7 +27,7 @@ func (h *RegUserV3Handler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 	h.pkey = pubkey
 	lasttime, found := REG_PEER_CACHE.Get(h.pkey)
 	if found {
-		if time.Now().Unix()-lasttime.(int64) < 5 {
+		if time.Now().Unix()-lasttime.(int64) < 1 {
 			return pkt.NewErrorMsg(pkt.TOO_MANY_CURSOR, "Too frequently"), nil, nil
 		}
 	}

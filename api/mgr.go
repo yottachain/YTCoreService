@@ -65,7 +65,7 @@ func (me *Register) regist() error {
 	ii := int(time.Now().UnixNano() % int64(net.GetSuperNodeCount()))
 	sn := net.GetSuperNode(ii)
 	req := &pkt.RegUserReqV2{Username: &me.username, PubKey: &me.c.SignKey.PublicKey, VersionId: &env.VersionID}
-	res, err := net.RequestSN(req, sn, "", 0, false)
+	res, err := net.RequestSN(req, sn, "", 1, false)
 	if err != nil {
 		emsg := fmt.Sprintf("User '%s' registration failed!%s", me.c.Username, pkt.ToError(err))
 		logrus.Errorf("[Regist]%s\n", emsg)
@@ -211,6 +211,11 @@ func DistoryClient(key string) {
 		delete(clients.clientnames, c.Username)
 		delete(clients.clientids, c.UserId)
 	}
+}
+
+func InitApi() {
+	cache.IS_S3_Server = false
+	StartApi()
 }
 
 func StartApi() {

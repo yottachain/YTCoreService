@@ -13,19 +13,16 @@ import (
 )
 
 func SyncFile() {
-
 	if yfnet {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 	} else {
 		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
 	}
 	api.StartApi()
-
 }
 
 func UploadFile() {
 	initApi()
-
 	meta := api.MetaTobytes(0, md5.New().Sum(nil))
 	err := client.NewObjectAccessor().CreateObject("test", "uris", primitive.NewObjectID(), meta)
 	if err != nil {
@@ -56,7 +53,7 @@ func DownLoadFile() {
 			}
 		}
 	}()
-	err := dn.SaveToFile(outpath)
+	_, err := dn.SaveToFile(outpath)
 	if err != nil {
 		logrus.Errorf("[DownloadFile]ERR:%s.\n", err)
 	} else {
