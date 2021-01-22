@@ -8,7 +8,7 @@ import (
 	ytcrypto "github.com/yottachain/YTCrypto"
 )
 
-func TestEOS() bool {
+func EOS() bool {
 	env.InitServer()
 	net.InitShadowPriKey()
 	net.EOSInit()

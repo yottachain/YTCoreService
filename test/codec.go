@@ -14,6 +14,13 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
+func Codec() {
+	env.InitClient()
+	//TestMultiCutFile()
+	//TestCutFile()
+	TestLRC()
+}
+
 func TestAES() {
 	data := []byte("abcdefg")
 	sha256Digest := sha256.New()

@@ -2,6 +2,7 @@ package test
 
 import (
 	"os"
+	"time"
 
 	"github.com/yottachain/YTCoreService/api"
 )
@@ -19,4 +20,15 @@ func initApi() {
 		os.Setenv("YTFS.userlist", "conf/userlistZW.cfg")
 	}
 	api.InitApi()
+
+	for {
+		cs := api.GetClients()
+		if len(cs) > 0 {
+			client = cs[0]
+			break
+		} else {
+			time.Sleep(time.Duration(1) * time.Second)
+		}
+	}
+
 }
