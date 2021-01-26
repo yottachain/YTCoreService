@@ -121,7 +121,12 @@ func (self *DownloadObject) LoadRange(start, end int64) io.ReadCloser {
 	return rd
 }
 
-func (self *DownloadObject) SaveToPath(path string) ([]byte, error) {
+func (self *DownloadObject) SaveToPath(path string) error {
+	_, err := self.SaveToPathV2(path)
+	return err
+}
+
+func (self *DownloadObject) SaveToPathV2(path string) ([]byte, error) {
 	s, err := os.Stat(path)
 	if err != nil {
 		if !os.IsExist(err) {
