@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/mr-tron/base58/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 )
@@ -17,6 +17,7 @@ type Encoder struct {
 	key           string
 	userId        uint32
 	keyNumber     uint32
+	storeNumber   uint32
 	sign          string
 	checker       DupBlockChecker
 	fc            *FileEncoder
@@ -25,13 +26,14 @@ type Encoder struct {
 	WriteLength   *int64
 }
 
-func NewEncoder(uid, keyNum uint32, signstr string, s3key string, enc *FileEncoder, check DupBlockChecker) *Encoder {
+func NewEncoder(uid, keyNum, storeNum uint32, signstr string, s3key string, enc *FileEncoder, check DupBlockChecker) *Encoder {
 	return &Encoder{key: s3key,
-		userId:    uid,
-		keyNumber: keyNum,
-		sign:      signstr,
-		checker:   check,
-		fc:        enc,
+		userId:      uid,
+		keyNumber:   keyNum,
+		storeNumber: storeNum,
+		sign:        signstr,
+		checker:     check,
+		fc:          enc,
 	}
 }
 
@@ -145,6 +147,7 @@ func (self *Encoder) writeHead(f *os.File) (int64, error) {
 	bytebuf.Write(self.GetMD5())
 	binary.Write(bytebuf, binary.BigEndian, self.userId)
 	binary.Write(bytebuf, binary.BigEndian, self.keyNumber)
+	binary.Write(bytebuf, binary.BigEndian, self.storeNumber)
 	bs7 := []byte(self.sign)
 	size := len(bs7)
 	binary.Write(bytebuf, binary.BigEndian, int32(size))
@@ -154,7 +157,7 @@ func (self *Encoder) writeHead(f *os.File) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return 8 + 8 + 16 + 4 + 4 + 4 + int64(size), nil
+	return 8 + 8 + 16 + 4 + 4 + 4 + 4 + int64(size), nil
 }
 
 func (self *Encoder) writeKey(f *os.File) error {

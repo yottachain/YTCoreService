@@ -125,10 +125,11 @@ func CheckBlockDup(vhp []byte) proto.Message {
 }
 
 type UploadBlockDBHandler struct {
-	pkey string
-	m    *pkt.UploadBlockDBReqV2
-	user *dao.User
-	vnu  primitive.ObjectID
+	pkey        string
+	m           *pkt.UploadBlockDBReqV2
+	user        *dao.User
+	vnu         primitive.ObjectID
+	storeNumber int32
 }
 
 func (h *UploadBlockDBHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
@@ -139,6 +140,9 @@ func (h *UploadBlockDBHandler) SetMessage(pubkey string, msg proto.Message) (*pk
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Id == nil || h.m.Vnu == nil || h.m.OriginalSize == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
+		sign, num := GetStoreNumber(*h.m.SignData, int32(*h.m.KeyNumber))
+		*h.m.SignData = sign
+		h.storeNumber = num
 		if h.m.Data == nil || len(h.m.Data) > env.PL2 {
 			return pkt.NewError(pkt.TOO_BIG_BLOCK), nil, nil
 		}
@@ -202,7 +206,7 @@ func (h *UploadBlockDBHandler) Handle() proto.Message {
 		}
 	}
 	ref := &pkt.Refer{VBI: vbi, SuperID: uint8(env.SuperNodeID), OriginalSize: int64(*h.m.OriginalSize),
-		RealSize: int32(len(h.m.Data)), KEU: h.m.KEU, KeyNumber: int16(*h.m.KeyNumber), Id: int16(*h.m.Id)}
+		RealSize: int32(len(h.m.Data)), KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}
 	vnustr := h.vnu.Hex()
 	usedSpace := uint64(env.PCM)
 	saveObjectMetaReq := &pkt.SaveObjectMetaReq{UserID: &h.user.UserID, VNU: &vnustr,
@@ -222,10 +226,11 @@ func (h *UploadBlockDBHandler) Handle() proto.Message {
 }
 
 type UploadBlockDupHandler struct {
-	pkey string
-	m    *pkt.UploadBlockDupReqV2
-	user *dao.User
-	vnu  primitive.ObjectID
+	pkey        string
+	m           *pkt.UploadBlockDupReqV2
+	user        *dao.User
+	vnu         primitive.ObjectID
+	storeNumber int32
 }
 
 func (h *UploadBlockDupHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
@@ -236,6 +241,9 @@ func (h *UploadBlockDupHandler) SetMessage(pubkey string, msg proto.Message) (*p
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
+		sign, num := GetStoreNumber(*h.m.SignData, int32(*h.m.KeyNumber))
+		*h.m.SignData = sign
+		h.storeNumber = num
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
@@ -270,11 +278,11 @@ func (h *UploadBlockDupHandler) Handle() proto.Message {
 	}
 	usedSpace := env.PCM
 	if meta.AR != codec.AR_DB_MODE {
-		usedSpace = env.PFL * uint64(meta.VNF) * uint64(env.Space_factor) / 100
+		usedSpace = env.PFL * uint64(meta.VNF+1) * uint64(env.Space_factor) / 100
 	}
 	vnustr := h.vnu.Hex()
 	ref := &pkt.Refer{VBI: meta.VBI, SuperID: uint8(env.SuperNodeID), OriginalSize: int64(*h.m.OriginalSize),
-		RealSize: int32(*h.m.RealSize), KEU: h.m.KEU, KeyNumber: int16(*h.m.KeyNumber), Id: int16(*h.m.Id)}
+		RealSize: int32(*h.m.RealSize), KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}
 	saveObjectMetaReq := &pkt.SaveObjectMetaReq{UserID: &h.user.UserID, VNU: &vnustr,
 		Refer: ref.Bytes(), UsedSpace: &usedSpace, Mode: new(bool)}
 	*saveObjectMetaReq.Mode = false
@@ -286,18 +294,33 @@ func (h *UploadBlockDupHandler) Handle() proto.Message {
 			if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
 				logrus.Warnf("[UploadBLK]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), *h.m.Id)
 			} else {
-				dao.IncBlockNlinkCount()
+				dao.INCBlockNLINK(meta)
 			}
 		}
 	}
 	return &pkt.VoidResp{}
 }
 
+func GetStoreNumber(signdata string, signnumber int32) (string, int32) {
+	type SignData struct {
+		Number int32
+		Sign   string
+	}
+	data := &SignData{}
+	err := json.Unmarshal([]byte(signdata), &data)
+	if err != nil {
+		return signdata, signnumber
+	} else {
+		return data.Sign, data.Number
+	}
+}
+
 type UploadBlockEndHandler struct {
-	pkey string
-	m    *pkt.UploadBlockEndReqV2
-	user *dao.User
-	vnu  primitive.ObjectID
+	pkey        string
+	m           *pkt.UploadBlockEndReqV2
+	user        *dao.User
+	vnu         primitive.ObjectID
+	storeNumber int32
 }
 
 func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
@@ -308,6 +331,9 @@ func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*p
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
+		sign, num := GetStoreNumber(*h.m.SignData, *h.m.KeyNumber)
+		*h.m.SignData = sign
+		h.storeNumber = num
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
@@ -391,7 +417,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	usedSpace := uint64(env.PFL * shardcount)
 	vnustr := h.vnu.Hex()
 	ref := &pkt.Refer{VBI: meta.VBI, SuperID: uint8(env.SuperNodeID), OriginalSize: *h.m.OriginalSize,
-		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(*h.m.KeyNumber), Id: int16(*h.m.Id)}
+		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}
 	saveObjectMetaReq := &pkt.SaveObjectMetaReq{UserID: &h.user.UserID, VNU: &vnustr,
 		Refer: ref.Bytes(), UsedSpace: &usedSpace, Mode: new(bool)}
 	*saveObjectMetaReq.Mode = false
@@ -482,10 +508,11 @@ func verifySign(meta *dao.ShardMeta, node []*net.Node) bool {
 }
 
 type UploadBlockEndSyncHandler struct {
-	pkey string
-	m    *pkt.UploadBlockEndSyncReqV2
-	user *dao.User
-	vnu  primitive.ObjectID
+	pkey        string
+	m           *pkt.UploadBlockEndSyncReqV2
+	user        *dao.User
+	vnu         primitive.ObjectID
+	storeNumber int32
 }
 
 func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
@@ -496,6 +523,9 @@ func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message)
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VBI == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
+		sign, num := GetStoreNumber(*h.m.SignData, *h.m.KeyNumber)
+		*h.m.SignData = sign
+		h.storeNumber = num
 		h.user = dao.GetUserCache(int32(*h.m.UserId), int(*h.m.KeyNumber), *h.m.SignData)
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
@@ -563,7 +593,7 @@ func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
 	usedSpace := uint64(env.PFL * shardcount)
 	vnustr := h.vnu.Hex()
 	ref := &pkt.Refer{VBI: meta.VBI, SuperID: uint8(env.SuperNodeID), OriginalSize: *h.m.OriginalSize,
-		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(*h.m.KeyNumber), Id: int16(*h.m.Id)}
+		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}
 	saveObjectMetaReq := &pkt.SaveObjectMetaReq{UserID: &h.user.UserID, VNU: &vnustr,
 		Refer: ref.Bytes(), UsedSpace: &usedSpace, Mode: new(bool)}
 	*saveObjectMetaReq.Mode = false

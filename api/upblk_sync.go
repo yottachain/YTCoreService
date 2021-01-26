@@ -73,8 +73,8 @@ func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 	vnu := &pkt.UploadBlockDBReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadBlockDBReqV2{
 		UserId:       &self.UPOBJ.UClient.UserId,
-		SignData:     &self.UPOBJ.UClient.Sign,
-		KeyNumber:    &self.UPOBJ.UClient.KeyNumber,
+		SignData:     &self.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber:    &self.UPOBJ.UClient.SignKey.KeyNumber,
 		Id:           &bid,
 		Vnu:          vnu,
 		VHP:          self.EncBLK.VHP,
@@ -83,6 +83,10 @@ func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 		KED:          self.EncBLK.KED,
 		OriginalSize: &osize,
 		Data:         self.EncBLK.DATA,
+	}
+	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+		req.SignData = &sign
 	}
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg == nil {
@@ -99,10 +103,14 @@ func (self *UploadBlockSync) uploadDup() {
 	v := &pkt.UploadBlockDupReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	dupReq := &pkt.UploadBlockDupReqV2{
 		UserId:    &self.UPOBJ.UClient.UserId,
-		SignData:  &self.UPOBJ.UClient.Sign,
-		KeyNumber: &self.UPOBJ.UClient.KeyNumber,
+		SignData:  &self.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
 		VHB:       self.EncBLK.VHB,
 		KEU:       self.EncBLK.KEU,
+	}
+	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+		dupReq.SignData = &sign
 	}
 	bid := uint32(self.ID)
 	osize := uint64(self.EncBLK.OriginalSize)

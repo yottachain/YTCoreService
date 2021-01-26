@@ -38,6 +38,38 @@ type FileMeta struct {
 	Latest    bool
 }
 
+func (self *FileMeta) GetFileMeta() error {
+	source := NewUserMetaSource(uint32(self.UserId))
+	var opt *options.FindOneOptions
+	var filter bson.M
+	if self.VersionId == primitive.NilObjectID {
+		filter = bson.M{"bucketId": self.BucketId, "fileName": self.FileName}
+		opt = options.FindOne().SetProjection(bson.M{"_id": 1, "version.versionId": 1, "version.meta": 1, "version": bson.M{"$slice": -1}})
+	} else {
+		filter = bson.M{"bucketId": self.BucketId, "fileName": self.FileName, "version.versionId": self.VersionId}
+		opt = options.FindOne().SetProjection(bson.M{"_id": 1, "version.versionId": 1, "version.meta": 1})
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res := &FileMetaWithVersion{}
+	err := source.GetFileColl().FindOne(ctx, filter, opt).Decode(res)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return err
+		} else {
+			logrus.Errorf("[S3FileMeta]GetFileMeta %s/%s ERR:%s\n", self.BucketId.Hex(), self.FileName, err)
+			return err
+		}
+	}
+	self.FileId = res.FileId
+	if len(res.Version) == 0 {
+		return mongo.ErrNoDocuments
+	}
+	self.VersionId = res.Version[0].VersionId
+	self.Meta = res.Version[0].Meta
+	return nil
+}
+
 func (self *FileMeta) GetLastFileMeta(justversion bool) error {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"bucketId": self.BucketId, "fileName": self.FileName}

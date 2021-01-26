@@ -470,14 +470,13 @@ github.com/yottachain/P2PHost v1.0.2-0.20200921072702-609d35770f59 h1:FZHYTMNf39
 github.com/yottachain/P2PHost v1.0.2-0.20200921072702-609d35770f59/go.mod h1:4ZBTjWbVgjQbVAjLDWsj0VSB723F02mau38rGp1W5yU=
 github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812 h1:XG9TtLosanLdwqSoporMr8OASUOjxuaj6cJDlut1c9s=
 github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812/go.mod h1:jDJUVGeQ1clW7k9OTRBAFtCMwGs9B9fGQ9QY64SKqlk=
-github.com/yottachain/YTDNMgmt v0.0.0-20210120102054-351b0717c173 h1:9cOOMSj5Hic652pJ4q//4lSgUH5Xy0v4ErJ4bb5UNeg=
-github.com/yottachain/YTDNMgmt v0.0.0-20210120102054-351b0717c173/go.mod h1:aAy0R01g6gHj8oLp1ZKayseDUGAnGv1RlQ3ptXOzm8M=
+github.com/yottachain/YTDNMgmt v0.0.0-20210126073346-878685ad12b5 h1:1nW6Sd0T83FKIsHFybNswgvqd18W+B5ThCkvhibr+Zc=
+github.com/yottachain/YTDNMgmt v0.0.0-20210126073346-878685ad12b5/go.mod h1:aAy0R01g6gHj8oLp1ZKayseDUGAnGv1RlQ3ptXOzm8M=
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb h1:dcRKjMvVYkYS5y2r+tXkU+eKTXWN5vHTLXdwC72JKQU=
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200703084155-b2658f82b387/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
+github.com/yottachain/YTHost v1.0.2-0.20200918110720-68f155ccc541 h1:jZK4hDasAo+ubFlbi0l7uJoXizoKFkpSaUcbW6Fw/pA=
 github.com/yottachain/YTHost v1.0.2-0.20200918110720-68f155ccc541/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
-github.com/yottachain/YTHost v1.0.2-0.20210114062308-1be45ce6bacd h1:ZUDDKRefDc59f3IkAGHHTTdDoR3b50Jp3lfw2TBVa0I=
-github.com/yottachain/YTHost v1.0.2-0.20210114062308-1be45ce6bacd/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/yotta-analysis v0.0.0-20200427065413-d4b83ac9a92f/go.mod h1:WBAiITvR+7h/fwyUYkybMjaBb812On6Td7sMc/nAqKE=
 github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692 h1:LEWEYm5sR8SGk/+Qv23q7/4ArbGS0QZc9DSyxjFF0Mk=
 github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=

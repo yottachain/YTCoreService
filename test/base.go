@@ -17,7 +17,7 @@ const epos = 1024*1024*8 + 12
 
 var data []byte = env.MakeRandData(testsize)
 
-func UpAndDownBytes() {
+func UpAndDown() {
 	initApi()
 	vhw, _ := upload()
 	download(vhw)

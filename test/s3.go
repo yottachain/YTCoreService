@@ -1,9 +1,7 @@
 package test
 
 import (
-	"crypto/md5"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -12,34 +10,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func SyncFile() {
-
-	if yfnet {
-		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
-	} else {
-		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
-	}
-	api.StartApi()
-
-}
-
-func UploadFile() {
+func S3() {
 	initApi()
-
-	meta := api.MetaTobytes(0, md5.New().Sum(nil))
-	err := client.NewObjectAccessor().CreateObject("test", "uris", primitive.NewObjectID(), meta)
-	if err != nil {
-		logrus.Panicf("%s", err)
-	}
-	//client.UploadFile("D:/Adobe_Reader_XI_zh_CN.exe", "test", "Adobe_Reader_XI_zh_CN.exe")
-	//client.UploadFile("D:/Secop.rar", "test", "Secop.rar")
-	//client.UploadFile("D:/YTCoreService_2.0.0.1.gz", "test", "YTCoreService_2.0.0.1.gz")
-	//client.UploadFile("D:/YTCoreService_2.0.0.2.gz", "test", "YTCoreService_2.0.0.2.gz")
+	//test.DownLoadFile()
+	//test.ListBucket()
+	//test.ListObj()
 }
 
 func DownLoadFile() {
 	outpath := "D:/YTSDK.ok.rar"
-	initApi()
 	dn, errmsg := client.NewDownloadFile("test", "YTSDK.rar", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
@@ -56,7 +35,7 @@ func DownLoadFile() {
 			}
 		}
 	}()
-	err := dn.SaveToFile(outpath)
+	_, err := dn.SaveToFile(outpath)
 	if err != nil {
 		logrus.Errorf("[DownloadFile]ERR:%s.\n", err)
 	} else {

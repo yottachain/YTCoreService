@@ -34,6 +34,7 @@ var HttpPort int
 var HttpRemoteIp string
 
 var EOSURI string
+var EOSAPI string
 var BPAccount string
 var ShadowAccount string
 var ShadowPriKey string
@@ -91,6 +92,8 @@ func readSnProperties() {
 	if EOSURI == "" {
 		log.Panicf("The 'eosURI' parameter is not configured.\n")
 	}
+	//EOSAPI = config.GetString("eosAPI", "http://yts3api.yottachain.net:8888/v1/history/get_key_accounts")
+	EOSAPI = config.GetString("eosAPI", "NA")
 	BPAccount = config.GetString("BPAccount", "")
 	if BPAccount == "" {
 		log.Panicf("The 'BPAccount' parameter is not configured.\n")

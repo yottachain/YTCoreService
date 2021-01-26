@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mr-tron/base58"
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/dao"

@@ -24,8 +24,8 @@ const Default_Block_Size = 1024*1024*2 - 1 - 128
 
 const Compress_Reserve_Size = 16 * 1024
 
-const SN_RETRY_WAIT = 10
-const SN_RETRYTIMES = 6 * 5
+const SN_RETRY_WAIT = 5
+const SN_RETRYTIMES = 12 * 5
 const DN_RETRY_WAIT = 3
 const CONN_EXPIRED = 60 * 5
 

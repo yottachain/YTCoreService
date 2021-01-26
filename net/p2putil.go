@@ -50,32 +50,32 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		log_pre = fmt.Sprintf("[%s][%d]%s", name, sn.ID, log_prefix)
 	}
 	retryTimes := 0
-	var resmsg *pkt.ErrorMessage
 	for {
-		if retryTimes > 1 {
-			if resmsg == nil {
-				logrus.Errorf("[P2P]%sRetry...\n", log_pre)
-			} else {
-				logrus.Errorf("[P2P]%s,ServiceError %d:%s,Retry...\n",
-					log_pre, resmsg.Code, strings.TrimSpace(resmsg.Msg))
-			}
-		}
-		client, err := NewClient(sn.NodeID)
+		snclient, err := NewSNClient(sn)
 		if err != nil {
 			return nil, err
 		}
-		resmsg, err := client.RequestSN(int32(msgtype), data, sn.Addrs, sn.Multiaddrs, log_pre, nowait)
-		if err != nil {
+		var resmsg proto.Message
+		var errmsg *pkt.ErrorMessage
+		if snclient.HttpSupported {
+			resmsg, errmsg = snclient.Request(int32(msgtype), data, log_pre, nowait)
+		} else {
+			client, err := NewClient(sn.NodeID)
+			if err != nil {
+				return nil, err
+			}
+			resmsg, errmsg = client.Request(int32(msgtype), data, snclient.TcpAddr, log_pre, nowait)
+		}
+		if errmsg != nil {
+			if !(errmsg.Code == pkt.TOO_MANY_CURSOR || errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {
+				return nil, errmsg
+			}
 			if nowait || retryTimes >= retry {
-				return nil, err
+				return nil, errmsg
+			} else {
+				logrus.Errorf("[P2P]%sServiceError %d:%s,Retry...\n", log_pre, errmsg.Code, strings.TrimSpace(errmsg.Msg))
 			}
-			if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR) {
-				if err.Code == pkt.INVALID_ARGS {
-					logrus.Errorf("%s [RequestSN]return msg error %s data hex=%x\n", log_pre, err.Msg, data)
-				}
-				return nil, err
-			}
-			if retryTimes != 0 {
+			if !(retryTimes == 0 && (errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.CONN_ERROR)) {
 				time.Sleep(time.Duration(env.SN_RETRY_WAIT) * time.Second)
 			}
 			retryTimes++

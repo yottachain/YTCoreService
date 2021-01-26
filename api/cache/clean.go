@@ -11,8 +11,10 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
+var IS_S3_Server = true
+
 func Delete(paths []string) {
-	if paths != nil {
+	if paths != nil && IS_S3_Server {
 		dir := ""
 		for _, p := range paths {
 			p = strings.ReplaceAll(p, "\\", "/")

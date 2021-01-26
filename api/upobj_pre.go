@@ -82,7 +82,8 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 		codec.Append(s3key, p)
 		logrus.Infof("[UploadObjectToDisk][%s]Already exists.\n", s3key)
 	} else {
-		enc := codec.NewEncoder(self.UClient.UserId, self.UClient.KeyNumber, self.UClient.Sign, s3key, self.Encoder, self)
+		enc := codec.NewEncoder(self.UClient.UserId, self.UClient.SignKey.KeyNumber,
+			self.UClient.StoreKey.KeyNumber, self.UClient.SignKey.Sign, s3key, self.Encoder, self)
 		enc.HandleProgress(self.PRO.ReadinLength, self.PRO.ReadOutLength, self.PRO.WriteLength)
 		logrus.Infof("[UploadObjectToDisk][%s]Start encode object...\n", s3key)
 		err := enc.Handle(p)
@@ -105,8 +106,8 @@ func (self *UploadObjectToDisk) Check(b *codec.PlainBlock, id int) (*codec.Encod
 	SN := net.GetBlockSuperNode(b.VHP)
 	req := &pkt.CheckBlockDupReq{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 		VHP:       b.VHP,
 	}
 	var resp proto.Message
@@ -146,7 +147,7 @@ func (self *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.Enco
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
-	keu := codec.ECBEncryptNoPad(ks, self.UClient.AESKey)
+	keu := codec.ECBEncryptNoPad(ks, self.UClient.StoreKey.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, b.KD)
 	return &codec.EncodedBlock{IsDup: false, OriginalSize: b.OriginalSize,
 		RealSize: rsize, VHP: b.VHP, KEU: keu, KED: ked, DATA: eblk.Data}, nil
@@ -187,7 +188,7 @@ func (self *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *c
 			vhb = eblk.VHB
 		}
 		if bytes.Equal(vhb, vhbs[index]) {
-			return codec.ECBEncryptNoPad(ks, self.UClient.AESKey), vhb
+			return codec.ECBEncryptNoPad(ks, self.UClient.StoreKey.AESKey), vhb
 		}
 	}
 	return nil, nil

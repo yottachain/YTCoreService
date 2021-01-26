@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/md5"
 	"errors"
 	"io"
 	"os"
@@ -20,6 +21,7 @@ type DownloadObject struct {
 	UClient  *Client
 	Length   int64
 	REFS     []*pkt.Refer
+	RSS      [][]byte
 	BkCall   BackupCaller
 	Progress *DownProgress
 }
@@ -48,8 +50,8 @@ func (self *DownloadObject) GetProgress() int32 {
 func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
 	req := &pkt.DownloadObjectInitReqV2{
 		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.Sign,
-		KeyNumber: &self.UClient.KeyNumber,
+		SignData:  &self.UClient.SignKey.Sign,
+		KeyNumber: &self.UClient.SignKey.KeyNumber,
 		VHW:       vhw,
 	}
 	return self.init(req, base58.Encode(vhw))
@@ -58,8 +60,8 @@ func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
 func (self *DownloadObject) InitByKey(bucketName, filename string, version primitive.ObjectID) *pkt.ErrorMessage {
 	req := &pkt.DownloadFileReqV2{
 		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.Sign,
-		KeyNumber:  &self.UClient.KeyNumber,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
 		Bucketname: &bucketName,
 		FileName:   &filename,
 	}
@@ -109,30 +111,35 @@ func (self *DownloadObject) init(req proto.Message, key string) *pkt.ErrorMessag
 	return nil
 }
 
-func (self *DownloadObject) Load() io.Reader {
+func (self *DownloadObject) Load() io.ReadCloser {
 	rd := NewDownLoadReader(self, 0, self.Length)
 	return rd
 }
 
-func (self *DownloadObject) LoadRange(start, end int64) io.Reader {
+func (self *DownloadObject) LoadRange(start, end int64) io.ReadCloser {
 	rd := NewDownLoadReader(self, start, end)
 	return rd
 }
 
 func (self *DownloadObject) SaveToPath(path string) error {
+	_, err := self.SaveToPathV2(path)
+	return err
+}
+
+func (self *DownloadObject) SaveToPathV2(path string) ([]byte, error) {
 	s, err := os.Stat(path)
 	if err != nil {
 		if !os.IsExist(err) {
 			err = os.MkdirAll(path, os.ModePerm)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
-			return err
+			return nil, err
 		}
 	} else {
 		if !s.IsDir() {
-			return errors.New("The specified path is not a directory.")
+			return nil, errors.New("The specified path is not a directory.")
 		}
 	}
 	self.Progress.Path = strings.ReplaceAll(path, "\\", "/")
@@ -142,27 +149,29 @@ func (self *DownloadObject) SaveToPath(path string) error {
 	return self.SaveToFile(self.Progress.Path + "source.dat")
 }
 
-func (self *DownloadObject) SaveToFile(path string) error {
+func (self *DownloadObject) SaveToFile(path string) ([]byte, error) {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 	read := NewDownLoadReader(self, 0, self.Length)
 	readbuf := make([]byte, 8192)
+	md5Digest := md5.New()
 	for {
 		num, err := read.Read(readbuf)
 		if err != nil && err != io.EOF {
-			return err
+			return nil, err
 		}
 		if num > 0 {
 			bs := readbuf[0:num]
 			f.Write(bs)
+			md5Digest.Write(bs)
 		}
 		if err != nil && err == io.EOF {
 			break
 		}
 	}
 	self.Progress.Complete = true
-	return nil
+	return md5Digest.Sum(nil), nil
 }

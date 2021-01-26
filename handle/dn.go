@@ -139,8 +139,10 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	if err != nil {
 		emsg := fmt.Sprintf("[DNStatusRep]ERR:%s,ID:%d,take times %d ms\n", err.Error(), h.m.Id, time.Now().Sub(startTime).Milliseconds())
 		logrus.Errorf(emsg)
-		if err == YTDNMgmt.IdentifyError {
-			productiveSpace = -1
+		var e *YTDNMgmt.ReportError
+		if errors.As(err, &e) {
+			productiveSpace = int64(e.ErrCode)
+			//innerErr:=e.Err
 		} else {
 			productiveSpace = -2
 		}

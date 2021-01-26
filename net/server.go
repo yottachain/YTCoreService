@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/mr-tron/base58"
 	"github.com/multiformats/go-multiaddr"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
@@ -24,8 +24,8 @@ func Stop() {
 }
 
 func Start(port int32, port2 int32, privatekey string) error {
-	privbytes, err := base58.Decode(privatekey)
-	if err != nil {
+	privbytes := base58.Decode(privatekey)
+	if privbytes == nil || len(privbytes) == 0 {
 		logrus.Panicf("[Booter]Bad format of private key,Base58 format needed")
 	}
 	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])

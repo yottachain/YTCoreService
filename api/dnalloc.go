@@ -26,11 +26,13 @@ func NotifyAllocNode(reset bool) {
 		time.Sleep(time.Duration(60) * time.Second)
 	} else {
 		cond.Signal()
-		for {
-			if DNList.Len() > 0 {
-				break
-			} else {
-				time.Sleep(time.Duration(1) * time.Second)
+		if env.StartSync > 0 {
+			for {
+				if DNList.Len() > 0 {
+					break
+				} else {
+					time.Sleep(time.Duration(1) * time.Second)
+				}
 			}
 		}
 	}
@@ -71,11 +73,12 @@ func StartPreAllocNode() {
 
 func PreAllocNode(c *Client) error {
 	defer env.TracePanic("[PreAllocNode]")
-	req := &pkt.PreAllocNodeReqV2{UserId: &c.UserId, SignData: &c.Sign, KeyNumber: &c.KeyNumber, Count: new(uint32)}
+	req := &pkt.PreAllocNodeReqV2{UserId: &c.UserId, SignData: &c.SignKey.Sign, KeyNumber: &c.SignKey.KeyNumber, Count: new(uint32)}
 	*req.Count = uint32(env.PNN)
 	req.Excludes = ErrorList()
 	res, err := net.RequestSN(req, c.SuperNode, "", 0, false)
 	if err != nil {
+		logrus.Debugf("[PreAllocNode]Return ERR:%d-%s\n", err.GetCode(), err.GetMsg())
 		return errors.New(fmt.Sprintf("%d-%s", err.GetCode(), err.GetMsg()))
 	}
 	resp, ok := res.(*pkt.PreAllocNodeResp)
