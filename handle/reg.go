@@ -307,11 +307,12 @@ func (h *SyncUserHandler) Handle() proto.Message {
 		eq := true
 		if len(h.m.Pubkey) != len(user.KUEp) {
 			eq = false
-		}
-		for index, bs := range h.m.Pubkey {
-			if !bytes.Equal(user.KUEp[index], bs) {
-				eq = false
-				break
+		} else {
+			for index, bs := range h.m.Pubkey {
+				if !bytes.Equal(user.KUEp[index], bs) {
+					eq = false
+					break
+				}
 			}
 		}
 		if !eq {
