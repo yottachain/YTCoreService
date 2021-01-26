@@ -172,7 +172,9 @@ func UpdateUser(user *User) error {
 	filter := bson.M{"_id": user.UserID}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := source.GetUserColl().UpdateOne(ctx, filter, user)
+	opt := &options.ReplaceOptions{}
+	opt.SetUpsert(true)
+	_, err := source.GetUserColl().ReplaceOne(ctx, filter, user, opt)
 	if err != nil {
 		logrus.Errorf("[UserMeta]UpdateUser UserID:%d,ERR:%s\n", user.UserID, err)
 		return err
