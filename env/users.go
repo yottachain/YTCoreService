@@ -22,6 +22,12 @@ func ReadUserProperties() []*UserInfo {
 	} else {
 		path = YTFS_HOME + path
 	}
+	_, err := os.Stat(path)
+	if err != nil {
+		if !os.IsExist(err) {
+			return []*UserInfo{}
+		}
+	}
 	bs, err := ioutil.ReadFile(path)
 	if err != nil {
 		logrus.Warnf("[Init]Read userlist.cfg ERR:%s\n", err)

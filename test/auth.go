@@ -10,7 +10,7 @@ import (
 )
 
 func Auth() {
-	api.AUTO_REG_FLAG = false
+
 	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 
 	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"
