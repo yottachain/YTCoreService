@@ -22,8 +22,6 @@ type Client struct {
 	SignKey  *Key
 	StoreKey *Key
 	KeyMap   map[uint32]*Key
-
-	AccessorKey string //Compatible with old S3
 }
 
 func (c *Client) GetKey(pubkeyhash []byte) *Key {

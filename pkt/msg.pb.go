@@ -7,10 +7,12 @@
 package pkt
 
 import (
+	"fmt"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
+	"strings"
 	sync "sync"
 )
 
@@ -126,6 +128,10 @@ type ErrorMessage struct {
 
 	Code int32  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
 	Msg  string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+}
+
+func (x *ErrorMessage) Error() string {
+	return fmt.Sprintf("ServiceError %d:%s", x.Code, strings.TrimSpace(x.Msg))
 }
 
 func (x *ErrorMessage) Reset() {
