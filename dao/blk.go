@@ -121,7 +121,7 @@ func INCBlockNLINK(meta *BlockMeta) error {
 		logrus.Errorf("[BlockMeta]INCBlockNLINK ERR:%s\n", err)
 		return err
 	}
-	IncBlockNlinkCount()
+	IncBlockNlinkCount(1)
 	return nil
 }
 
@@ -231,10 +231,10 @@ func GetBlockNlinkCount() (uint64, error) {
 	return result.NLINK, nil
 }
 
-func IncBlockNlinkCount() error {
+func IncBlockNlinkCount(inc int) error {
 	source := NewBaseSource()
 	filter := bson.M{"_id": 0}
-	update := bson.M{"$inc": bson.M{"NLINK": 1}}
+	update := bson.M{"$inc": bson.M{"NLINK": inc}}
 	opt := options.Update().SetUpsert(true)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -246,13 +246,27 @@ func IncBlockNlinkCount() error {
 	return nil
 }
 
+func AddLinks(ids []int64) error {
+	source := NewBaseSource()
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+	update := bson.M{"$inc": bson.M{"NLINK": 1}}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_, err := source.GetBlockColl().UpdateMany(ctx, filter, update)
+	if err != nil {
+		logrus.Errorf("[BlockMeta]AddLinks ERR:%s\n", err)
+	}
+	IncBlockNlinkCount(len(ids))
+	return nil
+}
+
 func GetUsedSpace(ids []int64) (map[int64]*BlockMeta, error) {
 	source := NewBaseSource()
 	filter := bson.M{"_id": bson.M{"$in": ids}}
 	fields := bson.M{"_id": 1, "VNF": 1, "AR": 1, "NLINK": 1}
 	opt := options.Find().SetProjection(fields)
 	metas := make(map[int64]*BlockMeta)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
 	defer cur.Close(ctx)

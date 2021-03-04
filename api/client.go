@@ -220,19 +220,34 @@ func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.
 	}
 }
 
-func (c *Client) ImporterAuth(bucketName, filename string) *AuthImporter {
+func (c *Client) ImportAuth(bucketName, filename string) *AuthImporter {
 	do := &AuthImporter{UClient: c}
 	do.bucketName = bucketName
 	do.filename = filename
 	return do
 }
 
-func (c *Client) ExporterAuth(bucketName, filename string) (*AuthExporter, *pkt.ErrorMessage) {
-	return c.ExporterAuthByVer(bucketName, filename, primitive.NilObjectID)
+func (c *Client) ExportAuth(bucketName, filename string) (*AuthExporter, *pkt.ErrorMessage) {
+	return c.ExportAuthByVer(bucketName, filename, primitive.NilObjectID)
 }
 
-func (c *Client) ExporterAuthByVer(bucketName, filename string, version primitive.ObjectID) (*AuthExporter, *pkt.ErrorMessage) {
+func (c *Client) ExportAuthByVer(bucketName, filename string, version primitive.ObjectID) (*AuthExporter, *pkt.ErrorMessage) {
 	do := &AuthExporter{UClient: c}
+	err := do.InitByKey(bucketName, filename, version)
+	if err != nil {
+		return nil, err
+	} else {
+		return do, nil
+	}
+}
+
+func (c *Client) Auth(bucketName, filename string) (*Auth, *pkt.ErrorMessage) {
+	return c.AuthByVer(bucketName, filename, primitive.NilObjectID)
+}
+
+func (c *Client) AuthByVer(bucketName, filename string, version primitive.ObjectID) (*Auth, *pkt.ErrorMessage) {
+	do := &Auth{}
+	do.UClient = c
 	err := do.InitByKey(bucketName, filename, version)
 	if err != nil {
 		return nil, err

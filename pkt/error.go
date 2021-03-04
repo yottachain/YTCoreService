@@ -49,6 +49,7 @@ const CONN_ERROR = 0x31
 const CODEC_ERROR = 0x32
 const BAD_FILE = 0x33
 const PRIKEY_NOT_EXIST = 0x34
+const REPEAT_REQ = 0x35
 
 var BUSY_ERROR = NewErrorMsg(SERVER_ERROR, "Too many routines")
 

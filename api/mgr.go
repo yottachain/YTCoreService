@@ -58,7 +58,6 @@ func (me *Register) newClient() error {
 	k := &Key{PrivateKey: me.privkey, KUSp: bs, AESKey: aeskey, PublicKey: pubkey}
 	m := make(map[uint32]*Key)
 	me.c = &Client{Username: me.username, SignKey: k, StoreKey: k, KeyMap: m}
-	me.c.AccessorKey = k.PublicKey
 	return nil
 }
 

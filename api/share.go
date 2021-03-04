@@ -131,6 +131,78 @@ func (self *AuthImporter) checkHash() *pkt.ErrorMessage {
 	return nil
 }
 
+type Auth struct {
+	AuthExporter
+	Bucket string
+	Key    string
+}
+
+func (self *Auth) MakeRefs(AuthorizedKey string) error {
+	refmap := make(map[int32]*pkt.Refer)
+	for _, ref := range self.REFS {
+		id := int32(ref.Id) & 0xFFFF
+		refmap[id] = ref
+	}
+	var referIndex int32 = 0
+	for {
+		refer := refmap[referIndex]
+		if refer == nil {
+			break
+		}
+		k, ok := self.UClient.KeyMap[uint32(refer.KeyNumber)]
+		if !ok {
+			emsg := fmt.Sprintf("The user did not enter a private key with number%d", refer.KeyNumber)
+			logrus.Errorf("[Auth]%s\n", emsg)
+			return pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
+		}
+		var KS []byte
+		if len(refer.KEU) == 32 {
+			KS = codec.ECBDecryptNoPad(refer.KEU, k.AESKey)
+		} else {
+			KS = codec.ECCDecrypt(refer.KEU, k.PrivateKey)
+		}
+		refer.KEU = codec.ECCEncrypt(KS, AuthorizedKey)
+		referIndex++
+	}
+	return nil
+}
+
+func (self *Auth) LicensedTo(username, AuthorizedKey string) *pkt.ErrorMessage {
+	sn := net.GetRegSuperNode(username)
+	refers := [][]byte{}
+	for _, ref := range self.REFS {
+		refers = append(refers, ref.Bytes())
+	}
+	count := uint32(len(refers))
+	list := &pkt.AuthReq_RefList{Refers: refers, Count: &count}
+	size := uint64(self.Length)
+	req := &pkt.AuthReq{UserId: &self.UClient.UserId,
+		SignData:   &self.UClient.SignKey.Sign,
+		KeyNumber:  &self.UClient.SignKey.KeyNumber,
+		Bucketname: &self.Bucket,
+		FileName:   &self.Key,
+		Username:   &username,
+		Pubkey:     &AuthorizedKey,
+		Length:     &size,
+		VHW:        self.VHW,
+		Meta:       self.Meta,
+		Reflist:    list,
+	}
+	resp, errmsg := net.RequestSN(req, sn, "", env.SN_RETRYTIMES, false)
+	if errmsg != nil {
+		logrus.Errorf("[Auth][%s]LicensedTo %s ERR:%s\n", self.UClient.Username, username, pkt.ToError(errmsg))
+		return errmsg
+	}
+	_, OK := resp.(*pkt.VoidResp)
+	if OK {
+		logrus.Errorf("[Auth][%s]LicensedTo %s/%s/%s OK\n", self.UClient.Username, username, self.Bucket, self.Key)
+		return nil
+	} else {
+		logrus.Errorf("[Auth][%s]LicensedTo ERR:RETURN_ERR_MSG\n", self.UClient.Username)
+		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
+	}
+}
+
 type AuthExporter struct {
 	UClient *Client
 	Length  int64
@@ -168,7 +240,12 @@ func (self *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessag
 			logrus.Errorf("[AuthExporter]%s\n", emsg)
 			return nil, pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
 		}
-		KS := codec.ECBDecryptNoPad(refer.KEU, k.AESKey)
+		var KS []byte
+		if len(refer.KEU) == 32 {
+			KS = codec.ECBDecryptNoPad(refer.KEU, k.AESKey)
+		} else {
+			KS = codec.ECCDecrypt(refer.KEU, k.PrivateKey)
+		}
 		refer.KEU = codec.ECBEncryptNoPad(KS, KL)
 		refs.Write(refer.Bytes())
 		referIndex++

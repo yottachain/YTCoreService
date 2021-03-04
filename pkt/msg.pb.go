@@ -130,10 +130,6 @@ type ErrorMessage struct {
 	Msg  string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 }
 
-func (x *ErrorMessage) Error() string {
-	return fmt.Sprintf("ServiceError %d:%s", x.Code, strings.TrimSpace(x.Msg))
-}
-
 func (x *ErrorMessage) Reset() {
 	*x = ErrorMessage{}
 	if protoimpl.UnsafeEnabled {
@@ -141,6 +137,10 @@ func (x *ErrorMessage) Reset() {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
+}
+
+func (x *ErrorMessage) Error() string {
+	return fmt.Sprintf("ServiceError %d:%s", x.Code, strings.TrimSpace(x.Msg))
 }
 
 func (x *ErrorMessage) String() string {

@@ -150,6 +150,18 @@ func initLog(logFileName string, log *logrus.Logger) {
 	}
 }
 
+func AddLog(logFileName string) *logrus.Logger {
+	format := &Formatter{}
+	log := logrus.New()
+	log.Level = logrus.TraceLevel
+	log.Formatter = format
+	hook, _ := NewHook(logFileName, format)
+	if hook != nil {
+		log.AddHook(hook)
+	}
+	return log
+}
+
 func NewHook(logName string, format *Formatter) (logrus.Hook, error) {
 	writer, err := rotatelogs.New(
 		logName+".%Y%m%d",

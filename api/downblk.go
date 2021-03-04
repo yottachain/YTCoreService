@@ -75,7 +75,11 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 			logrus.Errorf("[DownloadBlock]%s\n", emsg)
 			return nil, pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
 		}
-		KS = codec.ECBDecryptNoPad(self.Ref.KEU, k.AESKey)
+		if len(self.Ref.KEU) == 32 {
+			KS = codec.ECBDecryptNoPad(self.Ref.KEU, k.AESKey)
+		} else {
+			KS = codec.ECCDecrypt(self.Ref.KEU, k.PrivateKey)
+		}
 	}
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()
