@@ -52,6 +52,68 @@ func (h *AuthHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMe
 	}
 }
 
+func (h *AuthHandler) Handle() proto.Message {
+	logrus.Debugf("[AuthHandler][%d]Receive auth request:/%s/%s to %s\n", *h.m.UserId, *h.m.Bucketname, *h.m.FileName, *h.m.Username)
+	resp := h.createBucket()
+	if resp != nil {
+		return resp
+	}
+	meta := dao.NewObjectMeta(h.authuser.UserID, h.m.VHW)
+	err := meta.GetAndUpdateLink()
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	} else {
+		if meta.VNU != primitive.NilObjectID {
+			return h.writeMeta(meta.VNU)
+		}
+	}
+	vbigroup := make(map[int32][]int64)
+	refers := []*pkt.Refer{}
+	for _, refbs := range h.m.Reflist.Refers {
+		refer := pkt.NewRefer(refbs)
+		if refer == nil {
+			logrus.Infof("[AuthHandler][%d]Refer data err\n", *h.m.UserId)
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer data err")
+		}
+		refer.KeyNumber = int16(h.authkeynumber)
+		refers = append(refers, refer)
+		ids := vbigroup[int32(refer.SuperID)]
+		if ids == nil {
+			ids = []int64{}
+			vbigroup[int32(refer.SuperID)] = ids
+		}
+		ids = append(ids, refer.VBI)
+	}
+	startTime := time.Now()
+	usedspaces := make([]int64, len(vbigroup))
+	wgroup := sync.WaitGroup{}
+	index := 0
+	for k, v := range vbigroup {
+		wgroup.Add(1)
+		go h.addNLink(k, v, &usedspaces[index], &wgroup)
+		index++
+	}
+	wgroup.Wait()
+	usedspace := int64(0)
+	for _, us := range usedspaces {
+		if us == -1 {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		} else {
+			usedspace = usedspace + us
+		}
+	}
+	logrus.Infof("[AuthHandler][%d]Sum fee result %d,add nlink %d,take times %d ms\n", *h.m.UserId, usedspace,
+		len(refers), time.Now().Sub(startTime).Milliseconds())
+	VNU := primitive.NewObjectID()
+	er := h.addMeta(uint64(usedspace), VNU, refers)
+	if er != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	logrus.Infof("[AuthHandler][%d]Auth object /%s/%s to %s OK\n", *h.m.UserId, *h.m.Bucketname, *h.m.FileName, *h.m.Username)
+	h.doFee(uint64(usedspace), VNU)
+	return h.writeMeta(VNU)
+}
+
 func (h *AuthHandler) ReqHashCode() string {
 	md5Digest := md5.New()
 	ss := fmt.Sprintf("%d%s%s%s%s", h.user.UserID, *h.m.Bucketname, *h.m.FileName, *h.m.Username, *h.m.Pubkey)
@@ -123,63 +185,6 @@ func (h *AuthHandler) writeMeta(vnu primitive.ObjectID) proto.Message {
 	return &pkt.VoidResp{}
 }
 
-func (h *AuthHandler) Handle() proto.Message {
-	resp := h.createBucket()
-	if resp != nil {
-		return resp
-	}
-	meta := dao.NewObjectMeta(h.authuser.UserID, h.m.VHW)
-	err := meta.GetAndUpdateLink()
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	} else {
-		if meta.VNU != primitive.NilObjectID {
-			return h.writeMeta(meta.VNU)
-		}
-	}
-	vbigroup := make(map[int32][]int64)
-	refers := []*pkt.Refer{}
-	for _, refbs := range h.m.Reflist.Refers {
-		refer := pkt.NewRefer(refbs)
-		if refer == nil {
-			logrus.Infof("[AuthHandler][%d]Refer data err\n", *h.m.UserId)
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer data err")
-		}
-		refer.KeyNumber = int16(h.authkeynumber)
-		refers = append(refers, refer)
-		ids := vbigroup[int32(refer.SuperID)]
-		if ids == nil {
-			vbigroup[int32(refer.SuperID)] = []int64{}
-		}
-		ids = append(ids, refer.VBI)
-	}
-	usedspaces := make([]int64, len(vbigroup))
-	wgroup := sync.WaitGroup{}
-	index := 0
-	for k, v := range vbigroup {
-		wgroup.Add(1)
-		go h.addNLink(k, v, &usedspaces[index], &wgroup)
-		index++
-	}
-	wgroup.Wait()
-	usedspace := int64(0)
-	for _, us := range usedspaces {
-		if us == -1 {
-			return pkt.NewError(pkt.SERVER_ERROR)
-		} else {
-			usedspace = usedspace + us
-		}
-	}
-	VNU := primitive.NewObjectID()
-	er := h.addMeta(uint64(usedspace), VNU, refers)
-	if er != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	logrus.Infof("[AuthHandler][%d]Auth object %s OK\n", *h.m.UserId, VNU.Hex())
-	h.doFee(uint64(usedspace), VNU)
-	return h.writeMeta(VNU)
-}
-
 func (h *AuthHandler) addMeta(usedspace uint64, VNU primitive.ObjectID, refers []*pkt.Refer) error {
 	meta := dao.NewObjectMeta(h.authuser.UserID, h.m.VHW)
 	meta.BlockList = [][]byte{}
@@ -224,7 +229,7 @@ func (h *AuthHandler) addNLink(snid int32, vibs []int64, usedSpace *int64, wg *s
 	defer wg.Done()
 	req := &pkt.AuthBlockLinkReq{VBIS: vibs}
 	var longmsg proto.Message
-	sn := net.GetUserSuperNode(snid)
+	sn := net.GetSuperNode(int(snid))
 	if sn.ID == int32(env.SuperNodeID) {
 		handler := &AuthBlockLinkHandler{pkey: sn.PubKey, m: req}
 		msg := handler.Handle()
@@ -252,7 +257,7 @@ type AuthBlockLinkHandler struct {
 	m    *pkt.AuthBlockLinkReq
 }
 
-func (h *AuthBlockLinkHandler) AuthBlockLinkHandler(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+func (h *AuthBlockLinkHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.AuthBlockLinkReq)
 	if ok {
@@ -260,7 +265,7 @@ func (h *AuthBlockLinkHandler) AuthBlockLinkHandler(pubkey string, msg proto.Mes
 		if h.m.VBIS == nil || len(h.m.VBIS) == 0 {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		return nil, AUTH_ROUTINE_NUM, nil
+		return nil, SUMFEE_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
@@ -269,9 +274,11 @@ func (h *AuthBlockLinkHandler) AuthBlockLinkHandler(pubkey string, msg proto.Mes
 func (h *AuthBlockLinkHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
-		logrus.Errorf("[SaveObjectMeta]AuthSuper ERR:%s\n", err)
+		logrus.Errorf("[AuthBlockLink]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
+	logrus.Debugf("[AuthBlockLink]Receive request:Count %d\n", len(h.m.VBIS))
+	startTime := time.Now()
 	m, err := dao.GetUsedSpace(h.m.VBIS)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
@@ -281,6 +288,7 @@ func (h *AuthBlockLinkHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	us := h.GetUsedSpace(m)
+	logrus.Debugf("[AuthBlockLink]Sum OK,count %d,take times %d ms\n", len(h.m.VBIS), time.Now().Sub(startTime).Milliseconds())
 	return &pkt.LongResp{Value: us}
 }
 
