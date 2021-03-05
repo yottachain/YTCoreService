@@ -135,8 +135,8 @@ func (h *AuthHandler) createBucket() proto.Message {
 	}
 	AUTH_MAP.Store(hash, "")
 	defer AUTH_MAP.Delete(hash)
-	authuser := dao.GetUserByUsername(*h.m.Username)
-	if authuser == nil {
+	h.authuser = dao.GetUserByUsername(*h.m.Username)
+	if h.authuser == nil {
 		logrus.Errorf("[AuthHandler][%d]Invalid Username:%s\n", *h.m.UserId, *h.m.Username)
 		return pkt.NewErrorMsg(pkt.INVALID_USER_ID, "Invalid Username:"+*h.m.Username)
 	}
@@ -146,7 +146,7 @@ func (h *AuthHandler) createBucket() proto.Message {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Pubkey err")
 	}
 	h.authkeynumber = -1
-	for index, k := range authuser.KUEp {
+	for index, k := range h.authuser.KUEp {
 		if bytes.Equal(k, bs) {
 			h.authkeynumber = int32(index)
 			break
@@ -156,15 +156,15 @@ func (h *AuthHandler) createBucket() proto.Message {
 		logrus.Errorf("[AuthHandler][%d]Pubkey:%s non-existent\n", h.authuser.UserID, *h.m.Pubkey)
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Pubkey non-existent")
 	}
-	meta, _ := dao.GetBucketIdFromCache(AUTH_BUCKET, authuser.UserID)
+	meta, _ := dao.GetBucketIdFromCache(AUTH_BUCKET, h.authuser.UserID)
 	if meta == nil {
-		meta := &dao.BucketMeta{UserId: authuser.UserID, BucketId: primitive.NewObjectID(), BucketName: AUTH_BUCKET}
+		meta := &dao.BucketMeta{UserId: h.authuser.UserID, BucketId: primitive.NewObjectID(), BucketName: AUTH_BUCKET}
 		err := dao.SaveBucketMeta(meta)
 		if err != nil {
 			return pkt.NewError(pkt.SERVER_ERROR)
 		}
 		logrus.Infof("[AuthHandler][%d]Create share bucket\n", h.authuser.UserID)
-		dao.DelBucketListCache(authuser.UserID)
+		dao.DelBucketListCache(h.authuser.UserID)
 	}
 	h.authbucketid = meta.BucketId
 	return nil

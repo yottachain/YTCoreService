@@ -95,7 +95,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	err2, rnum, urnum := handler.SetMessage(pubkey, msg)
 	if err2 != nil {
-		logrus.Errorf("[OnMessage]SetMessage %s %s,data len:%d\n", name, len(data), pkt.ToError(err2))
+		logrus.Errorf("[OnMessage]SetMessage %s %s,data len:%d\n", name, pkt.ToError(err2), len(data))
 		return pkt.MarshalMsgBytes(err2)
 	}
 	var curRouteNum int32 = 0
