@@ -40,7 +40,7 @@ func (h *AuthHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMe
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		if h.m.Username == nil || h.m.Pubkey == nil || h.m.Bucketname == nil || h.m.FileName == nil {
+		if h.m.Username == nil || h.m.Pubkey == nil || h.m.Bucketname == nil || *h.m.Bucketname == "" || h.m.FileName == nil || *h.m.FileName == "" {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		if h.m.Reflist == nil || h.m.Length == nil || h.m.VHW == nil || h.m.Reflist.Refers == nil || len(h.m.Reflist.Refers) == 0 {
@@ -78,11 +78,8 @@ func (h *AuthHandler) Handle() proto.Message {
 		refer.KeyNumber = int16(h.authkeynumber)
 		refers = append(refers, refer)
 		ids := vbigroup[int32(refer.SuperID)]
-		if ids == nil {
-			ids = []int64{}
-			vbigroup[int32(refer.SuperID)] = ids
-		}
 		ids = append(ids, refer.VBI)
+		vbigroup[int32(refer.SuperID)] = ids
 	}
 	startTime := time.Now()
 	usedspaces := make([]int64, len(vbigroup))
@@ -222,7 +219,7 @@ func (h *AuthHandler) doFee(usedspace uint64, VNU primitive.ObjectID) {
 	logrus.Infof("[AuthHandler]/%d/%s OK.\n", h.authuser.UserID, VNU.Hex())
 }
 
-func (h *AuthHandler) addNLink(snid int32, vibs []int64, usedSpace *int64, wg *sync.WaitGroup) (int64, *pkt.ErrorMessage) {
+func (h *AuthHandler) addNLink(snid int32, vibs []int64, usedSpace *int64, wg *sync.WaitGroup) {
 	defer wg.Done()
 	req := &pkt.AuthBlockLinkReq{VBIS: vibs}
 	var longmsg proto.Message
@@ -230,23 +227,27 @@ func (h *AuthHandler) addNLink(snid int32, vibs []int64, usedSpace *int64, wg *s
 	if sn.ID == int32(env.SuperNodeID) {
 		handler := &AuthBlockLinkHandler{pkey: sn.PubKey, m: req}
 		msg := handler.Handle()
-		if err, ok := msg.(*pkt.ErrorMessage); ok {
-			return 0, err
+		if _, ok := msg.(*pkt.ErrorMessage); ok {
+			*usedSpace = -1
+			return
 		} else {
 			longmsg = msg
 		}
 	} else {
 		msg, err := net.RequestSN(req, sn, "", 0, false)
 		if err != nil {
-			return 0, err
+			*usedSpace = -1
+			return
 		} else {
 			longmsg = msg
 		}
 	}
 	if resp, ok := longmsg.(*pkt.LongResp); ok {
-		return resp.Value, nil
+		*usedSpace = resp.Value
+	} else {
+		*usedSpace = -1
 	}
-	return 0, pkt.NewErrorMsg(pkt.BAD_MESSAGE, "")
+
 }
 
 type AuthBlockLinkHandler struct {

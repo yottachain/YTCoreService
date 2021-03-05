@@ -252,6 +252,8 @@ func (c *Client) AuthByVer(bucketName, filename string, version primitive.Object
 	if err != nil {
 		return nil, err
 	} else {
+		do.Bucket = bucketName
+		do.Key = filename
 		return do, nil
 	}
 }
