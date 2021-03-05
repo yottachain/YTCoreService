@@ -11,20 +11,21 @@ import (
 
 func Auth() {
 	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"
+	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 	api.InitApi()
 
 	//1.注册授权方的用户实例A
 	clientA, err := api.NewClientV2(&env.UserInfo{
-		UserName: "devtestuser1",
-		Privkey:  []string{"5KTF2yAamvcaoDu6juAvxT5nxTn3UGfNoY2CJn8VAQ4giAfma2a"}}, 3)
+		UserName: "testusernew1",
+		Privkey:  []string{"5Kd86kKY6SFYvV1zXsRakHEGKp3EzD6C9amYd8Q4XfZq24xJsFD"}}, 3)
 	if err != nil {
 		logrus.Panicf("注册导出授权用户失败:%s\n", err)
 	}
 
 	//2.注册被授权的用户实例B
 	clientB, err := api.NewClientV2(&env.UserInfo{
-		UserName: "devvtest1111",
-		Privkey:  []string{"5JReF8eeGS53B8prdcrSfTf6dGbvu3QJ6KceE8rLsnRaNMMCYw9"}}, 3)
+		UserName: "testusernew2",
+		Privkey:  []string{"5K7sN7D48Mpsy3Tpt9vs6eibDH7icA3UUtcpzxDj9amc5PNC7Pq"}}, 3)
 	if err != nil {
 		logrus.Panicf("注册导入授权用户失败:%s\n", err)
 	}

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -35,8 +36,12 @@ func GetBucketIdFromCache(bname string, uid int32) (*BucketMeta, error) {
 		if err != nil {
 			return nil, err
 		} else {
-			BUCKET_CACHE.SetDefault(key, meta)
-			return meta, nil
+			if meta == nil {
+				return nil, errors.New("INVALID_BUCKET_NAME")
+			} else {
+				BUCKET_CACHE.SetDefault(key, meta)
+				return meta, nil
+			}
 		}
 	} else {
 		return v.(*BucketMeta), nil
@@ -101,8 +106,12 @@ func GetBucketByName(bname string, uid int32) (*BucketMeta, error) {
 	res := &BucketMeta{}
 	err := source.GetBucketColl().FindOne(ctx, filter).Decode(res)
 	if err != nil {
-		logrus.Errorf("[BucketMeta]GetBucketByName ERR:%s\n", err)
-		return nil, err
+		if err != mongo.ErrNoDocuments {
+			logrus.Errorf("[BucketMeta]GetBucketByName ERR:%s\n", err)
+			return nil, err
+		} else {
+			return nil, nil
+		}
 	}
 	res.UserId = uid
 	return res, nil

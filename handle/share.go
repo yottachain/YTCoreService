@@ -156,10 +156,7 @@ func (h *AuthHandler) createBucket() proto.Message {
 		logrus.Errorf("[AuthHandler][%d]Pubkey:%s non-existent\n", h.authuser.UserID, *h.m.Pubkey)
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Pubkey non-existent")
 	}
-	meta, err := dao.GetBucketIdFromCache(AUTH_BUCKET, authuser.UserID)
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
+	meta, _ := dao.GetBucketIdFromCache(AUTH_BUCKET, authuser.UserID)
 	if meta == nil {
 		meta := &dao.BucketMeta{UserId: authuser.UserID, BucketId: primitive.NewObjectID(), BucketName: AUTH_BUCKET}
 		err := dao.SaveBucketMeta(meta)
