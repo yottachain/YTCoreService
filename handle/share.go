@@ -72,7 +72,7 @@ func (h *AuthHandler) Handle() proto.Message {
 	for _, refbs := range h.m.Reflist.Refers {
 		refer := pkt.NewRefer(refbs)
 		if refer == nil {
-			logrus.Infof("[AuthHandler][%d]Refer data err\n", *h.m.UserId)
+			logrus.Errorf("[AuthHandler][%d]Refer data err\n", *h.m.UserId)
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Refer data err")
 		}
 		refer.KeyNumber = int16(h.authkeynumber)

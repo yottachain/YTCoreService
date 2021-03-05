@@ -31,13 +31,13 @@ func Auth() {
 	}
 
 	//3.通过上传接口,给授权方的用户A上传一个文件
-	md5, yerr := clientA.UploadFile("D:/本地文件.dat", "test", "auth.dat")
+	md5, yerr := clientA.UploadFile("D:/本地文件.dat", "test", "auth2.dat")
 	if yerr != nil {
 		logrus.Panicf("上传文件失败:%s\n", yerr.Msg)
 	}
 
 	//4.把授权方的用户A所属文件(第三步上传的文件test/auth.dat),授权给用户B
-	auth, yerr := clientA.Auth("test", "auth.dat")
+	auth, yerr := clientA.Auth("test", "auth2.dat")
 	if yerr != nil {
 		logrus.Panicf("初始化授权导出失败:%s\n", yerr.Msg)
 	}
@@ -49,7 +49,7 @@ func Auth() {
 
 	//5.被授权用户B通过下载接口,下载刚才授权的文件
 	//sn会自动给该用户创建名称为"share"的bucket,授权的文件名为"授权方用户的bucket/授权的文件名"
-	down, yerr := clientB.NewDownloadLastVersion("share", "test/auth.dat")
+	down, yerr := clientB.NewDownloadLastVersion("share", "test/auth2.dat")
 	if yerr != nil {
 		logrus.Panicf("初始化下载失败:%s\n", yerr.Msg)
 	}

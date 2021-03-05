@@ -168,6 +168,7 @@ func (self *Auth) MakeRefs(AuthorizedKey string) error {
 }
 
 func (self *Auth) LicensedTo(username, AuthorizedKey string) *pkt.ErrorMessage {
+	self.MakeRefs(AuthorizedKey)
 	sn := net.GetRegSuperNode(username)
 	refers := [][]byte{}
 	for _, ref := range self.REFS {
