@@ -220,6 +220,17 @@ func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.
 	}
 }
 
+/*
+func (c *Client) DownloadToSGX(bucketName, filename string, version primitive.ObjectID) (*DownloadObject, *pkt.ErrorMessage) {
+	do := &DownloadObject{UClient: c, Progress: &DownProgress{}}
+	err := do.InitByKey(bucketName, filename, version)
+	if err != nil {
+		return nil, err
+	} else {
+		return do, nil
+	}
+}*/
+
 func (c *Client) ImportAuth(bucketName, filename string) *AuthImporter {
 	do := &AuthImporter{UClient: c}
 	do.bucketName = bucketName
