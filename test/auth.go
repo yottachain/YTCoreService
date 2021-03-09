@@ -9,6 +9,28 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
+func Download() {
+	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"
+	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
+	api.InitApi()
+
+	//1.注册授权方的用户实例A
+	/*
+		clientA, err := api.NewClientV2(&env.UserInfo{
+			UserName: "testusernew1",
+			Privkey:  []string{"5Kd86kKY6SFYvV1zXsRakHEGKp3EzD6C9amYd8Q4XfZq24xJsFD"}}, 3)
+		if err != nil {
+			logrus.Panicf("注册导出授权用户失败:%s\n", err)
+		}
+	*/
+
+	/*
+		sgx, err := clientA.DownloadToSGX("bucketName", "filename")
+		data, err := sgx.LoadBlock(0)
+	*/
+
+}
+
 func Auth() {
 	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"
 	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")

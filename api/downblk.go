@@ -81,6 +81,20 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 			KS = codec.ECCDecrypt(self.Ref.KEU, k.PrivateKey)
 		}
 	}
+	eb, errmsg := self.LoadEncryptedBlock()
+	if errmsg != nil {
+		return nil, errmsg
+	}
+	eb.SecretKey = KS
+	bp, errmsg := self.aesDecode(eb)
+	if errmsg != nil {
+		return nil, errmsg
+	} else {
+		return bp, nil
+	}
+}
+
+func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()
 	if errmsg != nil {
@@ -88,16 +102,11 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	} else {
 		dbresp, OK := resp.(*pkt.DownloadBlockDBResp)
 		if OK {
-			b := &codec.EncryptedBlock{SecretKey: KS}
+			b := &codec.EncryptedBlock{}
 			b.Data = dbresp.Data
-			bp, errmsg := self.aesDecode(b)
-			if errmsg != nil {
-				return nil, errmsg
-			} else {
-				logrus.Infof("[DownloadBlock][%d][%d]Download Block from DB,at sn %d, take times %d ms.\n",
-					self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
-				return bp, nil
-			}
+			logrus.Infof("[DownloadBlock][%d][%d]Download Block from DB,at sn %d, take times %d ms.\n",
+				self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
+			return b, nil
 		}
 		initresp, _ := resp.(*pkt.DownloadBlockInitResp)
 		logrus.Infof("[DownloadBlock][%d][%d]Init OK,at sn %d,take times %d ms.\n",
@@ -105,17 +114,18 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 		startTime := time.Now()
 		m := initresp.GetAR()
 		if m == codec.AR_COPY_MODE {
-			bp, errmsg := self.loadCopyShard(KS, initresp)
+			bp, errmsg := self.loadCopyShard(initresp)
 			if errmsg != nil {
 				return nil, errmsg
 			} else {
 				logrus.Infof("[DownloadBlock][%d][%d]Download CopyMode Block OK, take times %d ms.\n",
 					self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
+
 				return bp, nil
 			}
 		}
 		if m > 0 {
-			bp, errmsg := self.loadLRCShard(KS, initresp)
+			bp, errmsg := self.loadLRCShard(initresp)
 			if errmsg != nil {
 				return nil, errmsg
 			} else {
@@ -129,7 +139,7 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	}
 }
 
-func (self DownloadBlock) loadLRCShard(ks []byte, resp *pkt.DownloadBlockInitResp) (*codec.PlainBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), 0)
 	downloads := []*DownLoadShardInfo{}
 	for ii, id := range resp.Nids.Nodeids {
@@ -163,11 +173,10 @@ func (self DownloadBlock) loadLRCShard(ks []byte, resp *pkt.DownloadBlockInitRes
 		logrus.Errorf("[DownloadBlock][%d][%d]Download ERR:%s\n", self.Ref.Id, self.Ref.VBI, err1)
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, err1.Error())
 	}
-	b.SecretKey = ks
-	return self.aesDecode(b)
+	return b, nil
 }
 
-func (self DownloadBlock) loadCopyShard(ks []byte, resp *pkt.DownloadBlockInitResp) (*codec.PlainBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) loadCopyShard(resp *pkt.DownloadBlockInitResp) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	vhf := resp.Vhfs.VHF[0]
 	var b []byte
 	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), len(resp.Nlist.Ns))
@@ -190,8 +199,7 @@ func (self DownloadBlock) loadCopyShard(ks []byte, resp *pkt.DownloadBlockInitRe
 		c, _ := codec.NewErasureDecoder(codec.GetEncryptedBlockSize(int64(self.Ref.RealSize)))
 		c.AddShard(b)
 		eb := c.GetEncryptedBlock()
-		eb.SecretKey = ks
-		return self.aesDecode(eb)
+		return eb, nil
 	}
 }
 
