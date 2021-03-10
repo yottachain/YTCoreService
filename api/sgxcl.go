@@ -24,7 +24,7 @@ func AddPublicKey(username, pubkey string) (uint32, error) {
 	cc := GetClient(pubkey)
 	if cc != nil {
 		for k, v := range cc.KeyMap {
-			if v.PrivateKey == pubkey {
+			if v.PublicKey == pubkey {
 				return k, nil
 			}
 		}
