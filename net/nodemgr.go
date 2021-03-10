@@ -155,6 +155,10 @@ func readSuperNodeList(ls []*YTDNMgmt.SuperNode) {
 		maddrs, _ := StringListToMaddrs(sn.Addrs)
 		sn.Multiaddrs = maddrs
 
+		for _, addr := range sn.Addrs {
+			logrus.Infof("[NodeMgr] sn addr: %s\n", addr)
+		}
+
 		pkey := sn.PubKey
 		if pkey != "" && strings.HasPrefix(strings.ToUpper(pkey), "EOS") {
 			pkey = pkey[3:]
