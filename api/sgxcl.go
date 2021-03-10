@@ -69,9 +69,22 @@ func (self *DownloadForSGX) GetRefers() {
 		id := int32(ref.Id) & 0xFFFF
 		refmap[id] = ref
 	}
+	self.Refs = refmap
 }
 
 func (self *DownloadForSGX) LoadBlock(id int32) ([]byte, *pkt.ErrorMessage) {
+	sgx, err := self.LoadEncryptedBlock(id)
+	if err != nil {
+		return nil, err
+	} else {
+		if sgx == nil {
+			return nil, nil
+		}
+		return sgx.ToBytes(), nil
+	}
+}
+
+func (self *DownloadForSGX) LoadEncryptedBlock(id int32) (*sgx.EncryptedBlock, *pkt.ErrorMessage) {
 	refer := self.Refs[id]
 	if refer == nil {
 		return nil, nil
@@ -85,5 +98,5 @@ func (self *DownloadForSGX) LoadBlock(id int32) ([]byte, *pkt.ErrorMessage) {
 	sgxb.DATA = eb.Data
 	sgxb.KEU = refer.KEU
 	sgxb.KeyNumber = int32(refer.KeyNumber)
-	return sgxb.ToBytes(), nil
+	return sgxb, nil
 }

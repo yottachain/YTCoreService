@@ -38,7 +38,7 @@ func Auth() {
 
 	//1.注册授权方的用户实例A
 	clientA, err := api.NewClientV2(&env.UserInfo{
-		UserName: "testusernew1",
+		UserName: "testusernew8",
 		Privkey:  []string{"5Kd86kKY6SFYvV1zXsRakHEGKp3EzD6C9amYd8Q4XfZq24xJsFD"}}, 3)
 	if err != nil {
 		logrus.Panicf("注册导出授权用户失败:%s\n", err)
