@@ -2,9 +2,11 @@ package sgx
 
 import (
 	"bytes"
+	"crypto/aes"
 	"errors"
 
 	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
+	"github.com/yottachain/YTCrypto"
 )
 
 type Key struct {
@@ -34,4 +36,34 @@ func GenerateUserKey(bs []byte) []byte {
 		bss := make([]byte, siz)
 		return bytes.Join([][]byte{bs, bss}, []byte{})
 	}
+}
+
+func (self *Key) Decrypt(data []byte) []byte {
+	if len(data) == 32 {
+		return self.ECBDecryptNoPad(data)
+	} else {
+		return self.ECCDecrypt(data)
+	}
+}
+
+func (self *Key) ECCDecrypt(data []byte) []byte {
+	src, err := YTCrypto.ECCDecrypt(data, self.PrivateKey)
+	if err != nil {
+		return data
+	}
+	return src
+}
+
+func (self *Key) ECBDecryptNoPad(data []byte) []byte {
+	block, _ := aes.NewCipher(self.AESKey)
+	length := len(data)
+	if length%16 > 0 {
+		return data
+	}
+	decrypted := make([]byte, length)
+	size := block.BlockSize()
+	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
+		block.Decrypt(decrypted[bs:be], data[bs:be])
+	}
+	return decrypted
 }
