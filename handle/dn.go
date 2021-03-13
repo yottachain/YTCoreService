@@ -100,7 +100,7 @@ func (h *StatusRepHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.Er
 func (h *StatusRepHandler) Handle() proto.Message {
 	id, err := GetNodeId(h.pkey)
 	if err != nil {
-		emsg := fmt.Sprintf("[DNStatusRep]Invalid node pubkey:%s,ID,%d,ERR:%s\n", h.pkey, h.m.Id, err.Error())
+		emsg := fmt.Sprintf("[DNStatusRep]Invalid node pubkey:%s,addrs:%s, ID,%d,ERR:%s\n", h.pkey, h.m.Addrs, h.m.Id, err.Error())
 		logrus.Errorf(emsg)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
 	}
