@@ -81,32 +81,43 @@ func DelObject(uid int32, vnu primitive.ObjectID) {
 }
 
 func (h *AuthHandler) DeleteBlock(snid int32, vibs []int64, usedSpace *int64, wg *sync.WaitGroup) {
-	defer wg.Done()
-	req := &pkt.AuthBlockLinkReq{VBIS: vibs}
-	var longmsg proto.Message
+	req := &pkt.DeleteBlockReq{VBIS: vibs}
 	sn := net.GetSuperNode(int(snid))
 	if sn.ID == int32(env.SuperNodeID) {
-		handler := &AuthBlockLinkHandler{pkey: sn.PubKey, m: req}
-		msg := handler.Handle()
-		if _, ok := msg.(*pkt.ErrorMessage); ok {
-			*usedSpace = -1
-			return
-		} else {
-			longmsg = msg
-		}
+		handler := &DeleteBlockHandler{pkey: sn.PubKey, m: req}
+		handler.Handle()
 	} else {
-		msg, err := net.RequestSN(req, sn, "", 0, false)
+		_, err := net.RequestSN(req, sn, "", 0, false)
 		if err != nil {
-			*usedSpace = -1
-			return
-		} else {
-			longmsg = msg
+
 		}
 	}
-	if resp, ok := longmsg.(*pkt.LongResp); ok {
-		*usedSpace = resp.Value
-	} else {
-		*usedSpace = -1
-	}
+}
 
+type DeleteBlockHandler struct {
+	pkey string
+	m    *pkt.DeleteBlockReq
+}
+
+func (h *DeleteBlockHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+	h.pkey = pubkey
+	req, ok := msg.(*pkt.DeleteBlockReq)
+	if ok {
+		h.m = req
+		if h.m.VBIS == nil || len(h.m.VBIS) == 0 {
+			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
+		}
+		return nil, SUMFEE_ROUTINE_NUM, nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
+	}
+}
+
+func (h *DeleteBlockHandler) Handle() proto.Message {
+	_, err := net.AuthSuperNode(h.pkey)
+	if err != nil {
+		logrus.Errorf("[DeleteBlockHandler]AuthSuper ERR:%s\n", err)
+		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
+	}
+	return &pkt.LongResp{Value: 0}
 }
