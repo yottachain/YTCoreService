@@ -155,7 +155,7 @@ func (h *AuthHandler) createBucket() proto.Message {
 	}
 	meta, _ := dao.GetBucketIdFromCache(AUTH_BUCKET, h.authuser.UserID)
 	if meta == nil {
-		meta := &dao.BucketMeta{UserId: h.authuser.UserID, BucketId: primitive.NewObjectID(), BucketName: AUTH_BUCKET}
+		meta = &dao.BucketMeta{UserId: h.authuser.UserID, BucketId: primitive.NewObjectID(), BucketName: AUTH_BUCKET}
 		err := dao.SaveBucketMeta(meta)
 		if err != nil {
 			return pkt.NewError(pkt.SERVER_ERROR)
