@@ -20,6 +20,7 @@ var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
 var HTTP_ROUTINE_NUM *int32 = new(int32)
 var SUMFEE_ROUTINE_NUM *int32 = new(int32)
+var AUTH_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
 	InitCache()
@@ -30,6 +31,7 @@ func Start() {
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
 	atomic.StoreInt32(HTTP_ROUTINE_NUM, 0)
 	atomic.StoreInt32(SUMFEE_ROUTINE_NUM, 0)
+	atomic.StoreInt32(AUTH_ROUTINE_NUM, 0)
 	if env.STAT_SERVICE {
 		InitSpotCheckService()
 		InitRebuildService()
@@ -93,7 +95,7 @@ func OnMessage(msgType uint16, data []byte, pubkey string) []byte {
 	}
 	err2, rnum, urnum := handler.SetMessage(pubkey, msg)
 	if err2 != nil {
-		logrus.Errorf("[OnMessage]SetMessage %s %s,data len:%d\n", name, len(data), pkt.ToError(err2))
+		logrus.Errorf("[OnMessage]SetMessage %s %s,data len:%d\n", name, pkt.ToError(err2), len(data))
 		return pkt.MarshalMsgBytes(err2)
 	}
 	var curRouteNum int32 = 0
@@ -147,6 +149,10 @@ func CheckRoutine(rnum *int32) error {
 	} else if SUMFEE_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(SUMFEE_ROUTINE_NUM) > env.MAX_SUMFEE_ROUTINE {
 			return errors.New("SUMFEE_ROUTINE:Too many routines")
+		}
+	} else if AUTH_ROUTINE_NUM == rnum {
+		if atomic.LoadInt32(AUTH_ROUTINE_NUM) > env.MAX_AUTH_ROUTINE {
+			return errors.New("AUTH_ROUTINE:Too many routines")
 		}
 	} else {
 		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {

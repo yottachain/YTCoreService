@@ -1,0 +1,69 @@
+package gc
+
+import (
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/dao"
+	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/net"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+func StartIterateUser() {
+	time.Sleep(time.Duration((env.SuperNodeID+1)*30) * time.Minute)
+	for {
+		if !net.IsActive() {
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		}
+		time.Sleep(time.Duration(180) * time.Second)
+		IterateUser()
+	}
+}
+
+func IterateUser() {
+	defer env.TracePanic("[DelUsedSpace]")
+	var lastId int32 = 0
+	limit := 100
+	logrus.Infof("[DelUsedSpace]Start iterate user...\n")
+	for {
+		us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1})
+		if err != nil {
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		}
+		if len(us) == 0 {
+			break
+		} else {
+			for _, user := range us {
+				lastId = user.UserID
+				IterateObjects(user.UserID)
+			}
+		}
+	}
+	time.Sleep(time.Duration(24) * time.Hour)
+	logrus.Infof("[DelUsedSpace]Iterate user OK!\n")
+}
+
+func IterateObjects(uid int32) {
+	logrus.Infof("[DelUsedSpace]Start ls objects,UserID:%d\n", uid)
+	firstId := primitive.NilObjectID
+	for {
+		vnus, err := dao.ListObjectsForDel(uint32(uid), firstId, 10000)
+		if err != nil {
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		}
+
+		for _, vnu := range vnus {
+			//meta, err := dao.DelObject(uid, vnu)
+
+			firstId = vnu
+		}
+		if firstId == primitive.NilObjectID {
+			break
+		}
+	}
+}

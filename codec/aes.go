@@ -11,6 +11,8 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/yottachain/YTCrypto"
 )
 
 var IVParameter []byte
@@ -156,6 +158,22 @@ func ECBEncrypt(data, key []byte) []byte {
 		block.Encrypt(decrypted[bs:be], data[bs:be])
 	}
 	return decrypted
+}
+
+func ECCDecrypt(data []byte, prikey string) []byte {
+	src, err := YTCrypto.ECCDecrypt(data, prikey)
+	if err != nil {
+		return data
+	}
+	return src
+}
+
+func ECCEncrypt(data []byte, pubkey string) []byte {
+	src, err := YTCrypto.ECCEncrypt(data, pubkey)
+	if err != nil {
+		return data
+	}
+	return src
 }
 
 func ECBDecryptNoPad(data, key []byte) []byte {

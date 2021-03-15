@@ -24,7 +24,6 @@ func UploadFile() {
 //2.不注册用户,设置conf/ytfs.properties: driver=yotta,startSync=1
 //启动同步
 func SyncFile() {
-	api.AUTO_REG_FLAG = false
 	if yfnet {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 	} else {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -37,5 +38,17 @@ func Test(t *testing.T) {
 }
 
 func call() {
+	vbigroup := make(map[int32][]int64)
+	ids := vbigroup[int32(0)]
+	ids = append(ids, 11)
+	vbigroup[int32(0)] = ids
 
+	for k, v := range vbigroup {
+
+		fmt.Print(k)
+		for _, vv := range v {
+			fmt.Print(vv)
+		}
+
+	}
 }
