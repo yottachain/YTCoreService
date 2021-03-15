@@ -2,6 +2,11 @@ syntax = "proto2";
  
 package pkt;
 
+
+message DeleteBlockReq{
+    repeated int64 VBIS=1;
+}
+
 message AuthBlockLinkReq{
     repeated int64 VBIS=1;
 }

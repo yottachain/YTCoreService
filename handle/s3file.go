@@ -190,8 +190,20 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 }
 
 func (h *DeleteFileHandler) decObjectNLink(metaWVer *dao.FileMetaWithVersion) {
+	var usedspace int64 = 0
+	var length int64 = 0
+	var filecount int64 = 0
 	for _, ver := range metaWVer.Version {
-		dao.AddNeedDel(h.user.UserID, ver.VersionId)
+		fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: ver.VersionId}
+		fmeta.DECObjectNLINK()
+		if fmeta.Usedspace > 0 {
+			usedspace = usedspace + int64(fmeta.Usedspace)
+			filecount = filecount + 1
+			length = length + int64(fmeta.Length)
+		}
+	}
+	if usedspace > 0 {
+		dao.UpdateUserSpace(h.user.UserID, -usedspace, -filecount, -length)
 	}
 }
 
