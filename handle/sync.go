@@ -2,6 +2,7 @@ package handle
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -34,6 +35,41 @@ func AyncRequest(reqmsg proto.Message, exclude int, retrytime int) error {
 		}
 	}
 	return nil
+}
+
+func SyncRequestSN(reqmsg proto.Message, include []int, retrytime int) ([]*SNSynchronizer, error) {
+	if atomic.LoadInt32(RoutineConter) > env.MAX_AYNC_ROUTINE {
+		return nil, errors.New("AyncRequest:Too many routines.")
+	}
+	list := []*YTDNMgmt.SuperNode{}
+	for _, id := range include {
+		sn := net.GetSuperNode(id)
+		if sn != nil {
+			list = append(list, sn)
+		} else {
+			return nil, fmt.Errorf("Invalid SNID:%d", id)
+		}
+	}
+	num := len(list)
+	syncrun := make([]*SNSynchronizer, num)
+	if num <= 0 {
+		return syncrun, nil
+	}
+	wgroup := sync.WaitGroup{}
+	wgroup.Add(num)
+	for index, node := range list {
+		sy := &SNSynchronizer{
+			req:        reqmsg,
+			sn:         node,
+			retryTimes: retrytime,
+			wg:         &wgroup,
+		}
+		syncrun[index] = sy
+		go sy.run()
+
+	}
+	wgroup.Wait()
+	return syncrun, nil
 }
 
 func SyncRequest(reqmsg proto.Message, exclude int, retrytime int) ([]*SNSynchronizer, error) {
@@ -74,6 +110,10 @@ type SNSynchronizer struct {
 	sn         *YTDNMgmt.SuperNode
 	retryTimes int
 	wg         *sync.WaitGroup
+}
+
+func (self *SNSynchronizer) GetSN() *YTDNMgmt.SuperNode {
+	return self.sn
 }
 
 func (self *SNSynchronizer) Response() proto.Message {
