@@ -153,7 +153,7 @@ func (self *Auth) MakeRefs(AuthorizedKey string) error {
 		if !ok {
 			emsg := fmt.Sprintf("The user did not enter a private key with number%d", refer.KeyNumber)
 			logrus.Errorf("[Auth]%s\n", emsg)
-			return pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
+			return pkt.ToError(pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg))
 		}
 		var KS []byte
 		if len(refer.KEU) == 32 {

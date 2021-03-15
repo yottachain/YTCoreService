@@ -7,12 +7,10 @@
 package pkt
 
 import (
-	"fmt"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	"strings"
 	sync "sync"
 )
 
@@ -137,10 +135,6 @@ func (x *ErrorMessage) Reset() {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
-}
-
-func (x *ErrorMessage) Error() string {
-	return fmt.Sprintf("ServiceError %d:%s", x.Code, strings.TrimSpace(x.Msg))
 }
 
 func (x *ErrorMessage) String() string {
