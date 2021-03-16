@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -38,6 +37,5 @@ func Test(t *testing.T) {
 }
 
 func call() {
-	dd := -63
-	fmt.Print(uint64(dd))
+
 }

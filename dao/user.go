@@ -23,7 +23,7 @@ type User struct {
 	KUEp         [][]byte `bson:"KUEp"`
 	Usedspace    int64    `bson:"usedspace"`
 	SpaceTotal   int64    `bson:"spaceTotal"`
-	FileTotal    uint64   `bson:"fileTotal"`
+	FileTotal    int64    `bson:"fileTotal"`
 	Username     string   `bson:"username"`
 	CostPerCycle int64    `bson:"costPerCycle"`
 	NextCycle    int64    `bson:"nextCycle"`
