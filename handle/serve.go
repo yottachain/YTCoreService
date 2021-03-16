@@ -44,6 +44,7 @@ func Start() {
 		go StartIterateUser()
 		go StartDNBlackListCheck()
 		go StartDoDelete()
+		go StartGC()
 	}
 }
 

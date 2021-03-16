@@ -11,9 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DelOrUpObject(uid int32, vnu primitive.ObjectID) (*ObjectMeta, error) {
+func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool) (*ObjectMeta, error) {
 	source := NewUserMetaSource(uint32(uid))
-	filter := bson.M{"VNU": vnu, "NLINK": bson.M{"$lte": 1}}
+	filter := bson.M{"VNU": vnu, "NLINK": bson.M{"$lt": 1}}
+	if up {
+		filter = bson.M{"VNU": vnu, "NLINK": bson.M{"$lte": 1}}
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	result := &ObjectMeta{}
@@ -25,6 +28,10 @@ func DelOrUpObject(uid int32, vnu primitive.ObjectID) (*ObjectMeta, error) {
 			logrus.Errorf("[DelObject]DelOrUpObject UID %d,VNU %s,ERR:%s\n", uid, vnu.Hex(), err)
 			return nil, err
 		}
+	}
+	if !up {
+		logrus.Infof("[DelObject]DelOrUpObject UID %d,VNU %s OK\n", uid, vnu.Hex())
+		return result, nil
 	}
 	if result == nil {
 		fmeta := &ObjectMeta{UserId: uid, VNU: vnu}

@@ -58,7 +58,7 @@ func IterateObjects(uid int32) {
 			continue
 		}
 		for _, vnu := range vnus {
-			DelBlocks(uid, vnu)
+			DelBlocks(uid, vnu, false)
 			firstId = vnu
 		}
 		if firstId == primitive.NilObjectID {

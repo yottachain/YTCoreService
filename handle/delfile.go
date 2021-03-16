@@ -36,15 +36,15 @@ func IterateDELLog() {
 		if log == nil {
 			return
 		}
-		DelBlocks(log.UID, log.VNU)
+		DelBlocks(log.UID, log.VNU, true)
 	}
 }
 
 const VBI_COUNT_LIMIT = 10
 
-func DelBlocks(uid int32, vnu primitive.ObjectID) {
+func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool) {
 	for {
-		meta, err := dao.DelOrUpObject(uid, vnu)
+		meta, err := dao.DelOrUpObject(uid, vnu, decSpace)
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue

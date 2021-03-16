@@ -12,14 +12,14 @@ import (
 
 func S3() {
 	initApi()
-	//test.DownLoadFile()
+	DownLoadFile()
 	//test.ListBucket()
 	//test.ListObj()
 }
 
 func DownLoadFile() {
 	outpath := "D:/YTSDK.ok.rar"
-	dn, errmsg := client.NewDownloadFile("test", "YTSDK.rar", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("share", "2021-03-15/tmpfile_2021-03-15_0da2d6.txt8", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}

@@ -87,7 +87,7 @@ func NewRefer(bs []byte) *Refer {
 		keu := bs[18 : 18+145]
 		id := int16(bs[18+145] & 0xFF)
 		id = id<<8 | int16(bs[18+145+1]&0xFF)
-		KeyNumber := int16(bs[18+145+3] & 0xFF)
+		KeyNumber := int16(bs[18+145+2] & 0xFF)
 		KeyNumber = KeyNumber<<8 | int16(bs[18+145+3]&0xFF)
 		return &Refer{vbi, supid, originalSize, realSize, keu, KeyNumber, id}
 	}
