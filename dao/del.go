@@ -66,7 +66,7 @@ func DelOrUpBLK(vbi int64) error {
 		return decBlockNLINK(vbi)
 	}
 	logrus.Infof("[DelBlock]DelOrUpBLK %d OK\n", vbi)
-	er := DelShards(vbi, int(result.AR))
+	er := DelShards(vbi, int(result.VNF))
 	if er != nil {
 		return er
 	}
