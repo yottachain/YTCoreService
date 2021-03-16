@@ -12,7 +12,6 @@ import (
 )
 
 func StartGC() {
-	InitDELPool()
 	time.Sleep(time.Duration(1 * time.Minute))
 	for {
 		if !net.IsActive() {
