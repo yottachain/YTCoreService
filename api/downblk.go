@@ -71,7 +71,7 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	if KS == nil {
 		k, ok := self.UClient.KeyMap[uint32(self.Ref.KeyNumber)]
 		if !ok {
-			emsg := fmt.Sprintf("The user did not enter a private key with number%d", self.Ref.KeyNumber)
+			emsg := fmt.Sprintf("The user did not enter a private key with number %d", self.Ref.KeyNumber)
 			logrus.Errorf("[DownloadBlock]%s\n", emsg)
 			return nil, pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
 		}

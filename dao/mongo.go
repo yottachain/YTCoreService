@@ -392,6 +392,7 @@ func (source *DNIBaseSource) GetDNIColl() *mongo.Collection {
 const DNI_CACHE_NAME = "dnis"
 const OBJECT_NEW_TABLE_NAME = "objects_new"
 const USERSUM_CACHE_NAME = "userfeesum"
+const OBJECT_DEL_TABLE_NAME = "objects_del"
 
 var cacheBaseSource *CacheBaseSource = nil
 
@@ -399,6 +400,7 @@ type CacheBaseSource struct {
 	db         *mongo.Database
 	dni_c      *mongo.Collection
 	obj_c      *mongo.Collection
+	del_c      *mongo.Collection
 	sum_c      *mongo.Collection
 	shard_up_c sync.Map
 }
@@ -411,6 +413,7 @@ func (source *CacheBaseSource) initMetaDB() {
 	source.db = session.Database(CACHE_DATABASENAME)
 	source.dni_c = source.db.Collection(DNI_CACHE_NAME)
 	source.obj_c = source.db.Collection(OBJECT_NEW_TABLE_NAME)
+	source.del_c = source.db.Collection(OBJECT_DEL_TABLE_NAME)
 	source.sum_c = source.db.Collection(USERSUM_CACHE_NAME)
 	logrus.Infof("[InitMongo]Create cache tables Success.\n")
 }
@@ -450,6 +453,10 @@ func (source *CacheBaseSource) GetSumColl() *mongo.Collection {
 
 func (source *CacheBaseSource) GetDNIColl() *mongo.Collection {
 	return source.dni_c
+}
+
+func (source *CacheBaseSource) GetDELColl() *mongo.Collection {
+	return source.obj_c
 }
 
 func (source *CacheBaseSource) GetOBJColl() *mongo.Collection {

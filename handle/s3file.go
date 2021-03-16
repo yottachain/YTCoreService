@@ -184,26 +184,14 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 	if metaWVer == nil {
 		return &pkt.VoidResp{}
 	}
-	h.decObjectNLink(metaWVer)
+	h.AddLOG(metaWVer)
 	OBJ_DEL_LIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), time.Now())
 	return &pkt.VoidResp{}
 }
 
-func (h *DeleteFileHandler) decObjectNLink(metaWVer *dao.FileMetaWithVersion) {
-	var usedspace int64 = 0
-	var length int64 = 0
-	var filecount int64 = 0
+func (h *DeleteFileHandler) AddLOG(metaWVer *dao.FileMetaWithVersion) {
 	for _, ver := range metaWVer.Version {
-		fmeta := &dao.ObjectMeta{UserId: h.user.UserID, VNU: ver.VersionId}
-		fmeta.DECObjectNLINK()
-		if fmeta.Usedspace > 0 {
-			usedspace = usedspace + int64(fmeta.Usedspace)
-			filecount = filecount + 1
-			length = length + int64(fmeta.Length)
-		}
-	}
-	if usedspace > 0 {
-		dao.UpdateUserSpace(h.user.UserID, -usedspace, -filecount, -length)
+		dao.AddDelLOG(h.user.UserID, ver.VersionId)
 	}
 }
 
