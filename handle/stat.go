@@ -126,7 +126,11 @@ func (h *UserListHandler) Handle() proto.Message {
 	spaces := []*pkt.UserListResp_UserSpace{}
 	for _, user := range ls {
 		uid := uint32(user.UserID)
-		resp := &pkt.UserListResp_UserSpace{UserId: &uid, UserName: &user.Username, SpaceTotal: &user.SpaceTotal}
+		total := uint64(0)
+		if user.SpaceTotal > 0 {
+			total = uint64(user.SpaceTotal)
+		}
+		resp := &pkt.UserListResp_UserSpace{UserId: &uid, UserName: &user.Username, SpaceTotal: &total}
 		spaces = append(spaces, resp)
 	}
 	return &pkt.UserListResp{Userspace: spaces}
