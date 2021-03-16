@@ -12,15 +12,12 @@ import (
 )
 
 func StartGC() {
-	time.Sleep(time.Duration(1 * time.Minute))
-	for {
-		if !net.IsActive() {
-			time.Sleep(time.Duration(30) * time.Second)
-			continue
-		}
-		ListUser()
-		time.Sleep(time.Duration(60) * time.Second)
+	time.Sleep(time.Duration(10 * time.Minute))
+	if !net.IsActive() {
+		time.Sleep(time.Duration(30) * time.Second)
+		return
 	}
+	ListUser()
 }
 
 func ListUser() {
@@ -43,7 +40,6 @@ func ListUser() {
 			}
 		}
 	}
-	time.Sleep(time.Duration(2) * time.Hour)
 	logrus.Infof("[DelUsedSpace]Iterate user OK!\n")
 }
 
