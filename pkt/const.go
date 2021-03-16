@@ -45,6 +45,7 @@ func init_id_class() {
 	ID_CLASS_MAP[0x1978]=func() proto.Message { return &UploadShard2CResp{} }
 	ID_CLASS_MAP[0xcb05]=func() proto.Message { return &UploadShardReq{} }
 	ID_CLASS_MAP[0xe64f]=func() proto.Message { return &VoidResp{} }
+	ID_CLASS_MAP[0x05f0]=func() proto.Message { return &DeleteBlockReq{} }
 	ID_CLASS_MAP[0x3d7d]=func() proto.Message { return &AuthBlockLinkReq{} }
 	ID_CLASS_MAP[0x47fb]=func() proto.Message { return &AuthReq{} }
 	ID_CLASS_MAP[0x1c45]=func() proto.Message { return &GetFileAuthReq{} }
@@ -169,6 +170,7 @@ func init_class_id() {
 	CLASS_ID_MAP["UploadShard2CResp"]=0x1978
 	CLASS_ID_MAP["UploadShardReq"]=0xcb05
 	CLASS_ID_MAP["VoidResp"]=0xe64f
+	CLASS_ID_MAP["DeleteBlockReq"]=0x05f0
 	CLASS_ID_MAP["AuthBlockLinkReq"]=0x3d7d
 	CLASS_ID_MAP["AuthReq"]=0x47fb
 	CLASS_ID_MAP["GetFileAuthReq"]=0x1c45

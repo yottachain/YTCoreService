@@ -11,17 +11,24 @@ func init() {
 	ID_HANDLER_MAP[0xde6c] = func() MessageEvent { return MessageEvent(&UpdateBucketHandler{}) }
 	ID_HANDLER_MAP[0xfd39] = func() MessageEvent { return MessageEvent(&ListBucketHandler{}) }
 
+
 	ID_HANDLER_MAP[0x1b31] = func() MessageEvent { return MessageEvent(&TaskOpResultListHandler{}) }
 
+	ID_HANDLER_MAP[0x05f0] = func() MessageEvent { return MessageEvent(&DeleteBlockHandler{}) }
+
 	ID_HANDLER_MAP[0xc9a9] = func() MessageEvent { return MessageEvent(&StatusRepHandler{}) }
+
 
 	ID_HANDLER_MAP[0xa583] = func() MessageEvent { return MessageEvent(&SpotCheckRepHandler{}) }
 
 	ID_HANDLER_MAP[0x9edf] = func() MessageEvent { return MessageEvent(&NodeSyncHandler{}) }
 
+
 	ID_HANDLER_MAP[0x75c5] = func() MessageEvent { return MessageEvent(&DownloadObjectInitHandler{}) }
 	ID_HANDLER_MAP[0xbef5] = func() MessageEvent { return MessageEvent(&DownloadFileHandler{}) }
 	ID_HANDLER_MAP[0xe66e] = func() MessageEvent { return MessageEvent(&DownloadBlockInitHandler{}) }
+
+
 
 	ID_HANDLER_MAP[0x76a8] = func() MessageEvent { return MessageEvent(&ListSuperNodeHandler{}) }
 	ID_HANDLER_MAP[0x1d20] = func() MessageEvent { return MessageEvent(&PreAllocNodeHandler{}) }
@@ -37,6 +44,7 @@ func init() {
 	ID_HANDLER_MAP[0x0d8e] = func() MessageEvent { return MessageEvent(&GetObjectHandler{}) }
 	ID_HANDLER_MAP[0xc23f] = func() MessageEvent { return MessageEvent(&ListObjectHandler{}) }
 
+
 	ID_HANDLER_MAP[0x47fb] = func() MessageEvent { return MessageEvent(&AuthHandler{}) }
 	ID_HANDLER_MAP[0x3d7d] = func() MessageEvent { return MessageEvent(&AuthBlockLinkHandler{}) }
 	ID_HANDLER_MAP[0x1c45] = func() MessageEvent { return MessageEvent(&GetFileMetaHandler{}) }
@@ -48,6 +56,7 @@ func init() {
 	ID_HANDLER_MAP[0xb172] = func() MessageEvent { return MessageEvent(&RelationshipHandler{}) }
 
 	ID_HANDLER_MAP[0xd927] = func() MessageEvent { return MessageEvent(&BlockUsedSpaceHandler{}) }
+
 
 	ID_HANDLER_MAP[0xe5e2] = func() MessageEvent { return MessageEvent(&RelationshipSumHandler{}) }
 
