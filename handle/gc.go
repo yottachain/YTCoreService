@@ -12,6 +12,9 @@ import (
 )
 
 func StartGC() {
+	if !env.GC {
+		return
+	}
 	time.Sleep(time.Duration(10 * time.Minute))
 	if !net.IsActive() {
 		time.Sleep(time.Duration(30) * time.Second)

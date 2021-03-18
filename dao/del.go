@@ -63,14 +63,33 @@ func DelOrUpBLK(vbi int64) error {
 		}
 	}
 	if result == nil {
+		logrus.Infof("[DelBlock]DelOrUpBLK %d ignored,refer count >1\n", vbi)
 		return decBlockNLINK(vbi)
 	}
 	logrus.Infof("[DelBlock]DelOrUpBLK %d OK\n", vbi)
-	er := DelShards(vbi, int(result.VNF))
-	if er != nil {
-		return er
+	if result.VNF == 0 {
+		DelBLKData(vbi)
+	} else {
+		er := DelShards(vbi, int(result.VNF))
+		if er != nil {
+			return er
+		}
 	}
 	return decBlockCount()
+}
+
+func DelBLKData(vbi int64) error {
+	source := NewBaseSource()
+	filter := bson.M{"_id": vbi}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetBlockDataColl().DeleteOne(ctx, filter)
+	if err != nil {
+		logrus.Errorf("[DelBlock]DelBLKData ERR:%s\n", err)
+	} else {
+		logrus.Errorf("[DelBlock]DelBLKData %d OK\n", vbi)
+	}
+	return nil
 }
 
 func decBlockNLINK(vbi int64) error {
@@ -101,10 +120,10 @@ func DelShards(vbi int64, count int) error {
 	defer cancel()
 	_, err := source.GetShardColl().DeleteMany(ctx, filter)
 	if err != nil {
-		logrus.Errorf("[DelBlock]DelShards %d items ERR:%s\n", count, err)
+		logrus.Errorf("[DelBlock][%d]DelShards %d items ERR:%s\n", vbi, count, err)
 		return err
 	}
-	logrus.Infof("[DelBlock]DelShards %d items OK\n", count)
+	logrus.Infof("[DelBlock][%d]DelShards %d items OK\n", vbi, count)
 	return nil
 }
 

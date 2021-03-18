@@ -9,6 +9,7 @@ const SPOTCHECKNUM = 3
 
 var STAT_SERVICE bool = true
 var DE_DUPLICATION bool = true
+var GC bool = false
 var SPOTCHECK_ADDR string = ""
 var REBUILD_ADDR string = ""
 var SUM_USER_FEE int = 0
@@ -73,6 +74,7 @@ func readSnProperties() {
 	Port2 = config.GetRangeInt("port2", -1, 20000, 9998)
 
 	DE_DUPLICATION = config.GetBool("DE_DUPLICATION", true)
+	GC = config.GetBool("GC", false)
 	STAT_SERVICE = config.GetBool("STAT_SERVICE", true)
 	SPOTCHECK_ADDR = config.GetString("SPOTCHECK_ADDR", "")
 	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
