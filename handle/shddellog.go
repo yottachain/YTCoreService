@@ -64,13 +64,17 @@ func GetNodeLog(id int32) (*NodeLog, error) {
 		return log, nil
 	}
 	LOGS.Lock()
+	defer LOGS.Unlock()
 	log = LOGS.NodeMAP[id]
 	if log == nil {
 		log = NewNodeLog(id, env.DelLogPath)
+		err := log.CalCurDate()
+		if err != nil {
+			return nil, err
+		}
 		LOGS.NodeMAP[id] = log
 	}
-	LOGS.Unlock()
-	return log, log.CalCurDate()
+	return log, nil
 }
 
 type NodeLog struct {
