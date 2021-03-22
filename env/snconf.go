@@ -2,6 +2,7 @@ package env
 
 import (
 	"log"
+	"strings"
 )
 
 const BP_ENABLE bool = true
@@ -142,5 +143,7 @@ func readSnProperties() {
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
 
 	DelLogPath = config.GetString("DelLogPath", "")
-
+	if !strings.HasSuffix(DelLogPath, "/") {
+		DelLogPath = DelLogPath + "/"
+	}
 }

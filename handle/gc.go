@@ -56,7 +56,12 @@ func IterateObjects(uid int32) {
 			continue
 		}
 		for _, vnu := range vnus {
-			DelBlocks(uid, vnu, false)
+			if time.Now().Unix()-vnu.Timestamp().Unix() >= 60*5 {
+				_, found := Upload_CACHE.Get(vnu.Hex())
+				if !found {
+					DelBlocks(uid, vnu, false)
+				}
+			}
 			firstId = vnu
 		}
 		if firstId == primitive.NilObjectID {

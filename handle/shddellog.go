@@ -108,7 +108,7 @@ func (me *NodeLog) CalCurDate() error {
 	endts = (endts + 7) * (60 * 60 * 24)
 	atomic.StoreInt64(me.EndTime, endts)
 	CurDate := t.Format("20060102")
-	dirname := me.path + "/" + CurDate
+	dirname := me.path + CurDate
 	err := os.MkdirAll(dirname, os.ModePerm)
 	if err != nil {
 		return err
