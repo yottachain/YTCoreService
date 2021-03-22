@@ -182,7 +182,7 @@ func (h *DeleteFileHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	if metaWVer == nil {
-		return &pkt.VoidResp{}
+		return pkt.NewError(pkt.INVALID_OBJECT_NAME)
 	}
 	h.AddLOG(metaWVer)
 	OBJ_DEL_LIST_CACHE.SetDefault(strconv.Itoa(int(h.user.UserID)), time.Now())

@@ -54,6 +54,8 @@ var MAX_AUTH_ROUTINE int32 = 21
 var PER_USER_MAX_READ_ROUTINE int32
 var SLOW_OP_TIMES int
 
+var DelLogPath string = ""
+
 func readSnProperties() {
 	confpath := YTSN_HOME + "conf/server.properties"
 	config, err := NewConfig(confpath)
@@ -138,4 +140,7 @@ func readSnProperties() {
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+
+	DelLogPath = config.GetString("DelLogPath", "")
+
 }

@@ -37,5 +37,9 @@ func Test(t *testing.T) {
 }
 
 func call() {
-
+	/*
+		_, err := handle.NewNodeLog(2, "d:/")
+		if err != nil {
+			//fmt.Println(err)
+		}*/
 }

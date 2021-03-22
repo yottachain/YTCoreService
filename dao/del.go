@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -47,7 +48,7 @@ func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool) (*ObjectMeta, err
 	return result, nil
 }
 
-func DelOrUpBLK(vbi int64) error {
+func DelOrUpBLK(vbi int64) ([]*ShardMeta, error) {
 	source := NewBaseSource()
 	filter := bson.M{"_id": vbi, "NLINK": bson.M{"$lte": 1}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -59,26 +60,28 @@ func DelOrUpBLK(vbi int64) error {
 			result = nil
 		} else {
 			logrus.Errorf("[DelBlock]DelOrUpBLK %d,ERR:%s\n", vbi, err)
-			return err
+			return nil, err
 		}
 	}
 	if result == nil {
 		logrus.Infof("[DelBlock]DelOrUpBLK %d ignored,refer count >1\n", vbi)
-		return decBlockNLINK(vbi)
+		return nil, decBlockNLINK(vbi)
 	}
 	logrus.Infof("[DelBlock]DelOrUpBLK %d OK\n", vbi)
 	if result.VNF == 0 {
 		DelBLKData(vbi)
+		return nil, decBlockCount()
 	} else {
-		er := DelShards(vbi, int(result.VNF))
+		shds, er := DelShards(vbi, int(result.VNF))
 		if er != nil {
-			return er
+			return nil, er
+		} else {
+			return shds, decBlockCount()
 		}
 	}
-	return decBlockCount()
 }
 
-func DelBLKData(vbi int64) error {
+func DelBLKData(vbi int64) {
 	source := NewBaseSource()
 	filter := bson.M{"_id": vbi}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -89,7 +92,6 @@ func DelBLKData(vbi int64) error {
 	} else {
 		logrus.Errorf("[DelBlock]DelBLKData %d OK\n", vbi)
 	}
-	return nil
 }
 
 func decBlockNLINK(vbi int64) error {
@@ -109,7 +111,16 @@ func decBlockNLINK(vbi int64) error {
 	return nil
 }
 
-func DelShards(vbi int64, count int) error {
+func DelShards(vbi int64, count int) ([]*ShardMeta, error) {
+	var shds []*ShardMeta = nil
+	if env.DelLogPath != "" {
+		metas, er := GetShardMetas(vbi, count)
+		if er != nil {
+			return nil, er
+		} else {
+			shds = metas
+		}
+	}
 	source := NewBaseSource()
 	ids := make([]int64, count)
 	for ii := 0; ii < count; ii++ {
@@ -121,10 +132,10 @@ func DelShards(vbi int64, count int) error {
 	_, err := source.GetShardColl().DeleteMany(ctx, filter)
 	if err != nil {
 		logrus.Errorf("[DelBlock][%d]DelShards %d items ERR:%s\n", vbi, count, err)
-		return err
+		return nil, err
 	}
 	logrus.Infof("[DelBlock][%d]DelShards %d items OK\n", vbi, count)
-	return nil
+	return shds, nil
 }
 
 func decBlockNlinkCount() error {

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/mr-tron/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
@@ -98,7 +99,7 @@ func deleteBlocks(snid int32, vibs []int64) {
 	}
 	if errmsg != nil {
 		logrus.Errorf("[DeleteOBJ][%d]Delete blocks err:%s\n", pkt.ToError(errmsg))
-		time.Sleep(time.Duration(60) * time.Second)
+		time.Sleep(time.Duration(60*3) * time.Second)
 	}
 }
 
@@ -121,6 +122,24 @@ func (h *DeleteBlockHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.
 	}
 }
 
+func (h *DeleteBlockHandler) WriteLOG(shds []*dao.ShardMeta) error {
+	if shds != nil {
+		for _, shd := range shds {
+			log, err := GetNodeLog(shd.NodeId)
+			if err != nil {
+				logrus.Errorf("[DeleteBlock]GetNodeLog ERR:%s\n", err)
+				return err
+			}
+			err = log.WriteLog(base58.Encode(shd.VHF))
+			if err != nil {
+				logrus.Errorf("[DeleteBlock]WriteLog %d ERR:%s\n", shd.NodeId, err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (h *DeleteBlockHandler) Handle() proto.Message {
 	_, err := net.AuthSuperNode(h.pkey)
 	if err != nil {
@@ -129,9 +148,12 @@ func (h *DeleteBlockHandler) Handle() proto.Message {
 	}
 	var delerr error = nil
 	for _, vbi := range h.m.VBIS {
-		er := dao.DelOrUpBLK(vbi)
+		shds, er := dao.DelOrUpBLK(vbi)
 		if er != nil {
-			if delerr != nil {
+			delerr = er
+		} else {
+			er = h.WriteLOG(shds)
+			if er != nil {
 				delerr = er
 			}
 		}
