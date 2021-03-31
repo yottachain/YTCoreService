@@ -105,6 +105,7 @@ func (me *NodeLog) CalCurDate() error {
 		return nil
 	}
 	if me.writer != nil {
+		me.writer.Writer.Writer().Close()
 		me.writer.Close()
 		me.writer = nil
 	}
@@ -146,6 +147,7 @@ func (me *NodeLog) WriteLog(dat string) error {
 func (me *NodeLog) Close() {
 	if me.writer != nil {
 		logrus.Infof("[NodeLog]Log %s expired and closed\n", me.logname)
+		me.writer.Writer.Writer().Close()
 		me.writer.Close()
 		me.writer = nil
 	}
