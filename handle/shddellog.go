@@ -82,7 +82,8 @@ type NodeLog struct {
 	EndTime    *int64
 	NodeId     int32
 	path       string
-	writer     *logrus.Logger
+	logname    string
+	writer     *env.NoFmtLog
 	activeTime *int64
 }
 
@@ -104,7 +105,7 @@ func (me *NodeLog) CalCurDate() error {
 		return nil
 	}
 	if me.writer != nil {
-		me.writer.Writer().Close()
+		me.writer.Close()
 		me.writer = nil
 	}
 	t = t.Add(-time.Hour * 24 * (time.Duration(t.Weekday())))
@@ -117,7 +118,8 @@ func (me *NodeLog) CalCurDate() error {
 	if err != nil {
 		return err
 	}
-	f, err := env.AddLog(dirname + "/" + strconv.Itoa(int(me.NodeId)))
+	me.logname = dirname + "/" + strconv.Itoa(int(me.NodeId))
+	f, err := env.AddLog(me.logname)
 	//f, err := os.OpenFile(, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return err
@@ -135,7 +137,7 @@ func (me *NodeLog) WriteLog(dat string) error {
 			return err
 		}
 	}
-	me.writer.Info(dat, "\n")
+	me.writer.Writer.Info(dat, "\n")
 	//_, err := me.writer.Write([]byte(dat + "\n"))
 	atomic.StoreInt64(me.activeTime, time.Now().Unix())
 	return nil
@@ -143,7 +145,8 @@ func (me *NodeLog) WriteLog(dat string) error {
 
 func (me *NodeLog) Close() {
 	if me.writer != nil {
-		me.writer.Writer().Close()
+		logrus.Infof("[NodeLog]Log %s expired and closed\n", me.logname)
+		me.writer.Close()
 		me.writer = nil
 	}
 }

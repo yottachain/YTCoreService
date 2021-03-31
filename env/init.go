@@ -2,6 +2,7 @@ package env
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -150,14 +151,25 @@ func initLog(logFileName string, log *logrus.Logger) {
 	}
 }
 
-func AddLog(logFileName string) (*logrus.Logger, error) {
-	format := &Formatter{NoPrefix: true}
+type NoFmtLog struct {
+	Writer *logrus.Logger
+	Closer io.Closer
+}
+
+func (me *NoFmtLog) Close() {
+	if me.Closer != nil {
+		me.Closer.Close()
+	}
+}
+
+func AddLog(logFileName string) (*NoFmtLog, error) {
 	log := logrus.New()
-	log.Level = logrus.TraceLevel
-	writer, err := rotatelogs.New(logFileName)
+	format := &Formatter{NoPrefix: true}
+	writer, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
 	}
+	log.Level = logrus.TraceLevel
 	log.Formatter = format
 	lfsHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.DebugLevel: writer,
@@ -168,7 +180,8 @@ func AddLog(logFileName string) (*logrus.Logger, error) {
 		logrus.PanicLevel: writer,
 	}, format)
 	log.AddHook(lfsHook)
-	return log, nil
+	mylog := &NoFmtLog{Writer: log, Closer: writer}
+	return mylog, nil
 }
 
 func NewHook(logName string, format *Formatter) (logrus.Hook, error) {
