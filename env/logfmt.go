@@ -8,6 +8,7 @@ import (
 )
 
 type Formatter struct {
+	NoPrefix bool
 }
 
 func ParseLevel(lvl string) (logrus.Level, bool) {
@@ -59,6 +60,9 @@ const TimestampFormat = "15:04:05.000"
 const LogFormat = "[%time%][%lvl%]%msg%"
 
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
+	if f.NoPrefix {
+		return []byte(entry.Message), nil
+	}
 	output := LogFormat
 	timestampFormat := TimestampFormat
 	output = strings.Replace(output, "%time%", entry.Time.Format(timestampFormat), 1)

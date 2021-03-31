@@ -1,13 +1,13 @@
 package handle
 
 import (
-	"io"
 	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
@@ -82,7 +82,7 @@ type NodeLog struct {
 	EndTime    *int64
 	NodeId     int32
 	path       string
-	writer     io.WriteCloser
+	writer     *logrus.Logger
 	activeTime *int64
 }
 
@@ -104,7 +104,7 @@ func (me *NodeLog) CalCurDate() error {
 		return nil
 	}
 	if me.writer != nil {
-		me.writer.Close()
+		me.writer.Writer().Close()
 		me.writer = nil
 	}
 	t = t.Add(-time.Hour * 24 * (time.Duration(t.Weekday())))
@@ -117,7 +117,8 @@ func (me *NodeLog) CalCurDate() error {
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(dirname+"/"+strconv.Itoa(int(me.NodeId)), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	f, err := env.AddLog(dirname + "/" + strconv.Itoa(int(me.NodeId)))
+	//f, err := os.OpenFile(, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
@@ -134,17 +135,15 @@ func (me *NodeLog) WriteLog(dat string) error {
 			return err
 		}
 	}
-	_, err := me.writer.Write([]byte(dat + "\n"))
-	if err != nil {
-		return err
-	}
+	me.writer.Info(dat, "\n")
+	//_, err := me.writer.Write([]byte(dat + "\n"))
 	atomic.StoreInt64(me.activeTime, time.Now().Unix())
 	return nil
 }
 
 func (me *NodeLog) Close() {
 	if me.writer != nil {
-		me.writer.Close()
+		me.writer.Writer().Close()
 		me.writer = nil
 	}
 }

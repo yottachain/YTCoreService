@@ -117,7 +117,7 @@ func initServerLog() {
 }
 
 func initLog(logFileName string, log *logrus.Logger) {
-	format := &Formatter{}
+	format := &Formatter{NoPrefix: false}
 	lv, std := ParseLevel(LogLevel)
 	if std {
 		Console = true
@@ -150,16 +150,25 @@ func initLog(logFileName string, log *logrus.Logger) {
 	}
 }
 
-func AddLog(logFileName string) *logrus.Logger {
-	format := &Formatter{}
+func AddLog(logFileName string) (*logrus.Logger, error) {
+	format := &Formatter{NoPrefix: true}
 	log := logrus.New()
 	log.Level = logrus.TraceLevel
-	log.Formatter = format
-	hook, _ := NewHook(logFileName, format)
-	if hook != nil {
-		log.AddHook(hook)
+	writer, err := rotatelogs.New(logFileName)
+	if err != nil {
+		return nil, err
 	}
-	return log
+	log.Formatter = format
+	lfsHook := lfshook.NewHook(lfshook.WriterMap{
+		logrus.DebugLevel: writer,
+		logrus.InfoLevel:  writer,
+		logrus.WarnLevel:  writer,
+		logrus.ErrorLevel: writer,
+		logrus.FatalLevel: writer,
+		logrus.PanicLevel: writer,
+	}, format)
+	log.AddHook(lfsHook)
+	return log, nil
 }
 
 func NewHook(logName string, format *Formatter) (logrus.Hook, error) {
