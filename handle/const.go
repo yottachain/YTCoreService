@@ -14,6 +14,8 @@ func init() {
 
 	ID_HANDLER_MAP[0x1b31] = func() MessageEvent { return MessageEvent(&TaskOpResultListHandler{}) }
 
+	ID_HANDLER_MAP[0x05f0] = func() MessageEvent { return MessageEvent(&DeleteBlockHandler{}) }
+
 	ID_HANDLER_MAP[0xc9a9] = func() MessageEvent { return MessageEvent(&StatusRepHandler{}) }
 
 
@@ -25,6 +27,7 @@ func init() {
 	ID_HANDLER_MAP[0x75c5] = func() MessageEvent { return MessageEvent(&DownloadObjectInitHandler{}) }
 	ID_HANDLER_MAP[0xbef5] = func() MessageEvent { return MessageEvent(&DownloadFileHandler{}) }
 	ID_HANDLER_MAP[0xe66e] = func() MessageEvent { return MessageEvent(&DownloadBlockInitHandler{}) }
+
 
 
 	ID_HANDLER_MAP[0x76a8] = func() MessageEvent { return MessageEvent(&ListSuperNodeHandler{}) }
@@ -42,6 +45,8 @@ func init() {
 	ID_HANDLER_MAP[0xc23f] = func() MessageEvent { return MessageEvent(&ListObjectHandler{}) }
 
 
+	ID_HANDLER_MAP[0x47fb] = func() MessageEvent { return MessageEvent(&AuthHandler{}) }
+	ID_HANDLER_MAP[0x3d7d] = func() MessageEvent { return MessageEvent(&AuthBlockLinkHandler{}) }
 	ID_HANDLER_MAP[0x1c45] = func() MessageEvent { return MessageEvent(&GetFileMetaHandler{}) }
 	ID_HANDLER_MAP[0x6b4e] = func() MessageEvent { return MessageEvent(&UploadBlockAuthHandler{}) }
 

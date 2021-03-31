@@ -11,6 +11,73 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type DelLOG struct {
+	Id  primitive.ObjectID `bson:"_id"`
+	UID int32              `bson:"UID"`
+	VNU primitive.ObjectID `bson:"VNU"`
+}
+
+func AddDelLOG(uid int32, vnu primitive.ObjectID) error {
+	action := &DelLOG{Id: primitive.NewObjectID(), UID: uid, VNU: vnu}
+	source := NewCacheBaseSource()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetDELColl().InsertOne(ctx, action)
+	if err != nil {
+		logrus.Errorf("[CacheMeta]AddDelLOG UserID:%d,ERR:%s\n", uid, err)
+		return err
+	}
+	return nil
+}
+
+func FindOneDelLOG() *DelLOG {
+	source := NewCacheBaseSource()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	action := &DelLOG{}
+	err := source.GetDELColl().FindOneAndDelete(ctx, bson.M{}).Decode(action)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		}
+		logrus.Errorf("[CacheMeta]FindOneDelLOG ERR:%s\n", err)
+		return nil
+	}
+	return action
+}
+
+func ListDelLOG(startID primitive.ObjectID, limit int) ([]*DelLOG, error) {
+	source := NewCacheBaseSource()
+	filter := bson.M{"_id": bson.M{"$gt": startID}}
+	opt := options.Find().SetSort(bson.M{"_id": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+	cur, err := source.GetDELColl().Find(ctx, filter, opt)
+	defer cur.Close(ctx)
+	if err != nil {
+		logrus.Errorf("[CacheMeta]ListDelLOG ERR:%s\n", err)
+		return nil, err
+	}
+	VNUS := []*DelLOG{}
+	for cur.Next(ctx) {
+		var res = &DelLOG{}
+		err = cur.Decode(res)
+		if err != nil {
+			logrus.Errorf("[CacheMeta]ListDelLOG Decode ERR:%s\n", err)
+			return nil, err
+		}
+		VNUS = append(VNUS, res)
+		if len(VNUS) > limit {
+			break
+		}
+	}
+	if curerr := cur.Err(); curerr != nil {
+		logrus.Errorf("[CacheMeta]ListDelLOG Cursor ERR:%s, block count:%d\n", curerr, len(VNUS))
+		return nil, curerr
+	}
+	return VNUS, nil
+}
+
 type Action struct {
 	Id        primitive.ObjectID `bson:"_id"`
 	Step      int                `bson:"step"`

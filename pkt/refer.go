@@ -51,7 +51,11 @@ type Refer struct {
 }
 
 func NewRefer(bs []byte) *Refer {
-	if bs == nil || len(bs) < 54 {
+	if bs == nil {
+		return nil
+	}
+	size := len(bs)
+	if !(len(bs) == 54 || len(bs) == 167) {
 		return nil
 	}
 	vbi := int64(bs[0] & 0xFF)
@@ -72,12 +76,21 @@ func NewRefer(bs []byte) *Refer {
 	realSize := int32(bs[15] & 0xFF)
 	realSize = realSize<<8 | int32(bs[16]&0xFF)
 	realSize = realSize<<8 | int32(bs[17]&0xFF)
-	keu := bs[18:50]
-	id := int16(bs[50] & 0xFF)
-	id = id<<8 | int16(bs[51]&0xFF)
-	KeyNumber := int16(bs[52] & 0xFF)
-	KeyNumber = KeyNumber<<8 | int16(bs[53]&0xFF)
-	return &Refer{vbi, supid, originalSize, realSize, keu, KeyNumber, id}
+	if size == 54 {
+		keu := bs[18 : 18+32]
+		id := int16(bs[50] & 0xFF)
+		id = id<<8 | int16(bs[51]&0xFF)
+		KeyNumber := int16(bs[52] & 0xFF)
+		KeyNumber = KeyNumber<<8 | int16(bs[53]&0xFF)
+		return &Refer{vbi, supid, originalSize, realSize, keu, KeyNumber, id}
+	} else {
+		keu := bs[18 : 18+145]
+		id := int16(bs[18+145] & 0xFF)
+		id = id<<8 | int16(bs[18+145+1]&0xFF)
+		KeyNumber := int16(bs[18+145+2] & 0xFF)
+		KeyNumber = KeyNumber<<8 | int16(bs[18+145+3]&0xFF)
+		return &Refer{vbi, supid, originalSize, realSize, keu, KeyNumber, id}
+	}
 }
 
 func (self *Refer) Bytes() []byte {

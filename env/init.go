@@ -2,6 +2,7 @@ package env
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -117,7 +118,7 @@ func initServerLog() {
 }
 
 func initLog(logFileName string, log *logrus.Logger) {
-	format := &Formatter{}
+	format := &Formatter{NoPrefix: false}
 	lv, std := ParseLevel(LogLevel)
 	if std {
 		Console = true
@@ -148,6 +149,39 @@ func initLog(logFileName string, log *logrus.Logger) {
 			}
 		}
 	}
+}
+
+type NoFmtLog struct {
+	Writer *logrus.Logger
+	Closer io.Closer
+}
+
+func (me *NoFmtLog) Close() {
+	if me.Closer != nil {
+		me.Closer.Close()
+	}
+}
+
+func AddLog(logFileName string) (*NoFmtLog, error) {
+	log := logrus.New()
+	format := &Formatter{NoPrefix: true}
+	writer, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+	log.Level = logrus.TraceLevel
+	log.Formatter = format
+	lfsHook := lfshook.NewHook(lfshook.WriterMap{
+		logrus.DebugLevel: writer,
+		logrus.InfoLevel:  writer,
+		logrus.WarnLevel:  writer,
+		logrus.ErrorLevel: writer,
+		logrus.FatalLevel: writer,
+		logrus.PanicLevel: writer,
+	}, format)
+	log.AddHook(lfsHook)
+	mylog := &NoFmtLog{Writer: log, Closer: writer}
+	return mylog, nil
 }
 
 func NewHook(logName string, format *Formatter) (logrus.Hook, error) {

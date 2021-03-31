@@ -328,7 +328,7 @@ func (self *ObjectAccessor) GetObject(buck, fileName string) (*FileItem, *pkt.Er
 		}
 		item.FileId = pkt.NewObjectId(*dresp.Id.Timestamp, *dresp.Id.MachineIdentifier, *dresp.Id.ProcessIdentifier, *dresp.Id.Counter)
 		item.FileName = fileName
-		logrus.Infof("[GetObject]%s OK\n", key, fileName)
+		logrus.Infof("[GetObject]%s OK\n", key)
 		Object_CACHE.SetDefault(key, item)
 		return item, nil
 	} else {

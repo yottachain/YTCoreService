@@ -2,6 +2,7 @@ package env
 
 import (
 	"log"
+	"strings"
 )
 
 const BP_ENABLE bool = true
@@ -9,6 +10,7 @@ const SPOTCHECKNUM = 3
 
 var STAT_SERVICE bool = true
 var DE_DUPLICATION bool = true
+var GC bool = false
 var SPOTCHECK_ADDR string = ""
 var REBUILD_ADDR string = ""
 var SUM_USER_FEE int = 0
@@ -48,8 +50,12 @@ var MAX_READ_ROUTINE int32
 var MAX_WRITE_ROUTINE int32
 var MAX_STAT_ROUTINE int32
 var MAX_SUMFEE_ROUTINE int32 = 21
+var MAX_DELBLK_ROUTINE int32 = 21
+var MAX_AUTH_ROUTINE int32 = 21
 var PER_USER_MAX_READ_ROUTINE int32
 var SLOW_OP_TIMES int
+
+var DelLogPath string = ""
 
 func readSnProperties() {
 	confpath := YTSN_HOME + "conf/server.properties"
@@ -71,6 +77,7 @@ func readSnProperties() {
 	Port2 = config.GetRangeInt("port2", -1, 20000, 9998)
 
 	DE_DUPLICATION = config.GetBool("DE_DUPLICATION", true)
+	GC = config.GetBool("GC", false)
 	STAT_SERVICE = config.GetBool("STAT_SERVICE", true)
 	SPOTCHECK_ADDR = config.GetString("SPOTCHECK_ADDR", "")
 	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
@@ -134,4 +141,9 @@ func readSnProperties() {
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+
+	DelLogPath = config.GetString("DelLogPath", "")
+	if !strings.HasSuffix(DelLogPath, "/") {
+		DelLogPath = DelLogPath + "/"
+	}
 }

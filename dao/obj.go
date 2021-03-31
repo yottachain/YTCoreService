@@ -62,6 +62,25 @@ func (self *ObjectMeta) ChecekVNUExists() (bool, error) {
 	}
 }
 
+func (self *ObjectMeta) GetAndUpdateLink() error {
+	source := NewUserMetaSource(uint32(self.UserId))
+	filter := bson.M{"_id": self.VHW}
+	update := bson.M{"$inc": bson.M{"NLINK": 1}}
+	opt := options.FindOneAndUpdate().SetProjection(bson.M{"VNU": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := source.GetObjectColl().FindOneAndUpdate(ctx, filter, update, opt).Decode(self)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		} else {
+			logrus.Errorf("[ObjectMeta]GetAndUpdateLink ERR:%s\n", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func (self *ObjectMeta) IsExists() (bool, error) {
 	source := NewUserMetaSource(uint32(self.UserId))
 	filter := bson.M{"_id": self.VHW}
@@ -196,6 +215,39 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 		return err
 	}
 	return nil
+}
+
+func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int) ([]primitive.ObjectID, error) {
+	source := NewUserMetaSource(userid)
+	filter := bson.M{"VNU": bson.M{"$gt": startVnu}, "NLINK": bson.M{"$lt": 1}}
+	fields := bson.M{"VNU": 1}
+	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
+	defer cur.Close(ctx)
+	if err != nil {
+		logrus.Errorf("[ObjectMeta]ListObjectsForDel ERR:%s\n", err)
+		return nil, err
+	}
+	VNUS := []primitive.ObjectID{}
+	for cur.Next(ctx) {
+		var res = &ObjectMeta{}
+		err = cur.Decode(res)
+		if err != nil {
+			logrus.Errorf("[ObjectMeta]ListObjectsForDel Decode ERR:%s\n", err)
+			return nil, err
+		}
+		VNUS = append(VNUS, res.VNU)
+		if len(VNUS) > limit {
+			break
+		}
+	}
+	if curerr := cur.Err(); curerr != nil {
+		logrus.Errorf("[ObjectMeta]ListObjectsForDel Cursor ERR:%s, block count:%d\n", curerr, len(VNUS))
+		return nil, curerr
+	}
+	return VNUS, nil
 }
 
 func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byte, primitive.ObjectID, error) {

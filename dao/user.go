@@ -21,12 +21,12 @@ import (
 type User struct {
 	UserID       int32    `bson:"_id"`
 	KUEp         [][]byte `bson:"KUEp"`
-	Usedspace    uint64   `bson:"usedspace"`
-	SpaceTotal   uint64   `bson:"spaceTotal"`
-	FileTotal    uint64   `bson:"fileTotal"`
+	Usedspace    int64    `bson:"usedspace"`
+	SpaceTotal   int64    `bson:"spaceTotal"`
+	FileTotal    int64    `bson:"fileTotal"`
 	Username     string   `bson:"username"`
-	CostPerCycle uint64   `bson:"costPerCycle"`
-	NextCycle    uint64   `bson:"nextCycle"`
+	CostPerCycle int64    `bson:"costPerCycle"`
+	NextCycle    int64    `bson:"nextCycle"`
 	Relationship string   `bson:"relationship"`
 	Routine      *int32   `bson:"-"`
 }
