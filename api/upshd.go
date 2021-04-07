@@ -9,6 +9,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
+	"github.com/yottachain/YTCoreService/elk"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -146,8 +147,14 @@ func (self *UploadShard) DoSend() {
 		//node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
 		node.NodeInfo.SetOK(ctrtimes)
 		req.AllocId = ctlresp.AllocId
+		startSendTime := time.Now()
 		resp, err1 := self.SendShard(node, req)
+		sendTimes := time.Now().Sub(startSendTime).Milliseconds()
 		times := time.Now().Sub(startTime).Milliseconds()
+
+		stat := &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes), UpShardTimes: sendTimes}
+		self.uploadBlock.UPOBJ.Eclinet.AddDocAsync(stat)
+
 		if err1 != nil {
 			self.retrytimes++
 			node.DecCount()

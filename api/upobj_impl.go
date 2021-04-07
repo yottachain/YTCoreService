@@ -1,6 +1,8 @@
 package api
 
 import (
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/yottachain/YTElkProducer/conf"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
+	"github.com/yottachain/YTElkProducer"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -26,11 +29,30 @@ type UploadObject struct {
 	ERR        atomic.Value
 	activesign chan int
 	PRO        *UpProgress
+	Eclinet	   YTElkProducer.Client
+}
+
+func NewElkClient() YTElkProducer.Client {
+	elkConf := elasticsearch.Config{
+		Addresses: []string{"https://es-dlbhgdje.public.tencentelasticsearch.com:9200"},
+		Username:  "elastic",
+		Password:  "yotta@2021",
+	}
+
+	ytESConfig := conf.YTESConfig{
+		ESConf:      elkConf,
+		DebugMode:   false,
+		IndexPrefix: "s3client-log", //elk前缀，查询时候会用到
+		IndexType:   "log",
+	}
+
+	client, _ := YTElkProducer.NewClient(ytESConfig)
+	return client
 }
 
 func NewUploadObject(c *Client) *UploadObject {
 	p := &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
-	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p}
+	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p, Eclinet:NewElkClient()}
 	return o
 }
 
