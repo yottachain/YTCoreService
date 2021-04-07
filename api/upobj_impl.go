@@ -29,10 +29,11 @@ type UploadObject struct {
 	ERR        atomic.Value
 	activesign chan int
 	PRO        *UpProgress
-	Eclinet	   YTElkProducer.Client
+	Eclinet1	   YTElkProducer.Client
+	Eclinet2	   YTElkProducer.Client
 }
 
-func NewElkClient() YTElkProducer.Client {
+func NewElkClient(index string) YTElkProducer.Client {
 	elkConf := elasticsearch.Config{
 		Addresses: []string{"https://es-dlbhgdje.public.tencentelasticsearch.com:9200"},
 		Username:  "elastic",
@@ -42,7 +43,7 @@ func NewElkClient() YTElkProducer.Client {
 	ytESConfig := conf.YTESConfig{
 		ESConf:      elkConf,
 		DebugMode:   false,
-		IndexPrefix: "s3client-log", //elk前缀，查询时候会用到
+		IndexPrefix: index, //elk前缀，查询时候会用到
 		IndexType:   "log",
 	}
 
@@ -52,7 +53,8 @@ func NewElkClient() YTElkProducer.Client {
 
 func NewUploadObject(c *Client) *UploadObject {
 	p := &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
-	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p, Eclinet:NewElkClient()}
+	o := &UploadObject{UClient: c, ActiveTime: new(int64), activesign: make(chan int), PRO: p,
+		Eclinet1:NewElkClient("s3clinet-log-shards"), Eclinet2:NewElkClient("s3clinet-log-blocks")}
 	return o
 }
 

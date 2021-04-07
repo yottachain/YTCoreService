@@ -81,7 +81,7 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 		RetryTimes: uint32(self.retrytimes)}
 	times := 0
 	for {
-		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, self.logPrefix)
+		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, self.logPrefix, true)
 		times++
 		if err != nil {
 			node.NodeInfo.SetERR()
@@ -104,7 +104,7 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 }
 
 func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
-	msg, err := net.RequestDN(req, &node.NodeInfo.Node, self.logPrefix)
+	msg, err := net.RequestDN(req, &node.NodeInfo.Node, self.logPrefix, false)
 	if err != nil {
 		node.NodeInfo.SetERR()
 		return nil, errors.New("COMM_ERROR")
@@ -153,7 +153,7 @@ func (self *UploadShard) DoSend() {
 		times := time.Now().Sub(startTime).Milliseconds()
 
 		stat := &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes), UpShardTimes: sendTimes, Time:time.Now().Unix()}
-		self.uploadBlock.UPOBJ.Eclinet.AddDocAsync(stat)
+		self.uploadBlock.UPOBJ.Eclinet1.AddDocAsync(stat)
 
 		if err1 != nil {
 			self.retrytimes++
