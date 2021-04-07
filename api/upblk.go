@@ -335,7 +335,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	sTime := time.Now()
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	self.Stat.EndTimes = time.Now().Sub(sTime).Milliseconds()
-	self.UPOBJ.Eclinet2.AddDocAsync(self.Stat)
+	self.UPOBJ.Eclinet2.AddLogAsync(self.Stat)
 
 	if errmsg != nil {
 		var ids []int32
