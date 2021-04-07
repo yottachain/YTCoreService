@@ -11,6 +11,7 @@ import (
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/codec"
+	"github.com/yottachain/YTCoreService/elk"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
@@ -33,6 +34,7 @@ func StartUploadBlock(id int16, b *codec.PlainBlock, up *UploadObject, wg *sync.
 		ID:    id,
 		BLK:   b,
 		WG:    wg,
+		Stat:  &elk.ElkBlockLog{},
 	}
 	ub.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
 	<-BLOCK_ROUTINE_CH
@@ -48,6 +50,7 @@ type UploadBlock struct {
 	SN        *YTDNMgmt.SuperNode
 	WG        *sync.WaitGroup
 	STime     int64
+	Stat      *elk.ElkBlockLog
 }
 
 func (self *UploadBlock) DoFinish(size int64) {
@@ -85,7 +88,11 @@ func (self *UploadBlock) upload() {
 		Vnu:       vnu,
 		Version:   &env.VersionID,
 	}
+	sTime := time.Now()
 	resp, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
+	self.Stat.InitTimes = time.Now().Sub(sTime).Milliseconds()
+	self.Stat.Time = time.Now().Unix()
+
 	if errmsg != nil {
 		self.UPOBJ.ERR.Store(errmsg)
 		return
@@ -325,7 +332,11 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
 		req.SignData = &sign
 	}
+	sTime := time.Now()
 	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
+	self.Stat.EndTimes = time.Now().Sub(sTime).Milliseconds()
+	self.UPOBJ.Eclinet.AddDocAsync(self.Stat)
+
 	if errmsg != nil {
 		var ids []int32
 		if errmsg.Code == pkt.DN_IN_BLACKLIST {
