@@ -112,7 +112,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 	atomic.StoreInt64(client.lastTime, time.Now().Unix())
-	err := client.connect(addrs, log_pre, nowait)
+	err := client.connect(addrs, log_pre, false)
 	if err != nil {
 		return nil, err
 	}
