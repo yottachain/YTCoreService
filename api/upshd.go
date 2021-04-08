@@ -156,9 +156,10 @@ func (self *UploadShard) DoSend() {
 		sendTimes := time.Now().Sub(startSendTime).Milliseconds()
 		times := time.Now().Sub(startTime).Milliseconds()
 
-		stat := &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes),
+		//stat := &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes),
+		_ = &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes),
 			UpShardTimes: sendTimes, Id:node.NodeInfo.Id, GetNodeTimes:uint32(gnTimes)/(self.retrytimes + 1)}
-		self.uploadBlock.UPOBJ.Eclinet1.AddLogAsync(stat)
+		//self.uploadBlock.UPOBJ.Eclinet1.AddLogAsync(stat)
 
 		if err1 != nil {
 			self.retrytimes++
