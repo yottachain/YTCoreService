@@ -129,7 +129,9 @@ func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (
 
 func (self *UploadShard) DoSend() {
 	defer self.DoFinish()
+	gnstartTime := time.Now()
 	node := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
+	gnTimes := time.Now().Sub(gnstartTime).Milliseconds()
 	for {
 		startTime := time.Now()
 		req := self.MakeRequest(node)
@@ -138,7 +140,9 @@ func (self *UploadShard) DoSend() {
 		if err != nil {
 			self.retrytimes++
 			node.DecCount()
+			gnstartTime = time.Now()
 			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
+			gnTimes = gnTimes + time.Now().Sub(gnstartTime).Milliseconds()
 			logrus.Errorf("[UploadShard]%sGetNodeCapacity:%s,%s to %d,retry %d times,take times %d ms,retry next node %d\n",
 				self.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
 			node = n
@@ -152,13 +156,16 @@ func (self *UploadShard) DoSend() {
 		sendTimes := time.Now().Sub(startSendTime).Milliseconds()
 		times := time.Now().Sub(startTime).Milliseconds()
 
-		stat := &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes), UpShardTimes: sendTimes, Id:node.NodeInfo.Id, Time:time.Now().Unix()}
+		stat := &elk.ElkLog{GetTokenTimes: ctrtimes/int64(rtimes),
+			UpShardTimes: sendTimes, Id:node.NodeInfo.Id, GetNodeTimes:uint32(gnTimes)/(self.retrytimes + 1)}
 		self.uploadBlock.UPOBJ.Eclinet1.AddLogAsync(stat)
 
 		if err1 != nil {
 			self.retrytimes++
 			node.DecCount()
+			gnstartTime = time.Now()
 			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
+			gnTimes = gnTimes + time.Now().Sub(gnstartTime).Milliseconds()
 			logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d ms,retry next node %d\n",
 				self.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times, n.NodeInfo.Id)
 			node = n

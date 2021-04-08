@@ -91,7 +91,6 @@ func (self *UploadBlock) upload() {
 	sTime := time.Now()
 	resp, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	self.Stat.InitTimes = time.Now().Sub(sTime).Milliseconds()
-	self.Stat.Time = time.Now().Unix()
 
 	if errmsg != nil {
 		self.UPOBJ.ERR.Store(errmsg)
