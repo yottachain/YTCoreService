@@ -128,6 +128,7 @@ func readSnProperties() {
 	LsCacheMaxSize = config.GetRangeInt("lsCacheMaxSize", 1000, 500000, 20000)
 	PayInterval = config.GetRangeInt("payInterval", 10000, 600000, 60000)
 
+	MAX_DELBLK_ROUTINE = int32(config.GetRangeInt("MAX_DELBLK_ROUTINE", 21, 21*10, 21))
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))
 	MAX_HTTP_ROUTINE = int32(config.GetRangeInt("MAX_HTTP_ROUTINE", 500, 2000, 1000))
 	MAX_WRITE_ROUTINE = int32(config.GetRangeInt("MAX_WRITE_ROUTINE", 500, 5000, 2000))

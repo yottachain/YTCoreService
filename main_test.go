@@ -37,19 +37,19 @@ func Test(t *testing.T) {
 }
 
 func call() {
-	log, _ := env.AddLog("d:/sdd.log")
+	log, _ := env.AddLog("d:/sddwe.log")
 	log.Writer.Info("sdssdssdjksdsdsdsasd", "\n")
 	log.Writer.Info("sdsrrsdsdsdsds", "\n")
 
 	log.Close()
 
-	log, _ = env.AddLog("d:/sdd.log")
+	log, _ = env.AddLog("d:/sdd2.log")
 	log.Writer.Info("22sdsrrsdsdsdsds", "\n")
 	log.Writer.Info("22sdsrrsdsdsdsds", "\n")
 
 	log.Close()
 
-	log, _ = env.AddLog("d:/sdd.log")
+	log, _ = env.AddLog("d:/sdd3.log")
 	log.Writer.Info("332sdsrrsdsdsdsds", "\n")
 	log.Writer.Info("33232sdsrrsdsdsdsds", "\n")
 
