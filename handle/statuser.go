@@ -19,6 +19,7 @@ func StatUser() {
 	logrus.SetOutput(os.Stdout)
 	net.InitNodeMgr(dao.MongoAddress)
 	net.EOSInit()
+
 	logname := env.YTSN_HOME + "/users.txt"
 	os.Remove(logname)
 	f, err := env.AddLog(logname)
@@ -29,12 +30,14 @@ func StatUser() {
 	log.Writer.Info("ID:用户ID\n")
 	log.Writer.Info("UserName:用户名\n")
 	log.Writer.Info("FileTotal:文件数\n")
-	log.Writer.Info("SpaceTotal:存储总量\n")
-	log.Writer.Info("Usedspace:实际占用空间\n")
+	log.Writer.Info("SpaceTotal:存储总量(单位:bytes)\n")
+	log.Writer.Info("Usedspace:实际占用空间(单位:bytes)\n")
 	log.Writer.Info("Balance:用户HDD余额(单位:1/100000000 HDD)\n")
 	log.Writer.Info("-------------------\n")
 	defer log.Close()
 	Iterate()
+	logrus.Infof("[StatUser]STAT complete.\n")
+	dao.Close()
 }
 
 func Iterate() {
