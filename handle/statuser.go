@@ -59,18 +59,24 @@ func Iterate() {
 				}
 				b, err := GetBlance(user.Username)
 				if err != nil {
-					logrus.Panicf("[StatUser]Failed to get balance:%s\n", err)
+					log.Writer.Infof("ID:%d\n", user.UserID)
+					log.Writer.Infof("UserName:%s\n", user.Username)
+					log.Writer.Infof("FileTotal:%d\n", user.FileTotal)
+					log.Writer.Infof("SpaceTotal:%d\n", user.SpaceTotal)
+					log.Writer.Infof("Usedspace:%d\n", user.Usedspace)
+					log.Writer.Infof("Balance:%s\n", "Account ERR")
+					log.Writer.Info("-------------------\n")
+					logrus.Errorf("[StatUser]Failed to get balance:%s\n", err)
 				} else {
+					log.Writer.Infof("ID:%d\n", user.UserID)
+					log.Writer.Infof("UserName:%s\n", user.Username)
+					log.Writer.Infof("FileTotal:%d\n", user.FileTotal)
+					log.Writer.Infof("SpaceTotal:%d\n", user.SpaceTotal)
+					log.Writer.Infof("Usedspace:%d\n", user.Usedspace)
+					log.Writer.Infof("Balance:%d\n", b)
+					log.Writer.Info("-------------------\n")
 					logrus.Infof("[StatUser]Get balance successfully!,UserName:%s", user.Username)
 				}
-				log.Writer.Infof("ID:%d\n", user.UserID)
-				log.Writer.Infof("UserName:%s\n", user.Username)
-				log.Writer.Infof("FileTotal:%d\n", user.FileTotal)
-				log.Writer.Infof("SpaceTotal:%d\n", user.SpaceTotal)
-				log.Writer.Infof("Usedspace:%d\n", user.Usedspace)
-				log.Writer.Infof("Balance:%d\n", b)
-				log.Writer.Info("-------------------\n")
-
 				time.Sleep(time.Duration(5) * time.Second)
 			}
 		}
