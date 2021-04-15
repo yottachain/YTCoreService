@@ -217,9 +217,30 @@ func AddRefer(userid uint32, VNU primitive.ObjectID, block []byte, usedSpace uin
 	return nil
 }
 
-func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int) ([]primitive.ObjectID, error) {
+func GetLastAccessTime(userid uint32) (time.Time, error) {
+	source := NewUserMetaSource(userid)
+	opt := options.FindOne().SetProjection(bson.M{"VNU": 1}).SetSort(bson.M{"VNU": -1})
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+	result := &ObjectMeta{}
+	err := source.GetObjectColl().FindOne(ctx, bson.M{}, opt).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return time.Now(), nil
+		} else {
+			logrus.Errorf("[ObjectMeta]GetLastAccessTime ERR:%s\n", err)
+			return time.Now(), err
+		}
+	}
+	return result.VNU.Timestamp(), nil
+}
+
+func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int, InArrears bool) ([]primitive.ObjectID, error) {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": bson.M{"$gt": startVnu}, "NLINK": bson.M{"$lt": 1}}
+	if InArrears {
+		filter = bson.M{"VNU": bson.M{"$gt": startVnu}}
+	}
 	fields := bson.M{"VNU": 1}
 	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
