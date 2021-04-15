@@ -45,7 +45,7 @@ const VBI_COUNT_LIMIT = 10
 
 func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
 	for {
-		meta, err := dao.DelOrUpObject(uid, vnu, decSpace, false)
+		meta, err := dao.DelOrUpObject(uid, vnu, decSpace, del)
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue

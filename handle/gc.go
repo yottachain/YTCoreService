@@ -15,16 +15,12 @@ func StartGC() {
 	if !env.GC {
 		return
 	}
-	time.Sleep(time.Duration(5 * time.Minute))
-	for {
-		if !net.IsActive() {
-			time.Sleep(time.Duration(30) * time.Second)
-			continue
-		}
-		ListUser(true)
-		ListUser(false)
-		time.Sleep(time.Duration(24) * time.Hour)
+	if !net.IsActive() {
+		return
 	}
+	time.Sleep(time.Duration(5 * time.Minute))
+	ListUser(true)
+	ListUser(false)
 }
 
 func ListUser(InArrears bool) {
@@ -87,6 +83,7 @@ func ListUser(InArrears bool) {
 							logrus.Infof("[GC][%s][%d]Start clearing unreferenced data......\n", user.Username, user.UserID)
 							IterateObjects(user, false)
 						}
+						logrus.Infof("[GC][%s][%d]Delete completed.\n", user.Username, user.UserID)
 					}
 				}
 			}
@@ -102,6 +99,9 @@ func IterateObjects(user *dao.User, del bool) {
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
+		}
+		if len(vnus) == 0 {
+			break
 		}
 		for _, vnu := range vnus {
 			if time.Now().Unix()-vnu.Timestamp().Unix() >= 60*5 {
