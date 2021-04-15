@@ -76,6 +76,7 @@ func ListUser(InArrears bool) {
 								logrus.Infof("[GC][%s][%d]Be in arrears but not expired,LastAccessTime:%s\n", user.Username, user.UserID, lasttime.Format("2006-01-02 15:04:05"))
 							}
 							if user.Username == "pollydevnew2" {
+								logrus.Infof("[GC][%s][%d]Force delete...\n", user.Username, user.UserID)
 								expired = true
 							}
 						}
