@@ -84,6 +84,9 @@ func Iterate() {
 }
 
 func GetBlance(username string) (int64, error) {
+	if username == "pollydevnew2" {
+		return -5, nil
+	}
 	balance, err := net.GetBalance(username)
 	if err != nil {
 		return 0, err

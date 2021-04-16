@@ -37,20 +37,21 @@ func IterateDELLog() {
 		if log == nil {
 			return
 		}
-		DelBlocks(log.UID, log.VNU, true)
+		DelBlocks(log.UID, log.VNU, true, false)
 	}
 }
 
 const VBI_COUNT_LIMIT = 10
 
-func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool) {
+func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
 	for {
-		meta, err := dao.DelOrUpObject(uid, vnu, decSpace)
+		meta, err := dao.DelOrUpObject(uid, vnu, decSpace, del)
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		} else {
 			if meta != nil {
+				logrus.Infof("[DeleteOBJ][%d]Deleting object %s,block count %d...\n", uid, vnu.Hex(), len(meta.BlockList))
 				vbigroup := make(map[int32][]int64)
 				for _, refbs := range meta.BlockList {
 					refer := pkt.NewRefer(refbs)
@@ -99,7 +100,7 @@ func deleteBlocks(snid int32, vibs []int64) {
 	}
 	if errmsg != nil {
 		logrus.Errorf("[DeleteOBJ][%d]Delete blocks err:%s\n", pkt.ToError(errmsg))
-		time.Sleep(time.Duration(60*3) * time.Second)
+		time.Sleep(time.Duration(90) * time.Second)
 	}
 }
 
