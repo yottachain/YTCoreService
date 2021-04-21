@@ -16,8 +16,8 @@ import (
 var DEL_BLK_CH chan int
 
 func InitDELPool() {
-	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE/2)
-	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE/2); ii++ {
+	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE/3)
+	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE/3); ii++ {
 		DEL_BLK_CH <- 1
 	}
 }
