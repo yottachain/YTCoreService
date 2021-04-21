@@ -16,8 +16,8 @@ import (
 var DEL_BLK_CH chan int
 
 func InitDELPool() {
-	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE)
-	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE); ii++ {
+	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE/2)
+	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE/2); ii++ {
 		DEL_BLK_CH <- 1
 	}
 }
@@ -83,6 +83,7 @@ func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
 
 func deleteBlocks(snid int32, vibs []int64) {
 	defer func() { DEL_BLK_CH <- 1 }()
+	startTime := time.Now()
 	req := &pkt.DeleteBlockReq{VBIS: vibs}
 	sn := net.GetSuperNode(int(snid))
 	var errmsg *pkt.ErrorMessage = nil
@@ -99,8 +100,10 @@ func deleteBlocks(snid int32, vibs []int64) {
 		}
 	}
 	if errmsg != nil {
-		logrus.Errorf("[DeleteOBJ][%d]Delete blocks err:%s\n", pkt.ToError(errmsg))
+		logrus.Errorf("[DeleteOBJ][%d]Delete blocks err:%s\n", snid, pkt.ToError(errmsg))
 		time.Sleep(time.Duration(90) * time.Second)
+	} else {
+		logrus.Infof("[DeleteOBJ][%d]Delete %d blocks,take times %d ms\n", snid, len(vibs), time.Now().Sub(startTime).Milliseconds())
 	}
 }
 
