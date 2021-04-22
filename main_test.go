@@ -38,24 +38,14 @@ func Test(t *testing.T) {
 
 func call() {
 	log, _ := env.AddLog("d:/sddwe.log")
-	log.Writer.Info("sdssdssdjksdsdsdsasd", "\n")
-	log.Writer.Info("sdsrrsdsdsdsds", "\n")
+
+	log.Writer.Info("11111111111111sdssdssdjksdsdsdsasd", "\n")
+	log.Writer.Info("1111111111sdsrrsdsdsdsds", "\n")
 
 	log.Close()
 
-	log, _ = env.AddLog("d:/sdd2.log")
-	log.Writer.Info("22sdsrrsdsdsdsds", "\n")
-	log.Writer.Info("22sdsrrsdsdsdsds", "\n")
+	log, _ = env.AddLog("d:/sddwe.log")
+	log.Writer.Info("2222222111sdssdssdjksdsdsdsasd", "\n")
+	log.Writer.Info("222sdsrrsdsdsdsds", "\n")
 
-	log.Close()
-
-	log, _ = env.AddLog("d:/sdd3.log")
-	log.Writer.Info("332sdsrrsdsdsdsds", "\n")
-	log.Writer.Info("33232sdsrrsdsdsdsds", "\n")
-
-	/*
-		_, err := handle.NewNodeLog(2, "d:/")
-		if err != nil {
-			//fmt.Println(err)
-		}*/
 }
