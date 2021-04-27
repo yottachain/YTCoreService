@@ -109,9 +109,9 @@ func (me *NodeLog) CalCurDate() error {
 		me.writer.Close()
 		me.writer = nil
 	}
-	t = t.Add(-time.Hour * 24 * (time.Duration(t.Weekday())))
+	//t = t.Add(-time.Hour * 24 * (time.Duration(t.Weekday())))
 	endts := t.Unix() / (60 * 60 * 24)
-	endts = (endts + 7) * (60 * 60 * 24)
+	endts = (endts + 1) * (60 * 60 * 24)
 	atomic.StoreInt64(me.EndTime, endts)
 	CurDate := t.Format("20060102")
 	dirname := me.path + CurDate

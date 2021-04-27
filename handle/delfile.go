@@ -150,18 +150,23 @@ func (h *DeleteBlockHandler) Handle() proto.Message {
 		logrus.Errorf("[DeleteBlock]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
+	var dbtime, alltime int64
 	var delerr error = nil
 	for _, vbi := range h.m.VBIS {
+		startTime := time.Now()
 		shds, er := dao.DelOrUpBLK(vbi)
 		if er != nil {
 			delerr = er
 		} else {
+			dbtime = dbtime + time.Now().Sub(startTime).Milliseconds()
 			er = h.WriteLOG(shds)
 			if er != nil {
 				delerr = er
 			}
+			alltime = alltime + time.Now().Sub(startTime).Milliseconds()
 		}
 	}
+	logrus.Infof("[DeleteBlock]Delete %d blocks,take times %d/%d ms\n", len(h.m.VBIS), dbtime, alltime)
 	if delerr == nil {
 		return &pkt.VoidResp{}
 	} else {

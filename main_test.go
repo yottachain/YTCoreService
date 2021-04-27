@@ -37,15 +37,5 @@ func Test(t *testing.T) {
 }
 
 func call() {
-	log, _ := env.AddLog("d:/sddwe.log")
-
-	log.Writer.Info("11111111111111sdssdssdjksdsdsdsasd", "\n")
-	log.Writer.Info("1111111111sdsrrsdsdsdsds", "\n")
-
-	log.Close()
-
-	log, _ = env.AddLog("d:/sddwe.log")
-	log.Writer.Info("2222222111sdssdssdjksdsdsdsasd", "\n")
-	log.Writer.Info("222sdsrrsdsdsdsds", "\n")
 
 }
