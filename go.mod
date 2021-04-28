@@ -19,7 +19,7 @@ require (
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20210420070201-149437afeb2d
+	github.com/yottachain/YTDNMgmt v0.0.0-20210427090810-5850aab863e6
 	github.com/yottachain/YTHost v1.0.2-0.20210309102115-a3b2780e2d96
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
