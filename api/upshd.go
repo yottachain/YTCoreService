@@ -23,9 +23,13 @@ func InitShardUpPool() {
 	}
 }
 
-func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *sync.WaitGroup, ids []int32) *UploadShardResult {
+func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *sync.WaitGroup, ids []int32, lrc2 bool) *UploadShardResult {
 	upshd := &UploadShard{uploadBlock: upblk, shard: shd, shardId: shdid, retrytimes: 0, WG: wg}
-	upshd.logPrefix = fmt.Sprintf("[%s][%d][%d]", upblk.UPOBJ.VNU.Hex(), upblk.ID, shdid)
+	if lrc2 {
+		upshd.logPrefix = fmt.Sprintf("[%s][%d][%d-0]", upblk.UPOBJ.VNU.Hex(), upblk.ID, shdid)
+	} else {
+		upshd.logPrefix = fmt.Sprintf("[%s][%d][%d-1]", upblk.UPOBJ.VNU.Hex(), upblk.ID, shdid)
+	}
 	upshd.res = &UploadShardResult{SHARDID: shdid, VHF: shd.VHF}
 	upshd.blkList = ids
 	<-SHARD_UP_CH

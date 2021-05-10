@@ -64,7 +64,7 @@ func GetNodes(ids []int32) ([]*net.Node, error) {
 		}
 		if n == nil {
 			if noexistids == "" {
-				noexistids = noexistids + strconv.Itoa(int(ids[ii]))
+				noexistids = strconv.Itoa(int(ids[ii]))
 			} else {
 				noexistids = noexistids + "," + strconv.Itoa(int(ids[ii]))
 			}

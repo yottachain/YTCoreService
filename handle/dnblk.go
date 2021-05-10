@@ -24,6 +24,30 @@ func StartDNBlackListCheck() {
 	}
 }
 
+func NotInBlackListV3(oklist []*pkt.UploadBlockEndReqV3_OkList, uid int32) []int32 {
+	v := DN_Black_List.Load()
+	if v == nil {
+		return nil
+	}
+	ids := v.([]int32)
+	var inblackids []int32
+	for _, req := range oklist {
+		if req.NODEID == nil || req.NODEID2 == nil {
+			logrus.Error("[UploadBLK]NodeId is nil,UserId:%d.\n", uid)
+			continue
+		}
+		if env.IsExistInArray(*req.NODEID, ids) {
+			logrus.Warnf("[UploadBLK]DN_IN_BLACKLIST ERR,NodeId:%d,UserId:%d.\n", *req.NODEID, uid)
+			inblackids = append(inblackids, *req.NODEID)
+		}
+		if env.IsExistInArray(*req.NODEID2, ids) {
+			logrus.Warnf("[UploadBLK]DN_IN_BLACKLIST ERR,NodeId:%d,UserId:%d.\n", *req.NODEID2, uid)
+			inblackids = append(inblackids, *req.NODEID2)
+		}
+	}
+	return inblackids
+}
+
 func NotInBlackList(oklist []*pkt.UploadBlockEndReqV2_OkList, uid int32) []int32 {
 	v := DN_Black_List.Load()
 	if v == nil {

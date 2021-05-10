@@ -252,11 +252,15 @@ func (self *UploadBlock) UploadBlockDedup() {
 	retrytimes := 0
 	size := len(enc.Shards)
 	ress := make([]*UploadShardResult, size)
-	var ids []int32
 	keu := codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.StoreKey.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, self.BLK.KD)
+	var ress2 []*UploadShardResult = nil
+	if env.LRC2 && !enc.IsCopyShard() {
+		ress2 = make([]*UploadShardResult, size)
+	}
+	var ids []int32
 	for {
-		blkls, err := self.UploadShards(self.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, self.BLK.OriginalSize, ress, ids)
+		blkls, err := self.UploadShards(self.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, self.BLK.OriginalSize, ress, ress2, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
@@ -275,8 +279,8 @@ func (self *UploadBlock) UploadBlockDedup() {
 	}
 }
 
-func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.ErasureEncoder,
-	rsize *int32, originalSize int64, ress []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
+func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.ErasureEncoder, rsize *int32,
+	originalSize int64, ress []*UploadShardResult, ress2 []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
 	startTime := time.Now()
 	wgroup := sync.WaitGroup{}
@@ -284,8 +288,17 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	for index, shd := range enc.Shards {
 		if ress[index] == nil {
 			wgroup.Add(1)
-			ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids)
+			ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids, false)
 			num++
+		}
+	}
+	if ress2 != nil {
+		for index, shd := range enc.Shards {
+			if ress2[index] == nil {
+				wgroup.Add(1)
+				ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids, true)
+				num++
+			}
 		}
 	}
 	wgroup.Wait()
@@ -298,34 +311,59 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	kn := int32(self.UPOBJ.UClient.SignKey.KeyNumber)
 	bid := int32(self.ID)
 	osize := int64(originalSize)
-	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
-	vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	var ar int32 = 0
 	if enc.IsCopyShard() {
 		ar = codec.AR_COPY_MODE
 	} else {
 		ar = enc.DataCount
 	}
-	req := &pkt.UploadBlockEndReqV2{
-		UserId:       &uid,
-		SignData:     &self.UPOBJ.UClient.SignKey.Sign,
-		KeyNumber:    &kn,
-		Id:           &bid,
-		VHP:          vhp,
-		VHB:          vhb,
-		KEU:          keu,
-		KED:          ked,
-		Vnu:          vnu,
-		OriginalSize: &osize,
-		RealSize:     rsize,
-		AR:           &ar,
-		Oklist:       ToUploadBlockEndReqV2_OkList(ress),
+	var errmsg *pkt.ErrorMessage
+	if ress2 == nil {
+		i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
+		vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
+		req := &pkt.UploadBlockEndReqV2{
+			UserId:       &uid,
+			SignData:     &self.UPOBJ.UClient.SignKey.Sign,
+			KeyNumber:    &kn,
+			Id:           &bid,
+			VHP:          vhp,
+			VHB:          vhb,
+			KEU:          keu,
+			KED:          ked,
+			Vnu:          vnu,
+			OriginalSize: &osize,
+			RealSize:     rsize,
+			AR:           &ar,
+			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
+		}
+		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+			req.SignData = &sign
+		}
+		_, errmsg = net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
+	} else {
+		vnu := self.UPOBJ.VNU.Hex()
+		req := &pkt.UploadBlockEndReqV3{
+			UserId:       &uid,
+			SignData:     &self.UPOBJ.UClient.SignKey.Sign,
+			KeyNumber:    &kn,
+			Id:           &bid,
+			VHP:          vhp,
+			VHB:          vhb,
+			KEU:          keu,
+			KED:          ked,
+			VNU:          &vnu,
+			OriginalSize: &osize,
+			RealSize:     rsize,
+			AR:           &ar,
+			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
+		}
+		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
+			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+			req.SignData = &sign
+		}
+		_, errmsg = net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	}
-	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
-		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
-		req.SignData = &sign
-	}
-	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		var ids []int32
 		if errmsg.Code == pkt.DN_IN_BLACKLIST {
@@ -376,6 +414,21 @@ func ToUploadBlockEndReqV2_OkList(res []*UploadShardResult) []*pkt.UploadBlockEn
 			NODEID:  &r.NODE.Id,
 			VHF:     r.VHF,
 			DNSIGN:  &r.DNSIGN,
+		}
+	}
+	return oklist
+}
+
+func ToUploadBlockEndReqV3_OkList(res []*UploadShardResult, res2 []*UploadShardResult) []*pkt.UploadBlockEndReqV3_OkList {
+	oklist := make([]*pkt.UploadBlockEndReqV3_OkList, len(res))
+	for index, r := range res {
+		oklist[index] = &pkt.UploadBlockEndReqV3_OkList{
+			SHARDID: &r.SHARDID,
+			NODEID:  &r.NODE.Id,
+			VHF:     r.VHF,
+			DNSIGN:  &r.DNSIGN,
+			NODEID2: &res2[index].NODE.Id,
+			DNSIGN2: &res2[index].DNSIGN,
 		}
 	}
 	return oklist

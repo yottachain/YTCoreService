@@ -111,7 +111,6 @@ message UploadBlockDupReqV2{
     optional uint32 realSize=10;   
 }
 
-
 message UploadBlockEndReqV2{
     optional int32 userId=1;
     optional string signData=2;
@@ -138,7 +137,7 @@ message UploadBlockEndReqV2{
     }
 }
 
-message UploadBlockEndSyncReqV2{
+message UploadBlockEndReqV3{
     optional int32 userId=1;
     optional string signData=2;
     optional int32 keyNumber=3;
@@ -149,18 +148,15 @@ message UploadBlockEndSyncReqV2{
     optional bytes KED=8;
     optional int64 originalSize=9;   
     optional int32 realSize=10;   
-    optional group VNU=11{
-        optional uint32 timestamp=1;
-        optional int32 machineIdentifier=2;
-        optional uint32 processIdentifier=3;
-        optional int32 counter=4;     
-    }
+    optional string VNU=11;
     optional int32 AR=12;
     repeated group OkList=13{
         optional int32 SHARDID=1;
         optional int32 NODEID=2;
         optional bytes VHF=3;
         optional string DNSIGN=4;
+        optional int32 NODEID2=5;
+        optional string DNSIGN2=6;
     }
     optional int64 VBI=14;
 }
