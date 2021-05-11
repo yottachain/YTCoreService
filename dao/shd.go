@@ -14,9 +14,10 @@ import (
 )
 
 type ShardMeta struct {
-	VFI    int64  `bson:"_id"`
-	NodeId int32  `bson:"nodeId"`
-	VHF    []byte `bson:"VHF"`
+	VFI     int64  `bson:"_id"`
+	NodeId  int32  `bson:"nodeId"`
+	VHF     []byte `bson:"VHF"`
+	NodeId2 int32  `bson:"nodeId2"`
 }
 
 type ShardRebuidMeta struct {

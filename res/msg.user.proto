@@ -81,6 +81,25 @@ message DownloadObjectInitResp{
     optional uint64 length=2;
 }
 
+message DownloadBlockInitResp3{
+    optional bytes DATA=1;
+}
+
+message DownloadBlockInitResp2{
+    repeated group Ns=1{
+        optional int32 id=1;
+        optional string nodeid=2;
+        optional string pubkey=3;
+        repeated string addrs=4;
+        optional double weight=5;                 
+    }
+    optional int32 VNF=2;
+    repeated bytes VHFs=3;
+    repeated int32 Nids=4;
+    repeated int32 Nids2=5;
+    optional int32 AR=6;
+}
+
 message DownloadBlockInitResp{
     optional group NList=1{
         optional uint32 count=1;

@@ -139,6 +139,18 @@ func (h *DeleteBlockHandler) WriteLOG(shds []*dao.ShardMeta) error {
 				logrus.Errorf("[DeleteBlock]WriteLog %d ERR:%s\n", shd.NodeId, err)
 				return err
 			}
+			if shd.NodeId2 > 0 {
+				log, err = GetNodeLog(shd.NodeId2)
+				if err != nil {
+					logrus.Errorf("[DeleteBlock]GetNodeLog ERR:%s\n", err)
+					return err
+				}
+				err = log.WriteLog(base58.Encode(shd.VHF))
+				if err != nil {
+					logrus.Errorf("[DeleteBlock]WriteLog %d ERR:%s\n", shd.NodeId2, err)
+					return err
+				}
+			}
 		}
 	}
 	return nil

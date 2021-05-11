@@ -147,9 +147,13 @@ func (self *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 	size := len(enc.Shards)
 	rsize := int32(self.EncBLK.RealSize)
 	ress := make([]*UploadShardResult, size)
+	var ress2 []*UploadShardResult = nil
+	if env.LRC2 && !enc.IsCopyShard() {
+		ress2 = make([]*UploadShardResult, size)
+	}
 	var ids []int32
 	for {
-		blkls, err := self.UploadShards(self.EncBLK.VHP, self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, self.EncBLK.OriginalSize, ress, ids)
+		blkls, err := self.UploadShards(self.EncBLK.VHP, self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, self.EncBLK.OriginalSize, ress, ress2, ids)
 		if err != nil {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls

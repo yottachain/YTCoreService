@@ -65,15 +65,28 @@ func (self *ObjectInfo) GetBlockInfo(refer *pkt.Refer) (*BlockInfo, *pkt.ErrorMe
 	if OK {
 		return &BlockInfo{VHF: [][]byte{[]byte("")}, NodeID: []int32{0}}, nil
 	} else {
-		initresp, _ := resp.(*pkt.DownloadBlockInitResp)
-		vhfs := initresp.Vhfs.VHF
-		ids := initresp.Nids.Nodeids
-		b := &BlockInfo{VHF: vhfs, NodeID: ids}
-		for _, n := range initresp.Nlist.Ns {
-			if n != nil && n.Id != nil {
-				self.ADDR[*n.Id] = n.Addrs
+		initresp, ok := resp.(*pkt.DownloadBlockInitResp)
+		if ok {
+			vhfs := initresp.Vhfs.VHF
+			ids := initresp.Nids.Nodeids
+			b := &BlockInfo{VHF: vhfs, NodeID: ids}
+			for _, n := range initresp.Nlist.Ns {
+				if n != nil && n.Id != nil {
+					self.ADDR[*n.Id] = n.Addrs
+				}
 			}
+			return b, nil
+		} else {
+			initresp2, _ := resp.(*pkt.DownloadBlockInitResp2)
+			vhfs := initresp2.VHFs
+			ids := initresp2.Nids
+			b := &BlockInfo{VHF: vhfs, NodeID: ids}
+			for _, n := range initresp2.Ns {
+				if n != nil && n.Id != nil {
+					self.ADDR[*n.Id] = n.Addrs
+				}
+			}
+			return b, nil
 		}
-		return b, nil
 	}
 }

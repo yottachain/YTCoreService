@@ -393,17 +393,19 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 		}
 	}
 	shardMetas := make([]*dao.ShardMeta, shardcount)
+	signs := make([][]string, shardcount)
 	nodeidsls := []int32{}
 	for _, v := range h.m.Oklist {
 		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.VHF == nil || v.DNSIGN == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
+		signs[*v.SHARDID] = []string{*v.DNSIGN, ""}
 		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, VHF: v.VHF}
 		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
 	}
-	msgerr := VerifyShards(shardMetas, nodeidsls, vbi, shardcount, *h.m.AR, h.m.VHB)
+	msgerr := VerifyShards(shardMetas, signs, nodeidsls, vbi, *h.m.AR, h.m.VHB, false)
 	if msgerr != nil {
 		return msgerr
 	}
@@ -437,7 +439,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	return &pkt.UploadBlockEndResp{Host: &ip, VBI: &vbi}
 }
 
-func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, count int, AR int32, VHB []byte) *pkt.ErrorMessage {
+func VerifyShards(shardMetas []*dao.ShardMeta, signs [][]string, nodeidsls []int32, vbi int64, AR int32, VHB []byte, lrc2 bool) *pkt.ErrorMessage {
 	for _, v := range shardMetas {
 		if v == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList Missing")
@@ -453,12 +455,22 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 		logrus.Errorf("[UploadBLK]Some Nodes have been cancelled\n")
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
 	}
-	num := count / len(nodeidsls)
-	if count%len(nodeidsls) > 0 {
-		num = num + 1
+	shdnum := len(shardMetas)
+	nodenum := len(nodeidsls)
+	num := 0
+	if lrc2 {
+		num = (shdnum * 2) / nodenum
+		if (shdnum*2)%nodenum > 0 {
+			num = num + 1
+		}
+	} else {
+		num = shdnum / nodenum
+		if shdnum%nodenum > 0 {
+			num = num + 1
+		}
 	}
 	if num > env.ShardNumPerNode {
-		logrus.Warnf("[UploadBLK]Number of nodes less than %d/%d\n", len(nodeidsls), count)
+		logrus.Warnf("[UploadBLK]Number of nodes less than %d/%d\n", nodenum, shdnum)
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
 	}
 	md5Digest := md5.New()
@@ -470,7 +482,7 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 				md5Digest.Write(m.VHF)
 			}
 		}
-		if !verifySign(m, nodes) {
+		if !verifySign(m, signs, nodes) {
 			return pkt.NewError(pkt.INVALID_SIGNATURE)
 		}
 	}
@@ -482,14 +494,14 @@ func VerifyShards(shardMetas []*dao.ShardMeta, nodeidsls []int32, vbi int64, cou
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	err = saveShardCount(vbi, shardMetas)
+	err = saveShardCount(vbi, shardMetas, lrc2)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	return nil
 }
 
-func saveShardCount(vbi int64, ls []*dao.ShardMeta) error {
+func saveShardCount(vbi int64, ls []*dao.ShardMeta, lrc2 bool) error {
 	m := make(map[int32]int16)
 	for _, shard := range ls {
 		num, ok := m[shard.NodeId]
@@ -498,29 +510,37 @@ func saveShardCount(vbi int64, ls []*dao.ShardMeta) error {
 		} else {
 			m[shard.NodeId] = 1
 		}
+		if lrc2 {
+			num, ok = m[shard.NodeId2]
+			if ok {
+				m[shard.NodeId2] = num + 1
+			} else {
+				m[shard.NodeId2] = 1
+			}
+		}
 	}
 	bs := dao.ToBytes(m)
 	return dao.SaveNodeShardCount(vbi, bs)
 }
 
-func verifySign(meta *dao.ShardMeta, node []*net.Node) bool {
+func verifySign(meta *dao.ShardMeta, signs [][]string, node []*net.Node) bool {
 	return true
 }
 
-type UploadBlockEndSyncHandler struct {
+type UploadBlockEndV3Handler struct {
 	pkey        string
-	m           *pkt.UploadBlockEndSyncReqV2
+	m           *pkt.UploadBlockEndReqV3
 	user        *dao.User
 	vnu         primitive.ObjectID
 	storeNumber int32
 }
 
-func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+func (h *UploadBlockEndV3Handler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
 	h.pkey = pubkey
-	req, ok := msg.(*pkt.UploadBlockEndSyncReqV2)
+	req, ok := msg.(*pkt.UploadBlockEndReqV3)
 	if ok {
 		h.m = req
-		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VBI == nil {
+		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		sign, num := GetStoreNumber(*h.m.SignData, *h.m.KeyNumber)
@@ -530,7 +550,7 @@ func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message)
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || len(h.m.Oklist) > env.Max_Shard_Count+env.Default_PND {
+		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || len(h.m.Oklist) > (env.Max_Shard_Count+env.Default_PND)*2 {
 			return pkt.NewError(pkt.TOO_MANY_SHARDS), nil, nil
 		}
 		if h.m.VHB == nil || len(h.m.VHB) != 16 {
@@ -545,52 +565,74 @@ func (h *UploadBlockEndSyncHandler) SetMessage(pubkey string, msg proto.Message)
 		if h.m.KED == nil || len(h.m.KED) != 32 {
 			return pkt.NewError(pkt.INVALID_KED), nil, nil
 		}
-		if h.m.Vnu == nil || h.m.Id == nil || h.m.OriginalSize == nil || h.m.RealSize == nil || h.m.AR == nil {
+		if h.m.VNU == nil || h.m.Id == nil || h.m.OriginalSize == nil || h.m.RealSize == nil || h.m.AR == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		if h.m.Vnu.Timestamp == nil || h.m.Vnu.MachineIdentifier == nil || h.m.Vnu.ProcessIdentifier == nil || h.m.Vnu.Counter == nil {
+		vnu, err := primitive.ObjectIDFromHex(*h.m.VNU)
+		if err != nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
-		h.vnu = pkt.NewObjectId(*h.m.Vnu.Timestamp, *h.m.Vnu.MachineIdentifier, *h.m.Vnu.ProcessIdentifier, *h.m.Vnu.Counter)
+		h.vnu = vnu
 		return nil, WRITE_ROUTINE_NUM, nil
 	} else {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
 	}
 }
 
-func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
-	logrus.Debugf("[UploadBLK]Receive UploadBlockEndSync request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
+func (h *UploadBlockEndV3Handler) Handle() proto.Message {
+	logrus.Debugf("[UploadBLK]Receive UploadBlockEndV3 request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
-	vbi := *h.m.VBI
-	meta, err := dao.GetBlockById(vbi)
+	inblkids := NotInBlackListV3(h.m.Oklist, h.user.UserID)
+	if inblkids != nil && len(inblkids) > 0 {
+		txt, _ := json.Marshal(inblkids)
+		jsonstr := ""
+		if txt != nil {
+			jsonstr = string(txt)
+		}
+		logrus.Warnf("[UploadBLK][%d]DN_IN_BLACKLIST ERR:%s\n", h.user.UserID, jsonstr)
+		return pkt.NewErrorMsg(pkt.DN_IN_BLACKLIST, jsonstr)
+	}
+	shardcount := len(h.m.Oklist)
+	vbi := dao.GenerateBlockID(shardcount)
+	meta, err := dao.GetBlockByVHP_VHB(h.m.VHP, h.m.VHB)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	if meta != nil {
-		return &pkt.VoidResp{}
+		if !bytes.Equal(meta.KED, h.m.KED) {
+			logrus.Warnf("[UploadBLK]Block meta duplicate writing.\n")
+		} else {
+			vbi = meta.VBI
+		}
 	}
-	shardcount := len(h.m.Oklist)
 	shardMetas := make([]*dao.ShardMeta, shardcount)
+	signs := make([][]string, shardcount)
 	nodeidsls := []int32{}
 	for _, v := range h.m.Oklist {
-		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.VHF == nil || v.DNSIGN == nil {
+		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.NODEID2 == nil || v.VHF == nil || v.DNSIGN == nil || v.DNSIGN2 == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
-		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, VHF: v.VHF}
+		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, NodeId2: *v.NODEID2, VHF: v.VHF}
+		signs[*v.SHARDID] = []string{*v.DNSIGN, *v.DNSIGN2}
 		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
+		if !env.IsExistInArray(int32(*v.NODEID2), nodeidsls) {
+			nodeidsls = append(nodeidsls, int32(*v.NODEID2))
+		}
 	}
-	msgerr := VerifyShards(shardMetas, nodeidsls, vbi, shardcount, *h.m.AR, h.m.VHB)
+	msgerr := VerifyShards(shardMetas, signs, nodeidsls, vbi, *h.m.AR, h.m.VHB, true)
 	if msgerr != nil {
 		return msgerr
 	}
-	meta = &dao.BlockMeta{VBI: vbi, VHP: h.m.VHP, VHB: h.m.VHB, KED: h.m.KED,
-		VNF: int16(shardcount), NLINK: 1, AR: int16(*h.m.AR)}
-	dao.SaveBlockMeta(meta)
-	logrus.Debugf("[UploadBLK]Upload block Sync:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	if meta == nil {
+		meta = &dao.BlockMeta{VBI: vbi, VHP: h.m.VHP, VHB: h.m.VHB, KED: h.m.KED,
+			VNF: int16(shardcount), NLINK: 1, AR: int16(*h.m.AR)}
+		dao.SaveBlockMeta(meta)
+	}
+	logrus.Debugf("[UploadBLK]/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	startTime = time.Now()
-	usedSpace := uint64(env.PFL * shardcount)
+	usedSpace := uint64(env.PFL * shardcount * 2)
 	vnustr := h.vnu.Hex()
 	ref := &pkt.Refer{VBI: meta.VBI, SuperID: uint8(env.SuperNodeID), OriginalSize: *h.m.OriginalSize,
 		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}
@@ -599,7 +641,7 @@ func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
 	*saveObjectMetaReq.Mode = false
 	res, perr := SaveObjectMeta(saveObjectMetaReq, ref, h.vnu)
 	if perr != nil {
-		logrus.Infof("[UploadBLK]Sync Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
+		logrus.Errorf("[UploadBLK]Save object refer:/%s/%d ERR:%s\n", h.vnu.Hex(), *h.m.Id, perr.Msg)
 		return perr
 	} else {
 		if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
@@ -608,6 +650,7 @@ func (h *UploadBlockEndSyncHandler) Handle() proto.Message {
 			}
 		}
 	}
-	logrus.Infof("[UploadBLK]Sync Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
-	return &pkt.VoidResp{}
+	logrus.Infof("[UploadBLK]Save object refer:/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
+	ip := net.SelfIP
+	return &pkt.UploadBlockEndResp{Host: &ip, VBI: &vbi}
 }

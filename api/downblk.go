@@ -1,7 +1,10 @@
 package api
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -61,6 +64,41 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 			}
 			return initresp, nil
 		}
+		var msg *pkt.DownloadBlockInitResp2
+		initresp3, OK := resp.(*pkt.DownloadBlockInitResp3)
+		if OK {
+			if initresp3.DATA == nil {
+				logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_ERR_DATA\n", self.Ref.Id, self.Ref.VBI)
+				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "DATA_ERR")
+			}
+			data := initresp3.DATA
+			rd, err := gzip.NewReader(bytes.NewReader(data))
+			if err == nil {
+				d, err := ioutil.ReadAll(rd)
+				if err == nil {
+					data = d
+				}
+			}
+			msg = &pkt.DownloadBlockInitResp2{}
+			err = proto.Unmarshal(data, msg)
+			if err != nil {
+				logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_ERR_COMPRESSDATA\n", self.Ref.Id, self.Ref.VBI)
+				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "RETURN_ERR_COMPRESSDATA")
+			}
+		}
+		if msg == nil {
+			initresp2, OK := resp.(*pkt.DownloadBlockInitResp2)
+			if OK {
+				msg = initresp2
+			}
+		}
+		if msg != nil {
+			if msg.AR == nil || msg.VNF == nil || msg.Nids == nil || msg.Nids2 == nil || msg.Ns == nil || msg.VHFs == nil {
+				logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_ERR_RESP\n", self.Ref.Id, self.Ref.VBI)
+				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "ERR_RESP")
+			}
+			return msg, nil
+		}
 		logrus.Errorf("[DownloadBlock][%d][%d]Download init ERR:RETURN_ERR_MSG\n", self.Ref.Id, self.Ref.VBI)
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
 	}
@@ -108,24 +146,30 @@ func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.Erro
 				self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
 			return b, nil
 		}
-		initresp, _ := resp.(*pkt.DownloadBlockInitResp)
-		logrus.Infof("[DownloadBlock][%d][%d]Init OK,at sn %d,take times %d ms.\n",
-			self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
-		startTime := time.Now()
-		m := initresp.GetAR()
-		if m == codec.AR_COPY_MODE {
-			bp, errmsg := self.loadCopyShard(initresp)
-			if errmsg != nil {
-				return nil, errmsg
-			} else {
-				logrus.Infof("[DownloadBlock][%d][%d]Download CopyMode Block OK, take times %d ms.\n",
-					self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
-
-				return bp, nil
+		var m int32 = -99
+		var initresp2 *pkt.DownloadBlockInitResp2
+		initresp, ok := resp.(*pkt.DownloadBlockInitResp)
+		if ok {
+			logrus.Infof("[DownloadBlock][%d][%d]Init OK,at sn %d,take times %d ms.\n",
+				self.Ref.Id, self.Ref.VBI, self.Ref.SuperID, time.Now().Sub(startTime).Milliseconds())
+			startTime := time.Now()
+			m = initresp.GetAR()
+			if m == codec.AR_COPY_MODE {
+				bp, errmsg := self.loadCopyShard(initresp)
+				if errmsg != nil {
+					return nil, errmsg
+				} else {
+					logrus.Infof("[DownloadBlock][%d][%d]Download CopyMode Block OK, take times %d ms.\n",
+						self.Ref.Id, self.Ref.VBI, time.Now().Sub(startTime).Milliseconds())
+					return bp, nil
+				}
 			}
+		} else {
+			initresp2, _ = resp.(*pkt.DownloadBlockInitResp2)
+			m = initresp2.GetAR()
 		}
 		if m > 0 {
-			bp, errmsg := self.loadLRCShard(initresp)
+			bp, errmsg := self.loadLRCShard(initresp, initresp2)
 			if errmsg != nil {
 				return nil, errmsg
 			} else {
@@ -139,22 +183,51 @@ func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.Erro
 	}
 }
 
-func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *pkt.DownloadBlockInitResp2) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), 0)
 	downloads := []*DownLoadShardInfo{}
-	for ii, id := range resp.Nids.Nodeids {
-		vhf := resp.Vhfs.VHF[ii]
-		var dn *DownLoadShardInfo
-		for _, n := range resp.Nlist.Ns {
-			if n != nil {
-				if n.Id != nil && id == *n.Id {
-					dn = NewDownLoadShardInfo(n, vhf, env.DownloadRetryTimes, dns, self.Path)
-					break
+	if resp != nil {
+		for ii, id := range resp.Nids.Nodeids {
+			vhf := resp.Vhfs.VHF[ii]
+			var dn *DownLoadShardInfo
+			for _, n := range resp.Nlist.Ns {
+				if n != nil {
+					if n.Id != nil && id == *n.Id {
+						dn = NewDownLoadShardInfo(n, vhf, env.DownloadRetryTimes, dns, self.Path)
+						break
+					}
 				}
 			}
+			if dn != nil {
+				downloads = append(downloads, dn)
+			}
 		}
-		if dn != nil {
-			downloads = append(downloads, dn)
+	}
+	if resp2 != nil {
+		for ii, id := range resp2.Nids {
+			vhf := resp2.VHFs[ii]
+			id2 := resp2.Nids2[ii]
+			var n1, n2 *pkt.DownloadBlockInitResp2_Ns
+			for _, n := range resp2.Ns {
+				if n != nil && n.Id != nil {
+					if n1 == nil && id == *n.Id {
+						n1 = n
+						if n2 != nil {
+							break
+						}
+					}
+					if n2 == nil && id2 == *n.Id {
+						n2 = n
+						if n1 != nil {
+							break
+						}
+					}
+				}
+			}
+			dn := NewDownLoadShardInfo2(n1, n2, vhf, env.DownloadRetryTimes, dns, self.Path)
+			if dn != nil {
+				downloads = append(downloads, dn)
+			}
 		}
 	}
 	size := len(downloads)
