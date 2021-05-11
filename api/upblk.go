@@ -296,7 +296,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 		for index, shd := range enc.Shards {
 			if ress2[index] == nil {
 				wgroup.Add(1)
-				ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids, true)
+				ress2[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids, true)
 				num++
 			}
 		}
