@@ -158,7 +158,6 @@ message UploadBlockEndReqV3{
         optional int32 NODEID2=5;
         optional string DNSIGN2=6;
     }
-    optional int64 VBI=14;
 }
 
 message CheckBlockDupReq{

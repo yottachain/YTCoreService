@@ -540,7 +540,7 @@ func (h *UploadBlockEndV3Handler) SetMessage(pubkey string, msg proto.Message) (
 	req, ok := msg.(*pkt.UploadBlockEndReqV3)
 	if ok {
 		h.m = req
-		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.VBI == nil {
+		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
 		}
 		sign, num := GetStoreNumber(*h.m.SignData, *h.m.KeyNumber)
