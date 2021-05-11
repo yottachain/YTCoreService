@@ -166,6 +166,7 @@ func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.Erro
 			}
 		} else {
 			initresp2, _ = resp.(*pkt.DownloadBlockInitResp2)
+			m = initresp2.GetAR()
 		}
 		if m > 0 {
 			bp, errmsg := self.loadLRCShard(initresp, initresp2)
@@ -204,7 +205,7 @@ func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *p
 	}
 	if resp2 != nil {
 		for ii, id := range resp2.Nids {
-			vhf := resp.Vhfs.VHF[ii]
+			vhf := resp2.VHFs[ii]
 			id2 := resp2.Nids2[ii]
 			var n1, n2 *pkt.DownloadBlockInitResp2_Ns
 			for _, n := range resp2.Ns {
