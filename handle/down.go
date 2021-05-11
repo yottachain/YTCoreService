@@ -212,7 +212,7 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 				}
 			}
 		}
-		res := &pkt.DownloadBlockInitResp2{Ns: respNodes, VHFs: vhfs, Nids: nodeids, Nids2: nodeids2}
+		res := &pkt.DownloadBlockInitResp2{Ns: respNodes, VHFs: vhfs, Nids: nodeids, Nids2: nodeids2, VNF: new(int32), AR: new(int32)}
 		*res.AR = int32(bmeta.AR)
 		*res.VNF = int32(bmeta.VNF)
 		bs, err := proto.Marshal(res)
