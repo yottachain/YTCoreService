@@ -157,8 +157,10 @@ func DoCache() {
 	}()
 	for {
 		caches := cache.FindCache(count*2, IsDoing)
+		logrus.Info("[AyncUpload] Cache len %d\n", len(caches))
 		if len(caches) == 0 {
 			LoopCond.L.Lock()
+			logrus.Info("[AyncUpload] signal trigger\n")
 			LoopCond.Wait()
 			LoopCond.L.Unlock()
 		} else {
