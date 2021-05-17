@@ -129,7 +129,7 @@ var LoopCond = sync.NewCond(new(sync.Mutex))
 var DoingList sync.Map
 
 func initCACHEUpPool() int {
-	count := env.CheckInt(env.UploadBlockThreadNum/3, 10, 30)
+	count := env.CheckInt(env.UploadBlockThreadNum/3, 10, 100)
 	CACHE_UP_CH = make(chan int, count)
 	for ii := 0; ii < count; ii++ {
 		CACHE_UP_CH <- 1
@@ -170,7 +170,7 @@ func DoCache() {
 	for {
 		caches := cache.FindCache(count*2, IsDoing)
 		logrus.Infof("[AyncUpload] Cache len %d\n", len(caches))
-		logrus.Infof("[AyncUpload] Cache totals=%d, upings=%d, upSucs=%d, upFails\n",
+		logrus.Infof("[AyncUpload] Cache totals=%d, upings=%d, upSucs=%d, upFails=%d\n",
 						Stat.totalFiles, Stat.upingFiles, Stat.upSucFiles, Stat.upFialFiles)
 		if len(caches) == 0 {
 			LoopCond.L.Lock()
