@@ -16,6 +16,15 @@ import (
 
 var UPLOADING sync.Map
 
+type stat struct{
+	totalFiles int32
+	upingFiles int32
+	upFialFiles int32
+	upSucFiles int32
+}
+
+var Stat stat
+
 func PutUploadObject(userid int32, buck, key string, obj UploadObjectBase) {
 	ss := fmt.Sprintf("%d/%s/%s", userid, buck, key)
 	UPLOADING.Store(ss, obj)
@@ -63,6 +72,7 @@ func UploadMultiPartFile(userid int32, path []string, bucketname, key string) ([
 		logrus.Errorf("[UploadMultiPartFile]%s/%s,Insert cache ERR:%s\n", bucketname, key, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
+	atomic.AddInt32(&Stat.totalFiles, 1)
 	logrus.Infof("[UploadMultiPartFile]%s/%s,Insert cache ok\n", bucketname, key)
 	Notify()
 	return enc.GetMD5(), nil
@@ -85,6 +95,7 @@ func UploadSingleFile(userid int32, path string, bucketname, key string) ([]byte
 		logrus.Errorf("[UploadSingleFile]%s/%s,Insert cache ERR:%s\n", bucketname, key, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
+	atomic.AddInt32(&Stat.totalFiles, 1)
 	logrus.Infof("[UploadSingleFile]%s/%s,Insert cache ok\n", bucketname, key)
 	Notify()
 	return enc.GetMD5(), nil
@@ -107,6 +118,7 @@ func UploadBytesFile(userid int32, data []byte, bucketname, key string) ([]byte,
 		logrus.Errorf("[UploadBytesFile]%s/%s,Insert cache ERR:%s\n", bucketname, key, err)
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
+	atomic.AddInt32(&Stat.totalFiles, 1)
 	logrus.Infof("[UploadBytesFile]%s/%s,Insert cache ok\n", bucketname, key)
 	Notify()
 	return enc.GetMD5(), nil
@@ -158,6 +170,8 @@ func DoCache() {
 	for {
 		caches := cache.FindCache(count*2, IsDoing)
 		logrus.Infof("[AyncUpload] Cache len %d\n", len(caches))
+		logrus.Infof("[AyncUpload] Cache totals=%d, upings=%d, upSucs=%d, upFails\n",
+						Stat.totalFiles, Stat.upingFiles, Stat.upSucFiles, Stat.upFialFiles)
 		if len(caches) == 0 {
 			LoopCond.L.Lock()
 			logrus.Info("[AyncUpload] signal trigger\n")
@@ -167,6 +181,7 @@ func DoCache() {
 			for _, ca := range caches {
 				<-CACHE_UP_CH
 				DoingList.Store(ca.K.ToString(), ca)
+				atomic.AddInt32(&Stat.upingFiles, 1)
 				go upload(ca)
 			}
 		}
@@ -177,6 +192,7 @@ func upload(ca *cache.Cache) {
 	defer func() {
 		CACHE_UP_CH <- 1
 		DoingList.Delete(ca.K.ToString())
+		atomic.AddInt32(&Stat.upingFiles, -1)
 	}()
 	emsg := doUpload(ca)
 	if emsg != nil && !(emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS) {
@@ -192,6 +208,12 @@ func upload(ca *cache.Cache) {
 			}
 		}
 		cache.Delete(ca.V.Path)
+	}
+
+	if emsg != nil {
+		atomic.AddInt32(&Stat.upFialFiles, 1)
+	}else {
+		atomic.AddInt32(&Stat.upSucFiles, 1)
 	}
 }
 
