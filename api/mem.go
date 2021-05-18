@@ -17,8 +17,8 @@ func init() {
 
 func AddBlockMen(b *codec.Block) {
 	size := len(b.Data)
-	length := atomic.AddInt64(MemSize, int64(size))
-	AddMem(length)
+	//length := atomic.AddInt64(MemSize, int64(size))
+	AddMem(int64(size))
 }
 
 func AddSyncBlockMen(b *codec.EncodedBlock) {
@@ -26,8 +26,8 @@ func AddSyncBlockMen(b *codec.EncodedBlock) {
 		return
 	}
 	size := len(b.DATA)
-	length := atomic.AddInt64(MemSize, int64(size))
-	AddMem(length)
+	//length := atomic.AddInt64(MemSize, int64(size))
+	AddMem(int64(size))
 }
 
 func DecSyncBlockMen(b *codec.EncodedBlock) {
@@ -53,7 +53,7 @@ func AddMem(size int64) {
 			MemCond.L.Lock()
 			MemCond.Wait()
 			MemCond.L.Unlock()
-			length = atomic.LoadInt64(MemSize)
+			//length = atomic.LoadInt64(MemSize)
 		} else {
 			atomic.AddInt64(MemSize, size)
 			break
