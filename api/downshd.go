@@ -201,7 +201,7 @@ func (me *DownLoadShardInfo) Download() []byte {
 			if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 				return nil
 			}
-			if me.NodeInfo != nil {
+			if me.NodeInfo2 != nil {
 				m, err = net.RequestDN(req, me.NodeInfo2, me.DWNS.logPrefix)
 				if err == nil {
 					msg = m

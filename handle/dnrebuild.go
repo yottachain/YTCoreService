@@ -92,6 +92,11 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		logrus.Warnf("[DNRebuidRep]Node unequal:%d!=%d.\n", newid, h.m.NodeId)
 		newid = h.m.NodeId
 	}
+	if h.m.SrcNodeID == 0 {
+		emsg := fmt.Sprintf("[DNRebuidRep]Invalid SrcNodeID id:0\n")
+		logrus.Errorf(emsg)
+		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, emsg)
+	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
 		logrus.Errorf("[DNRebuidRep][%d]Rebuild task OpResultList is empty.\n", newid)
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "RES NULL")
@@ -107,7 +112,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 			okList = append(okList, id)
 		}
 	}
-	metas, err := dao.GetShardNodes(okList)
+	metas, err := dao.GetShardNodes(okList, h.m.SrcNodeID)
 	if err != nil {
 		return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
 	}
@@ -136,19 +141,31 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 	}
 }
 
-func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
+func SaveRep(newid int32, metas []*dao.ShardMeta) error {
 	size := len(metas)
 	if size == 0 {
 		return nil
 	}
+	rebuildmeta := []*dao.ShardRebuidMeta{}
 	vbi := dao.GenerateShardID(size)
 	for index, m := range metas {
-		m.ID = vbi + int64(index)
-		m.NewNodeId = newid
+		if m.NodeId != 0 {
+			rm := &dao.ShardRebuidMeta{ID: vbi + int64(index)}
+			rm.VFI = m.VFI
+			rm.NewNodeId = newid
+			rm.OldNodeId = m.NodeId
+			rebuildmeta = append(rebuildmeta, rm)
+		}
+		if m.NodeId2 != 0 {
+			rm := &dao.ShardRebuidMeta{ID: vbi + int64(index)}
+			rm.VFI = m.VFI
+			rm.NewNodeId = newid
+			rm.OldNodeId = m.NodeId2
+			rebuildmeta = append(rebuildmeta, rm)
+		}
 	}
 	count := make(map[int32]int16)
-	upmetas := make(map[int64]int32)
-	for _, res := range metas {
+	for _, res := range rebuildmeta {
 		num, ok := count[res.NewNodeId]
 		if ok {
 			count[res.NewNodeId] = num + 1
@@ -161,10 +178,9 @@ func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
 		} else {
 			count[res.OldNodeId] = -1
 		}
-		upmetas[res.VFI] = res.NewNodeId
 	}
 	startTime := time.Now()
-	err := dao.UpdateShardMeta(upmetas)
+	err := dao.UpdateShardMeta(metas, newid)
 	if err != nil {
 		logrus.Errorf("[DNRebuidRep][%d]UpdateShardMeta ERR:%s,count %d,take times %d ms\n",
 			newid, err, size, time.Now().Sub(startTime).Milliseconds())
@@ -179,7 +195,7 @@ func SaveRep(newid int32, metas []*dao.ShardRebuidMeta) error {
 		return err
 	}
 	startTime = time.Now()
-	err = dao.SaveShardRebuildMetas(metas)
+	err = dao.SaveShardRebuildMetas(rebuildmeta)
 	if err != nil {
 		logrus.Errorf("[DNRebuidRep][%d]Save Rebuild TaskOpResult ERR:%s,count %d,take times %d ms\n",
 			newid, err, size, time.Now().Sub(startTime).Milliseconds())
