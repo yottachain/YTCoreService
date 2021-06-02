@@ -58,6 +58,10 @@ func main() {
 			handle.InitSN()
 			return
 		}
+		if cmd == "statuser" {
+			handle.StatUser()
+			return
+		}
 		if cmd == "console" {
 			env.Console = true
 			err = s.Run()

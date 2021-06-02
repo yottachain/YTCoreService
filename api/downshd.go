@@ -99,9 +99,42 @@ func (me *DownLoadShards) OnResponse(data []byte) {
 type DownLoadShardInfo struct {
 	DWNS       *DownLoadShards
 	NodeInfo   *net.Node
+	NodeInfo2  *net.Node
 	VHF        []byte
 	RetryTimes int
 	Path       string
+}
+
+func NewDownLoadShardInfo2(n *pkt.DownloadBlockInitResp2_Ns, n2 *pkt.DownloadBlockInitResp2_Ns, v []byte, rt int, d *DownLoadShards, path string) *DownLoadShardInfo {
+	if v == nil || len(v) != 16 {
+		logrus.Errorf("[DownloadShard]%DownLoad ERR,VHF is null\n", d.logPrefix, base58.Encode(v))
+		return nil
+	}
+	var node1, node2 *net.Node
+	if n != nil {
+		if n.Id == nil || n.Nodeid == nil || n.Pubkey == nil || n.Addrs == nil || len(n.Addrs) == 0 {
+			logrus.Errorf("[DownloadShard]%DownLoad ERR,Nodeinfo is null\n", d.logPrefix, base58.Encode(v))
+			return nil
+		}
+		node1 = &net.Node{Id: *n.Id, Nodeid: *n.Nodeid, Pubkey: *n.Pubkey, Addrs: n.Addrs}
+	}
+	if n2 != nil {
+		if n2.Id == nil || n2.Nodeid == nil || n2.Pubkey == nil || n2.Addrs == nil || len(n2.Addrs) == 0 {
+			logrus.Errorf("[DownloadShard]%DownLoad ERR,Nodeinfo2 is null\n", d.logPrefix, base58.Encode(v))
+			return nil
+		}
+		node2 = &net.Node{Id: *n2.Id, Nodeid: *n2.Nodeid, Pubkey: *n2.Pubkey, Addrs: n2.Addrs}
+	}
+	if node1 == nil && node2 != nil {
+		return &DownLoadShardInfo{DWNS: d, NodeInfo: node2, VHF: v, RetryTimes: rt, Path: path}
+	}
+	if node1 != nil && node2 == nil {
+		return &DownLoadShardInfo{DWNS: d, NodeInfo: node1, VHF: v, RetryTimes: rt, Path: path}
+	}
+	if node1 != nil && node2 != nil {
+		return &DownLoadShardInfo{DWNS: d, NodeInfo: node1, NodeInfo2: node2, VHF: v, RetryTimes: rt, Path: path}
+	}
+	return nil
 }
 
 func NewDownLoadShardInfo(n *pkt.DownloadBlockInitResp_NList_Ns, v []byte, rt int, d *DownLoadShards, path string) *DownLoadShardInfo {
@@ -164,10 +197,22 @@ func (me *DownLoadShardInfo) Download() []byte {
 	for {
 		m, err := net.RequestDN(req, me.NodeInfo, me.DWNS.logPrefix)
 		if err != nil {
+			logrus.Errorf("[DownloadShard]%sDownload ERR,%s from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
 			if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 				return nil
 			}
-			logrus.Errorf("[DownloadShard]%sDownload ERR,%s from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
+			if me.NodeInfo2 != nil {
+				m, err = net.RequestDN(req, me.NodeInfo2, me.DWNS.logPrefix)
+				if err == nil {
+					msg = m
+					break
+				} else {
+					logrus.Errorf("[DownloadShard]%sDownload ERR,%s from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo2.Id)
+					if atomic.LoadInt32(me.DWNS.cancel) == 1 {
+						return nil
+					}
+				}
+			}
 			if err.Code == pkt.CONN_ERROR {
 				time.Sleep(time.Duration(1) * time.Second)
 			} else {

@@ -64,7 +64,7 @@ func GetNodes(ids []int32) ([]*net.Node, error) {
 		}
 		if n == nil {
 			if noexistids == "" {
-				noexistids = noexistids + strconv.Itoa(int(ids[ii]))
+				noexistids = strconv.Itoa(int(ids[ii]))
 			} else {
 				noexistids = noexistids + "," + strconv.Itoa(int(ids[ii]))
 			}
@@ -156,7 +156,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	}
 	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: productiveSpace, RelayUrl: relayUrl}
 	newnode.Addrs = YTDNMgmt.CheckPublicAddrs(node.Addrs, net.NodeMgr.Config.Misc.ExcludeAddrPrefix)
-	//NodeStatSync(newnode)
+	//NodeStatSync(newnode)l
 	SendSpotCheck(newnode)
 	SendRebuildTask(newnode)
 	logrus.Infof("[DNStatusRep]Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())

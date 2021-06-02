@@ -16,8 +16,8 @@ import (
 var DEL_BLK_CH chan int
 
 func InitDELPool() {
-	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE)
-	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE); ii++ {
+	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE/3)
+	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE/3); ii++ {
 		DEL_BLK_CH <- 1
 	}
 }
@@ -37,20 +37,21 @@ func IterateDELLog() {
 		if log == nil {
 			return
 		}
-		DelBlocks(log.UID, log.VNU, true)
+		DelBlocks(log.UID, log.VNU, true, false)
 	}
 }
 
 const VBI_COUNT_LIMIT = 10
 
-func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool) {
+func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
 	for {
-		meta, err := dao.DelOrUpObject(uid, vnu, decSpace)
+		meta, err := dao.DelOrUpObject(uid, vnu, decSpace, del)
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		} else {
 			if meta != nil {
+				logrus.Infof("[DeleteOBJ][%d]Deleting object %s,block count %d...\n", uid, vnu.Hex(), len(meta.BlockList))
 				vbigroup := make(map[int32][]int64)
 				for _, refbs := range meta.BlockList {
 					refer := pkt.NewRefer(refbs)
@@ -82,6 +83,7 @@ func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool) {
 
 func deleteBlocks(snid int32, vibs []int64) {
 	defer func() { DEL_BLK_CH <- 1 }()
+	startTime := time.Now()
 	req := &pkt.DeleteBlockReq{VBIS: vibs}
 	sn := net.GetSuperNode(int(snid))
 	var errmsg *pkt.ErrorMessage = nil
@@ -98,8 +100,10 @@ func deleteBlocks(snid int32, vibs []int64) {
 		}
 	}
 	if errmsg != nil {
-		logrus.Errorf("[DeleteOBJ][%d]Delete blocks err:%s\n", pkt.ToError(errmsg))
-		time.Sleep(time.Duration(60*3) * time.Second)
+		logrus.Errorf("[DeleteOBJ][%d]Delete blocks err:%s\n", snid, pkt.ToError(errmsg))
+		time.Sleep(time.Duration(90) * time.Second)
+	} else {
+		logrus.Infof("[DeleteOBJ][%d]Delete %d blocks,take times %d ms\n", snid, len(vibs), time.Now().Sub(startTime).Milliseconds())
 	}
 }
 
@@ -135,6 +139,18 @@ func (h *DeleteBlockHandler) WriteLOG(shds []*dao.ShardMeta) error {
 				logrus.Errorf("[DeleteBlock]WriteLog %d ERR:%s\n", shd.NodeId, err)
 				return err
 			}
+			if shd.NodeId2 > 0 {
+				log, err = GetNodeLog(shd.NodeId2)
+				if err != nil {
+					logrus.Errorf("[DeleteBlock]GetNodeLog ERR:%s\n", err)
+					return err
+				}
+				err = log.WriteLog(base58.Encode(shd.VHF))
+				if err != nil {
+					logrus.Errorf("[DeleteBlock]WriteLog %d ERR:%s\n", shd.NodeId2, err)
+					return err
+				}
+			}
 		}
 	}
 	return nil
@@ -146,18 +162,23 @@ func (h *DeleteBlockHandler) Handle() proto.Message {
 		logrus.Errorf("[DeleteBlock]AuthSuper ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
 	}
+	var dbtime, alltime int64
 	var delerr error = nil
 	for _, vbi := range h.m.VBIS {
+		startTime := time.Now()
 		shds, er := dao.DelOrUpBLK(vbi)
 		if er != nil {
 			delerr = er
 		} else {
+			dbtime = dbtime + time.Now().Sub(startTime).Milliseconds()
 			er = h.WriteLOG(shds)
 			if er != nil {
 				delerr = er
 			}
+			alltime = alltime + time.Now().Sub(startTime).Milliseconds()
 		}
 	}
+	logrus.Infof("[DeleteBlock]Delete %d blocks,take times %d/%d ms\n", len(h.m.VBIS), dbtime, alltime)
 	if delerr == nil {
 		return &pkt.VoidResp{}
 	} else {

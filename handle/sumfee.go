@@ -46,7 +46,6 @@ func IterateUser() {
 		} else {
 			for _, user := range us {
 				lastId = user.UserID
-
 				sum := &UserObjectSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username, CostPerCycle: uint64(user.CostPerCycle)}
 				atomic.StoreInt64(sum.UsedSpace, 0)
 				sum.IterateObjects()

@@ -54,6 +54,8 @@ func init_id_class() {
 	ID_CLASS_MAP[0xe231]=func() proto.Message { return &DownloadBlockDBResp{} }
 	ID_CLASS_MAP[0xff86]=func() proto.Message { return &DownloadBlockInitReq{} }
 	ID_CLASS_MAP[0x4cf2]=func() proto.Message { return &DownloadObjectInitResp{} }
+	ID_CLASS_MAP[0x35e6]=func() proto.Message { return &DownloadBlockInitResp3{} }
+	ID_CLASS_MAP[0xf527]=func() proto.Message { return &DownloadBlockInitResp2{} }
 	ID_CLASS_MAP[0x267e]=func() proto.Message { return &DownloadBlockInitResp{} }
 	ID_CLASS_MAP[0xb31f]=func() proto.Message { return &DownloadObjectInitReq{} }
 	ID_CLASS_MAP[0x76a8]=func() proto.Message { return &ListSuperNodeReq{} }
@@ -136,7 +138,7 @@ func init_id_class() {
 	ID_CLASS_MAP[0x9517]=func() proto.Message { return &UploadBlockDBReqV2{} }
 	ID_CLASS_MAP[0x657e]=func() proto.Message { return &UploadBlockDupReqV2{} }
 	ID_CLASS_MAP[0xbc17]=func() proto.Message { return &UploadBlockEndReqV2{} }
-	ID_CLASS_MAP[0x5753]=func() proto.Message { return &UploadBlockEndSyncReqV2{} }
+	ID_CLASS_MAP[0x7cd6]=func() proto.Message { return &UploadBlockEndReqV3{} }
 	ID_CLASS_MAP[0x56cb]=func() proto.Message { return &CheckBlockDupReq{} }
 	ID_CLASS_MAP[0xe299]=func() proto.Message { return &UploadBlockInitReqV2{} }
 	ID_CLASS_MAP[0xa52b]=func() proto.Message { return &UploadObjectEndReqV2{} }
@@ -179,6 +181,8 @@ func init_class_id() {
 	CLASS_ID_MAP["DownloadBlockDBResp"]=0xe231
 	CLASS_ID_MAP["DownloadBlockInitReq"]=0xff86
 	CLASS_ID_MAP["DownloadObjectInitResp"]=0x4cf2
+	CLASS_ID_MAP["DownloadBlockInitResp3"]=0x35e6
+	CLASS_ID_MAP["DownloadBlockInitResp2"]=0xf527
 	CLASS_ID_MAP["DownloadBlockInitResp"]=0x267e
 	CLASS_ID_MAP["DownloadObjectInitReq"]=0xb31f
 	CLASS_ID_MAP["ListSuperNodeReq"]=0x76a8
@@ -261,7 +265,7 @@ func init_class_id() {
 	CLASS_ID_MAP["UploadBlockDBReqV2"]=0x9517
 	CLASS_ID_MAP["UploadBlockDupReqV2"]=0x657e
 	CLASS_ID_MAP["UploadBlockEndReqV2"]=0xbc17
-	CLASS_ID_MAP["UploadBlockEndSyncReqV2"]=0x5753
+	CLASS_ID_MAP["UploadBlockEndReqV3"]=0x7cd6
 	CLASS_ID_MAP["CheckBlockDupReq"]=0x56cb
 	CLASS_ID_MAP["UploadBlockInitReqV2"]=0xe299
 	CLASS_ID_MAP["UploadObjectEndReqV2"]=0xa52b

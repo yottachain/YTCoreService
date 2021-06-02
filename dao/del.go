@@ -12,11 +12,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool) (*ObjectMeta, error) {
+func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool, del bool) (*ObjectMeta, error) {
 	source := NewUserMetaSource(uint32(uid))
 	filter := bson.M{"VNU": vnu, "NLINK": bson.M{"$lt": 1}}
 	if up {
 		filter = bson.M{"VNU": vnu, "NLINK": bson.M{"$lte": 1}}
+	}
+	if del {
+		filter = bson.M{"VNU": vnu}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

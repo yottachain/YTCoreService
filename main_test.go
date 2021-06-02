@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -37,25 +38,25 @@ func Test(t *testing.T) {
 }
 
 func call() {
-	log, _ := env.AddLog("d:/sdd.log")
-	log.Writer.Info("sdssdssdjksdsdsdsasd", "\n")
-	log.Writer.Info("sdsrrsdsdsdsds", "\n")
 
-	log.Close()
+	var ii int64 = 6961375064894061206
+	bs := env.IdToBytes(ii)
+	fmt.Println(bs[4])
 
-	log, _ = env.AddLog("d:/sdd.log")
-	log.Writer.Info("22sdsrrsdsdsdsds", "\n")
-	log.Writer.Info("22sdsrrsdsdsdsds", "\n")
+	ii = 6961374983020798451
+	bs = env.IdToBytes(ii)
+	fmt.Println(bs[4])
 
-	log.Close()
+	ii = 6961375399579267679
+	bs = env.IdToBytes(ii)
+	fmt.Println(bs[4])
 
-	log, _ = env.AddLog("d:/sdd.log")
-	log.Writer.Info("332sdsrrsdsdsdsds", "\n")
-	log.Writer.Info("33232sdsrrsdsdsdsds", "\n")
+	ii = 6961375330859773087
+	bs = env.IdToBytes(ii)
+	fmt.Println(bs[4])
 
-	/*
-		_, err := handle.NewNodeLog(2, "d:/")
-		if err != nil {
-			//fmt.Println(err)
-		}*/
+	ii = 6961375399579267679
+	bs = env.IdToBytes(ii)
+	fmt.Println(bs[4])
+
 }

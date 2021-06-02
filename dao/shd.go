@@ -14,9 +14,10 @@ import (
 )
 
 type ShardMeta struct {
-	VFI    int64  `bson:"_id"`
-	NodeId int32  `bson:"nodeId"`
-	VHF    []byte `bson:"VHF"`
+	VFI     int64  `bson:"_id"`
+	NodeId  int32  `bson:"nodeId"`
+	VHF     []byte `bson:"VHF"`
+	NodeId2 int32  `bson:"nodeId2"`
 }
 
 type ShardRebuidMeta struct {
@@ -83,14 +84,29 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 	return nil
 }
 
-func UpdateShardMeta(metas map[int64]int32) error {
+func UpdateShardMeta(metas []*ShardMeta, newid int32) error {
 	source := NewBaseSource()
 	operations := []mongo.WriteModel{}
-	for k, v := range metas {
-		filter := bson.M{"_id": k}
-		update := bson.M{"$set": bson.M{"nodeId": v}}
-		mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
-		operations = append(operations, mode)
+	for _, v := range metas {
+		if v.NodeId != 0 && v.NodeId2 != 0 {
+			filter := bson.M{"_id": v.VFI}
+			update := bson.M{"$set": bson.M{"nodeId": newid, "nodeId2": newid}}
+			mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
+			operations = append(operations, mode)
+		} else {
+			if v.NodeId != 0 {
+				filter := bson.M{"_id": v.VFI}
+				update := bson.M{"$set": bson.M{"nodeId": newid}}
+				mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
+				operations = append(operations, mode)
+			}
+			if v.NodeId2 != 0 {
+				filter := bson.M{"_id": v.VFI}
+				update := bson.M{"$set": bson.M{"nodeId2": newid}}
+				mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
+				operations = append(operations, mode)
+			}
+		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
@@ -141,12 +157,12 @@ func SaveShardMetas(ls []*ShardMeta) error {
 	return nil
 }
 
-func GetShardNodes(ids []int64) ([]*ShardRebuidMeta, error) {
+func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, error) {
 	source := NewBaseSource()
 	filter := bson.M{"_id": bson.M{"$in": ids}}
-	fields := bson.M{"_id": 1, "nodeId": 1}
+	fields := bson.M{"_id": 1, "nodeId": 1, "nodeId2": 1}
 	opt := options.Find().SetProjection(fields)
-	metas := []*ShardRebuidMeta{}
+	metas := []*ShardMeta{}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
@@ -162,8 +178,17 @@ func GetShardNodes(ids []int64) ([]*ShardRebuidMeta, error) {
 			logrus.Errorf("[ShardMeta]GetShardNodes Decode ERR:%s\n", err)
 			return nil, err
 		}
-		meta := &ShardRebuidMeta{VFI: res.VFI, OldNodeId: res.NodeId}
-		metas = append(metas, meta)
+		if srcnodeid == res.NodeId || srcnodeid == res.NodeId2 {
+			if srcnodeid != res.NodeId {
+				res.NodeId = 0
+			}
+			if srcnodeid != res.NodeId2 {
+				res.NodeId2 = 0
+			}
+			metas = append(metas, res)
+		} else {
+			logrus.Warnf("[ShardMeta]GetShardNodes ERR:Invalid SrcNodeID id %d\n", srcnodeid)
+		}
 	}
 	if curerr := cur.Err(); curerr != nil {
 		logrus.Errorf("[ShardMeta]GetShardNodes Cursor ERR:%s\n", curerr)

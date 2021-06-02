@@ -367,7 +367,7 @@ func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) (*
 func (h *UploadObjectEndHandler) Handle() proto.Message {
 	ca := GetUploadObject(h.vnu)
 	if ca == nil {
-		logrus.Warnf("[UploadOBJEnd][%s] already completed.\n", h.vnu.Hex())
+		logrus.Warnf("[UploadOBJEnd][%s]Already completed.\n", h.vnu.Hex())
 		return pkt.NewError(pkt.INVALID_UPLOAD_ID)
 	}
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)

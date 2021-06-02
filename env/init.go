@@ -164,22 +164,13 @@ func (me *NoFmtLog) Close() {
 
 func AddLog(logFileName string) (*NoFmtLog, error) {
 	log := logrus.New()
-	format := &Formatter{NoPrefix: true}
 	writer, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
 	}
 	log.Level = logrus.TraceLevel
-	log.Formatter = format
-	lfsHook := lfshook.NewHook(lfshook.WriterMap{
-		logrus.DebugLevel: writer,
-		logrus.InfoLevel:  writer,
-		logrus.WarnLevel:  writer,
-		logrus.ErrorLevel: writer,
-		logrus.FatalLevel: writer,
-		logrus.PanicLevel: writer,
-	}, format)
-	log.AddHook(lfsHook)
+	log.Formatter = &Formatter{NoPrefix: true}
+	log.Out = writer
 	mylog := &NoFmtLog{Writer: log, Closer: writer}
 	return mylog, nil
 }

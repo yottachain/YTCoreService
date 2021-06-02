@@ -1,6 +1,8 @@
 package handle
 
 import (
+	"bytes"
+	"compress/gzip"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -155,9 +157,19 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 	nodeidsls := []int32{}
 	vhfs := make([][]byte, bmeta.VNF)
 	nodeids := make([]int32, bmeta.VNF)
+	var nodeids2 []int32
 	for index, v := range metas {
 		vhfs[index] = v.VHF
 		nodeids[index] = v.NodeId
+		if v.NodeId2 > 0 {
+			if nodeids2 == nil {
+				nodeids2 = make([]int32, bmeta.VNF)
+			}
+			nodeids2[index] = v.NodeId2
+			if !env.IsExistInArray(v.NodeId2, nodeidsls) {
+				nodeidsls = append(nodeidsls, v.NodeId2)
+			}
+		}
 		if !env.IsExistInArray(v.NodeId, nodeidsls) {
 			nodeidsls = append(nodeidsls, v.NodeId)
 		}
@@ -172,22 +184,45 @@ func (h *DownloadBlockInitHandler) Handle() proto.Message {
 		}
 	}
 	num := len(nodes)
-	respNodes := make([]*pkt.DownloadBlockInitResp_NList_Ns, num)
-	for index, n := range nodes {
-		if n != nil {
-			respNodes[index] = &pkt.DownloadBlockInitResp_NList_Ns{
-				Id: &n.Id, Nodeid: &n.Nodeid, Pubkey: &n.Pubkey, Addrs: n.Addrs,
+	if nodeids2 == nil {
+		respNodes := make([]*pkt.DownloadBlockInitResp_NList_Ns, num)
+		for index, n := range nodes {
+			if n != nil {
+				respNodes[index] = &pkt.DownloadBlockInitResp_NList_Ns{
+					Id: &n.Id, Nodeid: &n.Nodeid, Pubkey: &n.Pubkey, Addrs: n.Addrs,
+				}
 			}
 		}
+		count := uint32(num)
+		nlist := &pkt.DownloadBlockInitResp_NList{Count: &count, Ns: respNodes}
+		vhfsize := uint32(len(vhfs))
+		vhf := &pkt.DownloadBlockInitResp_VHFS{Count: &vhfsize, VHF: vhfs}
+		idsize := uint32(len(nodeids))
+		ids := &pkt.DownloadBlockInitResp_Nids{Count: &idsize, Nodeids: nodeids}
+		res := &pkt.DownloadBlockInitResp{Nlist: nlist, VNF: new(int32), Vhfs: vhf, Nids: ids, AR: new(int32)}
+		*res.AR = int32(bmeta.AR)
+		*res.VNF = int32(bmeta.VNF)
+		return res
+	} else {
+		respNodes := make([]*pkt.DownloadBlockInitResp2_Ns, num)
+		for index, n := range nodes {
+			if n != nil {
+				respNodes[index] = &pkt.DownloadBlockInitResp2_Ns{
+					Id: &n.Id, Nodeid: &n.Nodeid, Pubkey: &n.Pubkey, Addrs: n.Addrs,
+				}
+			}
+		}
+		res := &pkt.DownloadBlockInitResp2{Ns: respNodes, VHFs: vhfs, Nids: nodeids, Nids2: nodeids2, VNF: new(int32), AR: new(int32)}
+		*res.AR = int32(bmeta.AR)
+		*res.VNF = int32(bmeta.VNF)
+		bs, err := proto.Marshal(res)
+		if err != nil {
+			return res
+		}
+		buf := bytes.NewBuffer(nil)
+		gw := gzip.NewWriter(buf)
+		_, err = gw.Write(bs)
+		gw.Close()
+		return &pkt.DownloadBlockInitResp3{DATA: buf.Bytes()}
 	}
-	count := uint32(num)
-	nlist := &pkt.DownloadBlockInitResp_NList{Count: &count, Ns: respNodes}
-	vhfsize := uint32(len(vhfs))
-	vhf := &pkt.DownloadBlockInitResp_VHFS{Count: &vhfsize, VHF: vhfs}
-	idsize := uint32(len(nodeids))
-	ids := &pkt.DownloadBlockInitResp_Nids{Count: &idsize, Nodeids: nodeids}
-	res := &pkt.DownloadBlockInitResp{Nlist: nlist, VNF: new(int32), Vhfs: vhf, Nids: ids, AR: new(int32)}
-	*res.AR = int32(bmeta.AR)
-	*res.VNF = int32(bmeta.VNF)
-	return res
 }
