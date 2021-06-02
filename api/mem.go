@@ -48,14 +48,15 @@ func DecBlockMen(b *codec.Block) {
 
 func AddMem(size int64) {
 	for {
+		MemCond.L.Lock()
 		length := atomic.LoadInt64(MemSize)
 		if length >= int64(env.UploadFileMaxMemory) {
-			MemCond.L.Lock()
 			MemCond.Wait()
 			MemCond.L.Unlock()
 			//length = atomic.LoadInt64(MemSize)
 		} else {
 			atomic.AddInt64(MemSize, size)
+			MemCond.L.Unlock()
 			break
 		}
 	}
