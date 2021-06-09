@@ -71,14 +71,17 @@ func DelOrUpBLK(vbi int64) ([]*ShardMeta, error) {
 		return nil, decBlockNLINK(vbi)
 	}
 	logrus.Infof("[DelBlock]DelOrUpBLK %d OK\n", vbi)
+	bkid := GenerateShardID(1)
 	if result.VNF == 0 {
 		DelBLKData(vbi)
+		SaveBlockBakup(bkid, vbi)
 		return nil, decBlockCount()
 	} else {
 		shds, er := DelShards(vbi, int(result.VNF))
 		if er != nil {
 			return nil, er
 		} else {
+			SaveBlockBakup(bkid, vbi)
 			return shds, decBlockCount()
 		}
 	}
