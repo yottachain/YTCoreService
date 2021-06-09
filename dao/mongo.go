@@ -106,6 +106,7 @@ const USER_REL_INDEX_NAME = "relationship"
 const BLOCK_TABLE_NAME = "blocks"
 const BLOCK_INDEX_VHP_VHB = "VHP_VHB"
 const BLOCK_DAT_TABLE_NAME = "blocks_data"
+const BLOCK_BK_TABLE_NAME = "blocks_bak"
 const BLOCK_CNT_TABLE_NAME = "block_count"
 
 const SHARD_TABLE_NAME = "shards"
@@ -119,6 +120,7 @@ type MetaBaseSource struct {
 	block_c     *mongo.Collection
 	block_d_c   *mongo.Collection
 	block_cnt_c *mongo.Collection
+	block_bk_c  *mongo.Collection
 	shard_c     *mongo.Collection
 	shard_cnt_c *mongo.Collection
 	shard_rbd_c *mongo.Collection
@@ -152,6 +154,7 @@ func (source *MetaBaseSource) initMetaDB() {
 	source.block_c.Indexes().CreateOne(context.Background(), index3)
 	source.block_d_c = source.db.Collection(BLOCK_DAT_TABLE_NAME)
 	source.block_cnt_c = source.db.Collection(BLOCK_CNT_TABLE_NAME)
+	source.block_bk_c = source.db.Collection(BLOCK_BK_TABLE_NAME)
 	source.shard_c = source.db.Collection(SHARD_TABLE_NAME)
 	source.shard_cnt_c = source.db.Collection(SHARD_CNT_TABLE_NAME)
 	source.shard_rbd_c = source.db.Collection(SHARD_RBD_TABLE_NAME)
@@ -172,6 +175,10 @@ func (source *MetaBaseSource) GetBlockColl() *mongo.Collection {
 
 func (source *MetaBaseSource) GetBlockDataColl() *mongo.Collection {
 	return source.block_d_c
+}
+
+func (source *MetaBaseSource) GetBlockBakColl() *mongo.Collection {
+	return source.block_bk_c
 }
 
 func (source *MetaBaseSource) GetBlockCountColl() *mongo.Collection {
