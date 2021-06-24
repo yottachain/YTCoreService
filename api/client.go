@@ -220,6 +220,10 @@ func (c *Client) NewDownloadFile(bucketName, filename string, version primitive.
 	}
 }
 
+func (c *Client) UploadPreEncode(bucketname, objectname string) *UploadObjectToDisk {
+	return NewUploadObjectToDisk(c, bucketname, objectname)
+}
+
 func (c *Client) DownloadToSGX(bucketName, filename string) (*DownloadForSGX, *pkt.ErrorMessage) {
 	return c.DownloadToSGXWVer(bucketName, filename, primitive.NilObjectID)
 }

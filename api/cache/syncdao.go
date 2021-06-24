@@ -11,6 +11,9 @@ type SyncObject struct {
 }
 
 func SyncObjectExists(sha256 []byte) bool {
+	if ObjectDB == nil {
+		return false
+	}
 	var val []byte
 	ObjectDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
@@ -26,6 +29,9 @@ func SyncObjectExists(sha256 []byte) bool {
 var SyncList sync.Map
 
 func AddSyncList(sha256 []byte) *sync.Cond {
+	if ObjectDB == nil {
+		return nil
+	}
 	cond := sync.NewCond(new(sync.Mutex))
 	for {
 		c, ok := SyncList.LoadOrStore(string(sha256), cond)
@@ -42,11 +48,17 @@ func AddSyncList(sha256 []byte) *sync.Cond {
 }
 
 func DelSyncList(sha256 []byte, c *sync.Cond) {
+	if ObjectDB == nil {
+		return
+	}
 	SyncList.Delete(string(sha256))
 	c.Broadcast()
 }
 
 func InsertSyncObject(sha256 []byte) error {
+	if ObjectDB == nil {
+		return nil
+	}
 	return ObjectDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
 		err := b.Put(sha256, []byte("1"))
@@ -58,6 +70,9 @@ func InsertSyncObject(sha256 []byte) error {
 }
 
 func FindSyncObject(count int, isdoing func(key string) bool) []string {
+	if ObjectDB == nil {
+		return nil
+	}
 	res := []string{}
 	ObjectDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
@@ -78,6 +93,9 @@ func FindSyncObject(count int, isdoing func(key string) bool) []string {
 }
 
 func DeleteSyncObject(k []byte) error {
+	if ObjectDB == nil {
+		return nil
+	}
 	return ObjectDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SyncBuck)
 		err := b.Delete(k)

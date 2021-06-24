@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -38,25 +37,5 @@ func Test(t *testing.T) {
 }
 
 func call() {
-
-	var ii int64 = 6961375064894061206
-	bs := env.IdToBytes(ii)
-	fmt.Println(bs[4])
-
-	ii = 6961374983020798451
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
-
-	ii = 6961375399579267679
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
-
-	ii = 6961375330859773087
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
-
-	ii = 6961375399579267679
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
 
 }

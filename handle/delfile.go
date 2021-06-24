@@ -171,9 +171,6 @@ func (h *DeleteBlockHandler) Handle() proto.Message {
 			delerr = er
 		} else {
 			dbtime = dbtime + time.Now().Sub(startTime).Milliseconds()
-			if shds != nil {
-
-			}
 			er = h.WriteLOG(shds)
 			if er != nil {
 				delerr = er
