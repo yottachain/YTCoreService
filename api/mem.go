@@ -54,6 +54,9 @@ func AddMem(length int64) {
 		MemCond.Wait()
 	}
 	MemSize = MemSize + length
+	if MemSize < int64(env.UploadFileMaxMemory) {
+		MemCond.Signal()
+	}
 	MemCond.L.Unlock()
 }
 
