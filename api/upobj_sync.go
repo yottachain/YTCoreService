@@ -18,6 +18,34 @@ type UploadObjectSync struct {
 	decoder *codec.Decoder
 }
 
+func NewUploadEncObject(filename string) (*UploadObjectSync, *pkt.ErrorMessage) {
+	u := &UploadObjectSync{UploadObject: UploadObject{}}
+	u.ActiveTime = new(int64)
+	u.activesign = make(chan int)
+	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
+	err := u.createDecoder2(filename)
+	if err != nil {
+		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
+	}
+	return u, nil
+}
+
+func (self *UploadObjectSync) createDecoder2(filename string) error {
+	dec, err := codec.NewDecoder(filename)
+	if err != nil {
+		logrus.Errorf("[SyncUpload][%s]NewDecoder err:%s\n", filename, err)
+		return err
+	}
+	self.decoder = dec
+	c, err := AddClient(dec.UserId, dec.KeyNumber, dec.StoreNumber, dec.Sign)
+	if err != nil {
+		logrus.Errorf("[SyncUpload][%s]AddClient err:%s\n", filename, err)
+		return err
+	}
+	self.UClient = c
+	return nil
+}
+
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
 	u.ActiveTime = new(int64)

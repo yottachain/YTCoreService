@@ -45,7 +45,7 @@ func InitLRC() {
 	}
 	sysType := runtime.GOOS
 	if sysType == "windows" {
-		ISWindows = false
+		ISWindows = true
 	}
 	s1 := int16(env.Default_PND - 23)
 	s2 := int16(env.UploadBlockThreadNum)

@@ -218,6 +218,14 @@ func InitApi() {
 	StartApi()
 }
 
+func StartMobileAPI() {
+	env.InitClient()
+	codec.InitLRC()
+	priv, _ := ytcrypto.CreateKey()
+	net.Start(0, 0, priv)
+	InitSuperList()
+}
+
 func StartApi() {
 	env.InitClient()
 	codec.InitLRC()

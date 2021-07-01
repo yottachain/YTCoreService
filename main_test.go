@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
@@ -37,26 +41,47 @@ func Test(t *testing.T) {
 	select {}
 }
 
+var MemCond = sync.NewCond(new(sync.Mutex))
+var MemSize int64 = 0
+var MaxSize int64 = 50
+
 func call() {
+	//go notify()
+	for ii := 0; ii < 100; ii++ {
+		go add()
+	}
 
-	var ii int64 = 6961375064894061206
-	bs := env.IdToBytes(ii)
-	fmt.Println(bs[4])
+}
 
-	ii = 6961374983020798451
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
+var count *int64 = new(int64)
 
-	ii = 6961375399579267679
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
+func add() {
+	for ii := 0; ii < 10; ii++ {
+		fmt.Printf("add,len=%d\n", atomic.AddInt64(count, 1))
+		t := rand.Intn(40)
+		AddMem(int64(t))
+		time.Sleep(time.Duration(t) * time.Millisecond)
+		DecMen(int64(t))
+		fmt.Printf("dec,len=%d\n", atomic.AddInt64(count, -1))
+	}
+}
 
-	ii = 6961375330859773087
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
+func AddMem(length int64) {
+	MemCond.L.Lock()
+	for MemSize+length >= int64(MaxSize) {
+		MemCond.Wait()
+	}
+	MemSize = MemSize + length
+	if MemSize < int64(MaxSize) {
+		MemCond.Signal()
+	}
+	MemCond.L.Unlock()
+}
 
-	ii = 6961375399579267679
-	bs = env.IdToBytes(ii)
-	fmt.Println(bs[4])
+func DecMen(length int64) {
+	MemCond.L.Lock()
+	MemSize = MemSize - length
+	MemCond.Signal()
 
+	MemCond.L.Unlock()
 }

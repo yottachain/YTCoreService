@@ -21,11 +21,12 @@ type UploadObjectToDisk struct {
 	UploadObject
 	Bucket    string
 	ObjectKey string
+	out       string
 }
 
 func NewUploadObjectToDisk(c *Client, bucketname, objectname string) *UploadObjectToDisk {
 	p := &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
-	return &UploadObjectToDisk{UploadObject{UClient: c, PRO: p}, bucketname, objectname}
+	return &UploadObjectToDisk{UploadObject{UClient: c, PRO: p}, bucketname, objectname, ""}
 }
 
 func (self *UploadObjectToDisk) UploadMultiFile(path []string) *pkt.ErrorMessage {
@@ -74,7 +75,7 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 	s3key := self.Bucket + "/" + self.ObjectKey
 	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
 	exist := cache.SyncObjectExists(self.Encoder.GetVHW())
-	p := makePath(base58.Encode(self.Encoder.GetVHW()))
+	p := self.makePath(base58.Encode(self.Encoder.GetVHW()))
 	if exist {
 		atomic.StoreInt64(self.PRO.ReadinLength, self.Encoder.GetLength())
 		atomic.StoreInt64(self.PRO.ReadOutLength, self.Encoder.GetLength())
@@ -196,12 +197,17 @@ func (self *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *c
 
 var pathmap sync.Map
 
-func makePath(hash string) string {
+func (self *UploadObjectToDisk) makePath(hash string) string {
 	p := env.GetCache() + hash[0:2] + "/" + hash[2:4]
 	_, ok := pathmap.Load(p)
 	if !ok {
 		os.MkdirAll(p, os.ModePerm)
 		pathmap.Store(p, "")
 	}
-	return p + "/" + hash
+	self.out = p + "/" + hash
+	return self.out
+}
+
+func (self *UploadObjectToDisk) OutPath() string {
+	return self.out
 }
