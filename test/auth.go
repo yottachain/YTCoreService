@@ -12,6 +12,7 @@ import (
 func Auth() {
 	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"
 	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
+	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 	api.InitApi()
 
 	//1.注册授权方的用户实例A

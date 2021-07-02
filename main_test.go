@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -47,8 +48,11 @@ var MaxSize int64 = 50
 
 func call() {
 	//go notify()
-	for ii := 0; ii < 100; ii++ {
-		go add()
+	version, err := syscall.GetVersion()
+	if err != nil {
+	}
+	if byte(version) == 6 {
+		fmt.Printf("%d.%d (%d)", byte(version), uint8(version>>8), version>>16)
 	}
 
 }

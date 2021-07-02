@@ -31,6 +31,7 @@ import "C"
 import (
 	"errors"
 	"runtime"
+	"syscall"
 	"unsafe"
 
 	"github.com/sirupsen/logrus"
@@ -45,7 +46,12 @@ func InitLRC() {
 	}
 	sysType := runtime.GOOS
 	if sysType == "windows" {
-		ISWindows = true
+		version, err := syscall.GetVersion()
+		if err == nil {
+			if byte(version) == 6 && uint8(version>>8) == 1 {
+				ISWindows = true
+			}
+		}
 	}
 	s1 := int16(env.Default_PND - 23)
 	s2 := int16(env.UploadBlockThreadNum)
