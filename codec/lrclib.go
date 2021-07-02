@@ -33,7 +33,6 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/gonutz/w32"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
@@ -46,9 +45,8 @@ func InitLRC() {
 	}
 	sysType := runtime.GOOS
 	if sysType == "windows" {
-		v := w32.GetVersion()
-		major, minor := v&0xFF, v&0xFF00>>8
-		if major == 6 && minor == 1 {
+		v, err := env.GetWinVersion()
+		if err == nil && v == "6.1" {
 			ISWindows = true
 		}
 	}

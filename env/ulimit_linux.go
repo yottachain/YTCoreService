@@ -24,3 +24,7 @@ func ULimit() {
 	}
 	logrus.Infof("[SetLimit]Ulimit -a,return %d\n", rLimit.Cur)
 }
+
+func GetWinVersion() (string, error) {
+	return "", nil
+}

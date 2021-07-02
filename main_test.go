@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gonutz/w32"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
 )
@@ -48,12 +47,10 @@ var MaxSize int64 = 50
 
 func call() {
 	//go notify()
-	v := w32.GetVersion()
-	major, minor := v&0xFF, v&0xFF00>>8
-
-	//ss := fmt.Printf("%d.%d", major, minor)
-	fmt.Println(major)
-	fmt.Println(minor)
+	ss, e := env.GetWinVersion()
+	if e == nil {
+		fmt.Println(ss)
+	}
 }
 
 var count *int64 = new(int64)

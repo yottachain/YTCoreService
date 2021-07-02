@@ -9,7 +9,6 @@ require (
 	github.com/gobuffalo/packr/v2 v2.5.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
-	github.com/gonutz/w32 v1.0.0
 	github.com/kardianos/service v1.1.0
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/libp2p/go-libp2p-core v0.3.1
@@ -27,6 +26,7 @@ require (
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	golang.org/x/mod v0.3.0 // indirect
+	golang.org/x/sys v0.0.0-20191220142924-d4481acd189f
 	golang.org/x/tools v0.0.0-20200605181038-cef9fc3bc8f0 // indirect
 	google.golang.org/protobuf v1.22.0
 )
