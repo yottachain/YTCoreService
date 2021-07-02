@@ -31,9 +31,9 @@ import "C"
 import (
 	"errors"
 	"runtime"
-	"syscall"
 	"unsafe"
 
+	"github.com/gonutz/w32"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
@@ -46,11 +46,10 @@ func InitLRC() {
 	}
 	sysType := runtime.GOOS
 	if sysType == "windows" {
-		version, err := syscall.GetVersion()
-		if err == nil {
-			if byte(version) == 6 && uint8(version>>8) == 1 {
-				ISWindows = true
-			}
+		v := w32.GetVersion()
+		major, minor := v&0xFF, v&0xFF00>>8
+		if major == 6 && minor == 1 {
+			ISWindows = true
 		}
 	}
 	s1 := int16(env.Default_PND - 23)
