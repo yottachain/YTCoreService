@@ -6,10 +6,10 @@ import (
 	"os"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"testing"
 	"time"
 
+	"github.com/gonutz/w32"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
 )
@@ -48,13 +48,12 @@ var MaxSize int64 = 50
 
 func call() {
 	//go notify()
-	version, err := syscall.GetVersion()
-	if err != nil {
-	}
-	if byte(version) == 6 {
-		fmt.Printf("%d.%d (%d)", byte(version), uint8(version>>8), version>>16)
-	}
+	v := w32.GetVersion()
+	major, minor := v&0xFF, v&0xFF00>>8
 
+	//ss := fmt.Printf("%d.%d", major, minor)
+	fmt.Println(major)
+	fmt.Println(minor)
 }
 
 var count *int64 = new(int64)
