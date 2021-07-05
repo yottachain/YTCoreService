@@ -19,7 +19,7 @@ import (
 var BLK_SUMMER_CH chan *BlockSpaceSum
 
 func StartIterateUser() {
-	BLK_SUMMER_CH = make(chan *BlockSpaceSum, net.GetSuperNodeCount())
+	BLK_SUMMER_CH = make(chan *BlockSpaceSum, env.MAX_SUMFEE_ROUTINE/3)
 	for {
 		if env.SUM_USER_FEE == 0 && net.IsActive() {
 			time.Sleep(time.Duration(30) * time.Second)
@@ -140,22 +140,25 @@ func (me *UserObjectSum) SetCycleFee() {
 		if me.CostPerCycle == cost {
 			logrus.Infof("[SumFileUsedSpace]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
 		} else {
-			num := 0
-			for {
-				err = net.SetHfee(me.UserName, cost)
-				if err != nil {
-					num++
-					if num > 8 {
-						break
+			logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			/*
+				num := 0
+				for {
+					err = net.SetHfee(me.UserName, cost)
+					if err != nil {
+						num++
+						if num > 8 {
+							break
+						} else {
+							time.Sleep(time.Duration(15) * time.Second)
+						}
 					} else {
-						time.Sleep(time.Duration(15) * time.Second)
+						dao.UpdateUserCost(me.UserID, cost)
+						logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+						break
 					}
-				} else {
-					dao.UpdateUserCost(me.UserID, cost)
-					logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
-					break
 				}
-			}
+			*/
 		}
 	}
 	if err == nil {
