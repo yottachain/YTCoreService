@@ -18,9 +18,12 @@ func StartGC() {
 	if !net.IsActive() {
 		return
 	}
-	time.Sleep(time.Duration(5 * time.Minute))
-	ListUser(true)
-	ListUser(false)
+	for {
+		time.Sleep(time.Duration(5 * time.Minute))
+		ListUser(true)
+		ListUser(false)
+		time.Sleep(time.Duration(3 * time.Hour))
+	}
 }
 
 func ListUser(InArrears bool) {
