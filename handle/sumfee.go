@@ -21,7 +21,7 @@ var BLK_SUMMER_CH chan *BlockSpaceSum
 func StartIterateUser() {
 	BLK_SUMMER_CH = make(chan *BlockSpaceSum, env.MAX_SUMFEE_ROUTINE/3)
 	for {
-		if env.SUM_USER_FEE == 0 && net.IsActive() {
+		if env.SUM_USER_FEE == 0 && !net.IsActive() {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		}
