@@ -31,10 +31,10 @@ func StartIterateUser() {
 }
 
 func IterateUser() {
-	defer env.TracePanic("[SumUsedSpace]")
+	defer env.TracePanic("[SumUsedFee]")
 	var lastId int32 = 0
 	limit := 100
-	logrus.Infof("[SumUsedSpace]Start iterate user...\n")
+	logrus.Infof("[SumUsedFee]Start iterate user...\n")
 	for {
 		us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "nextCycle": 1, "username": 1, "costPerCycle": 1})
 		if err != nil {
@@ -52,7 +52,7 @@ func IterateUser() {
 			}
 		}
 	}
-	logrus.Infof("[SumUsedSpace]Iterate user OK!\n")
+	logrus.Infof("[SumUsedFee]Iterate user OK!\n")
 }
 
 const BLKID_LIMIT = 500
@@ -85,7 +85,7 @@ func (me *UserObjectSum) IterateObjects() {
 			break
 		}
 	}
-	logrus.Infof("[SumFileUsedSpace]Start sum fee,UserID:%d\n", me.UserID)
+	logrus.Infof("[SumUsedFee]Start sum fee,UserID:%d\n", me.UserID)
 	wgroup := sync.WaitGroup{}
 	limit := net.GetSuperNodeCount() * BLKID_LIMIT
 	firstId := primitive.NilObjectID
@@ -105,7 +105,7 @@ func (me *UserObjectSum) IterateObjects() {
 					bss := &BlockSpaceSum{SuperID: supid, VBIS: ids, WG: &wgroup, UserSum: me}
 					BLK_SUMMER_CH <- bss
 					wgroup.Add(1)
-					go DoBlockSpaceSum()
+					go bss.DoBlockSpaceSum()
 					m[supid] = []int64{vbi}
 				} else {
 					m[supid] = append(ids, vbi)
@@ -125,7 +125,7 @@ func (me *UserObjectSum) IterateObjects() {
 		for k, v := range m {
 			bss := &BlockSpaceSum{SuperID: k, VBIS: v, WG: &wgroup, UserSum: me}
 			BLK_SUMMER_CH <- bss
-			go DoBlockSpaceSum()
+			go bss.DoBlockSpaceSum()
 		}
 	}
 	wgroup.Wait()
@@ -134,13 +134,13 @@ func (me *UserObjectSum) IterateObjects() {
 
 func (me *UserObjectSum) SetCycleFee() {
 	cost := CalCycleFee(me.GetUsedSpace())
-	logrus.Infof("[SumFileUsedSpace]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
+	logrus.Infof("[SumUsedFee]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
 	var err error
 	if cost > 0 {
 		if me.CostPerCycle == cost {
-			logrus.Infof("[SumFileUsedSpace]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
+			logrus.Infof("[SumUsedFee]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
 		} else {
-			logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			logrus.Infof("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
 			/*
 				num := 0
 				for {
@@ -176,7 +176,7 @@ type BlockSpaceSum struct {
 func (bss *BlockSpaceSum) ReqBlockUsedSpace() (int64, *pkt.ErrorMessage) {
 	sn := net.GetSuperNode(int(bss.SuperID))
 	if sn == nil {
-		logrus.Errorf("[SumBlockUsedSpace]ERR SNID:%d\n", bss.SuperID)
+		logrus.Errorf("[SumUsedFee]ERR SNID:%d\n", bss.SuperID)
 	}
 	msg := &pkt.GetBlockUsedSpace{Id: bss.VBIS}
 	if sn.ID == int32(env.SuperNodeID) {
@@ -197,18 +197,19 @@ func (bss *BlockSpaceSum) ReqBlockUsedSpace() (int64, *pkt.ErrorMessage) {
 	}
 }
 
-func DoBlockSpaceSum() {
-	bss := <-BLK_SUMMER_CH
-	if bss == nil {
-		return
-	}
-	defer bss.WG.Done()
-	defer env.TracePanic("[SumBlockUsedSpace]")
+func (bss *BlockSpaceSum) DoFinish() {
+	_ = <-BLK_SUMMER_CH
+	bss.WG.Done()
+	env.TracePanic("[SumUsedFee]")
+}
+
+func (bss *BlockSpaceSum) DoBlockSpaceSum() {
+	defer bss.DoFinish()
 	var space int64
 	for {
 		uspace, err := bss.ReqBlockUsedSpace()
 		if err != nil {
-			logrus.Errorf("[SumBlockUsedSpace]ERR:%d,retry...\n", err.GetCode())
+			logrus.Errorf("[SumUsedFee]ERR:%d,retry...\n", err.GetCode())
 			time.Sleep(time.Duration(60) * time.Second)
 		} else {
 			space = uspace
@@ -216,7 +217,7 @@ func DoBlockSpaceSum() {
 		}
 	}
 	bss.UserSum.AddUsedSapce(space)
-	logrus.Infof("[SumBlockUsedSpace]OK,block count:%d,usedspace:%d,snid:%d\n", len(bss.VBIS), space, bss.SuperID)
+	logrus.Infof("[SumUsedFee]OK,block count:%d,usedspace:%d,snid:%d\n", len(bss.VBIS), space, bss.SuperID)
 }
 
 type BlockUsedSpaceHandler struct {

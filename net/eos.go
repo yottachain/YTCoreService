@@ -143,9 +143,14 @@ func GetBalance(username string) (v int64, err error) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			env.TraceError("[EOS]")
-			v = 0
-			err = errors.New("Unknown error")
+			ss := env.TraceErrors("[EOS]")
+			if strings.ContainsAny(ss, "user not a account") {
+				v = -5
+				err = errors.New("user not a account")
+			} else {
+				v = 0
+				err = errors.New("Unknown error")
+			}
 		}
 	}()
 	obj := GetBalanceReq{Owner: eos.AN(username),

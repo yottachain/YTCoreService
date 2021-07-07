@@ -102,6 +102,17 @@ func TraceError(prefix string) {
 	}
 }
 
+func TraceErrors(prefix string) string {
+	stack := make([]byte, 2048)
+	length := runtime.Stack(stack, true)
+	ss := string(stack[0:length])
+	ls := strings.Split(ss, "\n")
+	for _, s := range ls {
+		logrus.Error(prefix + s + "\n")
+	}
+	return ss
+}
+
 func MakeRandData(size int64) []byte {
 	rand.Seed(time.Now().UnixNano())
 	loop := size / 8
