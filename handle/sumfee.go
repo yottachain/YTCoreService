@@ -95,7 +95,7 @@ func (me *UserObjectSum) IterateObjects2() {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		} else {
-			logrus.Errorf("[SumUsedFee]UserID %d list object ok,usedspace %d\n", me.UserID, ls)
+			logrus.Errorf("[SumUsedFee]UserID %d list object ok,usedspace %d,time %s\n", me.UserID, ls, id.Timestamp().Format("2006-01-02 15:04:05"))
 		}
 		me.AddUsedSapce(int64(ls))
 		firstId = id
