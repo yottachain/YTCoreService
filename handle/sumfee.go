@@ -34,7 +34,7 @@ func IterateUser() {
 	defer env.TracePanic("[SumUsedFee]")
 	var lastId int32 = 0
 	limit := 100
-	logrus.Errorf("[SumUsedFee]Start iterate user...\n")
+	logrus.Infof("[SumUsedFee]Start iterate user...\n")
 	for {
 		us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "nextCycle": 1, "username": 1, "costPerCycle": 1})
 		if err != nil {
@@ -52,7 +52,7 @@ func IterateUser() {
 			}
 		}
 	}
-	logrus.Errorf("[SumUsedFee]Iterate user OK!\n")
+	logrus.Infof("[SumUsedFee]Iterate user OK!\n")
 }
 
 const BLKID_LIMIT = 500
@@ -85,7 +85,7 @@ func (me *UserObjectSum) IterateObjects2() {
 			break
 		}
 	}
-	logrus.Errorf("[SumUsedFee]Start sum fee,UserID:%d\n", me.UserID)
+	logrus.Infof("[SumUsedFee]Start sum fee,UserID:%d\n", me.UserID)
 	limit := 10000
 	firstId := primitive.NilObjectID
 	for {
@@ -95,7 +95,7 @@ func (me *UserObjectSum) IterateObjects2() {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		} else {
-			logrus.Errorf("[SumUsedFee]UserID %d list object ok,usedspace %d,time %s\n", me.UserID, ls, id.Timestamp().Format("2006-01-02 15:04:05"))
+			logrus.Infof("[SumUsedFee]UserID %d list object ok,usedspace %d,time %s\n", me.UserID, ls, id.Timestamp().Format("2006-01-02 15:04:05"))
 		}
 		me.AddUsedSapce(int64(ls))
 		firstId = id
@@ -169,31 +169,29 @@ func (me *UserObjectSum) IterateObjects() {
 
 func (me *UserObjectSum) SetCycleFee() {
 	cost := CalCycleFee(me.GetUsedSpace())
-	logrus.Errorf("[SumUsedFee]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
+	logrus.Infof("[SumUsedFee]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
 	var err error
 	if cost > 0 {
 		if me.CostPerCycle == cost {
-			logrus.Errorf("[SumUsedFee]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
+			logrus.Warnf("[SumUsedFee]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
 		} else {
-			logrus.Errorf("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
-			/*
-				num := 0
-				for {
-					err = net.SetHfee(me.UserName, cost)
-					if err != nil {
-						num++
-						if num > 8 {
-							break
-						} else {
-							time.Sleep(time.Duration(15) * time.Second)
-						}
-					} else {
-						dao.UpdateUserCost(me.UserID, cost)
-						logrus.Infof("[SumFileUsedSpace]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			logrus.Infof("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+			num := 0
+			for {
+				err = net.SetHfee(me.UserName, cost)
+				if err != nil {
+					num++
+					if num > 8 {
 						break
+					} else {
+						time.Sleep(time.Duration(15) * time.Second)
 					}
+				} else {
+					dao.UpdateUserCost(me.UserID, cost)
+					logrus.Infof("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+					break
 				}
-			*/
+			}
 		}
 	}
 	if err == nil {
