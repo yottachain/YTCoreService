@@ -11,6 +11,7 @@ import (
 
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func init() {
@@ -47,10 +48,10 @@ var MaxSize int64 = 50
 
 func call() {
 	//go notify()
-	ss, e := env.GetWinVersion()
-	if e == nil {
-		fmt.Println(ss)
-	}
+	id, _ := primitive.ObjectIDFromHex("5e284c043d910a4bd21dae5b")
+	fmt.Println(id.Timestamp().Format("2006-01-02 15:04:05"))
+
+	//
 }
 
 var count *int64 = new(int64)
