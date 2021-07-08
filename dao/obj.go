@@ -274,7 +274,7 @@ func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int, In
 func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64, primitive.ObjectID, error) {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
-	fields := bson.M{"VNU": 1, "NLINK": 1, "Usedspace": 1}
+	fields := bson.M{"VNU": 1, "NLINK": 1, "usedspace": 1}
 	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
