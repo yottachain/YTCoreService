@@ -129,7 +129,7 @@ func readSnProperties() {
 	PayInterval = config.GetRangeInt("payInterval", 10000, 600000, 60000)
 
 	MAX_DELBLK_ROUTINE = int32(config.GetRangeInt("MAX_DELBLK_ROUTINE", 3, 21*50, 21))
-	MAX_SUMFEE_ROUTINE = int32(config.GetRangeInt("MAX_DELBLK_ROUTINE", 3, 21*50, 21))
+	MAX_SUMFEE_ROUTINE = int32(config.GetRangeInt("MAX_SUMFEE_ROUTINE", 3, 21*50, 21))
 
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))
 	MAX_HTTP_ROUTINE = int32(config.GetRangeInt("MAX_HTTP_ROUTINE", 500, 2000, 1000))
