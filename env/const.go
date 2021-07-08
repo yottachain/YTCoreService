@@ -11,7 +11,7 @@ const PPC uint64 = 1
 const UnitCycleCost uint64 = 100000000 * PPC / 365
 const UnitFirstCost uint64 = 100000000 * PMS / 365
 const UnitSpace uint64 = 1024 * 1024 * 1024
-const CostSumCycle uint64 = PPC * 3 * 1000 * 60 * 60 * 24
+const CostSumCycle uint64 = PPC * 1 * 1000 * 60 * 60 * 24
 const PCM uint64 = 16 * 1024
 const PNF uint32 = 3
 

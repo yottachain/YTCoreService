@@ -299,14 +299,12 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
 			return 0, startVnu, err
 		}
-		//logrus.Errorf("[ObjectMeta]usedspace:%d\n", res.Usedspace)
 		if res.VNU.Timestamp().Unix() > stoptime {
 			logrus.Errorf("[ObjectMeta]Sum Stop Timestamp:%s\n", res.VNU.Timestamp().Format("2006-01-02 15:04:05"))
 			startVnu = primitive.NilObjectID
 			break
 		}
 		if res.NLINK <= 0 {
-			logrus.Errorf("[ObjectMeta]NLINK<=0:%s\n", res.VNU.Hex())
 			startVnu = res.VNU
 			continue
 		}
@@ -372,6 +370,9 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 	if curerr := cur.Err(); curerr != nil {
 		logrus.Errorf("[ObjectMeta]ListObjects Cursor ERR:%s, block count:%d\n", curerr, len(vbis))
 		return nil, startVnu, curerr
+	}
+	if len(vbis) == 0 {
+		startVnu = primitive.NilObjectID
 	}
 	return vbis, startVnu, nil
 }
