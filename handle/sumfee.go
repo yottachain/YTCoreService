@@ -168,14 +168,14 @@ func (me *UserObjectSum) IterateObjects() {
 }
 
 func (me *UserObjectSum) SetCycleFee() {
-	cost := CalCycleFee(me.GetUsedSpace())
-	logrus.Infof("[SumUsedFee]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, me.UsedSpace, cost)
+	usedSpace := me.GetUsedSpace()
+	cost := CalCycleFee(usedSpace)
+	logrus.Infof("[SumUsedFee]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, usedSpace, cost)
 	var err error
 	if cost > 0 {
 		if me.CostPerCycle == cost {
-			logrus.Warnf("[SumUsedFee]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.UsedSpace, me.UserID)
+			logrus.Warnf("[SumUsedFee]Not need to set costPerCycle,old cost:%d,UserID:%d\n", me.CostPerCycle, me.UserID)
 		} else {
-			logrus.Infof("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
 			num := 0
 			for {
 				err = net.SetHfee(me.UserName, cost)
@@ -188,7 +188,7 @@ func (me *UserObjectSum) SetCycleFee() {
 					}
 				} else {
 					dao.UpdateUserCost(me.UserID, cost)
-					logrus.Infof("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, me.UsedSpace, me.UserID)
+					logrus.Infof("[SumUsedFee]Set costPerCycle:%d,usedspace:%d,UserID:%d\n", cost, usedSpace, me.UserID)
 					break
 				}
 			}
