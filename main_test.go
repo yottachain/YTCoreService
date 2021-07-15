@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/test"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func init() {
@@ -48,10 +48,10 @@ var MaxSize int64 = 50
 
 func call() {
 	//go notify()
-	id, _ := primitive.ObjectIDFromHex("5e284c043d910a4bd21dae5b")
-	fmt.Println(id.Timestamp().Format("2006-01-02 15:04:05"))
+	UsedSpace := int64(824897946768)
+	cost := handle.CalCycleFee(UsedSpace)
+	fmt.Printf("[SumUsedFee]File statistics completed,usedspace:%d,cost:%d\n", UsedSpace, cost)
 
-	//
 }
 
 var count *int64 = new(int64)
