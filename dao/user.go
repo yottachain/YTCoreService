@@ -28,6 +28,7 @@ type User struct {
 	CostPerCycle int64    `bson:"costPerCycle"`
 	NextCycle    int64    `bson:"nextCycle"`
 	Relationship string   `bson:"relationship"`
+	Balance      int64    `bson:"balance"`
 	Routine      *int32   `bson:"-"`
 }
 
@@ -79,6 +80,18 @@ func GetUserCache(userid int32, keyNumber int, signdata string) *User {
 		return nil
 	}
 	return user
+}
+
+func UpdateBalance(uid int32, balance int64) {
+	source := NewBaseSource()
+	filter := bson.M{"_id": uid}
+	update := bson.M{"$set": bson.M{"balance": balance}}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
+	if err != nil {
+		logrus.Errorf("[UserMeta]UpdateBalance ERR:%s\n", err)
+	}
 }
 
 func UpdateNilRelationship() {

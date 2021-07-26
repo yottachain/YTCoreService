@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"sync"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/test"
 )
 
@@ -49,8 +49,8 @@ var MaxSize int64 = 50
 func call() {
 	//go notify()
 	UsedSpace := int64(824897946768)
-	cost := handle.CalCycleFee(UsedSpace)
-	fmt.Printf("[SumUsedFee]File statistics completed,usedspace:%d,cost:%d\n", UsedSpace, cost)
+	//cost := handle.CalCycleFee(UsedSpace)
+	fmt.Printf("[SumUsedFee]File statistics completed,usedspace:%d,cost:%d\n", UsedSpace, math.MaxInt32)
 
 }
 
