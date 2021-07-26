@@ -115,7 +115,7 @@ var UserSTATCache = struct {
 func IterateUsers() {
 	defer env.TracePanic("[StatUser]")
 	var content bytes.Buffer
-	content.WriteString("UserName	ID	balance	UsedSpace	UsedSpace1	UsedSpace12	Cost\n")
+	content.WriteString("UserName	ID	balance	UsedSpace	UsedSpace1	UsedSpace2	Cost\n")
 	var lastId int32 = 0
 	limit := 100
 	logrus.Infof("[StatUser]Start iterate user...\n")
@@ -139,7 +139,7 @@ func IterateUsers() {
 				sum.IterateObjects()
 				sum1 := &UsedspaceSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username}
 				atomic.StoreInt64(sum1.UsedSpace, 0)
-				sum1.IterateObjects()
+				sum1.IterateObjects2()
 				usedspace1 = usedspace1 + sum1.GetUsedSpace()
 				cyusedspce = cyusedspce + sum.GetUsedSpace()
 				cycost = cycost + sum.Cost
