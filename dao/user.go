@@ -216,7 +216,11 @@ func ListUsers(lastId int32, limit int, fields bson.M) ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetUserColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[UserMeta]ListUsers ERR:%s\n", err)
 		return nil, err
@@ -251,7 +255,11 @@ func TotalUsers() (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetUserColl().Aggregate(ctx, []bson.M{o})
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[UserMeta]TotalUsers ERR:%s\n", err)
 		return nil, err
@@ -320,7 +328,11 @@ func SumRelationship() (map[string]int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetUserColl().Aggregate(ctx, []bson.M{filter, o})
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[UserMeta]SumRelationship ERR:%s\n", err)
 		return nil, err

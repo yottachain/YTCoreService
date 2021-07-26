@@ -48,7 +48,9 @@ func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
 		meta, err := dao.DelOrUpObject(uid, vnu, decSpace, del)
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
-			continue
+			logrus.Errorf("[DeleteOBJ][%d]Deleting object %s,ERR:%s\n", uid, vnu.Hex(), err)
+			break
+			//continue
 		} else {
 			if meta != nil {
 				logrus.Infof("[DeleteOBJ][%d]Deleting object %s,block count %d...\n", uid, vnu.Hex(), len(meta.BlockList))

@@ -102,10 +102,11 @@ func StartSumUser() {
 	if !net.IsActive() {
 		return
 	}
-	for {
-		IterateUsers()
-		time.Sleep(time.Duration(24 * time.Hour))
-	}
+	IterateUsers()
+	//for {
+	//	IterateUsers()
+	//	time.Sleep(time.Duration(24 * time.Hour))
+	//}
 }
 
 var UserSTATCache = struct {

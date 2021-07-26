@@ -237,16 +237,22 @@ func GetLastAccessTime(userid uint32) (time.Time, error) {
 
 func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int, InArrears bool) ([]primitive.ObjectID, error) {
 	source := NewUserMetaSource(userid)
-	filter := bson.M{"VNU": bson.M{"$gt": startVnu}, "NLINK": bson.M{"$lt": 1}}
-	if InArrears {
-		filter = bson.M{"VNU": bson.M{"$gt": startVnu}}
-	}
-	fields := bson.M{"VNU": 1}
+	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
+	/*
+		filter := bson.M{"VNU": bson.M{"$gt": startVnu}, "NLINK": bson.M{"$lt": 1}}
+		if InArrears {
+			filter = bson.M{"VNU": bson.M{"$gt": startVnu}}
+		}*/
+	fields := bson.M{"VNU": 1, "NLINK": 1}
 	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 540*time.Second)
 	defer cancel()
 	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ObjectMeta]ListObjectsForDel ERR:%s\n", err)
 		return nil, err
@@ -258,6 +264,11 @@ func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int, In
 		if err != nil {
 			logrus.Errorf("[ObjectMeta]ListObjectsForDel Decode ERR:%s\n", err)
 			return nil, err
+		}
+		if !InArrears {
+			if res.NLINK > 0 {
+				continue
+			}
 		}
 		VNUS = append(VNUS, res.VNU)
 		if len(VNUS) > limit {
@@ -279,7 +290,11 @@ func ListObjects3(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
 		return 0, startVnu, err
@@ -318,7 +333,11 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
 		return 0, startVnu, err
@@ -371,7 +390,11 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
 		return nil, startVnu, err
