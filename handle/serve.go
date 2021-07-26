@@ -45,6 +45,7 @@ func Start() {
 		go StartDNBlackListCheck()
 		go StartDoDelete()
 		go StartGC()
+		go StartSumUser()
 	}
 }
 

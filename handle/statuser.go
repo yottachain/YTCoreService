@@ -1,7 +1,10 @@
 package handle
 
 import (
+	"bytes"
+	"fmt"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -9,6 +12,7 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var log *env.NoFmtLog
@@ -92,4 +96,104 @@ func GetBlance(username string) (int64, error) {
 		return 0, err
 	}
 	return balance, nil
+}
+
+func StartSumUser() {
+	if !net.IsActive() {
+		return
+	}
+	for {
+		IterateUsers()
+		time.Sleep(time.Duration(24 * time.Hour))
+	}
+}
+
+var UserSTATCache = struct {
+	Value atomic.Value
+}{}
+
+func IterateUsers() {
+	defer env.TracePanic("[StatUser]")
+	var content bytes.Buffer
+	content.WriteString("用户	ID	余额	存储占用	计费存储量	周期费用\n")
+	var lastId int32 = 0
+	limit := 100
+	logrus.Infof("[StatUser]Start iterate user...\n")
+	cyusedspce := int64(0)
+	cycost := int64(0)
+	usedspace := int64(0)
+	for {
+		us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "usedspace": 1, "username": 1, "costPerCycle": 1})
+		if err != nil {
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		}
+		if len(us) == 0 {
+			break
+		} else {
+			for _, user := range us {
+				lastId = user.UserID
+				sum := &UsedspaceSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username}
+				atomic.StoreInt64(sum.UsedSpace, 0)
+				sum.IterateObjects()
+				balance, err := net.GetBalance(user.Username)
+				if err != nil {
+					content.WriteString(fmt.Sprintf("%s	%d	ERR	%d	%d	%d\n", user.Username, user.UserID, user.Usedspace, sum.GetUsedSpace(), sum.Cost))
+				} else {
+					content.WriteString(fmt.Sprintf("%s	%d	%d	%d	%d	%d\n", user.Username, user.UserID, balance, user.Usedspace, sum.GetUsedSpace(), sum.Cost))
+				}
+				cyusedspce = cyusedspce + sum.GetUsedSpace()
+				cycost = cycost + sum.Cost
+				usedspace = usedspace + user.Usedspace
+			}
+
+		}
+	}
+	content.WriteString(fmt.Sprintf("ALL	0	0	%d	%d	%d\n", usedspace, cyusedspce, cycost))
+	UserSTATCache.Value.Store(content.String())
+	logrus.Infof("[StatUser]Iterate user OK!\n")
+}
+
+type UsedspaceSum struct {
+	UserID    int32
+	UserName  string
+	UsedSpace *int64
+	Cost      int64
+}
+
+func (me *UsedspaceSum) AddUsedSapce(space int64) {
+	atomic.AddInt64(me.UsedSpace, space)
+}
+
+func (me *UsedspaceSum) GetUsedSpace() int64 {
+	return atomic.LoadInt64(me.UsedSpace)
+}
+
+func (me *UsedspaceSum) IterateObjects() {
+	logrus.Infof("[StatUser]Start sum fee,UserID:%d\n", me.UserID)
+	limit := 10000
+	firstId := primitive.NilObjectID
+	for {
+		ls, id, err := dao.ListObjects2(uint32(me.UserID), firstId, limit)
+		if err != nil {
+			logrus.Errorf("[StatUser]UserID %d list object err:%s\n", me.UserID, err)
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		} else {
+			logrus.Infof("[StatUser]UserID %d list object ok,usedspace %d,time %s\n", me.UserID, ls, id.Timestamp().Format("2006-01-02 15:04:05"))
+		}
+		me.AddUsedSapce(int64(ls))
+		firstId = id
+		if firstId == primitive.NilObjectID {
+			break
+		}
+	}
+	me.SetCycleFee()
+}
+
+func (me *UsedspaceSum) SetCycleFee() {
+	usedSpace := me.GetUsedSpace()
+	cost := CalCycleFee(usedSpace)
+	me.Cost = int64(cost)
+	logrus.Infof("[StatUser]File statistics completed,UserID:%d,usedspace:%d,cost:%d\n", me.UserID, usedSpace, cost)
 }
