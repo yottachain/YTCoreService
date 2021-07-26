@@ -115,7 +115,7 @@ var UserSTATCache = struct {
 func IterateUsers() {
 	defer env.TracePanic("[StatUser]")
 	var content bytes.Buffer
-	content.WriteString("用户	ID	余额	存储占用	计费存储量	周期费用\n")
+	content.WriteString("UserName	ID	balance	UsedSpace	UsedSpace	Cost\n")
 	var lastId int32 = 0
 	limit := 100
 	logrus.Infof("[StatUser]Start iterate user...\n")
@@ -149,7 +149,7 @@ func IterateUsers() {
 
 		}
 	}
-	content.WriteString(fmt.Sprintf("ALL	0	0	%d	%d	%d\n", usedspace, cyusedspce, cycost))
+	content.WriteString(fmt.Sprintf("ALL	-	-	%d	%d	%d\n", usedspace, cyusedspce, cycost))
 	UserSTATCache.Value.Store(content.String())
 	logrus.Infof("[StatUser]Iterate user OK!\n")
 }
