@@ -59,7 +59,7 @@ func main() {
 			return
 		}
 		if cmd == "statuser" {
-			http.StartIterateUser()
+			handle.StartIterateUser()
 			return
 		}
 		if cmd == "console" {
