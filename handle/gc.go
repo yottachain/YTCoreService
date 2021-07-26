@@ -19,7 +19,7 @@ func StartGC() {
 		return
 	}
 	for {
-		time.Sleep(time.Duration(5 * time.Minute))
+		time.Sleep(time.Duration(10 * time.Minute))
 		ListUser(true)
 		ListUser(false)
 		time.Sleep(time.Duration(3 * time.Hour))
@@ -98,7 +98,7 @@ func ListUser(InArrears bool) {
 func IterateObjects(user *dao.User, del bool) {
 	firstId := primitive.NilObjectID
 	for {
-		vnus, err := dao.ListObjectsForDel(uint32(user.UserID), firstId, 100, del)
+		vnus, err := dao.ListObjectsForDel(uint32(user.UserID), firstId, 1, del)
 		if err != nil {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue

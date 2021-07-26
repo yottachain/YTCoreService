@@ -284,7 +284,6 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
 		return 0, startVnu, err
 	}
-	vbis := [][]byte{}
 	pms := env.PMS
 	if env.SUM_USER_FEE > 0 {
 		pms = uint64(env.SUM_USER_FEE)
@@ -300,7 +299,7 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 			return 0, startVnu, err
 		}
 		if res.VNU.Timestamp().Unix() > stoptime {
-			logrus.Errorf("[ObjectMeta]Sum Stop Timestamp:%s\n", res.VNU.Timestamp().Format("2006-01-02 15:04:05"))
+			logrus.Infof("[ObjectMeta]Sum Stop Timestamp:%s\n", res.VNU.Timestamp().Format("2006-01-02 15:04:05"))
 			startVnu = primitive.NilObjectID
 			break
 		}
@@ -319,7 +318,7 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 		startVnu = primitive.NilObjectID
 	}
 	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[ObjectMeta]ListObjects Cursor ERR:%s, block count:%d\n", curerr, len(vbis))
+		logrus.Errorf("[ObjectMeta]ListObjects Cursor ERR:%s, file count:%d\n", count)
 		return 0, startVnu, curerr
 	}
 	return usedspace, startVnu, nil

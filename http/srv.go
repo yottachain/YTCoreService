@@ -58,6 +58,7 @@ func Start(port int) error {
 	http.HandleFunc("/ChangeAssignedSpace", ChangeAssignedSpaceHandle)
 	http.HandleFunc("/ChangeDepAcc", ChangeDepAccHandle)
 	http.HandleFunc("/ChangeDeposit", ChangeDepositHandle)
+	http.HandleFunc("/statuser", UserStatHandle)
 	http.HandleFunc("/", RootHandle)
 	InitCache()
 	server = &http.Server{
