@@ -115,13 +115,14 @@ var UserSTATCache = struct {
 func IterateUsers() {
 	defer env.TracePanic("[StatUser]")
 	var content bytes.Buffer
-	content.WriteString("UserName	ID	balance	UsedSpace	UsedSpace	Cost\n")
+	content.WriteString("UserName	ID	balance	UsedSpace	UsedSpace1	UsedSpace12	Cost\n")
 	var lastId int32 = 0
 	limit := 100
 	logrus.Infof("[StatUser]Start iterate user...\n")
 	cyusedspce := int64(0)
 	cycost := int64(0)
 	usedspace := int64(0)
+	usedspace1 := int64(0)
 	for {
 		us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "usedspace": 1, "username": 1, "costPerCycle": 1})
 		if err != nil {
@@ -136,20 +137,24 @@ func IterateUsers() {
 				sum := &UsedspaceSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username}
 				atomic.StoreInt64(sum.UsedSpace, 0)
 				sum.IterateObjects()
-				balance, err := net.GetBalance(user.Username)
-				if err != nil {
-					content.WriteString(fmt.Sprintf("%s	%d	ERR	%d	%d	%d\n", user.Username, user.UserID, user.Usedspace, sum.GetUsedSpace(), sum.Cost))
-				} else {
-					content.WriteString(fmt.Sprintf("%s	%d	%d	%d	%d	%d\n", user.Username, user.UserID, balance, user.Usedspace, sum.GetUsedSpace(), sum.Cost))
-				}
+				sum1 := &UsedspaceSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username}
+				atomic.StoreInt64(sum1.UsedSpace, 0)
+				sum1.IterateObjects()
+				usedspace1 = usedspace1 + sum1.GetUsedSpace()
 				cyusedspce = cyusedspce + sum.GetUsedSpace()
 				cycost = cycost + sum.Cost
 				usedspace = usedspace + user.Usedspace
+				balance, err := net.GetBalance(user.Username)
+				if err != nil {
+					content.WriteString(fmt.Sprintf("%s	%d	ERR	%d	%d	%d	%d\n", user.Username, user.UserID, user.Usedspace, sum1.GetUsedSpace(), sum.GetUsedSpace(), sum.Cost))
+				} else {
+					content.WriteString(fmt.Sprintf("%s	%d	%d	%d	%d	%d	%d\n", user.Username, user.UserID, balance, user.Usedspace, sum1.GetUsedSpace(), sum.GetUsedSpace(), sum.Cost))
+				}
 			}
 
 		}
 	}
-	content.WriteString(fmt.Sprintf("ALL	-	-	%d	%d	%d\n", usedspace, cyusedspce, cycost))
+	content.WriteString(fmt.Sprintf("ALL	-	-	%d	%d	%d	%d\n", usedspace, usedspace1, cyusedspce, cycost))
 	UserSTATCache.Value.Store(content.String())
 	logrus.Infof("[StatUser]Iterate user OK!\n")
 }
@@ -167,6 +172,27 @@ func (me *UsedspaceSum) AddUsedSapce(space int64) {
 
 func (me *UsedspaceSum) GetUsedSpace() int64 {
 	return atomic.LoadInt64(me.UsedSpace)
+}
+
+func (me *UsedspaceSum) IterateObjects2() {
+	logrus.Infof("[StatUser]Start sum fee,UserID:%d\n", me.UserID)
+	limit := 10000
+	firstId := primitive.NilObjectID
+	for {
+		ls, id, err := dao.ListObjects3(uint32(me.UserID), firstId, limit)
+		if err != nil {
+			logrus.Errorf("[StatUser]UserID %d list object err:%s\n", me.UserID, err)
+			time.Sleep(time.Duration(30) * time.Second)
+			continue
+		} else {
+			logrus.Infof("[StatUser]UserID %d list object ok,usedspace %d,time %s\n", me.UserID, ls, id.Timestamp().Format("2006-01-02 15:04:05"))
+		}
+		me.AddUsedSapce(int64(ls))
+		firstId = id
+		if firstId == primitive.NilObjectID {
+			break
+		}
+	}
 }
 
 func (me *UsedspaceSum) IterateObjects() {
