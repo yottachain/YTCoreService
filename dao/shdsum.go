@@ -75,7 +75,11 @@ func ListNodeShardCount(firstid int64, lastid int64) (map[int32]int64, int64, bo
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	cur, err := source.GetShardUploadColl(firstid).Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ShardMeta]ListNodeShardCount ERR:%s\n", err)
 		return nil, 0, false, err

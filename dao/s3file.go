@@ -226,7 +226,11 @@ func ListFileMeta(uid uint32, bid primitive.ObjectID, prefix string, nFileName s
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetFileColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[S3FileMeta]ListFileMeta ERR:%s\n", err)
 		return nil, err

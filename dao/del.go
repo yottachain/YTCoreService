@@ -35,6 +35,7 @@ func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool, del bool) (*Objec
 	}
 	if !up {
 		logrus.Infof("[DelObject]DelOrUpObject UID %d,VNU %s OK\n", uid, vnu.Hex())
+		DeleteLog(filter, source.GetObjectColl().Name, false)
 		return result, nil
 	}
 	if result == nil {
@@ -42,6 +43,7 @@ func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool, del bool) (*Objec
 		fmeta.DECObjectNLINK()
 		return nil, nil
 	}
+	DeleteLog(filter, source.GetObjectColl().Name, false)
 	logrus.Infof("[DelObject]DelOrUpObject UID %d,VNU %s OK\n", uid, vnu.Hex())
 	usedspace := int64(result.Usedspace)
 	length := int64(result.Length)
@@ -71,6 +73,7 @@ func DelOrUpBLK(vbi int64) ([]*ShardMeta, error) {
 		return nil, decBlockNLINK(vbi)
 	}
 	logrus.Infof("[DelBlock]DelOrUpBLK %d OK\n", vbi)
+	DeleteLog(filter, source.GetBlockColl().Name(), false)
 	bkid := GenerateShardID(1)
 	if result.VNF == 0 {
 		DelBLKData(vbi)
@@ -96,7 +99,8 @@ func DelBLKData(vbi int64) {
 	if err != nil {
 		logrus.Errorf("[DelBlock]DelBLKData ERR:%s\n", err)
 	} else {
-		logrus.Errorf("[DelBlock]DelBLKData %d OK\n", vbi)
+		DeleteLog(filter, source.GetBlockDataColl().Name(), false)
+		logrus.Infof("[DelBlock]DelBLKData %d OK\n", vbi)
 	}
 }
 
@@ -111,6 +115,7 @@ func decBlockNLINK(vbi int64) error {
 		logrus.Errorf("[DelBlock]DecBlockNLINK %d,ERR:%s\n", vbi, err)
 		return err
 	}
+	UpdateLog(filter, update, source.GetBlockDataColl().Name(), false)
 	if res.MatchedCount > 0 {
 		decBlockNlinkCount()
 	}
@@ -140,6 +145,7 @@ func DelShards(vbi int64, count int) ([]*ShardMeta, error) {
 		logrus.Errorf("[DelBlock][%d]DelShards %d items ERR:%s\n", vbi, count, err)
 		return nil, err
 	}
+	DeleteLog(filter, source.GetShardColl().Name(), true)
 	logrus.Infof("[DelBlock][%d]DelShards %d items OK\n", vbi, count)
 	return shds, nil
 }

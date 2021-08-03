@@ -157,7 +157,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 	}
 	statusRepResp := &pkt.StatusRepResp{ProductiveSpace: productiveSpace, RelayUrl: relayUrl}
 	newnode.Addrs = YTDNMgmt.CheckPublicAddrs(node.Addrs, net.NodeMgr.Config.Misc.ExcludeAddrPrefix)
-	//NodeStatSync(newnode)l
+	//NodeStatSync(newnode)
 	SendSpotCheck(newnode)
 	SendRebuildTask(newnode)
 	logrus.Infof("[DNStatusRep]Node:%d,take times %d ms\n", h.m.Id, time.Now().Sub(startTime).Milliseconds())

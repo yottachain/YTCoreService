@@ -37,6 +37,7 @@ func (self *ObjectMeta) GetAndUpdateNlink() error {
 		logrus.Errorf("[ObjectMeta]GetAndUpdateNlink ERR:%s\n", err)
 		return err
 	}
+	UpdateLog(filter, update, source.GetObjectColl().Name, false)
 	return nil
 }
 
