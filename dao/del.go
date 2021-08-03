@@ -34,16 +34,14 @@ func DelOrUpObject(uid int32, vnu primitive.ObjectID, up bool, del bool) (*Objec
 		}
 	}
 	if !up {
-		logrus.Infof("[DelObject]DelOrUpObject UID %d,VNU %s OK\n", uid, vnu.Hex())
-		DeleteLog(filter, source.GetObjectColl().Name, false)
+		logrus.Infof("[DelObject]DelOrUpObject UID %d,VNU %s OK\n", uid, vnu.Hex())		 
 		return result, nil
 	}
 	if result == nil {
 		fmeta := &ObjectMeta{UserId: uid, VNU: vnu}
 		fmeta.DECObjectNLINK()
 		return nil, nil
-	}
-	DeleteLog(filter, source.GetObjectColl().Name, false)
+	}	
 	logrus.Infof("[DelObject]DelOrUpObject UID %d,VNU %s OK\n", uid, vnu.Hex())
 	usedspace := int64(result.Usedspace)
 	length := int64(result.Length)
