@@ -19,20 +19,20 @@ type DBLog struct {
 	Id     primitive.ObjectID `bson:"_id"`
 	Coll   string             `bson:"coll"`
 	Type   int8               `bson:"type"`
-	filter []byte             `bson:"filter"`
-	update []byte             `bson:"update"`
+	Filter []byte             `bson:"filter"`
+	Update []byte             `bson:"update"`
 }
 
 func (self *DBLog) Execute() error {
 	filter := bson.M{}
-	err := bson.Unmarshal(self.filter, filter)
+	err := bson.Unmarshal(self.Filter, filter)
 	if err != nil {
 		logrus.Errorf("[OPLogs]Unmarshal filter ERR:%s\n", err)
 		return err
 	}
 	update := bson.M{}
 	if self.Type == UPDATE_ONE || self.Type == UPDATE_MANY {
-		err := bson.Unmarshal(self.update, update)
+		err := bson.Unmarshal(self.Update, update)
 		if err != nil {
 			logrus.Errorf("[OPLogs]Unmarshal update ERR:%s\n", err)
 			return err
@@ -68,7 +68,7 @@ func UpdateOP(filter bson.M, update bson.M, collname string, many bool) (*DBLog,
 		logrus.Errorf("[OPLogs]Update,Marshal update ERR:%s\n", err)
 		return nil, err
 	}
-	log := &DBLog{Id: primitive.NewObjectID(), Coll: collname, Type: UPDATE_ONE, filter: f, update: u}
+	log := &DBLog{Id: primitive.NewObjectID(), Coll: collname, Type: UPDATE_ONE, Filter: f, Update: u}
 	if many {
 		log.Type = UPDATE_MANY
 	}
@@ -103,7 +103,7 @@ func UpdateLog(filter bson.M, update bson.M, collname string, many bool) error {
 		logrus.Errorf("[OPLogs]Update,Marshal update ERR:%s\n", err)
 		return err
 	}
-	log := &DBLog{Id: primitive.NewObjectID(), Coll: collname, Type: UPDATE_ONE, filter: f, update: u}
+	log := &DBLog{Id: primitive.NewObjectID(), Coll: collname, Type: UPDATE_ONE, Filter: f, Update: u}
 	if many {
 		log.Type = UPDATE_MANY
 	}
@@ -124,7 +124,7 @@ func DeleteLog(filter bson.M, collname string, many bool) error {
 		logrus.Errorf("[OPLogs]Delete,Marshal filter ERR:%s\n", err)
 		return err
 	}
-	log := &DBLog{Id: primitive.NewObjectID(), Coll: collname, Type: DELETE_ONE, filter: f, update: []byte{}}
+	log := &DBLog{Id: primitive.NewObjectID(), Coll: collname, Type: DELETE_ONE, Filter: f, Update: []byte{}}
 	if many {
 		log.Type = DELETE_MANY
 	}
