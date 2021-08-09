@@ -263,7 +263,8 @@ func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int, In
 		err = cur.Decode(res)
 		if err != nil {
 			logrus.Errorf("[ObjectMeta]ListObjectsForDel Decode ERR:%s\n", err)
-			return nil, err
+			continue
+			//return nil, err
 		}
 		if !InArrears {
 			if res.NLINK > 0 {
@@ -306,7 +307,8 @@ func ListObjects3(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 		err = cur.Decode(res)
 		if err != nil {
 			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
-			return 0, startVnu, err
+			continue
+			//return 0, startVnu, err
 		}
 		if count > limit {
 			break
@@ -354,7 +356,8 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 		err = cur.Decode(res)
 		if err != nil {
 			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
-			return 0, startVnu, err
+			continue
+			//return 0, startVnu, err
 		}
 		if res.VNU.Timestamp().Unix() > stoptime {
 			logrus.Infof("[ObjectMeta]Sum Stop Timestamp:%s\n", res.VNU.Timestamp().Format("2006-01-02 15:04:05"))
@@ -410,7 +413,8 @@ func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byt
 		err = cur.Decode(res)
 		if err != nil {
 			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
-			return nil, startVnu, err
+			continue
+			//return nil, startVnu, err
 		}
 		if res.VNU.Timestamp().Unix() > stoptime {
 			startVnu = primitive.NilObjectID
