@@ -90,7 +90,8 @@ message StatusRepReq {
    int64 tx=13;  
    int64 rx=14;   
    string other=15;    
-   string hash=16;               
+   string hash=16; 
+   uint64 allocSpace=17;      
 }
 
 message StatusRepResp {
