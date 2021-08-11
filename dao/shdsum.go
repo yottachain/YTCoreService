@@ -91,7 +91,10 @@ func ListNodeShardCount(firstid int64, lastid int64) (map[int32]int64, int64, bo
 	for {
 		hasnext = cur.Next(ctx)
 		if !hasnext {
-			lid = NextTime(lid)
+			newlastid := NextTime(lid)
+			if newlastid < lastid {
+				lid = newlastid
+			}
 			break
 		}
 		var res = &result{}
