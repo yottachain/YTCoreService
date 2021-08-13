@@ -53,7 +53,11 @@ func ListDelLOG(startID primitive.ObjectID, limit int) ([]*DelLOG, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	cur, err := source.GetDELColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[CacheMeta]ListDelLOG ERR:%s\n", err)
 		return nil, err
@@ -143,7 +147,11 @@ func ListNewObject() (*Action, []primitive.ObjectID) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	cur, err := source.GetOBJColl().Find(ctx, bson.M{})
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[CacheMeta]ListNewObject ERR:%s\n", err)
 		return nil, nil

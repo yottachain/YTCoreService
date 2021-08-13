@@ -29,7 +29,11 @@ func GetBlockByVHP(vhp []byte) ([]*BlockMeta, error) {
 	defer cancel()
 	opt := options.Find().SetProjection(bson.M{"VHB": 1, "KED": 1, "AR": 1})
 	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[BlockMeta]GetBlockByVHP ERR:%s\n", err)
 		return nil, err
@@ -121,6 +125,7 @@ func INCBlockNLINK(meta *BlockMeta) error {
 		logrus.Errorf("[BlockMeta]INCBlockNLINK ERR:%s\n", err)
 		return err
 	}
+	UpdateLog(filter, update, source.GetBlockColl().Name(), false)
 	IncBlockNlinkCount(1)
 	return nil
 }
@@ -256,6 +261,7 @@ func AddLinks(ids []int64) error {
 	if err != nil {
 		logrus.Errorf("[BlockMeta]AddLinks ERR:%s\n", err)
 	}
+	UpdateLog(filter, update, source.GetBlockColl().Name(), true)
 	IncBlockNlinkCount(len(ids))
 	return nil
 }
@@ -269,7 +275,11 @@ func GetUsedSpace(ids []int64) (map[int64]*BlockMeta, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	cur, err := source.GetBlockColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[BlockMeta]GetUsedSpace ERR:%s\n", err)
 		return nil, err

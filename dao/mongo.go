@@ -112,7 +112,8 @@ const BLOCK_CNT_TABLE_NAME = "block_count"
 const SHARD_TABLE_NAME = "shards"
 const SHARD_CNT_TABLE_NAME = "shard_count"
 const SHARD_RBD_TABLE_NAME = "shards_rebuild"
-const SHARD_UP_TABLE_NAME = "shards_upload"
+
+const OPLOG = "oplogs"
 
 type MetaBaseSource struct {
 	db          *mongo.Database
@@ -124,6 +125,7 @@ type MetaBaseSource struct {
 	shard_c     *mongo.Collection
 	shard_cnt_c *mongo.Collection
 	shard_rbd_c *mongo.Collection
+	oplogs_c    *mongo.Collection
 }
 
 var metaBaseSource *MetaBaseSource = nil
@@ -158,11 +160,33 @@ func (source *MetaBaseSource) initMetaDB() {
 	source.shard_c = source.db.Collection(SHARD_TABLE_NAME)
 	source.shard_cnt_c = source.db.Collection(SHARD_CNT_TABLE_NAME)
 	source.shard_rbd_c = source.db.Collection(SHARD_RBD_TABLE_NAME)
+	source.oplogs_c = source.db.Collection(OPLOG)
 	logrus.Infof("[InitMongo]Create metabase tables Success.\n")
 }
 
 func (source *MetaBaseSource) GetDB() *mongo.Database {
 	return source.db
+}
+
+func (source *MetaBaseSource) GetColl(name string) *mongo.Collection {
+	if name == USER_TABLE_NAME {
+		return source.user_c
+	} else if name == BLOCK_TABLE_NAME {
+		return source.block_c
+	} else if name == BLOCK_DAT_TABLE_NAME {
+		return source.block_d_c
+	} else if name == BLOCK_BK_TABLE_NAME {
+		return source.block_bk_c
+	} else if name == BLOCK_CNT_TABLE_NAME {
+		return source.block_cnt_c
+	} else if name == SHARD_TABLE_NAME {
+		return source.shard_c
+	} else if name == SHARD_CNT_TABLE_NAME {
+		return source.shard_cnt_c
+	} else if name == SHARD_RBD_TABLE_NAME {
+		return source.shard_rbd_c
+	}
+	return nil
 }
 
 func (source *MetaBaseSource) GetUserColl() *mongo.Collection {
@@ -197,6 +221,10 @@ func (source *MetaBaseSource) GetShardRebuildColl() *mongo.Collection {
 	return source.shard_rbd_c
 }
 
+func (source *MetaBaseSource) GetOPLogsColl() *mongo.Collection {
+	return source.oplogs_c
+}
+
 const USER_BUCKET_TABLE_NAME = "buckets"
 const USER_BUCKET_INDEX_NAME = "BUKNAME"
 const USER_DIR_TABLE_NAME = "directorys"
@@ -212,6 +240,7 @@ type UserBaseSource struct {
 	dir_c    *mongo.Collection
 	file_c   *mongo.Collection
 	object_c *mongo.Collection
+	oplogs_c *mongo.Collection
 }
 
 var userBaseSource *UserBaseSource = nil
@@ -246,6 +275,7 @@ func (source *UserBaseSource) initMetaDB() {
 		Options: options.Index().SetUnique(true).SetName(USER_OBJ_INDEX_NAME),
 	}
 	source.object_c.Indexes().CreateOne(context.Background(), index4)
+	source.oplogs_c = source.db.Collection(OPLOG)
 	logrus.Infof("[InitMongo]Create usermeta tables Success.\n")
 }
 
@@ -267,6 +297,10 @@ func (source *UserBaseSource) GetFileColl() *mongo.Collection {
 
 func (source *UserBaseSource) GetObjectColl() *mongo.Collection {
 	return source.object_c
+}
+
+func (source *UserBaseSource) GetOPLogsColl() *mongo.Collection {
+	return source.oplogs_c
 }
 
 const BUCKET_TABLE_NAME = "buckets"
@@ -400,6 +434,8 @@ const DNI_CACHE_NAME = "dnis"
 const OBJECT_NEW_TABLE_NAME = "objects_new"
 const USERSUM_CACHE_NAME = "userfeesum"
 const OBJECT_DEL_TABLE_NAME = "objects_del"
+
+const SHARD_UP_TABLE_NAME = "shards_upload"
 
 var cacheBaseSource *CacheBaseSource = nil
 

@@ -87,11 +87,14 @@ func UpdateShardCount(hash map[int32]int64, firstid int64, lastid int64) error {
 func UpdateShardMeta(metas []*ShardMeta, newid int32) error {
 	source := NewBaseSource()
 	operations := []mongo.WriteModel{}
+	logs := []*DBLog{}
 	for _, v := range metas {
 		if v.NodeId != 0 && v.NodeId2 != 0 {
 			filter := bson.M{"_id": v.VFI}
 			update := bson.M{"$set": bson.M{"nodeId": newid, "nodeId2": newid}}
 			mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
+			dblog, _ := UpdateOP(filter, update, source.GetShardColl().Name(), false)
+			logs = append(logs, dblog)
 			operations = append(operations, mode)
 		} else {
 			if v.NodeId != 0 {
@@ -99,12 +102,16 @@ func UpdateShardMeta(metas []*ShardMeta, newid int32) error {
 				update := bson.M{"$set": bson.M{"nodeId": newid}}
 				mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
 				operations = append(operations, mode)
+				dblog, _ := UpdateOP(filter, update, source.GetShardColl().Name(), false)
+				logs = append(logs, dblog)
 			}
 			if v.NodeId2 != 0 {
 				filter := bson.M{"_id": v.VFI}
 				update := bson.M{"$set": bson.M{"nodeId2": newid}}
 				mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
 				operations = append(operations, mode)
+				dblog, _ := UpdateOP(filter, update, source.GetShardColl().Name(), false)
+				logs = append(logs, dblog)
 			}
 		}
 	}
@@ -114,6 +121,7 @@ func UpdateShardMeta(metas []*ShardMeta, newid int32) error {
 	if err != nil {
 		return err
 	}
+	Save(logs)
 	return nil
 }
 
@@ -166,7 +174,11 @@ func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetShardColl().Find(ctx, filter, opt)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ShardMeta]GetShardNodes ERR:%s\n", err)
 		return nil, err
@@ -212,7 +224,11 @@ func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := source.GetShardColl().Find(ctx, filter)
-	defer cur.Close(ctx)
+	defer func() {
+		if cur != nil {
+			cur.Close(ctx)
+		}
+	}()
 	if err != nil {
 		logrus.Errorf("[ShardMeta]GetShardMetas ERR:%s\n", err)
 		return nil, err

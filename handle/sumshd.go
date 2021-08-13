@@ -9,7 +9,7 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 )
 
-const DELAY_TIMES = 60 * 5
+const DELAY_TIMES = 60 * 15
 
 var firstId int64
 

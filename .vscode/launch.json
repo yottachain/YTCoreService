@@ -75,7 +75,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}",
             "env": {},
-            "args": ["console"]
+            "args": ["init"]
         }
     ]
 }

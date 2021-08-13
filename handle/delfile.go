@@ -128,6 +128,29 @@ func (h *DeleteBlockHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.
 	}
 }
 
+func DecShardCount(ls []*dao.ShardMeta) error {
+	vbi := dao.GenerateShardID(1)
+	m := make(map[int32]int16)
+	for _, shard := range ls {
+		num, ok := m[shard.NodeId]
+		if ok {
+			m[shard.NodeId] = num - 1
+		} else {
+			m[shard.NodeId] = -1
+		}
+		if shard.NodeId2 > 0 {
+			num, ok = m[shard.NodeId2]
+			if ok {
+				m[shard.NodeId2] = num - 1
+			} else {
+				m[shard.NodeId2] = -1
+			}
+		}
+	}
+	bs := dao.ToBytes(m)
+	return dao.SaveNodeShardCount(vbi, bs)
+}
+
 func (h *DeleteBlockHandler) WriteLOG(shds []*dao.ShardMeta) error {
 	if shds != nil {
 		for _, shd := range shds {
@@ -154,6 +177,7 @@ func (h *DeleteBlockHandler) WriteLOG(shds []*dao.ShardMeta) error {
 				}
 			}
 		}
+		DecShardCount(shds)
 	}
 	return nil
 }

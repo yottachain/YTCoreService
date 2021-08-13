@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"sync"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func init() {
@@ -48,10 +49,24 @@ var MaxSize int64 = 50
 
 func call() {
 	//go notify()
-	UsedSpace := int64(824897946768)
-	//cost := handle.CalCycleFee(UsedSpace)
-	fmt.Printf("[SumUsedFee]File statistics completed,usedspace:%d,cost:%d\n", UsedSpace, math.MaxInt32)
+	ids := []int32{13, 25}
+	filter := bson.M{"_id": bson.M{"$in": ids}, "VNU": primitive.NewObjectID()}
+	ss, err := bson.Marshal(filter)
+	if err != nil {
+		return
+	}
+	f1 := bson.M{}
+	err = bson.Unmarshal(ss, f1)
+	if err != nil {
+		return
+	}
 
+	for k, v := range f1 {
+		fmt.Println(k)
+		fmt.Println(v)
+	}
+	
+	//bson.Encoder en:=
 }
 
 var count *int64 = new(int64)

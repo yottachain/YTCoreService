@@ -23,68 +23,9 @@ func StatUser() {
 	logrus.SetOutput(os.Stdout)
 	net.InitNodeMgr(dao.MongoAddress)
 	net.EOSInit()
-
-	logname := env.YTSN_HOME + "/users.txt"
-	os.Remove(logname)
-	f, err := env.AddLog(logname)
-	if err != nil {
-		logrus.Panicf("[StatUser]Create LOG err:%s\n", err)
-	}
-	log = f
-	log.Writer.Info("ID:用户ID\n")
-	log.Writer.Info("UserName:用户名\n")
-	log.Writer.Info("FileTotal:文件数\n")
-	log.Writer.Info("SpaceTotal:存储总量(单位:bytes)\n")
-	log.Writer.Info("Usedspace:实际占用空间(单位:bytes)\n")
-	log.Writer.Info("Balance:用户HDD余额(单位:1/100000000 HDD)\n")
-	log.Writer.Info("-------------------\n")
-	defer log.Close()
-	Iterate()
+	IterateUsers()
 	logrus.Infof("[StatUser]STAT complete.\n")
 	dao.Close()
-}
-
-func Iterate() {
-	var lastId int32 = 0
-	limit := 100
-	for {
-		us, err := dao.ListUsers(lastId, limit, bson.M{"_id": 1, "usedspace": 1, "username": 1, "spaceTotal": 1, "fileTotal": 1})
-		if err != nil {
-			time.Sleep(time.Duration(30) * time.Second)
-			continue
-		}
-		if len(us) == 0 {
-			break
-		} else {
-			for _, user := range us {
-				lastId = user.UserID
-				if net.GetUserSuperNode(user.UserID).ID != int32(env.SuperNodeID) {
-					continue
-				}
-				b, err := GetBlance(user.Username)
-				if err != nil {
-					log.Writer.Infof("ID:%d\n", user.UserID)
-					log.Writer.Infof("UserName:%s\n", user.Username)
-					log.Writer.Infof("FileTotal:%d\n", user.FileTotal)
-					log.Writer.Infof("SpaceTotal:%d\n", user.SpaceTotal)
-					log.Writer.Infof("Usedspace:%d\n", user.Usedspace)
-					log.Writer.Infof("Balance:%s\n", "Account ERR")
-					log.Writer.Info("-------------------\n")
-					logrus.Errorf("[StatUser]Failed to get balance:%s\n", err)
-				} else {
-					log.Writer.Infof("ID:%d\n", user.UserID)
-					log.Writer.Infof("UserName:%s\n", user.Username)
-					log.Writer.Infof("FileTotal:%d\n", user.FileTotal)
-					log.Writer.Infof("SpaceTotal:%d\n", user.SpaceTotal)
-					log.Writer.Infof("Usedspace:%d\n", user.Usedspace)
-					log.Writer.Infof("Balance:%d\n", b)
-					log.Writer.Info("-------------------\n")
-					logrus.Infof("[StatUser]Get balance successfully!,UserName:%s", user.Username)
-				}
-				time.Sleep(time.Duration(5) * time.Second)
-			}
-		}
-	}
 }
 
 func GetBlance(username string) (int64, error) {
@@ -120,6 +61,7 @@ func IterateUsers() {
 	var lastId int32 = 0
 	limit := 100
 	logrus.Infof("[StatUser]Start iterate user...\n")
+	logrus.Infof("[StatUser]UserName	ID	balance	UsedSpace	UsedSpace1	UsedSpace2	Cost\n")
 	cyusedspce := int64(0)
 	cycost := int64(0)
 	usedspace := int64(0)
@@ -148,8 +90,10 @@ func IterateUsers() {
 				balance, err := net.GetBalance(user.Username)
 				if err != nil {
 					content.WriteString(fmt.Sprintf("%s	%d	ERR	%d	%d	%d	%d\n", user.Username, user.UserID, user.Usedspace, sum1.GetUsedSpace(), sum.GetUsedSpace(), sum.Cost))
+					logrus.Infof("[StatUser]%s	%d	ERR	%d	%d	%d	%d\n", user.Username, user.UserID, user.Usedspace, sum1.GetUsedSpace(), sum.GetUsedSpace(), sum.Cost)
 				} else {
 					content.WriteString(fmt.Sprintf("%s	%d	%d	%d	%d	%d	%d\n", user.Username, user.UserID, balance, user.Usedspace, sum1.GetUsedSpace(), sum.GetUsedSpace(), sum.Cost))
+					logrus.Infof("[StatUser]%s	%d	%d	%d	%d	%d	%d\n", user.Username, user.UserID, balance, user.Usedspace, sum1.GetUsedSpace(), sum.GetUsedSpace(), sum.Cost)
 				}
 			}
 
@@ -157,6 +101,7 @@ func IterateUsers() {
 	}
 	content.WriteString(fmt.Sprintf("ALL	-	-	%d	%d	%d	%d\n", usedspace, usedspace1, cyusedspce, cycost))
 	UserSTATCache.Value.Store(content.String())
+	logrus.Infof("[StatUser]ALL	-	-	%d	%d	%d	%d\n", usedspace, usedspace1, cyusedspce, cycost)
 	logrus.Infof("[StatUser]Iterate user OK!\n")
 }
 
