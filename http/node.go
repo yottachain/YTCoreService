@@ -246,3 +246,7 @@ func ChangeDepAccHandle(w http.ResponseWriter, req *http.Request) {
 func ChangeDepositHandle(w http.ResponseWriter, req *http.Request) {
 	CallApiHandle(w, req, "ChangeDeposit")
 }
+
+func IncreaseDepositHandle(w http.ResponseWriter, req *http.Request) {
+	CallApiHandle(w, req, "IncreaseDeposit")
+}

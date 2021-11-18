@@ -148,6 +148,7 @@ func SaveRep(newid int32, metas []*dao.ShardMeta) error {
 	}
 	rebuildmeta := []*dao.ShardRebuidMeta{}
 	vbi := dao.GenerateShardID(size)
+	vbi2 := dao.GenerateShardID(size)
 	for index, m := range metas {
 		if m.NodeId != 0 {
 			rm := &dao.ShardRebuidMeta{ID: vbi + int64(index)}
@@ -157,7 +158,7 @@ func SaveRep(newid int32, metas []*dao.ShardMeta) error {
 			rebuildmeta = append(rebuildmeta, rm)
 		}
 		if m.NodeId2 != 0 {
-			rm := &dao.ShardRebuidMeta{ID: vbi + int64(index)}
+			rm := &dao.ShardRebuidMeta{ID: vbi2 + int64(index)}
 			rm.VFI = m.VFI
 			rm.NewNodeId = newid
 			rm.OldNodeId = m.NodeId2
