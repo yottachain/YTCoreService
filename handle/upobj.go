@@ -398,13 +398,21 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 		return &pkt.VoidResp{}
 	}
 	logrus.Infof("[UploadOBJEnd][%d]Add usedSpace:%d\n", h.user.UserID, usedspace)
-	firstCost := CalFirstFee(int64(usedspace))
-	err = net.SubBalance(h.user.Username, firstCost)
+
+	flag, err := CheckFreeSpace(h.user.UserID, int64(usedspace))
 	if err != nil {
-		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
-		logrus.Errorf("[UploadOBJEnd][%d]Sub Balance ERR:%s\n", h.user.UserID, err)
+		logrus.Errorf("[UploadOBJEnd][%d]CheckFreeSpace ERR:%s\n", h.user.UserID, err)
 	}
-	logrus.Infof("[UploadOBJEnd][%d]Sub balance:%d\n", h.user.UserID, firstCost)
+	if !flag {
+		firstCost := CalFirstFee(int64(usedspace))
+		err = net.SubBalance(h.user.Username, firstCost)
+		if err != nil {
+			dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
+			logrus.Errorf("[UploadOBJEnd][%d]Sub Balance ERR:%s\n", h.user.UserID, err)
+		}
+		logrus.Infof("[UploadOBJEnd][%d]Sub balance:%d\n", h.user.UserID, firstCost)
+	}
+
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 	return &pkt.VoidResp{}
 }
