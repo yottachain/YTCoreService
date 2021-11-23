@@ -19,17 +19,20 @@ import (
 )
 
 type User struct {
-	UserID       int32    `bson:"_id"`
-	KUEp         [][]byte `bson:"KUEp"`
-	Usedspace    int64    `bson:"usedspace"`
-	SpaceTotal   int64    `bson:"spaceTotal"`
-	FileTotal    int64    `bson:"fileTotal"`
-	Username     string   `bson:"username"`
-	CostPerCycle int64    `bson:"costPerCycle"`
-	NextCycle    int64    `bson:"nextCycle"`
-	Relationship string   `bson:"relationship"`
-	Balance      int64    `bson:"balance"`
-	Routine      *int32   `bson:"-"`
+	UserID           int32    `bson:"_id"`
+	KUEp             [][]byte `bson:"KUEp"`
+	Usedspace        int64    `bson:"usedspace"`
+	SpaceTotal       int64    `bson:"spaceTotal"`
+	FileTotal        int64    `bson:"fileTotal"`
+	Username         string   `bson:"username"`
+	CostPerCycle     int64    `bson:"costPerCycle"`
+	NextCycle        int64    `bson:"nextCycle"`
+	Relationship     string   `bson:"relationship"`
+	Balance          int64    `bson:"balance"`
+	Routine          *int32   `bson:"-"`
+	PledgeFreeAmount int64    `bson:"pledgeFreeAmount"`
+	PledgeFreeSpace  int64    `bson:"pledgeFreeSpace"`
+	PledgeUpdateTime int64    `bson:"pledgeUpdateTime"`
 }
 
 func (user *User) GetTotalJson() string {
@@ -368,55 +371,16 @@ func SetSpaceSum(snid int32, mowner string, usedspace uint64) error {
 	return nil
 }
 
-type PledgeInfo struct {
-	UserID           int32 `bson:"_id"`
-	PledgeFreeAmount int64 `bson:"pledgeFreeAmount"`
-	PledgeFreeSpace  int64 `bson:"pledgeFreeSpace"`
-	PledgeUsedSpace  int64 `bson:"pledgeUsedSpace"`
-	PledgeUpdateTime int64 `bson:"pledgeUpdateTime"`
-}
-
-func GetNodePledgeInfo(userID int32) (*PledgeInfo, error) {
-	source := NewDNIBaseSource()
+func UpdateUserPledgeInfo(userID int32, pledgeFreeAmount, PledgeFreeSpace int64) error {
+	source := NewBaseSource()
 	filter := bson.M{"_id": userID}
-	var result = &PledgeInfo{}
+	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "PledgeFreeSpace": PledgeFreeSpace, "pledgeUpdateTime": time.Now().Unix()}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := source.GetNodeColl().FindOne(ctx, filter).Decode(&result)
+	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
 	if err != nil {
-		if err != mongo.ErrNoDocuments {
-			logrus.Errorf("[PledgeSpace]GetNodePledgeInfo ERR:%s\n", err)
-		}
-		return nil, err
-	}
-	return result, nil
-}
-
-func UpdateNodePledgeInfo(userID int32, pledgeFreeAmount, PledgeFreeSpace, pledgeUsedSpace int64) error {
-	source := NewDNIBaseSource()
-	filter := bson.M{"_id": userID}
-	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "PledgeFreeSpace": PledgeFreeSpace, "pledgeUsedSpace": pledgeUsedSpace, "pledgeUpdateTime": time.Now().Unix()}}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, err := source.GetNodeColl().UpdateOne(ctx, filter, update)
-	if err != nil {
-		logrus.Errorf("[PledgeSpace]UpdateNodePledgeInfo ERR:%s\n", err)
+		logrus.Errorf("[PledgeSpace]UpdateUserPledgeInfo ERR:%s\n", err)
 		return err
 	}
-	return nil
-}
-
-func UpdateNodePledgeSpace(userID int32, pledgeUsedSpace int64) error {
-	source := NewDNIBaseSource()
-	filter := bson.M{"_id": userID}
-	update := bson.M{"$set": bson.M{"pledgeUsedSpace": pledgeUsedSpace, "pledgeUpdateTime": time.Now().Unix()}}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, err := source.GetNodeColl().UpdateOne(ctx, filter, update)
-	if err != nil {
-		logrus.Errorf("[PledgeSpace]UpdateNodePledgeSpace ERR:%s\n", err)
-		return err
-	}
-
 	return nil
 }

@@ -11,43 +11,27 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 )
 
-func CheckFreeSpace(userID int32, addUsedspace int64) (bool, error) {
-	pledgeInfo, err := getUserPledgeInfo(userID)
+func CheckFreeSpace(userID int32) (bool, error) {
+	user, err := getUserPledgeInfo(userID)
 	if err != nil {
 		logrus.Errorf("[PledgeSpace][%d]GetUserPledgeInfo ERR:%s\n", userID, err)
 		return false, err
 	}
-	if pledgeInfo.PledgeUsedSpace >= pledgeInfo.PledgeFreeSpace {
+	if user.Usedspace >= user.PledgeFreeSpace {
 		return false, nil
 	}
-	usedspaceNew := pledgeInfo.PledgeUsedSpace
-	if addUsedspace > 0 {
-		usedspaceNew += addUsedspace
-		err = dao.UpdateNodePledgeSpace(userID, usedspaceNew)
-		if err != nil {
-			return false, err
-		}
-	}
-	if usedspaceNew <= pledgeInfo.PledgeFreeSpace {
-		return true, nil
-	}
-	return false, nil
+
+	return true, nil
 }
 
-func getUserPledgeInfo(userID int32) (*dao.PledgeInfo, error) {
-	info, err := dao.GetNodePledgeInfo(userID)
-	if err != nil {
-		return nil, err
+func getUserPledgeInfo(userID int32) (*dao.User, error) {
+	user := dao.GetUserByUserId(userID)
+	if user == nil {
+		return nil, fmt.Errorf("User is null")
 	}
 	var pledgeFreeAmount int64
 
-	if info == nil || info.PledgeFreeAmount == 0 || time.Now().Sub(time.Unix(info.PledgeUpdateTime, 0)).Seconds() > float64(env.PLEDGE_SPACE_UPDATE_INTERVAL) {
-		user := dao.GetUserByUserId(userID)
-		if user == nil {
-			logrus.Errorf("[PledgeSpace][%d]GetUserByUserId The query result is empty\n", userID)
-			return nil, fmt.Errorf("User is null")
-		}
-
+	if user.PledgeFreeAmount == 0 || time.Now().Sub(time.Unix(user.PledgeUpdateTime, 0)).Seconds() > float64(env.PLEDGE_SPACE_UPDATE_INTERVAL) {
 		bpUrl := net.GetEOSURI().Url
 
 		depData, err := eospledge.GetDepStore(bpUrl, user.Username)
@@ -56,20 +40,19 @@ func getUserPledgeInfo(userID int32) (*dao.PledgeInfo, error) {
 			return nil, err
 		} else {
 			pledgeFreeAmount = int64(depData.DepositTotal.Amount)
-			info.UserID = userID
-			info.PledgeFreeAmount = pledgeFreeAmount
-			info.PledgeFreeSpace = calcPledgeFreeSpace(pledgeFreeAmount)
-			info.PledgeUsedSpace = user.Usedspace
-			info.PledgeUpdateTime = time.Now().Unix()
+			user.PledgeFreeAmount = pledgeFreeAmount
+			user.PledgeFreeSpace = calcPledgeFreeSpace(pledgeFreeAmount)
+			user.PledgeUpdateTime = time.Now().Unix()
 
-			err = dao.UpdateNodePledgeInfo(userID, pledgeFreeAmount, info.PledgeFreeSpace, info.PledgeUsedSpace)
+			err = dao.UpdateUserPledgeInfo(userID, pledgeFreeAmount, user.PledgeFreeSpace)
 			if err != nil {
+				logrus.Errorf("[PledgeSpace][%d]UpdateUserPledgeInfo ERR:%s\n", userID, err)
 				return nil, err
 			}
 		}
 
 	}
-	return info, nil
+	return user, nil
 }
 
 func calcPledgeFreeSpace(amount int64) int64 {

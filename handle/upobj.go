@@ -399,7 +399,8 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	}
 	logrus.Infof("[UploadOBJEnd][%d]Add usedSpace:%d\n", h.user.UserID, usedspace)
 
-	flag, err := CheckFreeSpace(h.user.UserID, int64(usedspace))
+	flag := false
+	flag, err = CheckFreeSpace(h.user.UserID)
 	if err != nil {
 		logrus.Errorf("[UploadOBJEnd][%d]CheckFreeSpace ERR:%s\n", h.user.UserID, err)
 	}
@@ -411,6 +412,8 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 			logrus.Errorf("[UploadOBJEnd][%d]Sub Balance ERR:%s\n", h.user.UserID, err)
 		}
 		logrus.Infof("[UploadOBJEnd][%d]Sub balance:%d\n", h.user.UserID, firstCost)
+	} else {
+		logrus.Infof("[UploadOBJEnd][%d]Use free space \n", h.user.UserID)
 	}
 
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
