@@ -67,7 +67,7 @@ func GetDepStore(url, accountName string) (*DepStoreData, error) {
 		return nil, err
 	}
 	if len(rows) == 0 {
-		return nil, fmt.Errorf("no matched row found, minerid: %s", req.Scope)
+		return nil, fmt.Errorf("no matched row found, accountName: %s", req.Scope)
 	}
 	return &rows[0], nil
 }

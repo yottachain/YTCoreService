@@ -30,7 +30,7 @@ type User struct {
 	Relationship     string   `bson:"relationship"`
 	Balance          int64    `bson:"balance"`
 	Routine          *int32   `bson:"-"`
-	PledgeFreeAmount int64    `bson:"pledgeFreeAmount"`
+	PledgeFreeAmount float64  `bson:"pledgeFreeAmount"`
 	PledgeFreeSpace  int64    `bson:"pledgeFreeSpace"`
 	PledgeUpdateTime int64    `bson:"pledgeUpdateTime"`
 }
@@ -371,10 +371,10 @@ func SetSpaceSum(snid int32, mowner string, usedspace uint64) error {
 	return nil
 }
 
-func UpdateUserPledgeInfo(userID int32, pledgeFreeAmount, PledgeFreeSpace int64) error {
+func UpdateUserPledgeInfo(userID int32, pledgeFreeAmount float64, PledgeFreeSpace int64) error {
 	source := NewBaseSource()
 	filter := bson.M{"_id": userID}
-	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "PledgeFreeSpace": PledgeFreeSpace, "pledgeUpdateTime": time.Now().Unix()}}
+	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "pledgeFreeSpace": PledgeFreeSpace, "pledgeUpdateTime": time.Now().Unix()}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
