@@ -371,10 +371,10 @@ func SetSpaceSum(snid int32, mowner string, usedspace uint64) error {
 	return nil
 }
 
-func UpdateUserPledgeInfo(userID int32, pledgeFreeAmount float64, PledgeFreeSpace int64) error {
+func UpdateUserPledgeInfo(userID int32, pledgeFreeAmount float64, pledgeFreeSpace int64) error {
 	source := NewBaseSource()
 	filter := bson.M{"_id": userID}
-	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "pledgeFreeSpace": PledgeFreeSpace, "pledgeUpdateTime": time.Now().Unix()}}
+	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "pledgeFreeSpace": pledgeFreeSpace, "pledgeUpdateTime": time.Now().Unix()}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
