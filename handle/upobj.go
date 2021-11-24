@@ -142,13 +142,22 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 	if len(h.m.VHW) != 32 {
 		return pkt.NewError(pkt.INVALID_VHW)
 	}
-	has, err := net.HasSpace(*h.m.Length, h.user.Username)
+
+	flag := false
+	flag, err := CheckFreeSpace(h.user.UserID)
 	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
+		logrus.Errorf("[UploadOBJInit][%d]CheckFreeSpace ERR:%s\n", h.user.UserID, err)
 	}
-	if !has {
-		return pkt.NewError(pkt.NOT_ENOUGH_DHH)
+	if !flag {
+		has, err := net.HasSpace(*h.m.Length, h.user.Username)
+		if err != nil {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		}
+		if !has {
+			return pkt.NewError(pkt.NOT_ENOUGH_DHH)
+		}
 	}
+
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
 	exists, err := meta.IsExists()
 	if err != nil {
