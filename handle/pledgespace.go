@@ -11,21 +11,21 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 )
 
-func CheckFreeSpace(user *dao.User) (bool, error) {
-	user, err := getUserPledgeInfo(user)
+func CheckFreeSpace(userID int32) (bool, error) {
+	user, err := getUserPledgeInfo(userID)
 	if err != nil {
-		logrus.Errorf("[PledgeSpace][%d]GetUserPledgeInfo ERR:%s\n", user.UserID, err)
+		logrus.Errorf("[PledgeSpace][%d]GetUserPledgeInfo ERR:%s\n", userID, err)
 		return false, err
 	}
-	if user.Usedspace > user.PledgeFreeSpace {
+	if user.Usedspace >= user.PledgeFreeSpace {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func getUserPledgeInfo(user *dao.User) (*dao.User, error) {
-	// user := dao.GetUserByUserId(userID)
+func getUserPledgeInfo(userID int32) (*dao.User, error) {
+	user := dao.GetUserByUserId(userID)
 	if user == nil {
 		return nil, fmt.Errorf("User is null")
 	}
@@ -35,7 +35,7 @@ func getUserPledgeInfo(user *dao.User) (*dao.User, error) {
 
 		depData, err := eospledge.GetDepStore(bpUrl, user.Username)
 		if err != nil {
-			logrus.Errorf("[PledgeSpace][%d]GetDepStore ERR:%s\n", user.UserID, err)
+			logrus.Errorf("[PledgeSpace][%d]GetDepStore ERR:%s\n", userID, err)
 			return nil, err
 		} else {
 			amount := int64(depData.DepositTotal.Amount)
@@ -43,9 +43,9 @@ func getUserPledgeInfo(user *dao.User) (*dao.User, error) {
 			user.PledgeFreeSpace = calcPledgeFreeSpace(user.PledgeFreeAmount)
 			user.PledgeUpdateTime = time.Now().Unix()
 
-			err = dao.UpdateUserPledgeInfo(user.UserID, user.PledgeFreeAmount, user.PledgeFreeSpace)
+			err = dao.UpdateUserPledgeInfo(userID, user.PledgeFreeAmount, user.PledgeFreeSpace)
 			if err != nil {
-				logrus.Errorf("[PledgeSpace][%d]UpdateUserPledgeInfo ERR:%s\n", user.UserID, err)
+				logrus.Errorf("[PledgeSpace][%d]UpdateUserPledgeInfo ERR:%s\n", userID, err)
 				return nil, err
 			}
 		}
