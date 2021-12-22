@@ -250,3 +250,42 @@ func ChangeDepositHandle(w http.ResponseWriter, req *http.Request) {
 func IncreaseDepositHandle(w http.ResponseWriter, req *http.Request) {
 	CallApiHandle(w, req, "IncreaseDeposit")
 }
+
+func NodeQuitHandle(w http.ResponseWriter, req *http.Request) {
+	b := checkRoutine()
+	defer atomic.AddInt32(RoutineConter, -1)
+	if !b {
+		WriteErr(w, "HTTP_ROUTINE:Too many routines")
+		return
+	}
+	var nodeID int = -1
+	var nonce, signature string
+	queryForm, err := url.ParseQuery(req.URL.RawQuery)
+	if err != nil {
+		WriteErr(w, "Bad request:"+err.Error())
+		return
+	}
+	if len(queryForm["nodeID"]) > 0 {
+		nodeID, _ = strconv.Atoi(queryForm["nodeID"][0])
+	}
+	if len(queryForm["nonce"]) > 0 {
+		nonce = queryForm["nonce"][0]
+	}
+	if len(queryForm["signature"]) > 0 {
+		signature = queryForm["signature"][0]
+	}
+	if nodeID == -1 || nonce == "" || signature == "" {
+		logrus.Errorf("[HttpDN]Bad request:NodeQuit,nodeID=%d&nonce=%s&signature=%s\n", nodeID, nonce, signature)
+		WriteErr(w, "Bad request")
+		return
+	}
+	logrus.Infof("[HttpDN]Call API:NodeQuit,nodeID=%s&nonce=%s&signature=%s\n", nodeID, nonce, signature)
+	err = net.NodeMgr.NodeQuit(int32(nodeID), nonce, signature)
+	if err != nil {
+		emsg := fmt.Sprintf("[HttpDN]Call API:NodeQuit,ERR:%s\n", err.Error())
+		logrus.Errorf(emsg)
+		WriteErr(w, emsg)
+	} else {
+		WriteText(w, "OK")
+	}
+}
