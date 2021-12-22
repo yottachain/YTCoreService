@@ -142,13 +142,22 @@ func (h *UploadObjectInitHandler) Handle() proto.Message {
 	if len(h.m.VHW) != 32 {
 		return pkt.NewError(pkt.INVALID_VHW)
 	}
-	has, err := net.HasSpace(*h.m.Length, h.user.Username)
+
+	flag := false
+	flag, err := CheckFreeSpace(h.user.UserID)
 	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
+		logrus.Errorf("[UploadOBJInit][%d]CheckFreeSpace ERR:%s\n", h.user.UserID, err)
 	}
-	if !has {
-		return pkt.NewError(pkt.NOT_ENOUGH_DHH)
+	if !flag {
+		has, err := net.HasSpace(*h.m.Length, h.user.Username)
+		if err != nil {
+			return pkt.NewError(pkt.SERVER_ERROR)
+		}
+		if !has {
+			return pkt.NewError(pkt.NOT_ENOUGH_DHH)
+		}
 	}
+
 	meta := dao.NewObjectMeta(h.user.UserID, h.m.VHW)
 	exists, err := meta.IsExists()
 	if err != nil {
@@ -398,13 +407,24 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 		return &pkt.VoidResp{}
 	}
 	logrus.Infof("[UploadOBJEnd][%d]Add usedSpace:%d\n", h.user.UserID, usedspace)
-	firstCost := CalFirstFee(int64(usedspace))
-	err = net.SubBalance(h.user.Username, firstCost)
+
+	flag := false
+	flag, err = CheckFreeSpace(h.user.UserID)
 	if err != nil {
-		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
-		logrus.Errorf("[UploadOBJEnd][%d]Sub Balance ERR:%s\n", h.user.UserID, err)
+		logrus.Errorf("[UploadOBJEnd][%d]CheckFreeSpace ERR:%s\n", h.user.UserID, err)
 	}
-	logrus.Infof("[UploadOBJEnd][%d]Sub balance:%d\n", h.user.UserID, firstCost)
+	if !flag {
+		firstCost := CalFirstFee(int64(usedspace))
+		err = net.SubBalance(h.user.Username, firstCost)
+		if err != nil {
+			dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 1)
+			logrus.Errorf("[UploadOBJEnd][%d]Sub Balance ERR:%s\n", h.user.UserID, err)
+		}
+		logrus.Infof("[UploadOBJEnd][%d]Sub balance:%d\n", h.user.UserID, firstCost)
+	} else {
+		logrus.Infof("[UploadOBJEnd][%d]Use free space \n", h.user.UserID)
+	}
+
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 	return &pkt.VoidResp{}
 }

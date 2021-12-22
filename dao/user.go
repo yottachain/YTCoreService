@@ -19,17 +19,20 @@ import (
 )
 
 type User struct {
-	UserID       int32    `bson:"_id"`
-	KUEp         [][]byte `bson:"KUEp"`
-	Usedspace    int64    `bson:"usedspace"`
-	SpaceTotal   int64    `bson:"spaceTotal"`
-	FileTotal    int64    `bson:"fileTotal"`
-	Username     string   `bson:"username"`
-	CostPerCycle int64    `bson:"costPerCycle"`
-	NextCycle    int64    `bson:"nextCycle"`
-	Relationship string   `bson:"relationship"`
-	Balance      int64    `bson:"balance"`
-	Routine      *int32   `bson:"-"`
+	UserID           int32    `bson:"_id"`
+	KUEp             [][]byte `bson:"KUEp"`
+	Usedspace        int64    `bson:"usedspace"`
+	SpaceTotal       int64    `bson:"spaceTotal"`
+	FileTotal        int64    `bson:"fileTotal"`
+	Username         string   `bson:"username"`
+	CostPerCycle     int64    `bson:"costPerCycle"`
+	NextCycle        int64    `bson:"nextCycle"`
+	Relationship     string   `bson:"relationship"`
+	Balance          int64    `bson:"balance"`
+	Routine          *int32   `bson:"-"`
+	PledgeFreeAmount float64  `bson:"pledgeFreeAmount"`
+	PledgeFreeSpace  int64    `bson:"pledgeFreeSpace"`
+	PledgeUpdateTime int64    `bson:"pledgeUpdateTime"`
 }
 
 func (user *User) GetTotalJson() string {
@@ -363,6 +366,20 @@ func SetSpaceSum(snid int32, mowner string, usedspace uint64) error {
 	_, err := source.GetSumColl().UpdateOne(ctx, filter, update, opt)
 	if err != nil {
 		logrus.Errorf("[UserMeta]SetSpaceSum ERR:%s\n", err)
+		return err
+	}
+	return nil
+}
+
+func UpdateUserPledgeInfo(userID int32, pledgeFreeAmount float64, pledgeFreeSpace int64) error {
+	source := NewBaseSource()
+	filter := bson.M{"_id": userID}
+	update := bson.M{"$set": bson.M{"pledgeFreeAmount": pledgeFreeAmount, "pledgeFreeSpace": pledgeFreeSpace, "pledgeUpdateTime": time.Now().Unix()}}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetUserColl().UpdateOne(ctx, filter, update)
+	if err != nil {
+		logrus.Errorf("[PledgeSpace]UpdateUserPledgeInfo ERR:%s\n", err)
 		return err
 	}
 	return nil
