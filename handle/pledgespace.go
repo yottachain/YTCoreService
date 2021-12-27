@@ -62,3 +62,20 @@ func calcPledgeFreeSpace(amount float64) int64 {
 	}
 	return 0
 }
+
+func UndepStore(username string) error {
+	user := dao.GetUserByUsername(username)
+	if user == nil {
+		return fmt.Errorf("User is null")
+	}
+	if user.Usedspace > 0 {
+		return fmt.Errorf("Usedspace is not null")
+	}
+	err := net.UndepStore(username)
+	if err != nil {
+		logrus.Errorf("[PledgeSpace][%d]UndepStore ERR:%s\n", user.UserID, err)
+		return err
+	}
+
+	return nil
+}

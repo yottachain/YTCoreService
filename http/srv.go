@@ -60,6 +60,7 @@ func Start(port int) error {
 	http.HandleFunc("/ChangeDeposit", ChangeDepositHandle)
 	http.HandleFunc("/IncreaseDeposit", IncreaseDepositHandle)
 	http.HandleFunc("/NodeQuit", NodeQuitHandle)
+	http.HandleFunc("/UndepStore", UndepStoreHandle)
 
 	http.HandleFunc("/statuser", UserStatHandle)
 	http.HandleFunc("/", RootHandle)
