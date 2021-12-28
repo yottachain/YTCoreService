@@ -68,12 +68,19 @@ func UndepStore(username string) error {
 	if user == nil {
 		return fmt.Errorf("User is null")
 	}
+	logrus.Infof("[PledgeSpace][%d]UndepStore TEST:%v\n", user.UserID, *user)
+
 	if user.Usedspace > 0 {
 		return fmt.Errorf("Usedspace is not null")
 	}
 	err := net.UndepStore(username)
 	if err != nil {
 		logrus.Errorf("[PledgeSpace][%d]UndepStore ERR:%s\n", user.UserID, err)
+		return err
+	}
+	err = dao.UpdateUserPledgeInfo(user.UserID, 0, 0)
+	if err != nil {
+		logrus.Errorf("[PledgeSpace][%d]UpdateUserPledgeInfo ERR:%s\n", user.UserID, err)
 		return err
 	}
 
