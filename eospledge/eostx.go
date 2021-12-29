@@ -46,7 +46,7 @@ func GetDepStore(url, accountName string) (*DepStoreData, error) {
 	req := eos.GetTableRowsRequest{
 		Code:       "hdddeposit12",
 		Scope:      accountName,
-		Table:      "storedeposit",
+		Table:      "depstore",
 		LowerBound: accountName,
 		UpperBound: accountName,
 		Limit:      1,
