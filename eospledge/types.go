@@ -101,7 +101,9 @@ type MActive struct {
 var YTASymbol = eos.Symbol{Precision: 4, Symbol: "YTA"}
 
 type DepStoreData struct {
-	AccountName     string    `json:"account_name"`
-	DepositTotal    eos.Asset `json:"deposit_total"`
-	LastDepositTime string    `json:"last_deposit_time"`
+	AccountName  string    `json:"account_name"`
+	DepositTotal eos.Asset `json:"deposit_total"`
+	Reserved1    eos.Asset `json:"reserved1"`
+	Reserved2    uint64    `json:"reserved2"`
+	Reserved3    uint64    `json:"reserved3"`
 }

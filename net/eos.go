@@ -173,6 +173,21 @@ func GetBalance(username string) (v int64, err error) {
 	return balance.Balance, nil
 }
 
+type UndepStoreReq struct {
+	Owner  eos.AccountName `json:"owner"`
+	Caller eos.AccountName `json:"caller"`
+}
+
+func UndepStore(username string) (err error) {
+	if !env.BP_ENABLE {
+		return nil
+	}
+	obj := UndepStoreReq{Owner: eos.AN(username),
+		Caller: eos.AN(env.BPAccount)}
+	_, err = RequestWRetry("undepstore", obj, 3)
+	return err
+}
+
 func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTransactionFullResp, error) {
 	count := 0
 	for {

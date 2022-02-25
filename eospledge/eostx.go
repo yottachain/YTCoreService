@@ -46,7 +46,7 @@ func GetDepStore(url, accountName string) (*DepStoreData, error) {
 	req := eos.GetTableRowsRequest{
 		Code:       "hdddeposit12",
 		Scope:      accountName,
-		Table:      "storedeposit",
+		Table:      "depstore",
 		LowerBound: accountName,
 		UpperBound: accountName,
 		Limit:      1,
@@ -56,7 +56,7 @@ func GetDepStore(url, accountName string) (*DepStoreData, error) {
 	}
 	resp, err := api.GetTableRows(req)
 	if err != nil {
-		return nil, fmt.Errorf("get table row failed, accountName: %s", accountName)
+		return nil, fmt.Errorf("get table row failed, accountName: %s, err: %v", accountName, err)
 	}
 	if resp.More == true {
 		return nil, fmt.Errorf("more than one rows returned, accountName: %s", accountName)
