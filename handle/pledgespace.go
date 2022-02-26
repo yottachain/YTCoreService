@@ -65,10 +65,17 @@ func calcPledgeFreeSpace(amount float64) int64 {
 
 func UndepStore(username string) error {
 	user := dao.GetUserByUsername(username)
-	if user == nil {
-		return fmt.Errorf("User is null")
+	if user == nil { //用户信息为空，未存储过数据，可直接退抵押
+		// return fmt.Errorf("User is null")
+		logrus.Infof("[PledgeSpace][username=%s]User is null.\n", username)
+		err := net.UndepStore(username)
+		if err != nil {
+			logrus.Errorf("[PledgeSpace][%d]UndepStore ERR:%s\n", user.UserID, err)
+			return err
+		}
+		return nil
 	}
-	logrus.Infof("[PledgeSpace][%d]UndepStore TEST:%v\n", user.UserID, *user)
+	// logrus.Infof("[PledgeSpace][%d]UndepStore TEST:%v\n", user.UserID, *user)
 
 	if user.Usedspace > 0 {
 		return fmt.Errorf("Usedspace is not null")
