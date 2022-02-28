@@ -203,17 +203,20 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTr
 				return nil, err
 			}
 		} else {
+			logrus.Infof("[wangjun][RequestWRetry] res=%+v\n", *res)
 			return res, nil
 		}
 	}
 }
 
 func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransactionFullResp, error) {
+	logrus.Infof("[wangjun][Request]actname=%s,obj=%+v,url=%s\n", actname, obj, URI.Url)
 	api, err := URI.NewApi()
 	if err != nil {
 		logrus.Errorf("[EOS]New Api,url:%s,ERR:%s\n", URI.Url, err)
 		return nil, err
 	}
+	logrus.Infof("[wangjun][Request]api=%+v\n", *api)
 	action := &eos.Action{
 		Account: eos.AN(env.ContractAccount),
 		Name:    eos.ActN(actname),
@@ -222,6 +225,7 @@ func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransaction
 		},
 		ActionData: eos.NewActionData(obj),
 	}
+	logrus.Infof("[wangjun][Request]action=%+v\n", *action)
 	txOpts := &eos.TxOptions{}
 	if err = txOpts.FillFromChain(api); err != nil {
 		logrus.Errorf("[EOS]Filling tx opts: %s\n", err)
