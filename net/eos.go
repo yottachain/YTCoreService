@@ -225,6 +225,10 @@ func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransaction
 		},
 		ActionData: eos.NewActionData(obj),
 	}
+	//wangjun 2022-02-28 19:47:11
+	if actname == "undepstore" {
+		action.Account = eos.AccountName(env.ContractOwnerD)
+	}
 	logrus.Infof("[wangjun][Request]action=%+v\n", *action)
 	txOpts := &eos.TxOptions{}
 	if err = txOpts.FillFromChain(api); err != nil {
