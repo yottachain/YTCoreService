@@ -48,7 +48,16 @@ func IterateUser() {
 				lastId = user.UserID
 				sum := &UserObjectSum{UserID: user.UserID, UsedSpace: new(int64), UserName: user.Username, CostPerCycle: uint64(user.CostPerCycle)}
 				atomic.StoreInt64(sum.UsedSpace, 0)
-				sum.IterateObjects2()
+				flag := false
+				flag, err := CheckFreeSpace(user.UserID)
+				if err != nil {
+					logrus.Errorf("[SumUsedFee][%d]CheckFreeSpace ERR:%s\n", lastId, err)
+				}
+				if !flag {
+					sum.IterateObjects2()
+				} else {
+					logrus.Infof("[SumUsedFee][%d]Use free space\n", lastId)
+				}
 			}
 		}
 	}

@@ -152,6 +152,9 @@ func readSuperNodeList(ls []*YTDNMgmt.SuperNode) {
 		if sn == nil || sn.Addrs == nil || len(sn.Addrs) == 0 {
 			logrus.Panicf("[NodeMgr]:No 'SN%d' in yotta.SuperNode.\n", index)
 		}
+		maddrs, _ := StringListToMaddrs(sn.Addrs)
+		sn.Multiaddrs = maddrs
+
 		pkey := sn.PubKey
 		if pkey != "" && strings.HasPrefix(strings.ToUpper(pkey), "EOS") {
 			pkey = pkey[3:]

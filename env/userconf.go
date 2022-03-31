@@ -99,6 +99,6 @@ func readClientProperties() {
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
 
-	LRC2 = config.GetBool("LRC2", false)
+	LRC2 = config.GetBool("LRC2", true)
 
 }

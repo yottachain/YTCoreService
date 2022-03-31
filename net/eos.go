@@ -173,6 +173,21 @@ func GetBalance(username string) (v int64, err error) {
 	return balance.Balance, nil
 }
 
+type UndepStoreReq struct {
+	Owner  eos.AccountName `json:"owner"`
+	Caller eos.AccountName `json:"caller"`
+}
+
+func UndepStore(username string) (err error) {
+	if !env.BP_ENABLE {
+		return nil
+	}
+	obj := UndepStoreReq{Owner: eos.AN(username),
+		Caller: eos.AN(env.BPAccount)}
+	_, err = RequestWRetry("undepstore", obj, 3)
+	return err
+}
+
 func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTransactionFullResp, error) {
 	count := 0
 	for {
@@ -188,17 +203,20 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTr
 				return nil, err
 			}
 		} else {
+			logrus.Infof("[wangjun][RequestWRetry] res=%+v\n", *res)
 			return res, nil
 		}
 	}
 }
 
 func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransactionFullResp, error) {
+	logrus.Infof("[wangjun][Request]actname=%s,obj=%+v,url=%s\n", actname, obj, URI.Url)
 	api, err := URI.NewApi()
 	if err != nil {
 		logrus.Errorf("[EOS]New Api,url:%s,ERR:%s\n", URI.Url, err)
 		return nil, err
 	}
+	logrus.Infof("[wangjun][Request]api=%+v\n", *api)
 	action := &eos.Action{
 		Account: eos.AN(env.ContractAccount),
 		Name:    eos.ActN(actname),
@@ -207,6 +225,11 @@ func Request(actname string, obj interface{}, URI *EOSURI) (*eos.PushTransaction
 		},
 		ActionData: eos.NewActionData(obj),
 	}
+	//wangjun 2022-02-28 19:47:11
+	if actname == "undepstore" {
+		action.Account = eos.AccountName(env.ContractOwnerD)
+	}
+	logrus.Infof("[wangjun][Request]action=%+v\n", *action)
 	txOpts := &eos.TxOptions{}
 	if err = txOpts.FillFromChain(api); err != nil {
 		logrus.Errorf("[EOS]Filling tx opts: %s\n", err)

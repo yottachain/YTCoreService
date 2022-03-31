@@ -133,6 +133,7 @@ func (h *StatusRepHandler) Handle() proto.Message {
 		Timestamp:      time.Now().Unix(),
 		HashID:         h.m.Hash,
 		AllocatedSpace: int64(h.m.AllocSpace),
+		AvailableSpace: int64(h.m.AvailableSpace),
 	}
 	startTime := time.Now()
 	var productiveSpace int64

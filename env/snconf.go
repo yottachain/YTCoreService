@@ -2,6 +2,7 @@ package env
 
 import (
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -56,6 +57,14 @@ var PER_USER_MAX_READ_ROUTINE int32
 var SLOW_OP_TIMES int
 
 var DelLogPath string = ""
+
+type PledgeSpaceFee struct {
+	Level int
+	Fee   int
+}
+
+var PLEDGE_SPACE_FEE []PledgeSpaceFee
+var PLEDGE_SPACE_UPDATE_INTERVAL int
 
 func readSnProperties() {
 	confpath := YTSN_HOME + "conf/server.properties"
@@ -149,4 +158,28 @@ func readSnProperties() {
 	if !strings.HasSuffix(DelLogPath, "/") {
 		DelLogPath = DelLogPath + "/"
 	}
+
+	pledgeSpaceFeeStr := config.GetString("PLEDGE_SPACE_FEE", "")
+	levelInfo := strings.Split(pledgeSpaceFeeStr, "|")
+	if len(levelInfo) == 0 {
+		log.Panicf("The 'PLEDGE_SPACE_FEE' parameter parses failed.\n")
+	}
+	PLEDGE_SPACE_FEE = make([]PledgeSpaceFee, len(levelInfo))
+	for n, info := range levelInfo {
+		levelFee := strings.Split(info, ",")
+		if len(levelFee) == 0 {
+			log.Panicf("The 'PLEDGE_SPACE_FEE' parameter parses failed.\n")
+		}
+		PLEDGE_SPACE_FEE[n].Level, err = strconv.Atoi(levelFee[0])
+		if err != nil {
+			log.Panicf("The 'PLEDGE_SPACE_FEE' parameter parses failed.\n")
+		}
+		PLEDGE_SPACE_FEE[n].Fee, err = strconv.Atoi(levelFee[1])
+		if err != nil {
+			log.Panicf("The 'PLEDGE_SPACE_FEE' parameter parses failed.\n")
+		}
+	}
+
+	PLEDGE_SPACE_UPDATE_INTERVAL = config.GetRangeInt("PLEDGE_SPACE_UPDATE_INTERVAL", 3600, 86400, 86400)
+
 }
