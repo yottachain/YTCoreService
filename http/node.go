@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 )
@@ -32,7 +31,7 @@ func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
 		v := ActiveNodesCache.Value.Load()
 		if v != nil {
 			ss, _ := v.(string)
-			WriteBin(w, ss)
+			WriteJson(w, ss)
 			return
 		}
 	}
@@ -53,11 +52,10 @@ func ActiveNodesHandle(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			WriteErr(w, "ActiveNodesList Marshal err:"+err.Error())
 		} else {
-			bs := codec.ECBEncrypt(txt, codec.FixKey)
-			ss := string(bs)
+			ss := string(txt)
 			ActiveNodesCache.Value.Store(ss)
 			atomic.StoreInt64(ActiveNodesCache.LastTimes, time.Now().Unix())
-			WriteBin(w, ss)
+			WriteJson(w, ss)
 		}
 	}
 }
@@ -95,8 +93,8 @@ func ReadableNodesHandle(w http.ResponseWriter, req *http.Request) {
 		for index, n := range nodes {
 			m := make(map[string]interface{})
 			m["id"] = strconv.Itoa(int(n.ID))
-			m["ip"] = n.Addrs
-			m["nodeid"] = n.NodeID
+			//m["ip"] = n.Addrs
+			//m["nodeid"] = n.NodeID
 			m["weight"] = strconv.FormatFloat(n.Weight, 'f', -1, 64)
 			ns[index] = m
 		}
