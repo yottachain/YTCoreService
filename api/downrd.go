@@ -75,7 +75,10 @@ func (me *DownLoadReader) readBlock() error {
 				return me.ReadCaller(pkt.ToError(err))
 			}
 			if plainblock != nil {
-				rd := codec.NewBlockReader(plainblock)
+				rd, eer := codec.NewBlockReader(plainblock)
+				if eer != nil {
+					return me.ReadCaller(eer)
+				}
 				er := rd.Skip(me.readpos - me.pos)
 				rd.SetPath(p)
 				if er != nil {

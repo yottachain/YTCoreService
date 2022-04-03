@@ -5,10 +5,12 @@ import (
 	"compress/flate"
 	"compress/zlib"
 	"crypto/sha256"
+	"errors"
 	"hash"
 	"io"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
@@ -19,7 +21,7 @@ type BlockReader struct {
 	reader io.Reader
 }
 
-func NewBlockReader(b *PlainBlock) *BlockReader {
+func NewBlockReader(b *PlainBlock) (*BlockReader, error) {
 	var ret int16 = 0
 	ret <<= 8
 	ret |= int16(b.Data[0] & 0xFF)
@@ -37,12 +39,20 @@ func NewBlockReader(b *PlainBlock) *BlockReader {
 	} else if r.head < 0 {
 		r.reader = bytes.NewReader(b.Data[2:])
 	} else {
-		r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
+		end := len(b.Data) - r.head
+		if end < 2 {
+			logrus.Errorf("[BlockReader]BlockHead ERR,block size:%d,head:%d\n", len(b.Data), r.head)
+			return nil, errors.New("Decode err")
+		}
+		r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2:end]))
 		if err != nil {
-			r.reader = flate.NewReader(bytes.NewReader(b.Data[2 : len(b.Data)-r.head]))
+			r.reader = flate.NewReader(bytes.NewReader(b.Data[2:end]))
 		}
 	}
-	return r
+	if r.reader == nil {
+		return nil, errors.New("Decode err")
+	}
+	return r, nil
 }
 
 func (br *BlockReader) SetPath(p string) {
@@ -145,7 +155,10 @@ func (decoder *FileDecoder) Handle() error {
 			}
 			value = v
 		}
-		br := NewBlockReader(value)
+		br, er := NewBlockReader(value)
+		if er != nil {
+			return er
+		}
 		num, err := decoder.readBlock(sha256Digest, f, br)
 		if err == io.EOF {
 			num = 0
