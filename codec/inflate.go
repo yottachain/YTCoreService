@@ -2,7 +2,6 @@ package codec
 
 import (
 	"bytes"
-	"compress/flate"
 	"compress/zlib"
 	"crypto/sha256"
 	"errors"
@@ -22,6 +21,9 @@ type BlockReader struct {
 }
 
 func NewBlockReader(b *PlainBlock) (*BlockReader, error) {
+	if b == nil {
+		return nil, errors.New("Decode err")
+	}
 	var ret int16 = 0
 	ret <<= 8
 	ret |= int16(b.Data[0] & 0xFF)
@@ -30,29 +32,21 @@ func NewBlockReader(b *PlainBlock) (*BlockReader, error) {
 	r := new(BlockReader)
 	r.block = b
 	r.head = int(ret)
-	var err error
+	var err error = nil
 	if r.head == 0 {
 		r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2:]))
-		if err != nil {
-			r.reader = flate.NewReader(bytes.NewReader(b.Data[2:]))
-		}
 	} else if r.head < 0 {
 		r.reader = bytes.NewReader(b.Data[2:])
 	} else {
 		end := len(b.Data) - r.head
 		if end < 2 {
 			logrus.Errorf("[BlockReader]BlockHead ERR,block size:%d,head:%d\n", len(b.Data), r.head)
-			return nil, errors.New("Decode err")
-		}
-		r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2:end]))
-		if err != nil {
-			r.reader = flate.NewReader(bytes.NewReader(b.Data[2:end]))
+			err = errors.New("Decode err")
+		} else {
+			r.reader, err = zlib.NewReader(bytes.NewReader(b.Data[2:end]))
 		}
 	}
-	if r.reader == nil {
-		return nil, errors.New("Decode err")
-	}
-	return r, nil
+	return r, err
 }
 
 func (br *BlockReader) SetPath(p string) {

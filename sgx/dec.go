@@ -2,8 +2,8 @@ package sgx
 
 import (
 	"bytes"
-	"compress/flate"
 	"compress/zlib"
+	"errors"
 	"io"
 )
 
@@ -13,7 +13,7 @@ type BlockReader struct {
 	reader io.Reader
 }
 
-func NewBlockReader(data []byte) *BlockReader {
+func NewBlockReader(data []byte) (*BlockReader, error) {
 	var ret int16 = 0
 	ret <<= 8
 	ret |= int16(data[0] & 0xFF)
@@ -22,21 +22,20 @@ func NewBlockReader(data []byte) *BlockReader {
 	r := new(BlockReader)
 	r.block = data
 	r.head = int(ret)
-	var err error
+	var err error = nil
 	if r.head == 0 {
 		r.reader, err = zlib.NewReader(bytes.NewReader(data[2:]))
-		if err != nil {
-			r.reader = flate.NewReader(bytes.NewReader(data[2:]))
-		}
 	} else if r.head < 0 {
 		r.reader = bytes.NewReader(data[2:])
 	} else {
-		r.reader, err = zlib.NewReader(bytes.NewReader(data[2 : len(data)-r.head]))
-		if err != nil {
-			r.reader = flate.NewReader(bytes.NewReader(data[2 : len(data)-r.head]))
+		end := len(data) - r.head
+		if end < 2 {
+			err = errors.New("Decode err")
+		} else {
+			r.reader, err = zlib.NewReader(bytes.NewReader(data[2:end]))
 		}
 	}
-	return r
+	return r, err
 }
 
 func (br *BlockReader) Read(p []byte) (n int, err error) {

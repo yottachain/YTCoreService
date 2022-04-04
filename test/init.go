@@ -7,7 +7,7 @@ import (
 	"github.com/yottachain/YTCoreService/api"
 )
 
-const yfnet = true
+const yfnet = false
 
 var client *api.Client
 
@@ -16,7 +16,7 @@ func initApi() {
 		os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 		os.Setenv("YTFS.userlist", "conf/userlistYF.cfg")
 	} else {
-		os.Setenv("YTFS.snlist", "conf/snlistZW.properties")
+		os.Setenv("YTFS.snlist", "conf/snlist.properties")
 		os.Setenv("YTFS.userlist", "conf/userlistZW.cfg")
 	}
 	api.InitApi()

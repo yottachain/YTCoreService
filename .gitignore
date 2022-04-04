@@ -1,1 +1,4 @@
 .idea
+/conf/userlistZW.cfg
+cache
+/p2phostinfo.log

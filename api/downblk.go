@@ -104,7 +104,7 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 	}
 }
 
-func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) Load(retry bool) (*codec.PlainBlock, *pkt.ErrorMessage) {
 	KS := self.KS
 	if KS == nil {
 		k, ok := self.UClient.KeyMap[uint32(self.Ref.KeyNumber)]
@@ -119,7 +119,7 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 			KS = codec.ECCDecrypt(self.Ref.KEU, k.PrivateKey)
 		}
 	}
-	eb, errmsg := self.LoadEncryptedBlock()
+	eb, errmsg := self.LoadEncryptedBlock(retry)
 	if errmsg != nil {
 		return nil, errmsg
 	}
@@ -132,7 +132,7 @@ func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	}
 }
 
-func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) LoadEncryptedBlock(retry bool) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()
 	if errmsg != nil {
@@ -169,7 +169,7 @@ func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.Erro
 			m = initresp2.GetAR()
 		}
 		if m > 0 {
-			bp, errmsg := self.loadLRCShard(initresp, initresp2)
+			bp, errmsg := self.loadLRCShard(initresp, initresp2, retry)
 			if errmsg != nil {
 				return nil, errmsg
 			} else {
@@ -183,8 +183,16 @@ func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.Erro
 	}
 }
 
-func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *pkt.DownloadBlockInitResp2) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
-	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), 0)
+func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *pkt.DownloadBlockInitResp2, retry bool) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
+	ignid := 0
+	if retry {
+		if resp != nil {
+			ignid = len(resp.Vhfs.VHF)
+		} else {
+			ignid = len(resp2.VHFs)
+		}
+	}
+	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), 0, ignid)
 	downloads := []*DownLoadShardInfo{}
 	if resp != nil {
 		for ii, id := range resp.Nids.Nodeids {
@@ -252,7 +260,7 @@ func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *p
 func (self DownloadBlock) loadCopyShard(resp *pkt.DownloadBlockInitResp) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	vhf := resp.Vhfs.VHF[0]
 	var b []byte
-	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), len(resp.Nlist.Ns))
+	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), len(resp.Nlist.Ns), 0)
 	for _, n := range resp.Nlist.Ns {
 		if n != nil {
 			dnshard := NewDownLoadShardInfo(n, vhf, 0, dns, self.Path)
