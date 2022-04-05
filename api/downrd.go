@@ -70,20 +70,13 @@ func (me *DownLoadReader) readBlock() error {
 					dn.KS = me.KSS[me.referIndex]
 				}
 			}
-			plainblock, err := dn.Load(false)
+			plainblock, err := dn.Load()
 			if err != nil {
 				return me.ReadCaller(pkt.ToError(err))
 			}
 			rd, eer := codec.NewBlockReader(plainblock)
 			if eer != nil {
-				plainblock, err = dn.Load(true)
-				if err != nil {
-					return me.ReadCaller(pkt.ToError(err))
-				}
-				rd, eer = codec.NewBlockReader(plainblock)
-				if eer != nil {
-					return me.ReadCaller(eer)
-				}
+				return me.ReadCaller(eer)
 			}
 			er := rd.Skip(me.readpos - me.pos)
 			rd.SetPath(p)

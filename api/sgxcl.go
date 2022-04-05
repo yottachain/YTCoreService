@@ -90,7 +90,7 @@ func (self *DownloadForSGX) LoadEncryptedBlock(id int32) (*sgx.EncryptedBlock, *
 		return nil, nil
 	}
 	dn := &DownloadBlock{UClient: self.UClient, Ref: refer}
-	eb, errmsg := dn.LoadEncryptedBlock(false)
+	eb, errmsg := dn.LoadEncryptedBlock()
 	if errmsg != nil {
 		return nil, errmsg
 	}

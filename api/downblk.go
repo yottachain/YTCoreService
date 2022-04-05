@@ -104,7 +104,7 @@ func (self DownloadBlock) LoadMeta() (proto.Message, *pkt.ErrorMessage) {
 	}
 }
 
-func (self DownloadBlock) Load(retry bool) (*codec.PlainBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) Load() (*codec.PlainBlock, *pkt.ErrorMessage) {
 	KS := self.KS
 	if KS == nil {
 		k, ok := self.UClient.KeyMap[uint32(self.Ref.KeyNumber)]
@@ -119,7 +119,7 @@ func (self DownloadBlock) Load(retry bool) (*codec.PlainBlock, *pkt.ErrorMessage
 			KS = codec.ECCDecrypt(self.Ref.KEU, k.PrivateKey)
 		}
 	}
-	eb, errmsg := self.LoadEncryptedBlock(retry)
+	eb, errmsg := self.LoadEncryptedBlock()
 	if errmsg != nil {
 		return nil, errmsg
 	}
@@ -132,7 +132,7 @@ func (self DownloadBlock) Load(retry bool) (*codec.PlainBlock, *pkt.ErrorMessage
 	}
 }
 
-func (self DownloadBlock) LoadEncryptedBlock(retry bool) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) LoadEncryptedBlock() (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	startTime := time.Now()
 	resp, errmsg := self.LoadMeta()
 	if errmsg != nil {
@@ -169,7 +169,7 @@ func (self DownloadBlock) LoadEncryptedBlock(retry bool) (*codec.EncryptedBlock,
 			m = initresp2.GetAR()
 		}
 		if m > 0 {
-			bp, errmsg := self.loadLRCShard(initresp, initresp2, retry)
+			bp, errmsg := self.loadLRCShard(initresp, initresp2)
 			if errmsg != nil {
 				return nil, errmsg
 			} else {
@@ -183,13 +183,15 @@ func (self DownloadBlock) LoadEncryptedBlock(retry bool) (*codec.EncryptedBlock,
 	}
 }
 
-func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *pkt.DownloadBlockInitResp2, retry bool) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
+func (self DownloadBlock) loadLRCShard(resp *pkt.DownloadBlockInitResp, resp2 *pkt.DownloadBlockInitResp2) (*codec.EncryptedBlock, *pkt.ErrorMessage) {
 	ignid := 0
-	if retry {
-		if resp != nil {
-			ignid = len(resp.Vhfs.VHF)
-		} else {
-			ignid = len(resp2.VHFs)
+	if env.LRCBugTime > self.Ref.VBI>>32 {
+		if self.Ref.RealSize >= 1024*16 && self.Ref.RealSize < 1024*48 {
+			if resp != nil {
+				ignid = len(resp.Vhfs.VHF)
+			} else {
+				ignid = len(resp2.VHFs)
+			}
 		}
 	}
 	dns := NewDownLoad(fmt.Sprintf("[%d][%d]", self.Ref.Id, self.Ref.VBI), 0, ignid)
