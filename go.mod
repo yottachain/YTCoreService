@@ -17,6 +17,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
+	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
 	github.com/yottachain/YTDNMgmt v0.0.0-20211227153232-29d1e1562059

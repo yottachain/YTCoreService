@@ -4,12 +4,19 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/eospledge"
 	"github.com/yottachain/YTCoreService/net"
 )
+
+type UserDeposit struct {
+	Username        string  `json:"username"`
+	PledgeFreeSpace float64 `json:"free_space"`
+	Usedspace       float64 `json:"used_space"`
+}
 
 func CheckFreeSpace(userID int32) (bool, error) {
 	user, err := getUserPledgeInfo(userID)
@@ -92,4 +99,31 @@ func UndepStore(username string) error {
 	}
 
 	return nil
+}
+
+func QueryDeposit(username string) (*UserDeposit, error) {
+	user := dao.GetUserByUsername(username)
+	if user == nil { //用户信息为空，未存储过数据，可直接退抵押
+		// return fmt.Errorf("User is null")
+		logrus.Infof("[PledgeSpace][username=%s]QueryDeposit user is null.\n", username)
+		err := net.UndepStore(username)
+		if err != nil {
+			logrus.Errorf("[PledgeSpace][%d]QueryDeposit ERR:%s\n", user.UserID, err)
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	userDeposit := &UserDeposit{Username: username, Usedspace: 0, PledgeFreeSpace: 0}
+
+	if user.PledgeFreeSpace > 0 {
+		r, _ := decimal.NewFromFloat(float64(user.PledgeFreeSpace) / 1024 / 1024 / 1024).Round(2).Float64()
+		userDeposit.PledgeFreeSpace = r
+	}
+	if user.Usedspace > 0 {
+		r, _ := decimal.NewFromFloat(float64(user.Usedspace) / 1024 / 1024 / 1024).Round(2).Float64()
+		userDeposit.Usedspace = r
+	}
+
+	return userDeposit, nil
 }
