@@ -23,7 +23,7 @@ func DownLoadFile() {
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
-
+	fmt.Printf("meta len %d\n", len(dn.Meta))
 	oksign := make(chan int)
 	go func() {
 		for {

@@ -24,6 +24,8 @@ type DownloadObject struct {
 	RSS      [][]byte
 	BkCall   BackupCaller
 	Progress *DownProgress
+	Meta     []byte
+	VHW      []byte
 }
 
 type DownProgress struct {
@@ -58,7 +60,7 @@ func (self *DownloadObject) InitByVHW(vhw []byte) *pkt.ErrorMessage {
 }
 
 func (self *DownloadObject) InitByKey(bucketName, filename string, version primitive.ObjectID) *pkt.ErrorMessage {
-	req := &pkt.DownloadFileReqV2{
+	req := &pkt.GetFileAuthReq{
 		UserId:     &self.UClient.UserId,
 		SignData:   &self.UClient.SignKey.Sign,
 		KeyNumber:  &self.UClient.SignKey.KeyNumber,
@@ -68,7 +70,7 @@ func (self *DownloadObject) InitByKey(bucketName, filename string, version primi
 	key := "/" + bucketName + "/" + filename
 	if version != primitive.NilObjectID {
 		i1, i2, i3, i4 := pkt.ObjectIdParam(version)
-		v := &pkt.DownloadFileReqV2_VersionId{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
+		v := &pkt.GetFileAuthReq_VersionId{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 		req.Versionid = v
 		key = key + "/" + version.Hex()
 	}
@@ -100,8 +102,29 @@ func (self *DownloadObject) init(req proto.Message, key string) *pkt.ErrorMessag
 		}
 		self.REFS = refs
 	} else {
-		logrus.Errorf("[DownloadOBJ][%s]Init ERR:RETURN_ERR_MSG\n", key)
-		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
+		presp, OK := resp.(*pkt.GetFileAuthResp)
+		if OK {
+			if presp.Length == nil || presp.Reflist == nil || presp.Reflist.Refers == nil || len(presp.Reflist.Refers) == 0 {
+				logrus.Errorf("[DownloadOBJ][%s]Init ERR:RETURN_NULL\n", key)
+				return pkt.NewErrorMsg(pkt.SERVER_ERROR, "NULL_REF")
+			}
+			self.VHW = presp.VHW
+			self.Meta = presp.Meta
+			self.Length = int64(*presp.Length)
+			refs := []*pkt.Refer{}
+			for _, ref := range presp.Reflist.Refers {
+				r := pkt.NewRefer(ref)
+				if r == nil {
+					logrus.Errorf("[DownloadOBJ][%s]Init ERR:RETURN_NULL_REF\n", key)
+					return pkt.NewErrorMsg(pkt.SERVER_ERROR, "NULL_REF")
+				}
+				refs = append(refs, r)
+			}
+			self.REFS = refs
+		} else {
+			logrus.Errorf("[DownloadOBJ][%s]Init ERR:RETURN_ERR_MSG\n", key)
+			return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
+		}
 	}
 	logrus.Infof("[DownloadOBJ][%s]Init OK, length %d,num of blocks %d,take times %d ms.\n", key, self.Length,
 		len(self.REFS), time.Now().Sub(startTime).Milliseconds())

@@ -259,6 +259,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 		ress2 = make([]*UploadShardResult, size)
 	}
 	var ids []int32
+
 	for {
 		blkls, err := self.UploadShards(self.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, self.BLK.OriginalSize, ress, ress2, ids)
 		if err != nil {
