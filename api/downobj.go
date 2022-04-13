@@ -39,6 +39,14 @@ func (self *DownloadObject) SetBackupCaller(call BackupCaller) {
 	self.BkCall = call
 }
 
+func (self *DownloadObject) GetTime() time.Time {
+	if len(self.REFS) > 0 {
+		id := self.REFS[len(self.REFS)-1].VBI
+		return time.Unix(id>>32, 0)
+	}
+	return time.Now()
+}
+
 func (self *DownloadObject) GetProgress() int32 {
 	if self.Progress.Complete {
 		return 100
