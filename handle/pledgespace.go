@@ -106,11 +106,6 @@ func QueryDeposit(username string) (*UserDeposit, error) {
 	if user == nil { //用户信息为空，未存储过数据，可直接退抵押
 		// return fmt.Errorf("User is null")
 		logrus.Infof("[PledgeSpace][username=%s]QueryDeposit user is null.\n", username)
-		// err := net.UndepStore(username)
-		// if err != nil {
-		// 	logrus.Errorf("[PledgeSpace][%d]QueryDeposit ERR:%s\n", user.UserID, err)
-		// 	return nil, err
-		// }
 		return nil, nil
 	}
 
