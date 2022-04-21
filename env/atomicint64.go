@@ -1,12 +1,13 @@
 package env
 
 import (
+	"sync"
 	"sync/atomic"
-	"unsafe"
 )
 
 type AtomInt64 struct {
-	x []byte
+	sync.RWMutex
+	v int64
 	p *int64
 }
 
@@ -14,31 +15,40 @@ func NewAtomInt64(inivalue int64) *AtomInt64 {
 	atom := &AtomInt64{}
 	xbit := 32 << (^uint(0) >> 63)
 	if xbit == 32 {
-		atom.x = make([]byte, 15)
-		atom.Set(inivalue)
+		atom.v = inivalue
 	} else {
 		atom.p = &inivalue
 	}
 	return atom
 }
 
-func (a *AtomInt64) xAddr() *int64 {
+func (a *AtomInt64) Set(inivalue int64) {
 	if a.p != nil {
-		return a.p
+		atomic.StoreInt64(a.p, inivalue)
 	} else {
-		pi := unsafe.Pointer((uintptr(unsafe.Pointer(&a.x)) + 7) / 8 * 8)
-		return (*int64)(pi)
+		a.Lock()
+		a.v = inivalue
+		a.Unlock()
 	}
 }
 
-func (a *AtomInt64) Set(inivalue int64) {
-	atomic.StoreInt64(a.xAddr(), inivalue)
-}
-
 func (a *AtomInt64) Add(delta int64) int64 {
-	return atomic.AddInt64(a.xAddr(), delta)
+	if a.p != nil {
+		return atomic.AddInt64(a.p, delta)
+	} else {
+		a.Lock()
+		defer a.Unlock()
+		a.v = a.v + delta
+		return a.v
+	}
 }
 
 func (a *AtomInt64) Value() int64 {
-	return atomic.LoadInt64(a.xAddr())
+	if a.p != nil {
+		return atomic.LoadInt64(a.p)
+	} else {
+		a.RLock()
+		defer a.RUnlock()
+		return a.v
+	}
 }
