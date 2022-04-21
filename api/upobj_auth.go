@@ -2,7 +2,6 @@ package api
 
 import (
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -17,7 +16,7 @@ type UploadObjectAuth struct {
 
 func NewUploadObjectAuth(c *Client) (*UploadObjectAuth, *pkt.ErrorMessage) {
 	u := &UploadObjectAuth{UploadObject: UploadObject{}}
-	u.ActiveTime = new(int64)
+	u.ActiveTime = env.NewAtomInt64(0)
 	u.activesign = make(chan int)
 	u.UClient = c
 	u.Exist = false
@@ -69,7 +68,7 @@ func (self *UploadObjectAuth) Upload() (reserr *pkt.ErrorMessage) {
 		logrus.Infof("[AuthUpload][%s]Already exists.\n", self.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
-		atomic.StoreInt64(self.ActiveTime, time.Now().Unix())
+		self.ActiveTime.Set(time.Now().Unix())
 		go self.waitcheck()
 		var id uint32 = 0
 		for _, ref := range self.Info.REFS {

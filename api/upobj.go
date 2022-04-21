@@ -1,23 +1,22 @@
 package api
 
 import (
-	"sync/atomic"
-
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
 type UpProgress struct {
-	Length        *int64
-	ReadinLength  *int64
-	ReadOutLength *int64
-	WriteLength   *int64
+	Length        *env.AtomInt64
+	ReadinLength  *env.AtomInt64
+	ReadOutLength *env.AtomInt64
+	WriteLength   *env.AtomInt64
 }
 
 func (self *UpProgress) GetProgress() int32 {
-	l1 := atomic.LoadInt64(self.Length)
-	l2 := atomic.LoadInt64(self.ReadinLength)
-	l3 := atomic.LoadInt64(self.ReadOutLength)
-	l4 := atomic.LoadInt64(self.WriteLength)
+	l1 := self.Length.Value()
+	l2 := self.ReadinLength.Value()
+	l3 := self.ReadOutLength.Value()
+	l4 := self.WriteLength.Value()
 	if l1 == 0 || l3 == 0 {
 		return 0
 	}

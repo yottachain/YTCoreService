@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -24,7 +23,7 @@ func (self *UploadBlockAuth) DoFinish() {
 	}
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
-	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
+	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
 }
 
 func StartUploadBlockAuth(b *pkt.Refer, up *UploadObject, wg *sync.WaitGroup) {

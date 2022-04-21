@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -25,7 +24,7 @@ type UploadObjectToDisk struct {
 }
 
 func NewUploadObjectToDisk(c *Client, bucketname, objectname string) *UploadObjectToDisk {
-	p := &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
+	p := &UpProgress{Length: env.NewAtomUint64(0), ReadinLength: env.NewAtomUint64(0), ReadOutLength: env.NewAtomUint64(0), WriteLength: env.NewAtomUint64(0)}
 	return &UploadObjectToDisk{UploadObject{UClient: c, PRO: p}, bucketname, objectname, ""}
 }
 
@@ -73,13 +72,13 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 		cache.DelSyncList(self.Encoder.GetVHW(), l)
 	}()
 	s3key := self.Bucket + "/" + self.ObjectKey
-	atomic.StoreInt64(self.PRO.Length, self.Encoder.GetLength())
+	self.PRO.Length.Set(self.Encoder.GetLength())
 	exist := cache.SyncObjectExists(self.Encoder.GetVHW())
 	p := self.makePath(base58.Encode(self.Encoder.GetVHW()))
 	if exist {
-		atomic.StoreInt64(self.PRO.ReadinLength, self.Encoder.GetLength())
-		atomic.StoreInt64(self.PRO.ReadOutLength, self.Encoder.GetLength())
-		atomic.StoreInt64(self.PRO.WriteLength, self.Encoder.GetLength())
+		self.PRO.ReadinLength.Set(self.Encoder.GetLength())
+		self.PRO.ReadOutLength.Set(self.Encoder.GetLength())
+		self.PRO.WriteLength.Set(self.Encoder.GetLength())
 		codec.Append(s3key, p)
 		logrus.Infof("[UploadObjectToDisk][%s]Already exists.\n", s3key)
 	} else {

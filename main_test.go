@@ -11,8 +11,6 @@ import (
 
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func init() {
@@ -48,25 +46,13 @@ var MemSize int64 = 0
 var MaxSize int64 = 50
 
 func call() {
-	//go notify()
-	ids := []int32{13, 25}
-	filter := bson.M{"_id": bson.M{"$in": ids}, "VNU": primitive.NewObjectID()}
-	ss, err := bson.Marshal(filter)
-	if err != nil {
-		return
+	atomicint := env.NewAtomInt64(1)
+	for ii := 0; ii < 10; ii++ {
+		i := atomicint.Add(10)
+		fmt.Println(i)
+		ii := atomicint.Add(-5)
+		fmt.Println(ii)
 	}
-	f1 := bson.M{}
-	err = bson.Unmarshal(ss, f1)
-	if err != nil {
-		return
-	}
-
-	for k, v := range f1 {
-		fmt.Println(k)
-		fmt.Println(v)
-	}
-
-	//bson.Encoder en:=
 }
 
 var count *int64 = new(int64)

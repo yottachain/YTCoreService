@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -57,9 +56,9 @@ func (self *UploadBlock) DoFinish(size int64) {
 	}
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
-	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
+	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
 	DecBlockMen(&self.BLK.Block)
-	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, size)
+	self.UPOBJ.PRO.WriteLength.Add(size)
 }
 
 func (self *UploadBlock) upload() {

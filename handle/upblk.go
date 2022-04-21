@@ -98,7 +98,8 @@ func CheckBlockDup(vhp []byte) proto.Message {
 	}
 	st := uint64(time.Now().Unix())
 	if env.DE_DUPLICATION {
-		return &pkt.UploadBlockInitResp{StartTime: &st}
+		vbi := uint64(dao.GenerateBlockID(env.Max_Shard_Count + env.Default_PND))
+		return &pkt.UploadBlockInitResp{StartTime: &vbi}
 	}
 	ls, err := dao.GetBlockByVHP(vhp)
 	if err != nil {

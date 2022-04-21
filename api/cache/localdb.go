@@ -2,7 +2,6 @@ package cache
 
 import (
 	"errors"
-	"sync/atomic"
 
 	"github.com/boltdb/bolt"
 	"github.com/sirupsen/logrus"
@@ -66,17 +65,17 @@ func InitDB() error {
 	return nil
 }
 
-var CurCacheSize *int64 = new(int64)
+var CurCacheSize *env.AtomInt64 = env.NewAtomInt64(0)
 
 func initCacheSize() {
 	sum := SumSpace()
 	logrus.Infof("[Cache]Sum cache size %d\n", sum)
-	atomic.StoreInt64(CurCacheSize, sum)
+	CurCacheSize.Set(sum)
 	if sum == 0 {
 		Clear()
 	}
 }
 
 func GetCacheSize() int64 {
-	return atomic.LoadInt64(CurCacheSize)
+	return CurCacheSize.Value()
 }

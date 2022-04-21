@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -41,9 +40,9 @@ func (self *UploadBlockSync) DoFinish() {
 	}
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
-	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
+	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
 	DecSyncBlockMen(self.EncBLK)
-	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, self.EncBLK.Length())
+	self.UPOBJ.PRO.WriteLength.Add(self.EncBLK.Length())
 }
 
 func (self *UploadBlockSync) upload() {
