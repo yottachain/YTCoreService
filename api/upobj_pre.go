@@ -24,7 +24,7 @@ type UploadObjectToDisk struct {
 }
 
 func NewUploadObjectToDisk(c *Client, bucketname, objectname string) *UploadObjectToDisk {
-	p := &UpProgress{Length: env.NewAtomUint64(0), ReadinLength: env.NewAtomUint64(0), ReadOutLength: env.NewAtomUint64(0), WriteLength: env.NewAtomUint64(0)}
+	p := &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	return &UploadObjectToDisk{UploadObject{UClient: c, PRO: p}, bucketname, objectname, ""}
 }
 
