@@ -76,14 +76,16 @@ func (self *UploadBlock) upload() {
 	bid := uint32(self.ID)
 	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
 	vnu := &pkt.UploadBlockInitReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
+	compareFlag := true
 	req := &pkt.UploadBlockInitReqV2{
-		UserId:    &self.UPOBJ.UClient.UserId,
-		SignData:  &self.UPOBJ.UClient.SignKey.Sign,
-		KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
-		VHP:       self.BLK.VHP,
-		Id:        &bid,
-		Vnu:       vnu,
-		Version:   &env.VersionID,
+		UserId:      &self.UPOBJ.UClient.UserId,
+		SignData:    &self.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber:   &self.UPOBJ.UClient.SignKey.KeyNumber,
+		VHP:         self.BLK.VHP,
+		Id:          &bid,
+		Vnu:         vnu,
+		Version:     &env.VersionID,
+		CompareFlag: &compareFlag,
 	}
 	resp, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
@@ -335,6 +337,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
+			Shardseqlist: ToUploadBlockEndReqV2_ShardSeqList(ress), //compare seq
 		}
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
@@ -344,19 +347,21 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	} else {
 		vnu := self.UPOBJ.VNU.Hex()
 		req := &pkt.UploadBlockEndReqV3{
-			UserId:       &uid,
-			SignData:     &self.UPOBJ.UClient.SignKey.Sign,
-			KeyNumber:    &kn,
-			Id:           &bid,
-			VHP:          vhp,
-			VHB:          vhb,
-			KEU:          keu,
-			KED:          ked,
-			VNU:          &vnu,
-			OriginalSize: &osize,
-			RealSize:     rsize,
-			AR:           &ar,
-			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
+			UserId:        &uid,
+			SignData:      &self.UPOBJ.UClient.SignKey.Sign,
+			KeyNumber:     &kn,
+			Id:            &bid,
+			VHP:           vhp,
+			VHB:           vhb,
+			KEU:           keu,
+			KED:           ked,
+			VNU:           &vnu,
+			OriginalSize:  &osize,
+			RealSize:      rsize,
+			AR:            &ar,
+			Oklist:        ToUploadBlockEndReqV3_OkList(ress, ress2),
+			Shardseqlist:  ToUploadBlockEndReqV3_ShardSeqList(ress),   //compare seq lrc2
+			Shardseqlist2: ToUploadBlockEndReqV3_ShardSeqList2(ress2), //compare seq lrc2
 		}
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
@@ -446,4 +451,37 @@ func SetStoreNumber(signdata string, storenumber int32) (string, error) {
 	} else {
 		return string(bs), nil
 	}
+}
+
+//compare seq
+func ToUploadBlockEndReqV2_ShardSeqList(res []*UploadShardResult) []*pkt.UploadBlockEndReqV2_ShardSeqList {
+	shardSeqList := make([]*pkt.UploadBlockEndReqV2_ShardSeqList, len(res))
+	for index, r := range res {
+		shardSeqList[index] = &pkt.UploadBlockEndReqV2_ShardSeqList{
+			Seq: &r.Seq,
+		}
+	}
+	return shardSeqList
+}
+
+//compare seq lrc2
+func ToUploadBlockEndReqV3_ShardSeqList(res []*UploadShardResult) []*pkt.UploadBlockEndReqV3_ShardSeqList {
+	shardSeqList := make([]*pkt.UploadBlockEndReqV3_ShardSeqList, len(res))
+	for index, r := range res {
+		shardSeqList[index] = &pkt.UploadBlockEndReqV3_ShardSeqList{
+			Seq: &r.Seq,
+		}
+	}
+	return shardSeqList
+}
+
+//compare seq lrc2
+func ToUploadBlockEndReqV3_ShardSeqList2(res2 []*UploadShardResult) []*pkt.UploadBlockEndReqV3_ShardSeqList2 {
+	shardSeqList2 := make([]*pkt.UploadBlockEndReqV3_ShardSeqList2, len(res2))
+	for index, r := range res2 {
+		shardSeqList2[index] = &pkt.UploadBlockEndReqV3_ShardSeqList2{
+			Seq: &r.Seq,
+		}
+	}
+	return shardSeqList2
 }

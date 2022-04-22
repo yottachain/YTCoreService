@@ -57,6 +57,7 @@ var PER_USER_MAX_READ_ROUTINE int32
 var SLOW_OP_TIMES int
 
 var DelLogPath string = ""
+var SAVE_COMPARE_SHARD_URL string
 
 type PledgeSpaceFee struct {
 	Level int
@@ -157,6 +158,11 @@ func readSnProperties() {
 	DelLogPath = config.GetString("DelLogPath", "")
 	if !strings.HasSuffix(DelLogPath, "/") {
 		DelLogPath = DelLogPath + "/"
+	}
+
+	SAVE_COMPARE_SHARD_URL = config.GetString("SAVE_COMPARE_SHARD_URL", "")
+	if SAVE_COMPARE_SHARD_URL == "" {
+		log.Panicf("The 'SAVE_COMPARE_SHARD_URL' parameter is not configured.\n")
 	}
 
 	pledgeSpaceFeeStr := config.GetString("PLEDGE_SPACE_FEE", "")

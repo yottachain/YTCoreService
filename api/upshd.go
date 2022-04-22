@@ -49,6 +49,7 @@ type UploadShardResult struct {
 	NODE    *NodeStat
 	VHF     []byte
 	DNSIGN  string
+	Seq     uint64
 }
 
 type UploadShard struct {
@@ -163,6 +164,7 @@ func (self *UploadShard) DoSend() {
 		}
 		self.res.DNSIGN = resp.DNSIGN
 		self.res.NODE = node.NodeInfo
+		self.res.Seq = resp.Seq //compare seq
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			self.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 		break
