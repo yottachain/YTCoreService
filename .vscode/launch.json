@@ -77,7 +77,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}",
-            "env": {},
+            "env":{
+                "YTFS_HOME":"D:/YTCoreService"
+            },
             "args": ["init"]
         }
     ]

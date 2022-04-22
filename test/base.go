@@ -15,20 +15,31 @@ const testsize = 1024 * 1024 * 10
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
 
-var data []byte = env.MakeRandData(testsize)
-
 func UpAndDown() {
 	initApi()
-	vhw, _ := upload()
-	download(vhw)
-	downloadRange(vhw)
+	for ii := 0; ii < 20; ii++ {
+		go testud()
+	}
+
 }
 
+func testud() {
+	for ii := 0; ii < 25; ii++ {
+		vhw, _ := upload()
+		if vhw != nil {
+			download(vhw)
+		}
+	}
+
+	//downloadRange(vhw)
+}
 func upload() ([]byte, primitive.ObjectID) {
+	var data []byte = env.MakeRandData(testsize)
 	up := client.NewUploadObject()
 	errmsg := up.UploadBytes(data)
 	if errmsg != nil {
-		logrus.Panicf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
+		logrus.Errorf("[UploadFile]ERR:%s\n", pkt.ToError(errmsg))
+		return nil, primitive.NilObjectID
 	}
 	vhw := up.GetSHA256()
 	logrus.Infof("[UploadFile]OK:%s\n", base58.Encode(vhw))
@@ -38,13 +49,15 @@ func upload() ([]byte, primitive.ObjectID) {
 func download(vhw []byte) {
 	dn, errmsg := client.NewDownloadObject(vhw)
 	if errmsg != nil {
-		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
+		logrus.Errorf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
+		return
 	}
 	read := dn.Load()
 	newvhw, count := readData(read)
 	logrus.Infof("[DownloadFile]OK:%s,size:%d\n", base58.Encode(newvhw), count)
 }
 
+/*
 func downloadRange(vhw []byte) {
 	if len(data) < epos {
 		logrus.Panicf("[DownLoadFile]ERR:%d<%d\n", len(data), epos)
@@ -62,7 +75,7 @@ func downloadRange(vhw []byte) {
 	newvhw, count := readData(read)
 	logrus.Infof("[DownloadFile]Download %d--%d OK,hash:%s,size:%d\n", spos, epos, base58.Encode(newvhw), count)
 }
-
+*/
 func readData(read io.Reader) ([]byte, int) {
 	readbuf := make([]byte, 8192)
 	count := 0
