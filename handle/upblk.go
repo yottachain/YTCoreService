@@ -63,6 +63,7 @@ func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*
 	if ok {
 		//compare
 		reqInterface := reflect.TypeOf(*req)
+		logrus.Infof("[wangjun][UploadBLK][SetMessage] req=%+v\n", *req)
 		_, result := reqInterface.FieldByName("CompareFlag")
 		if !result || req.CompareFlag == nil {
 			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, "CompareFlag check failed"), nil, nil
