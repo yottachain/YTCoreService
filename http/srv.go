@@ -88,6 +88,11 @@ func WriteText(w http.ResponseWriter, content string) {
 	io.WriteString(w, content)
 }
 
+func WriteBin(w http.ResponseWriter, content string) {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	io.WriteString(w, content)
+}
+
 func WriteJson(w http.ResponseWriter, content string) {
 	w.Header().Set("Content-Type", "text/json")
 	io.WriteString(w, content)

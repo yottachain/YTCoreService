@@ -25,6 +25,9 @@
             "type": "go",
             "request": "launch",
             "mode": "test",
+            "env":{
+                "YTFS_HOME":"D:/YTCoreService"
+            },
             "program": "${workspaceRoot}/main_test.go",
             "args": ["s3"]
         },    

@@ -16,6 +16,7 @@ import (
 )
 
 var IVParameter []byte
+var FixKey []byte
 
 func init() { //去重
 	bs := []byte("YottaChain2018王东临侯月文韩大光")
@@ -23,6 +24,9 @@ func init() { //去重
 	md5Digest.Write(bs)
 	IVParameter = md5Digest.Sum(nil)
 	rand.Seed(time.Now().UnixNano())
+	sha256 := sha256.New()
+	sha256.Write(bs)
+	FixKey = sha256.Sum(nil)
 }
 
 func init1() {
