@@ -67,7 +67,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 			resmsg, errmsg = client.Request(int32(msgtype), data, snclient.TcpAddr, log_pre, nowait)
 		}
 		if errmsg != nil {
-			if !(errmsg.Code == pkt.TOO_MANY_CURSOR || errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {
+			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {
 				return nil, errmsg
 			}
 			if nowait || retryTimes >= retry {

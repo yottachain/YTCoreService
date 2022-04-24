@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -180,7 +179,7 @@ func upload(ca *cache.Cache) {
 	if emsg != nil && !(emsg.Code == pkt.CODEC_ERROR || emsg.Code == pkt.INVALID_ARGS) {
 		time.Sleep(time.Duration(15) * time.Second)
 	} else {
-		atomic.AddInt64(cache.CurCacheSize, -ca.V.Length)
+		cache.CurCacheSize.Add(-ca.V.Length)
 		cache.DeleteValue(ca.K)
 		if emsg != nil {
 			if ca.V.Type > 0 {

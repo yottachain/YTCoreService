@@ -19,7 +19,7 @@ func Delete(paths []string) {
 		for _, p := range paths {
 			p = strings.ReplaceAll(p, "\\", "/")
 			dir = path.Dir(p)
-			if strings.HasPrefix(dir, env.GetS3Cache()) {
+			if strings.HasPrefix(p, env.GetS3Cache()) {
 				os.Remove(p)
 			}
 		}

@@ -2,7 +2,7 @@ package codec
 
 type ErasureDecoder struct {
 	encryptedBlockSize int64
-	decoder            *LRC_Decoder
+	decoder            LRC_Decoder
 	ok                 bool
 	copydata           []byte
 }

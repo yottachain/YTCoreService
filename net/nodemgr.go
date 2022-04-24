@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"strings"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -52,16 +51,6 @@ func InitNodeMgr(MongoAddress string) error {
 	}
 	config := YTDNMgmt.InitConfig(env.EOSURI, env.BPAccount, env.ShadowPriKey,
 		env.ContractAccount, env.ContractOwnerD, env.ShadowAccount, int32(env.SuperNodeID))
-	if config.PProf.Enable {
-		go func() {
-			err := http.ListenAndServe(config.PProf.BindAddr, nil)
-			if err != nil {
-				logrus.Errorf("[NodeMgr]ERR when starting pprof server on address %s: %s\n", config.PProf.BindAddr, err)
-			} else {
-				logrus.Infof("[NodeMgr]Enable pprof server:%s\n", config.PProf.BindAddr)
-			}
-		}()
-	}
 	mgr, err := YTDNMgmt.NewInstance(MongoAddress, env.EOSURI, env.BPAccount, env.ShadowPriKey,
 		env.ContractAccount, env.ContractOwnerD, env.ShadowAccount, int32(env.SuperNodeID),
 		0, config)

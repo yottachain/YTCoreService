@@ -6,7 +6,6 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
 	"github.com/boltdb/bolt"
 	"github.com/yottachain/YTCoreService/env"
@@ -186,7 +185,7 @@ func InsertValue(k *Key, v *Value) error {
 		if err != nil {
 			return err
 		}
-		atomic.AddInt64(CurCacheSize, v.Length)
+		CurCacheSize.Add(v.Length)
 		return nil
 	})
 }

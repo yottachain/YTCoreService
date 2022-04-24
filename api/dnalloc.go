@@ -90,8 +90,8 @@ func PreAllocNode(c *Client) error {
 					continue
 				}
 				ns := NewNodeStat(c.SuperNode.ID, *n.Timestamp, *n.Sign)
-				*ns.okDelayTimes = int64(index)
-				*ns.okTimes = 1
+				ns.okDelayTimes.Set(int64(index))
+				ns.okTimes.Set(1)
 				ns.Id = *n.Id
 				ns.Nodeid = *n.Nodeid
 				ns.Pubkey = *n.Pubkey
