@@ -86,6 +86,7 @@ func (self *UploadBlock) upload() {
 		Version:     &env.VersionID,
 		CompareFlag: &compareFlag,
 	}
+	logrus.Infof("[wangjun][UploadBLK][upload] req=%+v\n", *req)
 	resp, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		self.UPOBJ.ERR.Store(errmsg)
