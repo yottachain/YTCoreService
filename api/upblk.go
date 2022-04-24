@@ -258,7 +258,6 @@ func (self *UploadBlock) UploadBlockDedup() {
 		ress2 = make([]*UploadShardResult, size)
 	}
 	var ids []int32
-
 	for {
 		blkls, err := self.UploadShards(self.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, self.BLK.OriginalSize, ress, ress2, ids)
 		if err != nil {
@@ -335,6 +334,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
+			Vbi:          &self.STime,
 		}
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
@@ -357,6 +357,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
+			Vbi:          &self.STime,
 		}
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))

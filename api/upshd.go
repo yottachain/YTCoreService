@@ -76,6 +76,7 @@ func (self *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 		DAT:      self.shard.Data,
 		VHF:      self.shard.VHF,
 		USERSIGN: []byte(self.uploadBlock.UPOBJ.Sign),
+		HASHID:   self.uploadBlock.STime + int64(self.shardId),
 	}
 }
 
