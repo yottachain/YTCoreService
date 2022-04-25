@@ -86,7 +86,6 @@ func (self *UploadBlock) upload() {
 		Version:     &env.VersionID,
 		CompareFlag: &compareFlag,
 	}
-	logrus.Infof("[wangjun][UploadBLK][upload] req=%+v\n", *req)
 	resp, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		self.UPOBJ.ERR.Store(errmsg)
@@ -337,6 +336,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			OriginalSize: &osize,
 			RealSize:     rsize,
 			AR:           &ar,
+			Vbi:          &self.STime,
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
 			Shardseqlist: ToUploadBlockEndReqV2_ShardSeqList(ress), //compare seq
 		}
@@ -361,6 +361,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			RealSize:      rsize,
 			AR:            &ar,
 			Oklist:        ToUploadBlockEndReqV3_OkList(ress, ress2),
+			Vbi:           &self.STime,
 			Shardseqlist:  ToUploadBlockEndReqV3_ShardSeqList(ress),   //compare seq lrc2
 			Shardseqlist2: ToUploadBlockEndReqV3_ShardSeqList2(ress2), //compare seq lrc2
 		}
