@@ -112,9 +112,16 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 			okList = append(okList, id)
 		}
 	}
-	metas, err := dao.GetShardNodes(okList, h.m.SrcNodeID)
+	metas, del, err := dao.GetShardNodes(okList, h.m.SrcNodeID)
 	if err != nil {
 		return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
+	}
+	delsize := len(del)
+	if delsize > 0 {
+		bkid := dao.GenerateShardID(delsize)
+		for index, id := range del {
+			dao.SaveShardBakup(bkid+int64(index), id, h.m.SrcNodeID)
+		}
 	}
 	if time.Now().Unix() < h.m.ExpiredTime {
 		err := SaveRep(newid, metas)

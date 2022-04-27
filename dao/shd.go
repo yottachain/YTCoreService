@@ -165,7 +165,7 @@ func SaveShardMetas(ls []*ShardMeta) error {
 	return nil
 }
 
-func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, error) {
+func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, []int64, error) {
 	source := NewBaseSource()
 	filter := bson.M{"_id": bson.M{"$in": ids}}
 	fields := bson.M{"_id": 1, "nodeId": 1, "nodeId2": 1}
@@ -181,14 +181,15 @@ func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, error) {
 	}()
 	if err != nil {
 		logrus.Errorf("[ShardMeta]GetShardNodes ERR:%s\n", err)
-		return nil, err
+		return nil, nil, err
 	}
+	listok := []int64{}
 	for cur.Next(ctx) {
 		var res = &ShardMeta{}
 		err = cur.Decode(res)
 		if err != nil {
 			logrus.Errorf("[ShardMeta]GetShardNodes Decode ERR:%s\n", err)
-			return nil, err
+			return nil, nil, err
 		}
 		if srcnodeid == res.NodeId || srcnodeid == res.NodeId2 {
 			if srcnodeid != res.NodeId {
@@ -201,15 +202,29 @@ func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, error) {
 		} else {
 			logrus.Warnf("[ShardMeta]GetShardNodes ERR:Invalid SrcNodeID id %d\n", srcnodeid)
 		}
+		listok = append(listok, res.VFI)
 	}
 	if curerr := cur.Err(); curerr != nil {
 		logrus.Errorf("[ShardMeta]GetShardNodes Cursor ERR:%s\n", curerr)
-		return nil, curerr
+		return nil, nil, curerr
 	}
-	if len(metas) != len(ids) {
+	deletedIds := []int64{}
+	if len(listok) != len(ids) {
+		for _, id := range ids {
+			has := false
+			for _, sid := range listok {
+				if id == sid {
+					has = true
+					break
+				}
+			}
+			if !has {
+				deletedIds = append(deletedIds, id)
+			}
+		}
 		logrus.Warnf("[ShardMeta]GetShardNodes Return:%d,reqcount:%d\n", len(metas), len(ids))
 	}
-	return metas, nil
+	return metas, deletedIds, nil
 }
 
 func GetShardMetas(vbi int64, count int) ([]*ShardMeta, error) {

@@ -113,5 +113,4 @@ func readClientProperties() {
 		config.SaveValue("LRCBugTime", t.Format("2006-01-02"))
 		LRCBugTime = t.Unix()
 	}
-
 }
