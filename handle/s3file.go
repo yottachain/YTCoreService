@@ -226,13 +226,14 @@ func (h *GetObjectHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.INVALID_BUCKET_NAME)
 	}
 	fmeta := &dao.FileMeta{UserId: h.user.UserID, BucketId: meta.BucketId, FileName: *h.m.FileName}
-	err := fmeta.GetLastFileMeta(true)
+	err := fmeta.GetLastFileMeta(false)
 	if err != nil {
 		return &pkt.GetObjectResp{}
 	}
 	i1, i2, i3, i4 := pkt.ObjectIdParam(fmeta.FileId)
 	fid := &pkt.GetObjectResp_Id{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	res := &pkt.GetObjectResp{FileName: h.m.FileName, Id: fid}
+	res.Meta = fmeta.Meta
 	return res
 }
 

@@ -300,6 +300,26 @@ func GetUsedSpace(ids []int64) (map[int64]*BlockMeta, error) {
 	return metas, nil
 }
 
+func SaveShardBakup(id, shardid int64, dnid int32) error {
+	source := NewBaseSource()
+	var result = struct {
+		ID  int64 `bson:"_id"`
+		VBI int64 `bson:"VBI"`
+		NID int32 `bson:"NID"`
+	}{ID: id, VBI: shardid, NID: dnid}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := source.GetBlockBakColl().InsertOne(ctx, result)
+	if err != nil {
+		errstr := err.Error()
+		if !strings.ContainsAny(errstr, "duplicate key error") {
+			logrus.Errorf("[BlockMeta]SaveBlockBakup ERR:%s\n", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func SaveBlockBakup(id, bid int64) error {
 	source := NewBaseSource()
 	var result = struct {

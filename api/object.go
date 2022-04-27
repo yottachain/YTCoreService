@@ -173,7 +173,21 @@ func (self *ObjectAccessor) ListObject(buck, fileName, prefix string, wversion b
 		v := &pkt.ListObjectReqV2_NextVersionId{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 		req.Nextversionid = v
 	}
-	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
+	var resp proto.Message
+	var errmsg *pkt.ErrorMessage
+	var retry int = 0
+	for {
+		resp, errmsg = net.RequestSN(req, self.UClient.SuperNode, "", 0, true)
+		if errmsg != nil {
+			retry++
+			if retry > 2 {
+				break
+			}
+			time.Sleep(time.Millisecond * 500)
+		} else {
+			break
+		}
+	}
 	if errmsg != nil {
 		logrus.Errorf("[ListObject][%d]%s/%s/%s/%s ERR:%s\n", self.UClient.UserId, buck, fileName, prefix, nVerid.Hex(), pkt.ToError(errmsg))
 		return nil, errmsg

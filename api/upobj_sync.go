@@ -3,7 +3,6 @@ package api
 import (
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -20,9 +19,9 @@ type UploadObjectSync struct {
 
 func NewUploadEncObject(filename string) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
-	u.ActiveTime = new(int64)
+	u.ActiveTime = env.NewAtomInt64(0)
 	u.activesign = make(chan int)
-	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
+	u.PRO = &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	err := u.createDecoder2(filename)
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
@@ -48,9 +47,9 @@ func (self *UploadObjectSync) createDecoder2(filename string) error {
 
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
-	u.ActiveTime = new(int64)
+	u.ActiveTime = env.NewAtomInt64(0)
 	u.activesign = make(chan int)
-	u.PRO = &UpProgress{Length: new(int64), ReadinLength: new(int64), ReadOutLength: new(int64), WriteLength: new(int64)}
+	u.PRO = &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	err := u.createDecoder(sha256)
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
@@ -85,20 +84,20 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 		}
 		self.decoder.Close()
 	}()
-	atomic.StoreInt64(self.PRO.Length, self.decoder.GetLength())
+	self.PRO.Length.Set(self.decoder.GetLength())
 	err := self.initUpload(self.GetSHA256(), self.GetLength())
 	if err != nil {
 		return err
 	}
 	logrus.Infof("[SyncUpload][%s]Start upload object,Path:%s\n", self.VNU.Hex(), self.decoder.GetPath())
 	if self.Exist {
-		atomic.StoreInt64(self.PRO.ReadinLength, self.decoder.GetLength())
-		atomic.StoreInt64(self.PRO.ReadOutLength, self.decoder.GetLength())
-		atomic.StoreInt64(self.PRO.WriteLength, self.decoder.GetLength())
+		self.PRO.ReadinLength.Set(self.decoder.GetLength())
+		self.PRO.ReadOutLength.Set(self.decoder.GetLength())
+		self.PRO.WriteLength.Set(self.decoder.GetLength())
 		logrus.Infof("[SyncUpload][%s]Already exists.\n", self.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
-		atomic.StoreInt64(self.ActiveTime, time.Now().Unix())
+		self.ActiveTime.Set(time.Now().Unix())
 		go self.waitcheck()
 		var id uint32 = 0
 		for {
@@ -112,10 +111,10 @@ func (self *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			if self.ERR.Load() != nil {
 				break
 			}
-			atomic.StoreInt64(self.PRO.ReadinLength, self.decoder.GetReadinTotal())
-			atomic.StoreInt64(self.PRO.ReadOutLength, self.decoder.GetReadoutTotal())
+			self.PRO.ReadinLength.Set(self.decoder.GetReadinTotal())
+			self.PRO.ReadOutLength.Set(self.decoder.GetReadoutTotal())
 			if self.IdExist(id) {
-				atomic.AddInt64(self.PRO.WriteLength, b.Length())
+				self.PRO.WriteLength.Add(b.Length())
 				logrus.Infof("[SyncUpload][%s][%d]Block has been uploaded.\n", self.VNU.Hex(), id)
 			} else {
 				wgroup.Add(1)

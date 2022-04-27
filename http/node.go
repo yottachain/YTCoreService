@@ -93,8 +93,8 @@ func ReadableNodesHandle(w http.ResponseWriter, req *http.Request) {
 		for index, n := range nodes {
 			m := make(map[string]interface{})
 			m["id"] = strconv.Itoa(int(n.ID))
-			m["ip"] = n.Addrs
-			m["nodeid"] = n.NodeID
+			//m["ip"] = n.Addrs
+			//m["nodeid"] = n.NodeID
 			m["weight"] = strconv.FormatFloat(n.Weight, 'f', -1, 64)
 			ns[index] = m
 		}

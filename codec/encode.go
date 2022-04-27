@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"io"
 	"os"
-	"sync/atomic"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/yottachain/YTCoreService/env"
@@ -21,9 +20,9 @@ type Encoder struct {
 	sign          string
 	checker       DupBlockChecker
 	fc            *FileEncoder
-	ReadinLength  *int64
-	ReadOutLength *int64
-	WriteLength   *int64
+	ReadinLength  *env.AtomInt64
+	ReadOutLength *env.AtomInt64
+	WriteLength   *env.AtomInt64
 }
 
 func NewEncoder(uid, keyNum, storeNum uint32, signstr string, s3key string, enc *FileEncoder, check DupBlockChecker) *Encoder {
@@ -53,7 +52,7 @@ func (self *Encoder) GetBaseMD5() string {
 	return base58.Encode(self.fc.GetMD5())
 }
 
-func (self *Encoder) HandleProgress(Readin, ReadOut, Write *int64) {
+func (self *Encoder) HandleProgress(Readin, ReadOut, Write *env.AtomInt64) {
 	self.ReadinLength = Readin
 	self.ReadOutLength = ReadOut
 	self.WriteLength = Write
@@ -78,8 +77,8 @@ func (self *Encoder) Handle(out string) *pkt.ErrorMessage {
 		}
 		id++
 		if self.ReadinLength != nil {
-			atomic.StoreInt64(self.ReadinLength, self.fc.GetReadinTotal())
-			atomic.StoreInt64(self.ReadOutLength, self.fc.GetReadoutTotal())
+			self.ReadinLength.Add(self.fc.GetReadinTotal())
+			self.ReadOutLength.Add(self.fc.GetReadoutTotal())
 		}
 		if b == nil {
 			break
@@ -98,7 +97,7 @@ func (self *Encoder) Handle(out string) *pkt.ErrorMessage {
 				return pkt.NewErrorMsg(pkt.SERVER_ERROR, werr.Error())
 			}
 			if self.WriteLength != nil {
-				atomic.AddInt64(self.WriteLength, b.Length())
+				self.WriteLength.Add(b.Length())
 			}
 			lastpos = lastpos + size
 		}

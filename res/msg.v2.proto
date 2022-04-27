@@ -135,6 +135,7 @@ message UploadBlockEndReqV2{
         optional bytes VHF=3;
         optional string DNSIGN=4;
     }
+    optional int64 vbi=14;
 }
 
 message UploadBlockEndReqV3{
@@ -158,6 +159,7 @@ message UploadBlockEndReqV3{
         optional int32 NODEID2=5;
         optional string DNSIGN2=6;
     }
+    optional int64 vbi=14;
 }
 
 message CheckBlockDupReq{

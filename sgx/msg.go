@@ -82,7 +82,10 @@ func (self *EncryptedBlock) Decode(key *Key, writer io.Writer) error {
 	if err != nil {
 		return errors.New("Decrypt err")
 	}
-	read := NewBlockReader(pdata)
+	read, err := NewBlockReader(pdata)
+	if err != nil {
+		return errors.New("Decrypt err")
+	}
 	readbuf := make([]byte, 8192)
 	for {
 		num, err := read.Read(readbuf)

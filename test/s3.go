@@ -19,10 +19,11 @@ func S3() {
 
 func DownLoadFile() {
 	outpath := "D:/YTSDK.ok.rar"
-	dn, errmsg := client.NewDownloadFile("share", "2021-03-15/tmpfile_2021-03-15_0da2d6.txt8", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("dev1", "data/26sXkJy2bKQMggOz591RL-4723073918520286218-9247596949300099175", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
+	fmt.Printf("meta len %d\n", len(dn.Meta))
 	oksign := make(chan int)
 	go func() {
 		for {

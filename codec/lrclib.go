@@ -37,22 +37,29 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-var ISWindows bool = false
+var NoCGO bool = false
 
 func InitLRC() {
 	if BlockDataPool != nil {
 		return
 	}
+	LRCNoCGO := env.GetConfig().GetBool("LRCNoCGO", false)
 	sysType := runtime.GOOS
 	if sysType == "windows" {
-		v, err := env.GetWinVersion()
-		if err == nil && v == "6.1" {
-			ISWindows = true
+		if LRCNoCGO {
+			xbit := 32 << (^uint(0) >> 63)
+			if xbit == 32 {
+				NoCGO = true
+			} else {
+				v, err := env.GetWinVersion()
+				if err == nil && v == "6.1" {
+					NoCGO = true
+				}
+			}
 		}
 	}
 	s1 := int16(env.Default_PND - 23)
-	s2 := int16(env.UploadBlockThreadNum)
-	ret := C.LRC_Initial(C.short(s1), C.short(s2))
+	ret := C.LRC_Initial(C.short(s1))
 	if ret <= 0 {
 		logrus.Panicf("[LRC]Init ERR,return:%d\n", ret)
 	}
@@ -87,7 +94,7 @@ type LRC_Decoder interface {
 
 type LRC_Decoder_Linux struct {
 	orgsize int64
-	handle  int16
+	handle  unsafe.Pointer
 	inptr   []unsafe.Pointer
 	outptr  *Pointer
 	out     []byte
@@ -107,7 +114,7 @@ func (me *LRC_Decoder_Linux) Decode(bs []byte) ([]byte, error) {
 	}
 	inptr := C.CBytes(bs)
 	me.inptr = append(me.inptr, inptr)
-	ret := C.LRC_Decode(C.short(me.handle), inptr)
+	ret := C.LRC_Decode(me.handle, inptr)
 	osize := int16(ret)
 	if osize < 0 {
 		me.Free()
@@ -125,19 +132,19 @@ func (me *LRC_Decoder_Linux) Decode(bs []byte) ([]byte, error) {
 }
 
 func (me *LRC_Decoder_Linux) Free() {
-	if me.handle >= 0 {
-		C.LRC_FreeHandle(C.short(me.handle))
+	if me.handle != nil {
+		C.LRC_FreeHandle(me.handle)
 		BlockDataPool.BackPointer(me.outptr)
 		for _, p := range me.inptr {
 			C.free(p)
 		}
-		me.handle = -1
+		me.handle = nil
 	}
 }
 
 type LRC_Decoder_Win struct {
 	orgsize int64
-	handle  int16
+	handle  unsafe.Pointer
 	out     []byte
 	in      [][]byte
 }
@@ -156,7 +163,7 @@ func (me *LRC_Decoder_Win) Decode(bs []byte) ([]byte, error) {
 	}
 	inptr := unsafe.Pointer(&bs[0])
 	me.in = append(me.in, bs)
-	ret := C.LRC_Decode(C.short(me.handle), inptr)
+	ret := C.LRC_Decode(me.handle, inptr)
 	osize := int16(ret)
 	if osize < 0 {
 		me.Free()
@@ -172,9 +179,9 @@ func (me *LRC_Decoder_Win) Decode(bs []byte) ([]byte, error) {
 }
 
 func (me *LRC_Decoder_Win) Free() {
-	if me.handle >= 0 {
-		C.LRC_FreeHandle(C.short(me.handle))
-		me.handle = -1
+	if me.handle != nil {
+		C.LRC_FreeHandle(me.handle)
+		me.handle = nil
 	}
 }
 
@@ -185,31 +192,29 @@ func LRC_Decode(originalCount int64) (LRC_Decoder, error) {
 	if remainSize > 0 {
 		shardCount++
 	}
-	if ISWindows {
+	if NoCGO {
 		o := make([]byte, env.PFL*shardCount)
 		outp := unsafe.Pointer(&o[0])
 		ret := C.LRC_BeginDecode(C.ushort(shardCount), C.ulong(env.PFL), outp)
-		r := int16(ret)
-		if r < 0 {
+		if ret == nil {
 			return nil, errors.New("LRC begin decode ERR.")
 		}
 		return &LRC_Decoder_Win{
 			orgsize: originalCount,
-			handle:  r,
+			handle:  ret,
 			in:      [][]byte{},
 			out:     o,
 		}, nil
 	} else {
 		outp := BlockDataPool.GetPointer()
 		ret := C.LRC_BeginDecode(C.ushort(shardCount), C.ulong(env.PFL), outp.PTR)
-		r := int16(ret)
-		if r < 0 {
+		if ret == nil {
 			BlockDataPool.BackPointer(outp)
 			return nil, errors.New("LRC begin decode ERR.")
 		}
 		return &LRC_Decoder_Linux{
 			orgsize: originalCount,
-			handle:  r,
+			handle:  ret,
 			inptr:   []unsafe.Pointer{},
 			outptr:  outp,
 		}, nil
@@ -217,7 +222,7 @@ func LRC_Decode(originalCount int64) (LRC_Decoder, error) {
 }
 
 func LRC_Encode(data [][]byte) ([][]byte, error) {
-	if ISWindows {
+	if NoCGO {
 		return LRC_Encode_Win(data)
 	} else {
 		return LRC_Encode_Linux(data)

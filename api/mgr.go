@@ -235,7 +235,10 @@ func StartApi() {
 	priv, _ := ytcrypto.CreateKey()
 	net.Start(0, 0, priv)
 	InitSuperList()
-	cache.InitDB()
+	err := cache.InitDB()
+	if err != nil {
+		logrus.Panicf("InitDB ERR:%s\n", err)
+	}
 	go StartPreAllocNode()
 	go DoCache()
 	go StartSync()
@@ -266,7 +269,7 @@ func InitSuperList() {
 	ls := make([]*YTDNMgmt.SuperNode, len(list))
 	for index, jsonsn := range list {
 		maddr, _ := net.StringListToMaddrs(jsonsn.Addrs)
-		sn := &YTDNMgmt.SuperNode{ID: jsonsn.Number, NodeID: jsonsn.ID, Addrs: jsonsn.Addrs, Multiaddrs:maddr}
+		sn := &YTDNMgmt.SuperNode{ID: jsonsn.Number, NodeID: jsonsn.ID, Addrs: jsonsn.Addrs, Multiaddrs: maddr}
 		ls[index] = sn
 	}
 	GetSuperList(ls)
@@ -288,7 +291,7 @@ func GetSuperList(ls []*YTDNMgmt.SuperNode) {
 					for _, s := range sns {
 						if s.Addrs != nil && s.Id != nil && s.Nodeid != nil && s.Pubkey != nil {
 							maddrs, _ := net.StringListToMaddrs(s.Addrs)
-							list = append(list, &YTDNMgmt.SuperNode{ID: *s.Id, NodeID: *s.Nodeid, PubKey: *s.Pubkey, Addrs: s.Addrs, Multiaddrs:maddrs})
+							list = append(list, &YTDNMgmt.SuperNode{ID: *s.Id, NodeID: *s.Nodeid, PubKey: *s.Pubkey, Addrs: s.Addrs, Multiaddrs: maddrs})
 						}
 					}
 					if uint32(len(list)) == *resp.Supernodes.Count {

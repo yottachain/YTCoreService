@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 const s3cache_dir = "s3cache"
@@ -28,6 +29,7 @@ var MaxCacheSize int64
 var SyncMode int = 0
 var Driver string
 var StartSync = 0
+var LRCBugTime int64 = -1
 
 var LRC2 = false
 
@@ -100,5 +102,15 @@ func readClientProperties() {
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
 
 	LRC2 = config.GetBool("LRC2", true)
-
+	if config.HasValue("LRCBugTime") {
+		t, err := time.Parse("2006-01-02", config.GetString("LRCBugTime", ""))
+		if err == nil {
+			LRCBugTime = t.Unix()
+		}
+	}
+	if LRCBugTime == -1 {
+		t := time.Now()
+		config.SaveValue("LRCBugTime", t.Format("2006-01-02"))
+		LRCBugTime = t.Unix()
+	}
 }

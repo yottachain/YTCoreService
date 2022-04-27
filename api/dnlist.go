@@ -150,9 +150,9 @@ func (n *NodeList) GetNodeList() []*NodeStat {
 
 type NodeStat struct {
 	net.Node
-	okDelayTimes *int64
-	okTimes      *int64
-	errTimes     *int64
+	okDelayTimes *env.AtomInt64
+	okTimes      *env.AtomInt64
+	errTimes     *env.AtomInt64
 	resetTime    int64
 	snid         int32
 	timestamp    int64
@@ -161,10 +161,10 @@ type NodeStat struct {
 }
 
 func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {
-	ns := &NodeStat{okDelayTimes: new(int64), okTimes: new(int64), errTimes: new(int64)}
-	*ns.okDelayTimes = 0
-	*ns.okTimes = 0
-	*ns.errTimes = 0
+	ns := &NodeStat{okDelayTimes: env.NewAtomInt64(0), okTimes: env.NewAtomInt64(0), errTimes: env.NewAtomInt64(0)}
+	ns.okDelayTimes.Set(0)
+	ns.okTimes.Set(0)
+	ns.errTimes.Set(0)
 	ns.resetTime = time.Now().Unix()
 	ns.snid = id
 	ns.timestamp = timestamp
@@ -185,12 +185,12 @@ func (n *NodeStat) SnId() int32 {
 }
 
 func (n *NodeStat) SetERR() {
-	atomic.AddInt64(n.errTimes, 1)
+	n.errTimes.Add(1)
 }
 
 func (n *NodeStat) SetOK(t int64) {
-	atomic.AddInt64(n.okTimes, 1)
-	atomic.AddInt64(n.okDelayTimes, t*int64(time.Millisecond))
+	n.okTimes.Add(1)
+	n.okDelayTimes.Add(t * int64(time.Millisecond))
 }
 
 func (n *NodeStat) RandDelayTimes(size int) int {
@@ -198,15 +198,15 @@ func (n *NodeStat) RandDelayTimes(size int) int {
 }
 
 func (n *NodeStat) UpdateState(oldn *NodeStat) {
-	*n.okDelayTimes = atomic.LoadInt64(oldn.okDelayTimes)
-	*n.okTimes = atomic.LoadInt64(oldn.okTimes)
-	*n.errTimes = atomic.LoadInt64(oldn.errTimes)
+	n.okDelayTimes = oldn.okDelayTimes
+	n.okTimes = oldn.okTimes
+	n.errTimes = oldn.errTimes
 }
 
 func (n *NodeStat) GetDelayTimes() int64 {
-	oktimes := atomic.LoadInt64(n.okDelayTimes)
-	count := atomic.LoadInt64(n.okTimes)
-	errcount := atomic.LoadInt64(n.errTimes)
+	oktimes := int64(n.okDelayTimes.Value())
+	count := int64(n.okTimes.Value())
+	errcount := int64(n.errTimes.Value())
 	if count == 0 {
 		if errcount == 0 {
 			return 0

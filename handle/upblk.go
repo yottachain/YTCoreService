@@ -98,14 +98,16 @@ func CheckBlockDup(vhp []byte) proto.Message {
 	}
 	st := uint64(time.Now().Unix())
 	if env.DE_DUPLICATION {
-		return &pkt.UploadBlockInitResp{StartTime: &st}
+		vbi := uint64(dao.GenerateBlockID(env.Max_Shard_Count + env.Default_PND))
+		return &pkt.UploadBlockInitResp{StartTime: &vbi}
 	}
 	ls, err := dao.GetBlockByVHP(vhp)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	if ls == nil {
-		return &pkt.UploadBlockInitResp{StartTime: &st}
+		vbi := uint64(dao.GenerateBlockID(env.Max_Shard_Count + env.Default_PND))
+		return &pkt.UploadBlockInitResp{StartTime: &vbi}
 	} else {
 		size := len(ls)
 		vhbs := make([][]byte, size)
@@ -380,7 +382,12 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 		return pkt.NewErrorMsg(pkt.DN_IN_BLACKLIST, jsonstr)
 	}
 	shardcount := len(h.m.Oklist)
-	vbi := dao.GenerateBlockID(shardcount)
+	var vbi int64
+	if h.m.Vbi == nil {
+		vbi = dao.GenerateBlockID(shardcount)
+	} else {
+		vbi = *h.m.Vbi
+	}
 	meta, err := dao.GetBlockByVHP_VHB(h.m.VHP, h.m.VHB)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
@@ -593,7 +600,12 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 		return pkt.NewErrorMsg(pkt.DN_IN_BLACKLIST, jsonstr)
 	}
 	shardcount := len(h.m.Oklist)
-	vbi := dao.GenerateBlockID(shardcount)
+	var vbi int64
+	if h.m.Vbi == nil {
+		vbi = dao.GenerateBlockID(shardcount)
+	} else {
+		vbi = *h.m.Vbi
+	}
 	meta, err := dao.GetBlockByVHP_VHB(h.m.VHP, h.m.VHB)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
@@ -57,9 +56,9 @@ func (self *UploadBlock) DoFinish(size int64) {
 	}
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
-	atomic.StoreInt64(self.UPOBJ.ActiveTime, time.Now().Unix())
+	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
 	DecBlockMen(&self.BLK.Block)
-	atomic.AddInt64(self.UPOBJ.PRO.WriteLength, size)
+	self.UPOBJ.PRO.WriteLength.Add(size)
 }
 
 func (self *UploadBlock) upload() {
@@ -335,6 +334,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
+			Vbi:          &self.STime,
 		}
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
@@ -357,6 +357,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
+			Vbi:          &self.STime,
 		}
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
