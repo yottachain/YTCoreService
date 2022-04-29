@@ -424,7 +424,10 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
-		compareShard := &pkt.CompareShardReq_Shards{NodeId: v.NODEID, Seq: h.m.Shardseqlist[n].Seq, VHF: v.VHF}
+		//compare
+		var shardId int64
+		shardId = vbi + int64(*v.SHARDID)
+		compareShard := &pkt.CompareShardReq_Shards{NodeId: v.NODEID, Seq: h.m.Shardseqlist[n].Seq, VHF: v.VHF, Hid: &shardId}
 		compareShards = append(compareShards, compareShard)
 	}
 	//save compare shard
@@ -668,9 +671,11 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 		if !env.IsExistInArray(int32(*v.NODEID2), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID2))
 		}
-		//compare shard lrc2
-		compareShards = append(compareShards, &pkt.CompareShardReq_Shards{NodeId: v.NODEID, Seq: h.m.Shardseqlist[n].Seq, VHF: v.VHF})
-		compareShards = append(compareShards, &pkt.CompareShardReq_Shards{NodeId: v.NODEID2, Seq: h.m.Shardseqlist2[n].Seq, VHF: v.VHF})
+		//compare
+		var shardId int64
+		shardId = vbi + int64(*v.SHARDID)
+		compareShards = append(compareShards, &pkt.CompareShardReq_Shards{NodeId: v.NODEID, Seq: h.m.Shardseqlist[n].Seq, VHF: v.VHF, Hid: &shardId})
+		compareShards = append(compareShards, &pkt.CompareShardReq_Shards{NodeId: v.NODEID2, Seq: h.m.Shardseqlist2[n].Seq, VHF: v.VHF, Hid: &shardId})
 	}
 
 	//save compare shard

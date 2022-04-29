@@ -220,6 +220,7 @@ message CompareShardReq{
         optional int32 NodeId=1;
         optional uint64 Seq=2;
         optional bytes VHF=3;
+        optional int64 Hid=4;
     }
 }
 
