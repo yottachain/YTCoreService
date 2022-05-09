@@ -27,7 +27,7 @@ const Compress_Reserve_Size = 16 * 1024
 const SN_RETRY_WAIT = 5
 const SN_RETRYTIMES = 12 * 5
 const DN_RETRY_WAIT = 3
-const CONN_EXPIRED = 60 * 5
+const CONN_EXPIRED = 60 * 2
 
 var ShardNumPerNode int
 

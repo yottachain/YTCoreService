@@ -182,6 +182,27 @@ func GetClients() []*Client {
 	return ls
 }
 
+func SaveClients() {
+	cs := GetClients()
+	var users []*env.UserInfo
+	for _, c := range cs {
+		if c.StoreKey == nil {
+			continue
+		}
+		user := &env.UserInfo{}
+		user.UserName = c.Username
+		var keys []string
+		for _, v := range c.KeyMap {
+			keys = append(keys, v.PrivateKey)
+		}
+		user.Privkey = keys
+		user.SignKeyNumber = int32(c.SignKey.KeyNumber)
+		user.EncKeyNumber = int32(c.StoreKey.KeyNumber)
+		users = append(users, user)
+	}
+	env.SaveUserProperties(users)
+}
+
 func GetClientByName(username string) *Client {
 	clients.RLock()
 	defer clients.RUnlock()
