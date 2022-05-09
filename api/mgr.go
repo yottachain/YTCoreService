@@ -192,8 +192,6 @@ func DecryteUserList(data []byte) []byte {
 
 func SaveClients() {
 	cs := GetClients()
-	clients.RLock()
-	defer clients.RUnlock()
 	var users []*env.UserInfo
 	for _, c := range cs {
 		if c.StoreKey == nil {
@@ -210,6 +208,8 @@ func SaveClients() {
 		user.EncKeyNumber = int32(c.StoreKey.KeyNumber)
 		users = append(users, user)
 	}
+	clients.Lock()
+	defer clients.Unlock()
 	env.SaveEncryptUserProperties(users, EncryteUserList)
 }
 
