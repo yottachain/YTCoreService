@@ -56,17 +56,16 @@ func ReadUserProperties(decryteFunc DecryteFunc) []*UserInfo {
 		logrus.Warnf("[Init]Read userlist.cfg ERR:%s\n", err)
 		return []*UserInfo{}
 	}
-
 	text := string(bs)
-	if strings.HasPrefix(text, "crypted:") {
+	if strings.HasPrefix(text, "encrypt:") {
 		text = text[8:]
-		decryteFunc([]byte(text))
+		text = string(decryteFunc([]byte(text)))
 	}
 	if strings.HasPrefix(text, "nocrypted:") {
 		text = text[10:]
 	}
 	infos := []*UserInfo{}
-	bs = decryteFunc([]byte(text))
+	bs = []byte(text)
 	err = json.Unmarshal(bs, &infos)
 	if err != nil {
 		logrus.Errorf("[Init]Unmarshal userlist.cfg ERR:%s\n", err)
