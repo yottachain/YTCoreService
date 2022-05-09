@@ -67,8 +67,8 @@ func NewClientV2(user *env.UserInfo, retrytime int) (*Client, error) {
 	}
 	clients.clientids[reg.c.UserId] = reg.c
 	clients.clientnames[reg.c.Username] = reg.c
-	SaveClients()
 	clients.Unlock()
+	SaveClients()
 	NotifyAllocNode(false)
 	return reg.c, nil
 }

@@ -192,6 +192,8 @@ func DecryteUserList(data []byte) []byte {
 
 func SaveClients() {
 	cs := GetClients()
+	clients.RLock()
+	defer clients.RUnlock()
 	var users []*env.UserInfo
 	for _, c := range cs {
 		if c.StoreKey == nil {
