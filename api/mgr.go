@@ -182,6 +182,14 @@ func GetClients() []*Client {
 	return ls
 }
 
+func EncryteUserList(data []byte) []byte {
+	return codec.ECBEncrypt(data, codec.FixKey)
+}
+
+func DecryteUserList(data []byte) []byte {
+	return codec.ECBDecrypt(data, codec.FixKey)
+}
+
 func SaveClients() {
 	cs := GetClients()
 	var users []*env.UserInfo
@@ -200,7 +208,7 @@ func SaveClients() {
 		user.EncKeyNumber = int32(c.StoreKey.KeyNumber)
 		users = append(users, user)
 	}
-	env.SaveUserProperties(users)
+	env.SaveEncryptUserProperties(users, EncryteUserList)
 }
 
 func GetClientByName(username string) *Client {
