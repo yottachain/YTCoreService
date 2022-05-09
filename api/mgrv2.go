@@ -67,6 +67,7 @@ func NewClientV2(user *env.UserInfo, retrytime int) (*Client, error) {
 	}
 	clients.clientids[reg.c.UserId] = reg.c
 	clients.clientnames[reg.c.Username] = reg.c
+	SaveClients()
 	clients.Unlock()
 	NotifyAllocNode(false)
 	return reg.c, nil
@@ -178,7 +179,7 @@ func AutoReg() {
 	if env.StartSync > 0 || cache.IS_S3_Server == true {
 		return
 	}
-	infos := env.ReadUserProperties()
+	infos := env.ReadUserProperties(DecryteUserList)
 	for {
 		users := []*env.UserInfo{}
 		for _, user := range infos {
