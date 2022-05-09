@@ -273,7 +273,8 @@ func StartApi() {
 	go StartPreAllocNode()
 	go DoCache()
 	go StartSync()
-	go AutoReg()
+	//go AutoReg()
+	AutoReg()
 }
 
 func InitSuperList() {
