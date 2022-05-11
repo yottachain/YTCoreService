@@ -90,7 +90,7 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 		times++
 		if err != nil {
 			node.NodeInfo.SetERR()
-			return times, nil, errors.New("COMM_ERROR")
+			return times, nil, errors.New(err.Msg)
 		} else {
 			resp, ok := msg.(*pkt.GetNodeCapacityResp)
 			if !ok {
@@ -113,7 +113,7 @@ func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node, self.logPrefix)
 	if err != nil {
 		node.NodeInfo.SetERR()
-		return nil, errors.New("COMM_ERROR")
+		return nil, errors.New(err.Msg)
 	} else {
 		resp, ok := msg.(*pkt.UploadShard2CResp)
 		if !ok {
