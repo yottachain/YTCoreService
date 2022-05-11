@@ -81,6 +81,7 @@ func (self *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 }
 
 func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityResp, error) {
+	logrus.Debugf("[UploadShard]%sGetToken from %d......\n", self.logPrefix, node.NodeInfo.Id)
 	ctlreq := &pkt.GetNodeCapacityReq{StartTime: uint64(self.uploadBlock.STime),
 		RetryTimes: uint32(self.retrytimes)}
 	times := 0
@@ -108,6 +109,7 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 }
 
 func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
+	logrus.Debugf("[UploadShard]%sSendShard %s to %d......\n", self.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node, self.logPrefix)
 	if err != nil {
 		node.NodeInfo.SetERR()
@@ -148,7 +150,6 @@ func (self *UploadShard) DoSend() {
 			node = n
 			continue
 		}
-		//node.NodeInfo.SetOK(ctrtimes / int64(rtimes))
 		node.NodeInfo.SetOK(ctrtimes)
 		req.AllocId = ctlresp.AllocId
 		resp, err1 := self.SendShard(node, req)
