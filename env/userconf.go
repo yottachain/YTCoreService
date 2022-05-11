@@ -32,6 +32,8 @@ var StartSync = 0
 var LRCBugTime int64 = -1
 
 var LRC2 = false
+var CopyNum = 10
+var LRCShards = 40
 
 var cfg *Config
 
@@ -100,6 +102,9 @@ func readClientProperties() {
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+
+	CopyNum = config.GetRangeInt("CopyNum", 5, 36, 10)
+	LRCShards = config.GetRangeInt("LRCShards", 5, 164, 50)
 
 	LRC2 = config.GetBool("LRC2", true)
 	if config.HasValue("LRCBugTime") {

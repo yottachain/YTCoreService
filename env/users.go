@@ -28,13 +28,13 @@ func SaveEncryptUserProperties(userinfo []*UserInfo, encryptedFunc EncryteFunc) 
 	}
 	bs, err := json.Marshal(userinfo)
 	if err != nil {
-		logrus.Error("[Init]Unmarshal userlist.cfg ERR:%s\n", err)
+		logrus.Errorf("[Init]Marshal userlist.cfg ERR:%s\n", err)
 		return
 	}
 	context := "encrypt:" + string(encryptedFunc(bs))
 	er := ioutil.WriteFile(path, []byte(context), 0664)
 	if er != nil {
-		logrus.Error("[Init]Save userlist.cfg ERR:%s\n", err)
+		logrus.Errorf("[Init]Save userlist.cfg ERR:%s\n", err)
 	}
 }
 

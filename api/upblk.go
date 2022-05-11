@@ -254,7 +254,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	keu := codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.StoreKey.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, self.BLK.KD)
 	var ress2 []*UploadShardResult = nil
-	if env.LRC2 && !enc.IsCopyShard() {
+	if env.LRC2 && !enc.IsCopyShard() && size > env.LRCShards {
 		ress2 = make([]*UploadShardResult, size)
 	}
 	var ids []int32

@@ -59,8 +59,8 @@ func (me *ErasureEncoder) Encode() error {
 		}
 		shard := &Shard{Data: sdata}
 		shard.SumVHF()
-		me.Shards = make([]*Shard, env.Default_PND)
-		for ii := 0; ii < env.Default_PND; ii++ {
+		me.Shards = make([]*Shard, env.CopyNum)
+		for ii := 0; ii < env.CopyNum; ii++ {
 			me.Shards[ii] = shard
 		}
 		me.MakeVHBCopyMode()
