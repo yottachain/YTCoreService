@@ -19,7 +19,6 @@ type UploadBlockSync struct {
 }
 
 func StartUploadBlockSync(id int16, b *codec.EncodedBlock, up *UploadObject, wg *sync.WaitGroup) {
-	AddSyncBlockMen(b)
 	ub := UploadBlock{
 		UPOBJ: up,
 		ID:    id,
@@ -41,7 +40,6 @@ func (self *UploadBlockSync) DoFinish() {
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
 	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
-	DecSyncBlockMen(self.EncBLK)
 	self.UPOBJ.PRO.WriteLength.Add(self.EncBLK.Length())
 }
 
@@ -136,11 +134,9 @@ func (self *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
 		return
 	}
-	DecSyncBlockMen(self.EncBLK)
+
 	self.EncBLK.DATA = nil
 	eblk.Clear()
-	length := AddEncoderMem(enc)
-	defer DecMen(length)
 	self.Queue = NewDNQueue()
 	retrytimes := 0
 	size := len(enc.Shards)

@@ -26,7 +26,6 @@ func InitBlockRoutinePool() {
 }
 
 func StartUploadBlock(id int16, b *codec.PlainBlock, up *UploadObject, wg *sync.WaitGroup) {
-	AddBlockMen(&b.Block)
 	ub := &UploadBlock{
 		UPOBJ: up,
 		ID:    id,
@@ -57,7 +56,6 @@ func (self *UploadBlock) DoFinish(size int64) {
 	BLOCK_ROUTINE_CH <- 1
 	self.WG.Done()
 	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
-	DecBlockMen(&self.BLK.Block)
 	self.UPOBJ.PRO.WriteLength.Add(size)
 }
 
@@ -242,11 +240,8 @@ func (self *UploadBlock) UploadBlockDedup() {
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
 		return
 	}
-	DecBlockMen(&self.BLK.Block)
 	self.BLK.Clear()
 	eblk.Clear()
-	length := AddEncoderMem(enc)
-	defer DecMen(length)
 	self.Queue = NewDNQueue()
 	retrytimes := 0
 	size := len(enc.Shards)

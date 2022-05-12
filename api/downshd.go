@@ -109,20 +109,20 @@ type DownLoadShardInfo struct {
 
 func NewDownLoadShardInfo2(n *pkt.DownloadBlockInitResp2_Ns, n2 *pkt.DownloadBlockInitResp2_Ns, v []byte, rt int, d *DownLoadShards, path string) *DownLoadShardInfo {
 	if v == nil || len(v) != 16 {
-		logrus.Errorf("[DownloadShard]%DownLoad ERR,VHF is null\n", d.logPrefix, base58.Encode(v))
+		logrus.Errorf("[DownloadShard]%sDownLoad ERR,VHF is null\n", d.logPrefix, base58.Encode(v))
 		return nil
 	}
 	var node1, node2 *net.Node
 	if n != nil {
 		if n.Id == nil || n.Nodeid == nil || n.Pubkey == nil || n.Addrs == nil || len(n.Addrs) == 0 {
-			logrus.Errorf("[DownloadShard]%DownLoad ERR,Nodeinfo is null\n", d.logPrefix, base58.Encode(v))
+			logrus.Errorf("[DownloadShard]%sDownLoad ERR,Nodeinfo is null:%s\n", d.logPrefix, base58.Encode(v), n)
 			return nil
 		}
 		node1 = &net.Node{Id: *n.Id, Nodeid: *n.Nodeid, Pubkey: *n.Pubkey, Addrs: n.Addrs}
 	}
 	if n2 != nil {
 		if n2.Id == nil || n2.Nodeid == nil || n2.Pubkey == nil || n2.Addrs == nil || len(n2.Addrs) == 0 {
-			logrus.Errorf("[DownloadShard]%DownLoad ERR,Nodeinfo2 is null\n", d.logPrefix, base58.Encode(v))
+			logrus.Errorf("[DownloadShard]%sDownLoad ERR,Nodeinfo2 is null:%s\n", d.logPrefix, base58.Encode(v), n2)
 			return nil
 		}
 		node2 = &net.Node{Id: *n2.Id, Nodeid: *n2.Nodeid, Pubkey: *n2.Pubkey, Addrs: n2.Addrs}
@@ -141,11 +141,11 @@ func NewDownLoadShardInfo2(n *pkt.DownloadBlockInitResp2_Ns, n2 *pkt.DownloadBlo
 
 func NewDownLoadShardInfo(n *pkt.DownloadBlockInitResp_NList_Ns, v []byte, rt int, d *DownLoadShards, path string) *DownLoadShardInfo {
 	if n.Id == nil || n.Nodeid == nil || n.Pubkey == nil || n.Addrs == nil || len(n.Addrs) == 0 {
-		logrus.Errorf("[DownloadShard]%DownLoad ERR,Nodeinfo is null\n", d.logPrefix, base58.Encode(v))
+		logrus.Errorf("[DownloadShard]%sDownLoad ERR,Nodeinfo is null:%s\n", d.logPrefix, base58.Encode(v), n)
 		return nil
 	}
 	if v == nil || len(v) != 16 {
-		logrus.Errorf("[DownloadShard]%DownLoad ERR,VHF is null\n", d.logPrefix, base58.Encode(v))
+		logrus.Errorf("[DownloadShard]%sDownLoad ERR,VHF is null\n", d.logPrefix, base58.Encode(v))
 		return nil
 	}
 	node := &net.Node{Id: *n.Id, Nodeid: *n.Nodeid, Pubkey: *n.Pubkey, Addrs: n.Addrs}
