@@ -103,6 +103,12 @@ type NodeList struct {
 	resetSign  *int32
 }
 
+func (n *NodeList) Delete(id int32) {
+	n.Lock()
+	defer n.Unlock()
+	delete(n.list, id)
+}
+
 func (n *NodeList) UpdateNodeList(ns map[int32]*NodeStat) {
 	reset := atomic.LoadInt32(n.resetSign)
 	if reset == 0 {

@@ -118,18 +118,19 @@ func PreAllocNode(c *Client) error {
 	return errors.New("Return err msg")
 }
 
-var ERR_LIST_CACHE = cache.New(time.Duration(180)*time.Second, time.Duration(5)*time.Second)
+var ERR_LIST_CACHE = cache.New(time.Duration(60)*time.Minute, time.Duration(5)*time.Second)
 
 func GetExpiredTime() time.Duration {
 	if env.PTR == 0 {
 		return time.Duration(180) * time.Second
 	} else {
-		return time.Duration(env.PTR*60*2) * time.Second
+		return time.Duration(env.PTR*60*60) * time.Second
 	}
 }
 
 func AddError(id int32) {
 	ERR_LIST_CACHE.Set(strconv.Itoa(int(id)), "", GetExpiredTime())
+	DNList.Delete(id)
 }
 
 func ErrorList() []int32 {

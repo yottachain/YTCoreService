@@ -111,12 +111,18 @@ var RunningMap sync.Map
 func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 	if obj, has := RunningMap.Load(uploadobject.GetMD5()); has {
 		up := obj.(*UploadObject)
+		logrus.Infof("[UploadObject][%s]Uploading...\n", up.VNU.Hex())
 		up.Cond.Wait()
+		var errmsg *pkt.ErrorMessage
 		if e := up.ERR.Load(); e != nil {
-			return e.(*pkt.ErrorMessage)
-		} else {
-			return nil
+			errmsg = e.(*pkt.ErrorMessage)
 		}
+		if errmsg != nil {
+			logrus.Errorf("[UploadObject][%s]Receive notification,Upload ERR:%s\n", uploadobject.VNU.Hex(), pkt.ToError(errmsg))
+		} else {
+			logrus.Infof("[UploadObject][%s]Receive notification,Upload object OK.\n", uploadobject.VNU.Hex())
+		}
+		return errmsg
 	}
 	RunningMap.Store(uploadobject.GetMD5(), uploadobject)
 	defer func() {
