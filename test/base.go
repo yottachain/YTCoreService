@@ -20,19 +20,19 @@ func UpAndDown() {
 	for ii := 0; ii < 20; ii++ {
 		go testud()
 	}
-
+	select {}
 }
 
 func testud() {
-	for ii := 0; ii < 25; ii++ {
+	for ii := 0; ii < 5; ii++ {
 		vhw, _ := upload()
 		if vhw != nil {
 			download(vhw)
 		}
 	}
-
 	//downloadRange(vhw)
 }
+
 func upload() ([]byte, primitive.ObjectID) {
 	var data []byte = env.MakeRandData(testsize)
 	up := client.NewUploadObject()
@@ -76,6 +76,7 @@ func downloadRange(vhw []byte) {
 	logrus.Infof("[DownloadFile]Download %d--%d OK,hash:%s,size:%d\n", spos, epos, base58.Encode(newvhw), count)
 }
 */
+
 func readData(read io.Reader) ([]byte, int) {
 	readbuf := make([]byte, 8192)
 	count := 0

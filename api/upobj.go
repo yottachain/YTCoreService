@@ -12,11 +12,11 @@ type UpProgress struct {
 	WriteLength   *env.AtomInt64
 }
 
-func (self *UpProgress) GetProgress() int32 {
-	l1 := self.Length.Value()
-	l2 := self.ReadinLength.Value()
-	l3 := self.ReadOutLength.Value()
-	l4 := self.WriteLength.Value()
+func (up *UpProgress) GetProgress() int32 {
+	l1 := up.Length.Value()
+	l2 := up.ReadinLength.Value()
+	l3 := up.ReadOutLength.Value()
+	l4 := up.WriteLength.Value()
 	if l1 == 0 || l3 == 0 {
 		return 0
 	}

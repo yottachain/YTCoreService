@@ -34,65 +34,65 @@ func NewUploadObject(c *Client) *UploadObject {
 	return o
 }
 
-func (self *UploadObject) GetLength() int64 {
-	if self.Encoder != nil {
-		return self.Encoder.GetLength()
+func (uploadobject *UploadObject) GetLength() int64 {
+	if uploadobject.Encoder != nil {
+		return uploadobject.Encoder.GetLength()
 	}
 	return 0
 }
 
-func (self *UploadObject) GetSHA256() []byte {
-	if self.Encoder != nil {
-		return self.Encoder.GetVHW()
+func (uploadobject *UploadObject) GetSHA256() []byte {
+	if uploadobject.Encoder != nil {
+		return uploadobject.Encoder.GetVHW()
 	}
 	return nil
 }
 
-func (self *UploadObject) GetMD5() []byte {
-	if self.Encoder != nil {
-		return self.Encoder.GetMD5()
+func (uploadobject *UploadObject) GetMD5() []byte {
+	if uploadobject.Encoder != nil {
+		return uploadobject.Encoder.GetMD5()
 	}
 	return nil
 }
 
-func (self *UploadObject) UploadMultiFile(path []string) *pkt.ErrorMessage {
+func (uploadobject *UploadObject) UploadMultiFile(path []string) *pkt.ErrorMessage {
 	enc, err := codec.NewMultiFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
-	self.Encoder = enc
+	uploadobject.Encoder = enc
 	defer enc.Close()
-	return self.Upload()
+	return uploadobject.Upload()
 }
 
-func (self *UploadObject) UploadFile(path string) *pkt.ErrorMessage {
+func (uploadobject *UploadObject) UploadFile(path string) *pkt.ErrorMessage {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewFileEncoder]Path:%s,ERR:%s\n", path, err)
 		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
-	self.Encoder = enc
+	uploadobject.Encoder = enc
 	defer enc.Close()
-	return self.Upload()
+	return uploadobject.Upload()
 }
 
-func (self *UploadObject) UploadBytes(data []byte) *pkt.ErrorMessage {
+func (uploadobject *UploadObject) UploadBytes(data []byte) *pkt.ErrorMessage {
 	enc, err := codec.NewBytesEncoder(data)
 	if err != nil {
 		logrus.Errorf("[NewBytesEncoder]ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
-	self.Encoder = enc
+	uploadobject.Encoder = enc
 	defer enc.Close()
-	return self.Upload()
+	return uploadobject.Upload()
 }
 
-func (self *UploadObject) IdExist(id uint32) bool {
-	if self.Blocks == nil {
+func (uploadobject *UploadObject) IdExist(id uint32) bool {
+	if uploadobject.Blocks == nil {
 		return false
 	}
-	for _, ii := range self.Blocks {
+	for _, ii := range uploadobject.Blocks {
 		if ii == id {
 			return true
 		}
@@ -100,137 +100,137 @@ func (self *UploadObject) IdExist(id uint32) bool {
 	return false
 }
 
-func (self *UploadObject) GetProgress() int32 {
-	return self.PRO.GetProgress()
+func (uploadobject *UploadObject) GetProgress() int32 {
+	return uploadobject.PRO.GetProgress()
 }
 
-func (self *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
+func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
-			self.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
+			uploadobject.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
 	}()
-	self.PRO.Length.Set(self.Encoder.GetLength())
-	err := self.initUpload(self.Encoder.GetVHW(), self.Encoder.GetLength())
+	uploadobject.PRO.Length.Set(uploadobject.Encoder.GetLength())
+	err := uploadobject.initUpload(uploadobject.Encoder.GetVHW(), uploadobject.Encoder.GetLength())
 	if err != nil {
 		return err
 	}
-	logrus.Infof("[UploadObject][%s]Start upload object...\n", self.VNU.Hex())
-	if self.Exist {
-		self.PRO.ReadinLength.Set(self.Encoder.GetLength())
-		self.PRO.ReadOutLength.Set(self.Encoder.GetLength())
-		self.PRO.WriteLength.Set(self.Encoder.GetLength())
-		logrus.Infof("[UploadObject][%s]Already exists.\n", self.VNU.Hex())
+	logrus.Infof("[UploadObject][%s]Start upload object...\n", uploadobject.VNU.Hex())
+	if uploadobject.Exist {
+		uploadobject.PRO.ReadinLength.Set(uploadobject.Encoder.GetLength())
+		uploadobject.PRO.ReadOutLength.Set(uploadobject.Encoder.GetLength())
+		uploadobject.PRO.WriteLength.Set(uploadobject.Encoder.GetLength())
+		logrus.Infof("[UploadObject][%s]Already exists.\n", uploadobject.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
-		self.ActiveTime.Set(time.Now().Unix())
-		go self.waitcheck()
+		uploadobject.ActiveTime.Set(time.Now().Unix())
+		go uploadobject.waitcheck()
 		var id uint32 = 0
 		for {
-			b, err := self.Encoder.ReadNext()
+			b, err := uploadobject.Encoder.ReadNext()
 			if err != nil {
 				return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 			}
 			if b == nil {
 				break
 			}
-			if self.ERR.Load() != nil {
+			if uploadobject.ERR.Load() != nil {
 				break
 			}
-			self.PRO.ReadinLength.Set(self.Encoder.GetReadinTotal())
-			self.PRO.ReadOutLength.Set(self.Encoder.GetReadoutTotal())
-			if self.IdExist(id) {
-				self.PRO.WriteLength.Add(b.Length())
-				logrus.Infof("[UploadObject][%s][%d]Block has been uploaded.\n", self.VNU.Hex(), id)
+			uploadobject.PRO.ReadinLength.Set(uploadobject.Encoder.GetReadinTotal())
+			uploadobject.PRO.ReadOutLength.Set(uploadobject.Encoder.GetReadoutTotal())
+			if uploadobject.IdExist(id) {
+				uploadobject.PRO.WriteLength.Add(b.Length())
+				logrus.Infof("[UploadObject][%s][%d]Block has been uploaded.\n", uploadobject.VNU.Hex(), id)
 			} else {
 				wgroup.Add(1)
-				StartUploadBlock(int16(id), b, self, &wgroup)
+				StartUploadBlock(int16(id), b, uploadobject, &wgroup)
 			}
 			id++
 		}
 		wgroup.Wait()
-		<-self.activesign
+		<-uploadobject.activesign
 		var errmsg *pkt.ErrorMessage
-		v := self.ERR.Load()
+		v := uploadobject.ERR.Load()
 		if v != nil {
 			errmsg = v.(*pkt.ErrorMessage)
 		} else {
-			errmsg = self.complete(self.Encoder.GetVHW())
+			errmsg = uploadobject.complete(uploadobject.Encoder.GetVHW())
 		}
 		if errmsg != nil {
-			logrus.Errorf("[UploadObject][%s]Upload ERR:%s\n", self.VNU.Hex(), pkt.ToError(errmsg))
+			logrus.Errorf("[UploadObject][%s]Upload ERR:%s\n", uploadobject.VNU.Hex(), pkt.ToError(errmsg))
 			return errmsg
 		} else {
-			logrus.Infof("[UploadObject][%s]Upload object OK.\n", self.VNU.Hex())
+			logrus.Infof("[UploadObject][%s]Upload object OK.\n", uploadobject.VNU.Hex())
 		}
 	}
 	return nil
 }
 
-func (self *UploadObject) waitcheck() {
+func (uploadobject *UploadObject) waitcheck() {
 	for {
 		timeout := time.After(time.Second * 30)
 		select {
-		case self.activesign <- 1:
-			close(self.activesign)
+		case uploadobject.activesign <- 1:
+			close(uploadobject.activesign)
 			return
 		case <-timeout:
-			if self.ERR.Load() != nil {
+			if uploadobject.ERR.Load() != nil {
 				break
 			}
-			self.active()
+			uploadobject.active()
 		}
 	}
 }
 
-func (self *UploadObject) active() {
-	lt := self.ActiveTime.Value()
+func (uploadobject *UploadObject) active() {
+	lt := uploadobject.ActiveTime.Value()
 	if time.Now().Unix()-lt > 60 {
-		i1, i2, i3, i4 := pkt.ObjectIdParam(self.VNU)
+		i1, i2, i3, i4 := pkt.ObjectIdParam(uploadobject.VNU)
 		vnu := &pkt.ActiveCacheV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 		req := &pkt.ActiveCacheV2{
-			UserId:    &self.UClient.UserId,
-			SignData:  &self.UClient.SignKey.Sign,
-			KeyNumber: &self.UClient.SignKey.KeyNumber,
+			UserId:    &uploadobject.UClient.UserId,
+			SignData:  &uploadobject.UClient.SignKey.Sign,
+			KeyNumber: &uploadobject.UClient.SignKey.KeyNumber,
 			Vnu:       vnu,
 		}
-		_, err := net.RequestSN(req, self.UClient.SuperNode, self.VNU.Hex(), env.SN_RETRYTIMES, false)
+		_, err := net.RequestSN(req, uploadobject.UClient.SuperNode, uploadobject.VNU.Hex(), env.SN_RETRYTIMES, false)
 		if err == nil {
-			self.ActiveTime.Set(time.Now().Unix())
+			uploadobject.ActiveTime.Set(time.Now().Unix())
 		}
 	}
 }
 
-func (self *UploadObject) complete(sha []byte) *pkt.ErrorMessage {
-	i1, i2, i3, i4 := pkt.ObjectIdParam(self.VNU)
+func (uploadobject *UploadObject) complete(sha []byte) *pkt.ErrorMessage {
+	i1, i2, i3, i4 := pkt.ObjectIdParam(uploadobject.VNU)
 	vnu := &pkt.UploadObjectEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadObjectEndReqV2{
-		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.SignKey.Sign,
-		KeyNumber: &self.UClient.SignKey.KeyNumber,
+		UserId:    &uploadobject.UClient.UserId,
+		SignData:  &uploadobject.UClient.SignKey.Sign,
+		KeyNumber: &uploadobject.UClient.SignKey.KeyNumber,
 		VHW:       sha,
 		Vnu:       vnu,
 	}
-	_, errmsg := net.RequestSN(req, self.UClient.SuperNode, self.VNU.Hex(), env.SN_RETRYTIMES, false)
+	_, errmsg := net.RequestSN(req, uploadobject.UClient.SuperNode, uploadobject.VNU.Hex(), env.SN_RETRYTIMES, false)
 	if errmsg != nil && errmsg.Code != pkt.INVALID_UPLOAD_ID {
 		return errmsg
 	}
 	return nil
 }
 
-func (self *UploadObject) initUpload(sha []byte, length int64) *pkt.ErrorMessage {
+func (uploadobject *UploadObject) initUpload(sha []byte, length int64) *pkt.ErrorMessage {
 	size := uint64(length)
 	req := &pkt.UploadObjectInitReqV2{
-		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.SignKey.Sign,
-		KeyNumber: &self.UClient.SignKey.KeyNumber,
+		UserId:    &uploadobject.UClient.UserId,
+		SignData:  &uploadobject.UClient.SignKey.Sign,
+		KeyNumber: &uploadobject.UClient.SignKey.KeyNumber,
 		VHW:       sha,
 		Length:    &size,
 	}
 	var initresp *pkt.UploadObjectInitResp
-	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
+	resp, errmsg := net.RequestSN(req, uploadobject.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		logrus.Errorf("[UploadObject][%s]Init ERR:%s\n", base58.Encode(sha), pkt.ToError(errmsg))
 		return errmsg
@@ -245,18 +245,18 @@ func (self *UploadObject) initUpload(sha []byte, length int64) *pkt.ErrorMessage
 	if initresp.Vnu == nil || initresp.Vnu.Timestamp == nil || initresp.Vnu.MachineIdentifier == nil || initresp.Vnu.ProcessIdentifier == nil || initresp.Vnu.Counter == nil {
 		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "VNU Return Nil")
 	}
-	self.VNU = pkt.NewObjectId(*initresp.Vnu.Timestamp, *initresp.Vnu.MachineIdentifier, *initresp.Vnu.ProcessIdentifier, *initresp.Vnu.Counter)
+	uploadobject.VNU = pkt.NewObjectId(*initresp.Vnu.Timestamp, *initresp.Vnu.MachineIdentifier, *initresp.Vnu.ProcessIdentifier, *initresp.Vnu.Counter)
 	if initresp.SignArg != nil {
-		self.Sign = *initresp.SignArg
+		uploadobject.Sign = *initresp.SignArg
 	}
 	if initresp.Stamp != nil {
-		self.Stamp = int64(*initresp.Stamp)
+		uploadobject.Stamp = int64(*initresp.Stamp)
 	}
 	if initresp.Blocks != nil {
-		self.Blocks = initresp.Blocks.Blocks
+		uploadobject.Blocks = initresp.Blocks.Blocks
 	}
 	if initresp.Repeat != nil {
-		self.Exist = *initresp.Repeat
+		uploadobject.Exist = *initresp.Repeat
 	}
 	return nil
 }

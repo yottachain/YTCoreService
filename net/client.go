@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -129,6 +130,9 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		if atomic.LoadInt32(client.statu) != 2 {
 			client.connectedTime.Set(0)
 		}
+		if strings.Contains(serr.Error(), "connection is shut down") {
+			p2phst.ClientStore().Close(client.PeerId)
+		}
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 	msg := pkt.UnmarshalMsg(res)
@@ -139,7 +143,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	}
 }
 
-func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, maddrs [] ma.Multiaddr , log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
+func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, maddrs []ma.Multiaddr, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
 	if atomic.LoadInt32(client.statu) == 1 {
 		addrString := AddrsToString(addrs)
 		logmsg := fmt.Sprintf("[P2P]%s%s Connection destroyed!\n", log_pre, addrString)

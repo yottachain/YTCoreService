@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -62,33 +63,38 @@ type UploadShard struct {
 	WG          *sync.WaitGroup
 }
 
-func (self *UploadShard) DoFinish() {
-	env.TracePanic("[UploadShard]")
+func (us *UploadShard) DoFinish() {
+	if r := recover(); r != nil {
+		env.TraceError("[UploadShard]")
+	}
 	SHARD_UP_CH <- 1
-	self.WG.Done()
+	us.WG.Done()
 }
 
-func (self *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
+func (us *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 	return &pkt.UploadShardReq{
-		SHARDID:  self.shardId,
+		SHARDID:  us.shardId,
 		BPDID:    ns.NodeInfo.SnId(),
 		BPDSIGN:  []byte(ns.NodeInfo.sign),
-		DAT:      self.shard.Data,
-		VHF:      self.shard.VHF,
-		USERSIGN: []byte(self.uploadBlock.UPOBJ.Sign),
-		HASHID:   self.uploadBlock.STime + int64(self.shardId),
+		DAT:      us.shard.Data,
+		VHF:      us.shard.VHF,
+		USERSIGN: []byte(us.uploadBlock.UPOBJ.Sign),
+		HASHID:   us.uploadBlock.STime + int64(us.shardId),
 	}
 }
 
-func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityResp, error) {
-	logrus.Debugf("[UploadShard]%sGetToken from %d......\n", self.logPrefix, node.NodeInfo.Id)
-	ctlreq := &pkt.GetNodeCapacityReq{StartTime: uint64(self.uploadBlock.STime),
-		RetryTimes: uint32(self.retrytimes)}
+func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityResp, error) {
+	logrus.Debugf("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
+	ctlreq := &pkt.GetNodeCapacityReq{StartTime: uint64(us.uploadBlock.STime),
+		RetryTimes: uint32(us.retrytimes)}
 	times := 0
 	for {
-		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, self.logPrefix)
+		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, us.logPrefix)
 		times++
 		if err != nil {
+			if strings.Contains(err.Msg, "no handler") {
+				AddError(node.NodeInfo.Id)
+			}
 			node.NodeInfo.SetERR()
 			return times, nil, errors.New(err.Msg)
 		} else {
@@ -108,10 +114,13 @@ func (self *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 	}
 }
 
-func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
-	logrus.Debugf("[UploadShard]%sSendShard %s to %d......\n", self.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
-	msg, err := net.RequestDN(req, &node.NodeInfo.Node, self.logPrefix)
+func (us *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
+	logrus.Debugf("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
+	msg, err := net.RequestDN(req, &node.NodeInfo.Node, us.logPrefix)
 	if err != nil {
+		if strings.Contains(err.Msg, "no handler") {
+			AddError(node.NodeInfo.Id)
+		}
 		node.NodeInfo.SetERR()
 		return nil, errors.New(err.Msg)
 	} else {
@@ -133,40 +142,40 @@ func (self *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (
 	}
 }
 
-func (self *UploadShard) DoSend() {
-	defer self.DoFinish()
-	node := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
+func (us *UploadShard) DoSend() {
+	defer us.DoFinish()
+	node := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
 	for {
 		startTime := time.Now()
-		req := self.MakeRequest(node)
-		rtimes, ctlresp, err := self.GetToken(node)
-		ctrtimes := time.Now().Sub(startTime).Milliseconds()
+		req := us.MakeRequest(node)
+		rtimes, ctlresp, err := us.GetToken(node)
+		ctrtimes := time.Since(startTime).Milliseconds()
 		if err != nil {
-			self.retrytimes++
+			us.retrytimes++
 			node.DecCount()
-			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
+			n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
 			logrus.Errorf("[UploadShard]%sGetNodeCapacity:%s,%s to %d,retry %d times,take times %d ms,retry next node %d\n",
-				self.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
+				us.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
 			node = n
 			continue
 		}
 		node.NodeInfo.SetOK(ctrtimes)
 		req.AllocId = ctlresp.AllocId
-		resp, err1 := self.SendShard(node, req)
-		times := time.Now().Sub(startTime).Milliseconds()
+		resp, err1 := us.SendShard(node, req)
+		times := time.Since(startTime).Milliseconds()
 		if err1 != nil {
-			self.retrytimes++
+			us.retrytimes++
 			node.DecCount()
-			n := self.uploadBlock.Queue.GetNodeStatExcluld(self.blkList)
+			n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
 			logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d ms,retry next node %d\n",
-				self.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times, n.NodeInfo.Id)
+				us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times, n.NodeInfo.Id)
 			node = n
 			continue
 		}
-		self.res.DNSIGN = resp.DNSIGN
-		self.res.NODE = node.NodeInfo
+		us.res.DNSIGN = resp.DNSIGN
+		us.res.NODE = node.NodeInfo
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
-			self.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
+			us.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 		break
 	}
 }

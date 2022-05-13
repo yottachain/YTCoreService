@@ -4,3 +4,4 @@ cache
 /p2phostinfo.log
 log
 /conf/snlistYF.properties
+/conf/userlist.cfg

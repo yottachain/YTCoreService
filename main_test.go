@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	env.Console = true
+	env.Console = false
 }
 
 func Test(t *testing.T) {
