@@ -26,11 +26,13 @@ type UploadObject struct {
 	ERR        atomic.Value
 	activesign chan int
 	PRO        *UpProgress
+	Cond       *sync.Cond
 }
 
 func NewUploadObject(c *Client) *UploadObject {
 	p := &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	o := &UploadObject{UClient: c, ActiveTime: env.NewAtomInt64(0), activesign: make(chan int), PRO: p}
+	o.Cond = sync.NewCond(new(sync.Mutex))
 	return o
 }
 
@@ -104,17 +106,32 @@ func (uploadobject *UploadObject) GetProgress() int32 {
 	return uploadobject.PRO.GetProgress()
 }
 
+var RunningMap sync.Map
+
 func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
+	if obj, has := RunningMap.Load(uploadobject.GetMD5()); has {
+		up := obj.(*UploadObject)
+		up.Cond.Wait()
+		if e := up.ERR.Load(); e != nil {
+			return e.(*pkt.ErrorMessage)
+		} else {
+			return nil
+		}
+	}
+	RunningMap.Store(uploadobject.GetMD5(), uploadobject)
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
-			uploadobject.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
+			uploadobject.ERR.Store(reserr)
 		}
+		RunningMap.Delete(uploadobject.GetMD5())
+		uploadobject.Cond.Broadcast()
 	}()
 	uploadobject.PRO.Length.Set(uploadobject.Encoder.GetLength())
 	err := uploadobject.initUpload(uploadobject.Encoder.GetVHW(), uploadobject.Encoder.GetLength())
 	if err != nil {
+		uploadobject.ERR.Store(err)
 		return err
 	}
 	logrus.Infof("[UploadObject][%s]Start upload object...\n", uploadobject.VNU.Hex())
