@@ -26,13 +26,11 @@ type UploadObject struct {
 	ERR        atomic.Value
 	activesign chan int
 	PRO        *UpProgress
-	Cond       *sync.Cond
 }
 
 func NewUploadObject(c *Client) *UploadObject {
 	p := &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	o := &UploadObject{UClient: c, ActiveTime: env.NewAtomInt64(0), activesign: make(chan int), PRO: p}
-	o.Cond = sync.NewCond(new(sync.Mutex))
 	return o
 }
 
@@ -106,33 +104,35 @@ func (uploadobject *UploadObject) GetProgress() int32 {
 	return uploadobject.PRO.GetProgress()
 }
 
-var RunningMap sync.Map
+//var RunningMap sync.Map
 
 func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
-	if obj, has := RunningMap.Load(uploadobject.GetMD5()); has {
-		up := obj.(*UploadObject)
-		logrus.Infof("[UploadObject][%s]Uploading...\n", up.VNU.Hex())
-		up.Cond.Wait()
-		var errmsg *pkt.ErrorMessage
-		if e := up.ERR.Load(); e != nil {
-			errmsg = e.(*pkt.ErrorMessage)
-		}
-		if errmsg != nil {
-			logrus.Errorf("[UploadObject][%s]Receive notification,Upload ERR:%s\n", uploadobject.VNU.Hex(), pkt.ToError(errmsg))
-		} else {
-			logrus.Infof("[UploadObject][%s]Receive notification,Upload object OK.\n", uploadobject.VNU.Hex())
-		}
-		return errmsg
-	}
-	RunningMap.Store(uploadobject.GetMD5(), uploadobject)
+	/*
+		key := hex.EncodeToString(uploadobject.GetMD5())
+		if obj, has := RunningMap.Load(key); has {
+			up := obj.(*UploadObject)
+			logrus.Infof("[UploadObject][%s]Uploading...\n", up.VNU.Hex())
+			up.Cond.Wait()
+			var errmsg *pkt.ErrorMessage
+			if e := up.ERR.Load(); e != nil {
+				errmsg = e.(*pkt.ErrorMessage)
+			}
+			if errmsg != nil {
+				logrus.Errorf("[UploadObject][%s]Receive notification,Upload ERR:%s\n", uploadobject.VNU.Hex(), pkt.ToError(errmsg))
+			} else {
+				logrus.Infof("[UploadObject][%s]Receive notification,Upload object OK.\n", uploadobject.VNU.Hex())
+			}
+			return errmsg
+		}*/
+	//RunningMap.Store(key, uploadobject)
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 			uploadobject.ERR.Store(reserr)
 		}
-		RunningMap.Delete(uploadobject.GetMD5())
-		uploadobject.Cond.Broadcast()
+		//RunningMap.Delete(key)
+		//uploadobject.Cond.Broadcast()
 	}()
 	uploadobject.PRO.Length.Set(uploadobject.Encoder.GetLength())
 	err := uploadobject.initUpload(uploadobject.Encoder.GetVHW(), uploadobject.Encoder.GetLength())
