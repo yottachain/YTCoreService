@@ -249,7 +249,7 @@ func (self *UploadBlock) UploadBlockDedup() {
 	keu := codec.ECBEncryptNoPad(ks, self.UPOBJ.UClient.StoreKey.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, self.BLK.KD)
 	var ress2 []*UploadShardResult = nil
-	if env.LRC2 && !enc.IsCopyShard() && size > env.LRCShards {
+	if env.LRC2 {
 		ress2 = make([]*UploadShardResult, size)
 	}
 	var ids []int32
@@ -286,7 +286,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	bakcount := 0
 	waitcount := 0
 	if ress2 != nil {
-		bakcount = size * env.LRC2Num / 100
+		bakcount = size * env.ExtraPercent / 100
 		for _, res := range ress2 {
 			if res != nil {
 				bakcount--
@@ -309,11 +309,13 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			}
 		}
 	}
-	num, er := uploads.WaitUpload()
+	num, er := uploads.WaitUpload(enc.IsCopyShard())
 	if er != nil {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
 	}
-	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, num, size, time.Now().Sub(startTime).Milliseconds())
+	times := time.Since(startTime).Milliseconds()
+	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, num, size, times)
+	AddBlockOK(times)
 	startTime = time.Now()
 	uid := int32(self.UPOBJ.UClient.UserId)
 	kn := int32(self.UPOBJ.UClient.SignKey.KeyNumber)
@@ -326,7 +328,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 		ar = enc.DataCount
 	}
 	var errmsg *pkt.ErrorMessage
-	if ress2 == nil {
+	if ress2 == nil || enc.IsCopyShard() {
 		i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
 		vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 		req := &pkt.UploadBlockEndReqV2{
@@ -397,12 +399,10 @@ func (self *UploadBlock) CheckErrorMessage(ress, ress2 []*UploadShardResult, jso
 					ress[index] = nil
 				}
 			}
-			if ress2 != nil {
-				for index, res := range ress2 {
-					if env.IsExistInArray(res.NODE.Id, ids) {
-						logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODE.Id)
-						ress2[index] = nil
-					}
+			for index, res := range ress2 {
+				if env.IsExistInArray(res.NODE.Id, ids) {
+					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODE.Id)
+					ress2[index] = nil
 				}
 			}
 			return ids
@@ -411,10 +411,8 @@ func (self *UploadBlock) CheckErrorMessage(ress, ress2 []*UploadShardResult, jso
 	for index := range ress {
 		ress[index] = nil
 	}
-	if ress2 != nil {
-		for index := range ress2 {
-			ress2[index] = nil
-		}
+	for index := range ress2 {
+		ress2[index] = nil
 	}
 	return nil
 }

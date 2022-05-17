@@ -273,8 +273,10 @@ func StartApi() {
 	go StartPreAllocNode()
 	go DoCache()
 	go StartSync()
-	//go AutoReg()
 	AutoReg()
+	if env.UploadStat {
+		go StartUploadStat()
+	}
 }
 
 func InitSuperList() {

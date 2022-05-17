@@ -71,7 +71,7 @@ func NewUpLoad(logpre string, ress []*UploadShardResult, ress2 []*UploadShardRes
 	return dns
 }
 
-func (upLoadShards *UpLoadShards) WaitUpload() (int, error) {
+func (upLoadShards *UpLoadShards) WaitUpload(iscopymode bool) (int, error) {
 	startTime := time.Now().Unix()
 	size := len(upLoadShards.ress)
 	for ii := 0; ii < size; ii++ {
@@ -79,6 +79,10 @@ func (upLoadShards *UpLoadShards) WaitUpload() (int, error) {
 		if sign < 0 {
 			return 0, errors.New("")
 		}
+	}
+	if iscopymode {
+		atomic.StoreInt32(upLoadShards.cancel, 1)
+		return size, nil
 	}
 	for ii := 0; ii < upLoadShards.bakcount; ii++ {
 		sign := <-upLoadShards.bakSign
@@ -275,6 +279,7 @@ func (us *UploadShard) DoSend() {
 		us.res.NODE = node.NodeInfo
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			us.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
+		AddShardOK(times)
 		break
 	}
 }

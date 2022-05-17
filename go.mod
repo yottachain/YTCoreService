@@ -9,6 +9,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.5.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
+	github.com/grd/statistics v0.0.0-20130405091615-5af75da930c9 // indirect
 	github.com/kardianos/service v1.1.0
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/libp2p/go-libp2p-core v0.3.1

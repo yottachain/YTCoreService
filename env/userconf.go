@@ -32,9 +32,9 @@ var LRCBugTime int64 = -1
 
 var LRC2 = false
 var CopyNum = 10
-var LRCShards = 40
-var LRC2Num = 100
+var ExtraPercent = 100
 var BlkTimeout = 60
+var UploadStat = false
 
 var cfg *Config
 
@@ -102,10 +102,10 @@ func readClientProperties() {
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
 
-	CopyNum = config.GetRangeInt("CopyNum", 5, 36, 10)
-	LRCShards = config.GetRangeInt("LRCShards", 5, 164, 50)
-	LRC2Num = config.GetRangeInt("LRC2Num", 0, 100, 30)
+	CopyNum = config.GetRangeInt("CopyNum", 5, 18, 10)
+	ExtraPercent = config.GetRangeInt("ExtraPercent", 0, 100, 30)
 	BlkTimeout = config.GetRangeInt("BlkTimeout", 0, 60*5, 30)
+	UploadStat = config.GetBool("UploadStat", false)
 
 	LRC2 = config.GetBool("LRC2", true)
 	if config.HasValue("LRCBugTime") {

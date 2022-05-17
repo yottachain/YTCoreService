@@ -143,7 +143,7 @@ func (self *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 	rsize := int32(self.EncBLK.RealSize)
 	ress := make([]*UploadShardResult, size)
 	var ress2 []*UploadShardResult = nil
-	if env.LRC2 && !enc.IsCopyShard() && size > env.LRCShards {
+	if env.LRC2 {
 		ress2 = make([]*UploadShardResult, size)
 	}
 	var ids []int32
