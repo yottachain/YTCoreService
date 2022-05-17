@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/hex"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -104,35 +106,23 @@ func (uploadobject *UploadObject) GetProgress() int32 {
 	return uploadobject.PRO.GetProgress()
 }
 
-//var RunningMap sync.Map
+var RunningMap sync.Map
 
 func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
-	/*
-		key := hex.EncodeToString(uploadobject.GetMD5())
-		if obj, has := RunningMap.Load(key); has {
-			up := obj.(*UploadObject)
-			logrus.Infof("[UploadObject][%s]Uploading...\n", up.VNU.Hex())
-			up.Cond.Wait()
-			var errmsg *pkt.ErrorMessage
-			if e := up.ERR.Load(); e != nil {
-				errmsg = e.(*pkt.ErrorMessage)
-			}
-			if errmsg != nil {
-				logrus.Errorf("[UploadObject][%s]Receive notification,Upload ERR:%s\n", uploadobject.VNU.Hex(), pkt.ToError(errmsg))
-			} else {
-				logrus.Infof("[UploadObject][%s]Receive notification,Upload object OK.\n", uploadobject.VNU.Hex())
-			}
-			return errmsg
-		}*/
-	//RunningMap.Store(key, uploadobject)
+	key := hex.EncodeToString(uploadobject.GetMD5())
+	if obj, has := RunningMap.Load(key); has {
+		up := obj.(*UploadObject)
+		logrus.Infof("[UploadObject][%s]Uploading...\n", up.VNU.Hex())
+		return pkt.NewErrorMsg(pkt.REPEAT_REQ, fmt.Sprintf("Progress:%d", up.PRO.GetProgress()))
+	}
+	RunningMap.Store(key, uploadobject)
 	defer func() {
+		RunningMap.Delete(key)
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObject]")
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 			uploadobject.ERR.Store(reserr)
 		}
-		//RunningMap.Delete(key)
-		//uploadobject.Cond.Broadcast()
 	}()
 	uploadobject.PRO.Length.Set(uploadobject.Encoder.GetLength())
 	err := uploadobject.initUpload(uploadobject.Encoder.GetVHW(), uploadobject.Encoder.GetLength())

@@ -32,7 +32,7 @@ func NotInBlackListV3(oklist []*pkt.UploadBlockEndReqV3_OkList, uid int32) []int
 	ids := v.([]int32)
 	var inblackids []int32
 	for _, req := range oklist {
-		if req.NODEID == nil || req.NODEID2 == nil {
+		if req.NODEID == nil {
 			logrus.Error("[UploadBLK]NodeId is nil,UserId:%d.\n", uid)
 			continue
 		}
@@ -40,7 +40,7 @@ func NotInBlackListV3(oklist []*pkt.UploadBlockEndReqV3_OkList, uid int32) []int
 			logrus.Warnf("[UploadBLK]DN_IN_BLACKLIST ERR,NodeId:%d,UserId:%d.\n", *req.NODEID, uid)
 			inblackids = append(inblackids, *req.NODEID)
 		}
-		if env.IsExistInArray(*req.NODEID2, ids) {
+		if req.NODEID2 != nil && env.IsExistInArray(*req.NODEID2, ids) {
 			logrus.Warnf("[UploadBLK]DN_IN_BLACKLIST ERR,NodeId:%d,UserId:%d.\n", *req.NODEID2, uid)
 			inblackids = append(inblackids, *req.NODEID2)
 		}

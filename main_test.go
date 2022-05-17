@@ -38,7 +38,7 @@ func Test(t *testing.T) {
 		return
 	}
 	call()
-	select {}
+	//select {}
 }
 
 var MemCond = sync.NewCond(new(sync.Mutex))
@@ -46,12 +46,24 @@ var MemSize int64 = 0
 var MaxSize int64 = 50
 
 func call() {
-	atomicint := env.NewAtomInt64(1)
-	for ii := 0; ii < 10; ii++ {
-		i := atomicint.Add(10)
-		fmt.Println(i)
-		ii := atomicint.Add(-5)
-		fmt.Println(ii)
+	okSign := make(chan int, 10)
+	go func() {
+		for ii := 0; ii < 15; ii++ {
+			time.Sleep(time.Second)
+
+			okSign <- 1
+		}
+	}()
+	timeout := time.After(time.Second * 20)
+	for ii := 0; ii < 15; ii++ {
+		select {
+		case <-okSign:
+			fmt.Println("ok")
+		case <-timeout:
+			fmt.Println("time out")
+			//close(okSign)
+			return
+		}
 	}
 }
 

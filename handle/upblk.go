@@ -372,7 +372,7 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	logrus.Debugf("[UploadBLK]Receive UploadBlockEnd request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
 	inblkids := NotInBlackList(h.m.Oklist, h.user.UserID)
-	if inblkids != nil && len(inblkids) > 0 {
+	if len(inblkids) > 0 {
 		txt, _ := json.Marshal(inblkids)
 		jsonstr := ""
 		if txt != nil {
@@ -590,7 +590,7 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 	logrus.Debugf("[UploadBLK]Receive UploadBlockEndV3 request:/%s/%d\n", h.vnu.Hex(), *h.m.Id)
 	startTime := time.Now()
 	inblkids := NotInBlackListV3(h.m.Oklist, h.user.UserID)
-	if inblkids != nil && len(inblkids) > 0 {
+	if len(inblkids) > 0 {
 		txt, _ := json.Marshal(inblkids)
 		jsonstr := ""
 		if txt != nil {
@@ -621,16 +621,22 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 	signs := make([][]string, shardcount)
 	nodeidsls := []int32{}
 	for _, v := range h.m.Oklist {
-		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.NODEID2 == nil || v.VHF == nil || v.DNSIGN == nil || v.DNSIGN2 == nil {
+		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.VHF == nil || v.DNSIGN == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
-		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, NodeId2: *v.NODEID2, VHF: v.VHF}
-		signs[*v.SHARDID] = []string{*v.DNSIGN, *v.DNSIGN2}
+		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, VHF: v.VHF}
+		if v.NODEID2 != nil && v.DNSIGN2 != nil {
+			signs[*v.SHARDID] = []string{*v.DNSIGN, *v.DNSIGN2}
+			shardMetas[*v.SHARDID].NodeId2 = *v.NODEID2
+			if !env.IsExistInArray(int32(*v.NODEID2), nodeidsls) {
+				nodeidsls = append(nodeidsls, int32(*v.NODEID2))
+			}
+		} else {
+			signs[*v.SHARDID] = []string{*v.DNSIGN, ""}
+			shardMetas[*v.SHARDID].NodeId2 = 0
+		}
 		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
-		}
-		if !env.IsExistInArray(int32(*v.NODEID2), nodeidsls) {
-			nodeidsls = append(nodeidsls, int32(*v.NODEID2))
 		}
 	}
 	msgerr := VerifyShards(shardMetas, signs, nodeidsls, vbi, *h.m.AR, h.m.VHB, true)

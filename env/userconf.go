@@ -33,6 +33,8 @@ var LRCBugTime int64 = -1
 var LRC2 = false
 var CopyNum = 10
 var LRCShards = 40
+var LRC2Num = 100
+var BlkTimeout = 60
 
 var cfg *Config
 
@@ -102,6 +104,8 @@ func readClientProperties() {
 
 	CopyNum = config.GetRangeInt("CopyNum", 5, 36, 10)
 	LRCShards = config.GetRangeInt("LRCShards", 5, 164, 50)
+	LRC2Num = config.GetRangeInt("LRC2Num", 0, 100, 30)
+	BlkTimeout = config.GetRangeInt("BlkTimeout", 0, 60*5, 30)
 
 	LRC2 = config.GetBool("LRC2", true)
 	if config.HasValue("LRCBugTime") {

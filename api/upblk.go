@@ -277,26 +277,40 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	originalSize int64, ress []*UploadShardResult, ress2 []*UploadShardResult, ids []int32) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
 	startTime := time.Now()
-	wgroup := sync.WaitGroup{}
-	num := 0
+	count := 0
+	for _, res := range ress {
+		if res == nil {
+			count++
+		}
+	}
+	bakcount := 0
+	waitcount := 0
+	if ress2 != nil {
+		bakcount = size * env.LRC2Num / 100
+		for _, res := range ress2 {
+			if res != nil {
+				bakcount--
+			} else {
+				waitcount++
+			}
+		}
+		waitcount = waitcount - bakcount
+	}
+	uploads := NewUpLoad(self.logPrefix, ress, ress2, count, bakcount, waitcount)
 	for index, shd := range enc.Shards {
 		if ress[index] == nil {
-			wgroup.Add(1)
-			ress[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids, false)
-			num++
+			StartUploadShard(self, shd, int32(index), uploads, ids, false)
 		}
 	}
 	if ress2 != nil {
 		for index, shd := range enc.Shards {
 			if ress2[index] == nil {
-				wgroup.Add(1)
-				ress2[index] = StartUploadShard(self, shd, int32(index), &wgroup, ids, true)
-				num++
+				StartUploadShard(self, shd, int32(index), uploads, ids, true)
 			}
 		}
 	}
-	wgroup.Wait()
-	if self.CheckSendShardPanic(ress) {
+	num, er := uploads.WaitUpload()
+	if er != nil {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
 	}
 	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, num, size, time.Now().Sub(startTime).Milliseconds())
@@ -363,7 +377,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	if errmsg != nil {
 		var ids []int32
 		if errmsg.Code == pkt.DN_IN_BLACKLIST {
-			ids = self.CheckErrorMessage(ress, errmsg.Msg)
+			ids = self.CheckErrorMessage(ress, ress2, errmsg.Msg)
 		}
 		return ids, errmsg
 	} else {
@@ -372,17 +386,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	}
 }
 
-func (self *UploadBlock) CheckSendShardPanic(ress []*UploadShardResult) bool {
-	for index, res := range ress {
-		if res.NODE == nil {
-			ress[index] = nil
-			return true
-		}
-	}
-	return false
-}
-
-func (self *UploadBlock) CheckErrorMessage(ress []*UploadShardResult, jsonstr string) []int32 {
+func (self *UploadBlock) CheckErrorMessage(ress, ress2 []*UploadShardResult, jsonstr string) []int32 {
 	if jsonstr != "" {
 		ids := []int32{}
 		err := json.Unmarshal([]byte(jsonstr), &ids)
@@ -393,11 +397,24 @@ func (self *UploadBlock) CheckErrorMessage(ress []*UploadShardResult, jsonstr st
 					ress[index] = nil
 				}
 			}
+			if ress2 != nil {
+				for index, res := range ress2 {
+					if env.IsExistInArray(res.NODE.Id, ids) {
+						logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODE.Id)
+						ress2[index] = nil
+					}
+				}
+			}
 			return ids
 		}
 	}
 	for index := range ress {
 		ress[index] = nil
+	}
+	if ress2 != nil {
+		for index := range ress2 {
+			ress2[index] = nil
+		}
 	}
 	return nil
 }
@@ -423,8 +440,10 @@ func ToUploadBlockEndReqV3_OkList(res []*UploadShardResult, res2 []*UploadShardR
 			NODEID:  &r.NODE.Id,
 			VHF:     r.VHF,
 			DNSIGN:  &r.DNSIGN,
-			NODEID2: &res2[index].NODE.Id,
-			DNSIGN2: &res2[index].DNSIGN,
+		}
+		if res2[index] != nil {
+			oklist[index].NODEID2 = &res2[index].NODE.Id
+			oklist[index].DNSIGN2 = &res2[index].DNSIGN
 		}
 	}
 	return oklist
