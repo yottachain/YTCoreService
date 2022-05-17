@@ -18,6 +18,9 @@
             "request": "launch",
             "mode": "test",
             "program": "${workspaceRoot}/main_test.go",
+            "env":{
+                "YTFS_HOME":"D:/YTCoreService"
+            },
             "args": ["up&down"]
         },  
         {

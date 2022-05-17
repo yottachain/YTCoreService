@@ -462,23 +462,9 @@ func VerifyShards(shardMetas []*dao.ShardMeta, signs [][]string, nodeidsls []int
 		logrus.Errorf("[UploadBLK]Some Nodes have been cancelled\n")
 		return pkt.NewError(pkt.NO_ENOUGH_NODE)
 	}
-	shdnum := len(shardMetas)
-	nodenum := len(nodeidsls)
-	num := 0
-	if lrc2 {
-		num = (shdnum * 2) / nodenum
-		if (shdnum*2)%nodenum > 0 {
-			num = num + 1
-		}
-	} else {
-		num = shdnum / nodenum
-		if shdnum%nodenum > 0 {
-			num = num + 1
-		}
-	}
-	if num > env.ShardNumPerNode {
-		logrus.Warnf("[UploadBLK]Number of nodes less than %d/%d\n", nodenum, shdnum)
-		return pkt.NewError(pkt.NO_ENOUGH_NODE)
+	ma, e := sumShardCount(shardMetas, lrc2)
+	if e != nil {
+		return e
 	}
 	md5Digest := md5.New()
 	for index, m := range shardMetas {
@@ -501,31 +487,43 @@ func VerifyShards(shardMetas []*dao.ShardMeta, signs [][]string, nodeidsls []int
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	err = saveShardCount(vbi, shardMetas, lrc2)
+	err = saveShardCount(vbi, ma)
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	return nil
 }
 
-func saveShardCount(vbi int64, ls []*dao.ShardMeta, lrc2 bool) error {
+func sumShardCount(ls []*dao.ShardMeta, lrc2 bool) (map[int32]int16, *pkt.ErrorMessage) {
 	m := make(map[int32]int16)
 	for _, shard := range ls {
 		num, ok := m[shard.NodeId]
 		if ok {
 			m[shard.NodeId] = num + 1
+			if m[shard.NodeId] > int16(env.ShardNumPerNode) {
+				logrus.Warnf("[UploadBLK]ShardCount(%d) at node(%d) exceeds the upper limit\n", m[shard.NodeId], shard.NodeId)
+				return nil, pkt.NewError(pkt.NO_ENOUGH_NODE)
+			}
 		} else {
 			m[shard.NodeId] = 1
 		}
-		if lrc2 {
+		if lrc2 && shard.NodeId2 != 0 {
 			num, ok = m[shard.NodeId2]
 			if ok {
 				m[shard.NodeId2] = num + 1
+				if m[shard.NodeId2] > int16(env.ShardNumPerNode) {
+					logrus.Warnf("[UploadBLK]ShardCount(%d) at node(%d) exceeds the upper limit\n", m[shard.NodeId2], shard.NodeId2)
+					return nil, pkt.NewError(pkt.NO_ENOUGH_NODE)
+				}
 			} else {
 				m[shard.NodeId2] = 1
 			}
 		}
 	}
+	return m, nil
+}
+
+func saveShardCount(vbi int64, m map[int32]int16) error {
 	bs := dao.ToBytes(m)
 	return dao.SaveNodeShardCount(vbi, bs)
 }

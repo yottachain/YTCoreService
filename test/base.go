@@ -17,14 +17,14 @@ const epos = 1024*1024*8 + 12
 
 func UpAndDown() {
 	initApi()
-	for ii := 0; ii < 20; ii++ {
+	for ii := 0; ii < 1; ii++ {
 		go testud()
 	}
 	select {}
 }
 
 func testud() {
-	for ii := 0; ii < 5; ii++ {
+	for ii := 0; ii < 1; ii++ {
 		vhw, _ := upload()
 		if vhw != nil {
 			download(vhw)
