@@ -618,17 +618,20 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 	shardMetas := make([]*dao.ShardMeta, shardcount)
 	signs := make([][]string, shardcount)
 	nodeidsls := []int32{}
+	scount := 0
 	for _, v := range h.m.Oklist {
 		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.VHF == nil || v.DNSIGN == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
 		shardMetas[*v.SHARDID] = &dao.ShardMeta{VFI: int64(*v.SHARDID), NodeId: *v.NODEID, VHF: v.VHF}
+		scount++
 		if v.NODEID2 != nil && v.DNSIGN2 != nil {
 			signs[*v.SHARDID] = []string{*v.DNSIGN, *v.DNSIGN2}
 			shardMetas[*v.SHARDID].NodeId2 = *v.NODEID2
 			if !env.IsExistInArray(int32(*v.NODEID2), nodeidsls) {
 				nodeidsls = append(nodeidsls, int32(*v.NODEID2))
 			}
+			scount++
 		} else {
 			signs[*v.SHARDID] = []string{*v.DNSIGN, ""}
 			shardMetas[*v.SHARDID].NodeId2 = 0
@@ -648,7 +651,7 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 	}
 	logrus.Debugf("[UploadBLK]/%s/%d OK,take times %d ms\n", h.vnu.Hex(), *h.m.Id, time.Now().Sub(startTime).Milliseconds())
 	startTime = time.Now()
-	usedSpace := uint64(env.PFL * shardcount * 2)
+	usedSpace := uint64(env.PFL * scount)
 	vnustr := h.vnu.Hex()
 	ref := &pkt.Refer{VBI: meta.VBI, SuperID: uint8(env.SuperNodeID), OriginalSize: *h.m.OriginalSize,
 		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}

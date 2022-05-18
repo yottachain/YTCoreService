@@ -15,7 +15,7 @@ var ShardLock sync.RWMutex
 var BlockOKTimes []int64
 var BlockLock sync.RWMutex
 
-const maxSize = 10000 * 500
+const maxSize = 10000 * 100
 
 func StartUploadStat() {
 	waittimes := 0
