@@ -63,7 +63,10 @@ func StartPreAllocNode() {
 			time.Sleep(time.Duration(15) * time.Second)
 			continue
 		} else {
-			time.Sleep(time.Duration(15) * time.Second)
+			if DNList.Len() < env.PNN {
+				time.Sleep(time.Duration(65) * time.Second)
+				continue
+			}
 		}
 		cond.L.Lock()
 		cond.Wait()
@@ -102,12 +105,14 @@ func PreAllocNode(c *Client) error {
 					ns.Weight = *n.Weight
 				}
 				//logrus.Debugf("[PreAllocNode]Return %d,Weight:%f\n", ns.Id, ns.Weight)
-				nodemap[ns.Id] = ns
+				if !IsError(ns.Id) {
+					nodemap[ns.Id] = ns
+				}
 			}
 			nlen := len(nodemap)
 			if nlen > 0 {
 				DNList.UpdateNodeList(nodemap)
-				logrus.Infof("[PreAllocNode]Return %d nodes,Excludes %d nodes.\n", nlen, len(req.Excludes))
+				logrus.Infof("[PreAllocNode]Return %d nodes,Excludes %d nodes,List len:%d.\n", nlen, len(req.Excludes), DNList.Len())
 				return nil
 			}
 		}
@@ -118,19 +123,16 @@ func PreAllocNode(c *Client) error {
 	return errors.New("Return err msg")
 }
 
-var ERR_LIST_CACHE = cache.New(time.Duration(60)*time.Minute, time.Duration(5)*time.Second)
-
-func GetExpiredTime() time.Duration {
-	if env.PTR == 0 {
-		return time.Duration(180) * time.Second
-	} else {
-		return time.Duration(env.PTR*60*60) * time.Second
-	}
-}
+var ERR_LIST_CACHE = cache.New(time.Duration(180)*time.Minute, time.Duration(5)*time.Second)
 
 func AddError(id int32) {
-	ERR_LIST_CACHE.Set(strconv.Itoa(int(id)), "", GetExpiredTime())
+	ERR_LIST_CACHE.SetDefault(strconv.Itoa(int(id)), "")
 	DNList.Delete(id)
+}
+
+func IsError(id int32) bool {
+	_, ok := ERR_LIST_CACHE.Get(strconv.Itoa(int(id)))
+	return ok
 }
 
 func ErrorList() []int32 {
@@ -140,7 +142,7 @@ func ErrorList() []int32 {
 		id, err := strconv.Atoi(idstr)
 		if err == nil {
 			ids = append(ids, int32(id))
-			if len(ids) >= 300 {
+			if len(ids) >= env.PNN {
 				break
 			}
 		}

@@ -55,6 +55,7 @@ type UpLoadShards struct {
 	waitcount int
 	ress      []*UploadShardResult
 	ress2     []*UploadShardResult
+	count     int
 }
 
 func NewUpLoad(logpre string, ress []*UploadShardResult, ress2 []*UploadShardResult, chansize, chansize2, chansize3 int) *UpLoadShards {
@@ -71,29 +72,29 @@ func NewUpLoad(logpre string, ress []*UploadShardResult, ress2 []*UploadShardRes
 	return dns
 }
 
-func (upLoadShards *UpLoadShards) WaitUpload(iscopymode bool) (int, error) {
+func (upLoadShards *UpLoadShards) WaitUpload(iscopymode bool) error {
 	startTime := time.Now().Unix()
 	size := len(upLoadShards.ress)
 	for ii := 0; ii < size; ii++ {
 		sign := <-upLoadShards.okSign
 		if sign < 0 {
-			return 0, errors.New("")
+			return errors.New("")
 		}
 	}
 	if iscopymode {
 		atomic.StoreInt32(upLoadShards.cancel, 1)
-		return size, nil
+		return nil
 	}
 	for ii := 0; ii < upLoadShards.bakcount; ii++ {
 		sign := <-upLoadShards.bakSign
 		if sign < 0 {
-			return 0, errors.New("")
+			return errors.New("")
 		}
 	}
 	t := int64(env.BlkTimeout) - (time.Now().Unix() - startTime)
 	if t <= 0 {
 		atomic.StoreInt32(upLoadShards.cancel, 1)
-		return size + upLoadShards.bakcount, nil
+		return nil
 	}
 	timeout := time.After(time.Second * time.Duration(t))
 	for ii := 0; ii < upLoadShards.waitcount; ii++ {
@@ -101,17 +102,24 @@ func (upLoadShards *UpLoadShards) WaitUpload(iscopymode bool) (int, error) {
 		case <-upLoadShards.bakSign:
 		case <-timeout:
 			atomic.StoreInt32(upLoadShards.cancel, 1)
-			return size + upLoadShards.bakcount + ii, nil
+			return nil
 		}
 	}
 	atomic.StoreInt32(upLoadShards.cancel, 1)
-	return size + upLoadShards.bakcount + upLoadShards.waitcount, nil
+	return nil
+}
+
+func (upLoadShards *UpLoadShards) Count(iscopymode bool) int {
+	upLoadShards.RLock()
+	defer upLoadShards.RUnlock()
+	if iscopymode {
+		return len(upLoadShards.ress)
+	} else {
+		return upLoadShards.count
+	}
 }
 
 func (upLoadShards *UpLoadShards) OnResponse(rec *UploadShardResult) {
-	if upLoadShards.IsCancle() {
-		return
-	}
 	upLoadShards.Lock()
 	defer upLoadShards.Unlock()
 	if upLoadShards.ress[rec.SHARDID] == nil {
@@ -120,6 +128,7 @@ func (upLoadShards *UpLoadShards) OnResponse(rec *UploadShardResult) {
 		} else {
 			upLoadShards.ress[rec.SHARDID] = rec
 			upLoadShards.okSign <- 1
+			upLoadShards.count++
 		}
 	} else {
 		if rec.NODE == nil {
@@ -127,6 +136,7 @@ func (upLoadShards *UpLoadShards) OnResponse(rec *UploadShardResult) {
 		} else {
 			upLoadShards.ress2[rec.SHARDID] = rec
 			upLoadShards.bakSign <- 1
+			upLoadShards.count++
 		}
 	}
 }

@@ -9,10 +9,10 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-var ShardOKTimes []int64
+var ShardOKTimes []int64 = []int64{}
 var ShardLock sync.RWMutex
 
-var BlockOKTimes []int64
+var BlockOKTimes []int64 = []int64{}
 var BlockLock sync.RWMutex
 
 const maxSize = 10000 * 100

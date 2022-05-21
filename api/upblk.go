@@ -259,7 +259,6 @@ func (self *UploadBlock) UploadBlockDedup() {
 			if err.Code == pkt.DN_IN_BLACKLIST {
 				ids = blkls
 				logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
-				NotifyAllocNode(true)
 				retrytimes++
 				continue
 			}
@@ -309,12 +308,12 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			}
 		}
 	}
-	num, er := uploads.WaitUpload(enc.IsCopyShard())
+	er := uploads.WaitUpload(enc.IsCopyShard())
 	if er != nil {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
 	}
 	times := time.Since(startTime).Milliseconds()
-	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, num, size, times)
+	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", self.logPrefix, uploads.Count(enc.IsCopyShard()), size, times)
 	AddBlockOK(times)
 	startTime = time.Now()
 	uid := int32(self.UPOBJ.UClient.UserId)
@@ -331,6 +330,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 	if ress2 == nil || enc.IsCopyShard() {
 		i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
 		vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
+		uploads.RLock()
 		req := &pkt.UploadBlockEndReqV2{
 			UserId:       &uid,
 			SignData:     &self.UPOBJ.UClient.SignKey.Sign,
@@ -347,6 +347,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
 			Vbi:          &self.STime,
 		}
+		uploads.RUnlock()
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
 			req.SignData = &sign
@@ -354,6 +355,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 		_, errmsg = net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
 	} else {
 		vnu := self.UPOBJ.VNU.Hex()
+		uploads.RLock()
 		req := &pkt.UploadBlockEndReqV3{
 			UserId:       &uid,
 			SignData:     &self.UPOBJ.UClient.SignKey.Sign,
@@ -370,6 +372,7 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
 			Vbi:          &self.STime,
 		}
+		uploads.RUnlock()
 		if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
 			req.SignData = &sign
@@ -397,12 +400,14 @@ func (self *UploadBlock) CheckErrorMessage(ress, ress2 []*UploadShardResult, jso
 				if env.IsExistInArray(res.NODE.Id, ids) {
 					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODE.Id)
 					ress[index] = nil
+					AddError(res.NODE.Id)
 				}
 			}
 			for index, res := range ress2 {
 				if env.IsExistInArray(res.NODE.Id, ids) {
 					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", self.logPrefix, res.NODE.Id)
 					ress2[index] = nil
+					AddError(res.NODE.Id)
 				}
 			}
 			return ids

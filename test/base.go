@@ -11,23 +11,23 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const testsize = 1024 * 1024 * 10
+const testsize = 1024*1024*9 + 8192
 const spos = 1024*1024*5 + 798
 const epos = 1024*1024*8 + 12
 
 func UpAndDown() {
 	initApi()
-	for ii := 0; ii < 1; ii++ {
+	for ii := 0; ii < 20; ii++ {
 		go testud()
 	}
 	select {}
 }
 
 func testud() {
-	for ii := 0; ii < 1; ii++ {
+	for ii := 0; ii < 5; ii++ {
 		vhw, _ := upload()
 		if vhw != nil {
-			download(vhw)
+			//download(vhw)
 		}
 	}
 	//downloadRange(vhw)
