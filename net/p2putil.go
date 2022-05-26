@@ -20,6 +20,24 @@ type Node struct {
 	Weight float64
 }
 
+func CallDN(msg proto.Message, dn *Node, log_prefix string, timeout int64) (proto.Message, *pkt.ErrorMessage) {
+	data, name, msgtype, merr := pkt.MarshalMsg(msg)
+	if merr != nil {
+		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
+	}
+	var log_pre string
+	if log_prefix == "" {
+		log_pre = fmt.Sprintf("[%s][%d]", name, dn.Id)
+	} else {
+		log_pre = fmt.Sprintf("[%s][%d]%s", name, dn.Id, log_prefix)
+	}
+	client, err := NewClient(dn.Nodeid)
+	if err != nil {
+		return nil, err
+	}
+	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false, time.Millisecond*time.Duration(timeout))
+}
+
 func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *pkt.ErrorMessage) {
 	data, name, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
@@ -35,7 +53,7 @@ func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *
 	if err != nil {
 		return nil, err
 	}
-	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false)
+	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false, time.Millisecond*time.Duration(env.Writetimeout))
 }
 
 func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, retry int, nowait bool) (proto.Message, *pkt.ErrorMessage) {
@@ -64,7 +82,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 			if err != nil {
 				return nil, err
 			}
-			resmsg, errmsg = client.Request(int32(msgtype), data, snclient.TcpAddr, log_pre, nowait)
+			resmsg, errmsg = client.Request(int32(msgtype), data, snclient.TcpAddr, log_pre, nowait, time.Millisecond*time.Duration(env.Writetimeout))
 		}
 		if errmsg != nil {
 			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {

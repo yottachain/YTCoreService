@@ -189,7 +189,7 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 		RetryTimes: uint32(us.retrytimes)}
 	times := 0
 	for {
-		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node, us.logPrefix)
+		msg, err := net.CallDN(ctlreq, &node.NodeInfo.Node, us.logPrefix, int64(env.GetTokenTimeout))
 		times++
 		if err != nil {
 			if strings.Contains(err.Msg, "no handler") {

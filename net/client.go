@@ -104,7 +104,7 @@ func (client *TcpClient) IsActive() bool {
 	return time.Now().Unix()-client.lastTime.Value() <= env.CONN_EXPIRED
 }
 
-func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
+func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_pre string, nowait bool, tout time.Duration) (proto.Message, *pkt.ErrorMessage) {
 	if atomic.LoadInt32(client.statu) == 1 {
 		addrString := AddrsToString(addrs)
 		logmsg := fmt.Sprintf("%s Connection destroyed!", addrString)
@@ -112,11 +112,11 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 	}
 	client.lastTime.Set(time.Now().Unix())
-	err := client.connect(addrs, log_pre, nowait)
+	err := client.connect(addrs, log_pre, nowait, tout)
 	if err != nil {
 		return nil, err
 	}
-	timeout := time.Millisecond * time.Duration(env.Writetimeout)
+	timeout := tout
 	if nowait {
 		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
 	}
@@ -169,7 +169,7 @@ func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, mad
 
 	if !isHttp {
 		logrus.Debugf("maddr not support HTTP \n")
-		err := client.connect(addrs, log_pre, nowait)
+		err := client.connect(addrs, log_pre, nowait, time.Millisecond*time.Duration(env.Conntimeout))
 		if err != nil {
 			return nil, err
 		}
@@ -214,7 +214,7 @@ func (client *TcpClient) RequestSN(msgid int32, data []byte, addrs []string, mad
 	}
 }
 
-func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool) *pkt.ErrorMessage {
+func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool, tout time.Duration) *pkt.ErrorMessage {
 	if client.connectedTime.Value() >= 0 {
 		client.Lock()
 		defer client.Unlock()
@@ -235,7 +235,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool) *p
 					logrus.Errorf(logmsg)
 					return pkt.NewErrorMsg(pkt.INVALID_ARGS, logmsg)
 				}
-				timeout := time.Millisecond * time.Duration(env.Conntimeout)
+				timeout := tout
 				if nowait {
 					timeout = time.Millisecond * time.Duration(env.DirectConntimeout)
 				}

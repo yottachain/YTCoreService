@@ -35,6 +35,7 @@ var CopyNum = 10
 var ExtraPercent = 100
 var BlkTimeout = 60
 var UploadStat = false
+var GetTokenTimeout int = 60000
 
 var cfg *Config
 
@@ -101,6 +102,8 @@ func readClientProperties() {
 	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
 	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
 	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+
+	GetTokenTimeout = config.GetRangeInt("GetTokenTimeout", 1000, 60000, Writetimeout)
 
 	CopyNum = config.GetRangeInt("CopyNum", 5, 18, 10)
 	ExtraPercent = config.GetRangeInt("ExtraPercent", 0, 100, 30)
