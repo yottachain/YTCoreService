@@ -296,18 +296,28 @@ func (self *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *codec.Eras
 		waitcount = waitcount - bakcount
 	}
 	uploads := NewUpLoad(self.logPrefix, ress, ress2, count, bakcount, waitcount)
-	for index, shd := range enc.Shards {
-		if ress[index] == nil {
-			StartUploadShard(self, shd, int32(index), uploads, ids, false)
-		}
-	}
-	if ress2 != nil {
+	go func() {
 		for index, shd := range enc.Shards {
-			if ress2[index] == nil {
-				StartUploadShard(self, shd, int32(index), uploads, ids, true)
+			if ress[index] == nil {
+				if !uploads.IsCancle() {
+					StartUploadShard(self, shd, int32(index), uploads, ids, false)
+				} else {
+					return
+				}
 			}
 		}
-	}
+		if ress2 != nil {
+			for index, shd := range enc.Shards {
+				if ress2[index] == nil {
+					if !uploads.IsCancle() {
+						StartUploadShard(self, shd, int32(index), uploads, ids, true)
+					} else {
+						return
+					}
+				}
+			}
+		}
+	}()
 	er := uploads.WaitUpload(enc.IsCopyShard())
 	if er != nil {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
