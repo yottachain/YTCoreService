@@ -1,5 +1,3 @@
-
-
 package main
 
 import (
@@ -13,6 +11,7 @@ import (
 	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/http"
 	ytnet "github.com/yottachain/YTCoreService/net"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 var programName = "ytsn"
@@ -62,6 +61,10 @@ func main() {
 		}
 		if cmd == "statuser" {
 			handle.StartIterateUser()
+			return
+		}
+		if cmd == "test" {
+			test.UpAndDown()
 			return
 		}
 		if cmd == "console" {

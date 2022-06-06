@@ -246,6 +246,9 @@ func (us *UploadShard) DoSend() {
 	defer us.DoFinish()
 	node := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
 	for {
+		if us.parent.IsCancle() {
+			break
+		}
 		startTime := time.Now()
 		req := us.MakeRequest(node)
 		rtimes, ctlresp, err := us.GetToken(node)
