@@ -16,6 +16,7 @@ var PTR int = 2
 
 var ALLOC_MODE int = 0
 
+var MakeBlockThreadNum int = 5
 var UploadBlockThreadNum int = 50
 var UploadShardThreadNum int = 1500
 var UploadShardRetryTimes int = 3
@@ -88,6 +89,7 @@ func readClientProperties() {
 	PNN = config.GetRangeInt("PNN", 328, 328*10, 328*2)
 	PTR = config.GetRangeInt("PTR", 1, 60, 2)
 
+	MakeBlockThreadNum = config.GetRangeInt("makeBlockThreadNum", 1, 20, 5)
 	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 512, 30)
 	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 1500, 100000, 1500)
 	UploadShardRetryTimes = config.GetRangeInt("uploadShardRetryTimes", 1, 10, 3)

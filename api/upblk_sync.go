@@ -28,141 +28,153 @@ func StartUploadBlockSync(id int16, b *codec.EncodedBlock, up *UploadObject, wg 
 	syncup.EncBLK = b
 	syncup.UploadBlock = ub
 	syncup.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
-	<-BLOCK_ROUTINE_CH
+	<-BLOCK_MAKE_CH
 	go syncup.upload()
 }
 
-func (self *UploadBlockSync) DoFinish() {
+func (uploadBlock *UploadBlockSync) DoFinish() {
 	if r := recover(); r != nil {
 		env.TraceError("[SyncBlock]")
-		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
+		uploadBlock.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
+		uploadBlock.WG.Done()
 	}
-	BLOCK_ROUTINE_CH <- 1
-	self.WG.Done()
-	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
-	self.UPOBJ.PRO.WriteLength.Add(self.EncBLK.Length())
+	BLOCK_MAKE_CH <- 1
 }
 
-func (self *UploadBlockSync) upload() {
-	defer self.DoFinish()
-	self.SN = net.GetBlockSuperNode(self.EncBLK.VHP)
-	logrus.Infof("[SyncBlock]%sStart upload block to sn %d\n", self.logPrefix, self.SN.ID)
-	if self.EncBLK.IsDup {
-		self.uploadDup()
+func (uploadBlock *UploadBlockSync) upload() {
+	defer uploadBlock.DoFinish()
+	uploadBlock.SN = net.GetBlockSuperNode(uploadBlock.EncBLK.VHP)
+	logrus.Infof("[SyncBlock]%sStart upload block to sn %d\n", uploadBlock.logPrefix, uploadBlock.SN.ID)
+	if uploadBlock.EncBLK.IsDup {
+		uploadBlock.uploadDup()
 	} else {
 		eblk := &codec.EncryptedBlock{}
-		eblk.Data = self.EncBLK.DATA
+		eblk.Data = uploadBlock.EncBLK.DATA
 		eblk.MakeVHB()
-		if self.EncBLK.Length() < env.PL2 {
-			self.uploadDB(eblk)
+		if uploadBlock.EncBLK.Length() < env.PL2 {
+			uploadBlock.uploadDB(eblk)
 		} else {
-			self.STime = time.Now().Unix()
-			self.uploadDedup(eblk)
+			uploadBlock.STime = time.Now().Unix()
+			uploadBlock.uploadDedup(eblk)
 		}
 	}
 }
 
-func (self *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
+func (uploadBlock *UploadBlockSync) uploadDB(b *codec.EncryptedBlock) {
 	startTime := time.Now()
-	bid := uint32(self.ID)
-	osize := uint64(self.EncBLK.OriginalSize)
-	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
+	bid := uint32(uploadBlock.ID)
+	osize := uint64(uploadBlock.EncBLK.OriginalSize)
+	i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
 	vnu := &pkt.UploadBlockDBReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadBlockDBReqV2{
-		UserId:       &self.UPOBJ.UClient.UserId,
-		SignData:     &self.UPOBJ.UClient.SignKey.Sign,
-		KeyNumber:    &self.UPOBJ.UClient.SignKey.KeyNumber,
+		UserId:       &uploadBlock.UPOBJ.UClient.UserId,
+		SignData:     &uploadBlock.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber:    &uploadBlock.UPOBJ.UClient.SignKey.KeyNumber,
 		Id:           &bid,
 		Vnu:          vnu,
-		VHP:          self.EncBLK.VHP,
+		VHP:          uploadBlock.EncBLK.VHP,
 		VHB:          b.VHB,
-		KEU:          self.EncBLK.KEU,
-		KED:          self.EncBLK.KED,
+		KEU:          uploadBlock.EncBLK.KEU,
+		KED:          uploadBlock.EncBLK.KED,
 		OriginalSize: &osize,
-		Data:         self.EncBLK.DATA,
+		Data:         uploadBlock.EncBLK.DATA,
 	}
-	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
-		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+	if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
 		req.SignData = &sign
 	}
-	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
+	_, errmsg := net.RequestSN(req, uploadBlock.SN, uploadBlock.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg == nil {
-		logrus.Infof("[SyncBlock]%sUpload block to DB,VHP:%s,take times %d ms.\n", self.logPrefix,
-			base58.Encode(self.EncBLK.VHP), time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[SyncBlock]%sUpload block to DB,VHP:%s,take times %d ms.\n", uploadBlock.logPrefix,
+			base58.Encode(uploadBlock.EncBLK.VHP), time.Since(startTime).Milliseconds())
 	} else {
-		self.UPOBJ.ERR.Store(errmsg)
+		uploadBlock.UPOBJ.ERR.Store(errmsg)
 	}
 }
 
-func (self *UploadBlockSync) uploadDup() {
+func (uploadBlock *UploadBlockSync) uploadDup() {
 	startTime := time.Now()
-	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
+	i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
 	v := &pkt.UploadBlockDupReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	dupReq := &pkt.UploadBlockDupReqV2{
-		UserId:    &self.UPOBJ.UClient.UserId,
-		SignData:  &self.UPOBJ.UClient.SignKey.Sign,
-		KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
-		VHB:       self.EncBLK.VHB,
-		KEU:       self.EncBLK.KEU,
+		UserId:    &uploadBlock.UPOBJ.UClient.UserId,
+		SignData:  &uploadBlock.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber: &uploadBlock.UPOBJ.UClient.SignKey.KeyNumber,
+		VHB:       uploadBlock.EncBLK.VHB,
+		KEU:       uploadBlock.EncBLK.KEU,
 	}
-	if self.UPOBJ.UClient.StoreKey != self.UPOBJ.UClient.SignKey {
-		sign, _ := SetStoreNumber(self.UPOBJ.UClient.SignKey.Sign, int32(self.UPOBJ.UClient.StoreKey.KeyNumber))
+	if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
+		sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
 		dupReq.SignData = &sign
 	}
-	bid := uint32(self.ID)
-	osize := uint64(self.EncBLK.OriginalSize)
-	rsize := uint32(self.EncBLK.RealSize)
+	bid := uint32(uploadBlock.ID)
+	osize := uint64(uploadBlock.EncBLK.OriginalSize)
+	rsize := uint32(uploadBlock.EncBLK.RealSize)
 	dupReq.Id = &bid
-	dupReq.VHP = self.EncBLK.VHP
+	dupReq.VHP = uploadBlock.EncBLK.VHP
 	dupReq.OriginalSize = &osize
 	dupReq.RealSize = &rsize
 	dupReq.Vnu = v
-	_, errmsg := net.RequestSN(dupReq, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
+	_, errmsg := net.RequestSN(dupReq, uploadBlock.SN, uploadBlock.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg == nil {
-		logrus.Infof("[SyncBlock]%sBlock is a repetitive block %s,take times %d ms.\n", self.logPrefix,
-			base58.Encode(self.EncBLK.VHP), time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[SyncBlock]%sBlock is a repetitive block %s,take times %d ms.\n", uploadBlock.logPrefix,
+			base58.Encode(uploadBlock.EncBLK.VHP), time.Since(startTime).Milliseconds())
 	} else {
-		self.UPOBJ.ERR.Store(errmsg)
+		uploadBlock.UPOBJ.ERR.Store(errmsg)
 	}
 }
 
-func (self *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
+func (uploadBlock *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 	enc := codec.NewErasureEncoder(eblk)
 	err := enc.Encode()
 	if err != nil {
-		logrus.Errorf("[SyncBlock]ErasureEncoder ERR:%s\n", self.logPrefix, err)
-		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
+		logrus.Errorf("[SyncBlock]ErasureEncoder ERR:%s\n", uploadBlock.logPrefix, err)
+		uploadBlock.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
 		return
 	}
-
-	self.EncBLK.DATA = nil
+	blksize := uploadBlock.EncBLK.Length()
+	uploadBlock.EncBLK.DATA = nil
 	eblk.Clear()
-	self.Queue = NewDNQueue()
+	uploadBlock.Queue = NewDNQueue()
 	retrytimes := 0
 	size := len(enc.Shards)
-	rsize := int32(self.EncBLK.RealSize)
+	rsize := int32(uploadBlock.EncBLK.RealSize)
 	ress := make([]*UploadShardResult, size)
 	var ress2 []*UploadShardResult = nil
-	if env.LRC2 {
+	if !enc.IsCopyShard() && env.LRC2 {
 		ress2 = make([]*UploadShardResult, size)
 	}
-	var ids []int32
-	for {
-		blkls, err := self.UploadShards(self.EncBLK.VHP, self.EncBLK.KEU, self.EncBLK.KED, eblk.VHB, enc, &rsize, self.EncBLK.OriginalSize, ress, ress2, ids)
-		if err != nil {
-			if err.Code == pkt.DN_IN_BLACKLIST {
-				ids = blkls
-				logrus.Errorf("[SyncBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", self.logPrefix, retrytimes)
-				NotifyAllocNode(true)
-				retrytimes++
-				continue
+	<-BLOCK_ROUTINE_CH
+	startedSign := make(chan int, 1)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				env.TraceError("[UploadBlock]")
+				uploadBlock.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			}
-			if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" {
-				time.Sleep(time.Duration(60) * time.Second)
-				continue
+			BLOCK_ROUTINE_CH <- 1
+			uploadBlock.WG.Done()
+			uploadBlock.UPOBJ.ActiveTime.Set(time.Now().Unix())
+			uploadBlock.UPOBJ.PRO.WriteLength.Add(blksize)
+		}()
+		var ids []int32
+		for {
+			blkls, err := uploadBlock.UploadShards(uploadBlock.EncBLK.VHP, uploadBlock.EncBLK.KEU, uploadBlock.EncBLK.KED, eblk.VHB, enc, &rsize, uploadBlock.EncBLK.OriginalSize, ress, ress2, ids, startedSign)
+			if err != nil {
+				if err.Code == pkt.DN_IN_BLACKLIST {
+					ids = blkls
+					logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", uploadBlock.logPrefix, retrytimes)
+					retrytimes++
+					continue
+				}
+				if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" {
+					time.Sleep(time.Duration(60) * time.Second)
+					continue
+				}
+				uploadBlock.UPOBJ.ERR.Store(err)
 			}
-			self.UPOBJ.ERR.Store(err)
+			break
 		}
-		break
-	}
+	}()
+	<-startedSign
 }

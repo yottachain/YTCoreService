@@ -21,7 +21,7 @@ func (self *UploadBlockAuth) DoFinish() {
 		env.TraceError("[AuthBlock]")
 		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 	}
-	BLOCK_ROUTINE_CH <- 1
+	BLOCK_MAKE_CH <- 1
 	self.WG.Done()
 	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
 }
@@ -36,7 +36,7 @@ func StartUploadBlockAuth(b *pkt.Refer, up *UploadObject, wg *sync.WaitGroup) {
 	authup.REF = b
 	authup.UploadBlock = ub
 	authup.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
-	<-BLOCK_ROUTINE_CH
+	<-BLOCK_MAKE_CH
 	go authup.upload()
 }
 
