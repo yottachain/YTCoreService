@@ -36,6 +36,7 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 		}
 		waitcount = waitcount - bakcount
 	}
+	isCopyShard := enc.IsCopyShard()
 	uploads := NewUpLoad(uploadBlock.logPrefix, ress, ress2, count, bakcount, waitcount)
 	ShardRoutineLock.Lock()
 	for index, shd := range enc.Shards {
@@ -67,13 +68,13 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 	bid := int32(uploadBlock.ID)
 	osize := int64(originalSize)
 	var ar int32 = 0
-	if enc.IsCopyShard() {
+	if isCopyShard {
 		ar = codec.AR_COPY_MODE
 	} else {
 		ar = enc.DataCount
 	}
 	var errmsg *pkt.ErrorMessage
-	if ress2 == nil || enc.IsCopyShard() {
+	if ress2 == nil || isCopyShard {
 		i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
 		vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 		uploads.RLock()

@@ -165,6 +165,10 @@ func (uploadBlock *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 					ids = blkls
 					logrus.Errorf("[UploadBlock]%sWrite shardmetas ERR:DN_IN_BLACKLIST,RetryTimes %d\n", uploadBlock.logPrefix, retrytimes)
 					retrytimes++
+					if env.ThrowErr {
+						uploadBlock.UPOBJ.ERR.Store(err)
+						break
+					}
 					continue
 				}
 				if err.Code == pkt.SERVER_ERROR || err.Msg == "Panic" {
