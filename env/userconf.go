@@ -23,6 +23,7 @@ var UploadShardRetryTimes int = 3
 var DownloadRetryTimes int = 3
 
 var DownloadThread int = 200
+var ThrowErr = false
 
 var CachePath string
 var MaxCacheSize int64
@@ -88,6 +89,7 @@ func readClientProperties() {
 	LogLevel = config.GetString("logLevel", "trace,stdout")
 	PNN = config.GetRangeInt("PNN", 328, 328*10, 328*2)
 	PTR = config.GetRangeInt("PTR", 1, 60, 2)
+	ThrowErr = config.GetBool("throwErr", false)
 
 	MakeBlockThreadNum = config.GetRangeInt("makeBlockThreadNum", 1, 20, 5)
 	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 512, 30)

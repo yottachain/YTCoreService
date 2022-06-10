@@ -193,6 +193,9 @@ func (us *UploadShard) DoSend() {
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			us.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 		AddShardOK(times)
+		if env.ThrowErr {
+			us.shard.Clear()
+		}
 		break
 	}
 }
