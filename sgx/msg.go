@@ -57,7 +57,7 @@ func (self *EncryptedBlock) ToBytes() []byte {
 
 func (self *EncryptedBlock) Decrypt(key *Key) ([]byte, error) {
 	if self.DATA == nil {
-		return nil, errors.New("data is null")
+		return nil, errors.New("sgx decrypt:data is null")
 	}
 	if self.KeyNumber != self.KeyNumber {
 		return nil, errors.New("KeyNumber err")

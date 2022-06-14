@@ -70,7 +70,7 @@ func (self *Block) Load() error {
 
 func (self *Block) Save(pathstr string) error {
 	if self.Data == nil {
-		return errors.New("data is null")
+		return errors.New("")
 	}
 	err := ioutil.WriteFile(pathstr, self.Data, 0644)
 	if err == nil {
@@ -108,7 +108,7 @@ func InitPlainBlock(jsonstr string) (*PlainBlock, error) {
 
 func (self *PlainBlock) Sum() error {
 	if self.Data == nil {
-		return errors.New("data is null")
+		return errors.New("plainBlock sum:data is null")
 	}
 	md5Digest := md5.New()
 	md5Digest.Write(self.Data)
@@ -176,7 +176,7 @@ type EncryptedBlock struct {
 
 func (self *EncryptedBlock) MakeVHB() error {
 	if self.Data == nil {
-		return errors.New("data is null")
+		return errors.New("encryptedBlock sum:data is null")
 	}
 	sha256Digest := sha256.New()
 	sha256Digest.Write(self.Data)

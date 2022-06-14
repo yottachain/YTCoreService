@@ -74,7 +74,7 @@ func NewBlockAESEncryptor(b *PlainBlock, key []byte) *BlockAESEncryptor {
 
 func (bae *BlockAESEncryptor) Encrypt() (*EncryptedBlock, error) {
 	if bae.plainBlock.Data == nil {
-		return nil, errors.New("data is null")
+		return nil, errors.New("encrypt:data is null")
 	}
 	block, err := aes.NewCipher(bae.secretKey)
 	if err != nil {
@@ -102,7 +102,7 @@ func NewBlockAESDecryptor(b *EncryptedBlock) *BlockAESDecryptor {
 
 func (bae *BlockAESDecryptor) Decrypt() (*PlainBlock, error) {
 	if bae.encryptedBlock.Data == nil {
-		return nil, errors.New("data is null")
+		return nil, errors.New("decrypt:data is null")
 	}
 	if bae.encryptedBlock.SecretKey == nil {
 		return nil, errors.New("SecretKey is null")

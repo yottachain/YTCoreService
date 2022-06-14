@@ -30,10 +30,11 @@ func InitBlockRoutinePool() {
 
 func StartUploadBlock(id int16, b *codec.PlainBlock, up *UploadObject, wg *sync.WaitGroup) {
 	ub := &UploadBlock{
-		UPOBJ: up,
-		ID:    id,
-		BLK:   b,
-		WG:    wg,
+		UPOBJ:  up,
+		ID:     id,
+		BLK:    b,
+		WG:     wg,
+		Length: b.Length(),
 	}
 	ub.logPrefix = fmt.Sprintf("[%s][%d]", ub.UPOBJ.VNU.Hex(), ub.ID)
 	<-BLOCK_MAKE_CH
@@ -49,15 +50,20 @@ type UploadBlock struct {
 	SN        *YTDNMgmt.SuperNode
 	WG        *sync.WaitGroup
 	STime     int64
+	Length    int64
 }
 
 func (uploadBlock *UploadBlock) DoFinish() {
 	if r := recover(); r != nil {
 		env.TraceError("[UploadBlock]")
 		uploadBlock.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
-		uploadBlock.WG.Done()
 	}
 	BLOCK_MAKE_CH <- 1
+	if uploadBlock.WG != nil {
+		uploadBlock.WG.Done()
+		uploadBlock.UPOBJ.ActiveTime.Set(time.Now().Unix())
+		uploadBlock.UPOBJ.PRO.WriteLength.Add(uploadBlock.Length)
+	}
 }
 
 func (uploadBlock *UploadBlock) upload() {
@@ -240,7 +246,6 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 		uploadBlock.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error()))
 		return
 	}
-	blksize := uploadBlock.BLK.Length()
 	uploadBlock.BLK.Clear()
 	eblk.Clear()
 	uploadBlock.Queue = NewDNQueue()
@@ -253,6 +258,8 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 	if !enc.IsCopyShard() && env.LRC2 {
 		ress2 = make([]*UploadShardResult, size)
 	}
+	finishWg := uploadBlock.WG
+	uploadBlock.WG = nil
 	<-BLOCK_ROUTINE_CH
 	startedSign := make(chan int, 1)
 	go func() {
@@ -262,9 +269,9 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 				uploadBlock.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			}
 			BLOCK_ROUTINE_CH <- 1
-			uploadBlock.WG.Done()
+			finishWg.Done()
 			uploadBlock.UPOBJ.ActiveTime.Set(time.Now().Unix())
-			uploadBlock.UPOBJ.PRO.WriteLength.Add(blksize)
+			uploadBlock.UPOBJ.PRO.WriteLength.Add(uploadBlock.Length)
 		}()
 		var ids []int32
 		for {
