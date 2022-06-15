@@ -54,6 +54,15 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 		}
 	}
 	ShardRoutineLock.Unlock()
+	if env.ThrowErr {
+		for _, shd := range enc.Shards {
+			if shd.IsCopyShard() {
+				shd.Clear()
+				break
+			}
+			shd.Clear()
+		}
+	}
 	startedsign <- 1
 	er := uploads.WaitUpload()
 	if er != nil {

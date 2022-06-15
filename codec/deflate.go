@@ -97,8 +97,7 @@ func (fileEncoder *FileEncoder) ReadNext() (*PlainBlock, error) {
 		return nil, err
 	}
 	if has {
-		fileEncoder.readoutTotal = fileEncoder.readoutTotal + fileEncoder.curBlock.Length()
-		return fileEncoder.curBlock, nil
+		return fileEncoder.Next(), nil
 	} else {
 		return nil, nil
 	}
@@ -122,7 +121,7 @@ func (fileEncoder *FileEncoder) HasNext() (bool, error) {
 		return false, err
 	}
 	if readTotal > 0 {
-		_, err1 := fileEncoder.reader.Seek(readTotal*-1, io.SeekCurrent)
+		_, err1 := fileEncoder.reader.Seek(-readTotal, io.SeekCurrent)
 		if err1 != nil {
 			fileEncoder.Close()
 			return false, err1
@@ -148,14 +147,14 @@ func (fileEncoder *FileEncoder) pack() error {
 	size := -1
 	buf.Write([]byte{uint8(size >> 8), uint8(size)})
 	data := make([]byte, env.Default_Block_Size-2)
-	num, err := fileEncoder.reader.Read(data)
-	if err != nil && err != io.EOF {
+	num, err := io.ReadFull(fileEncoder.reader, data)
+	if err != nil && !(err == io.EOF || err == io.ErrUnexpectedEOF) {
 		return err
 	}
 	if num > 0 {
-		buf.Write(data[0:num])
+		buf.Write(data)
 		fileEncoder.curBlock = NewPlainBlock(buf.Bytes(), int64(num))
-		if err == io.EOF || num < env.Default_Block_Size-2 {
+		if err == io.EOF || err == io.ErrUnexpectedEOF || num < env.Default_Block_Size-2 {
 			fileEncoder.finished = true
 		}
 		fileEncoder.readinTotal = fileEncoder.readinTotal + int64(num)
@@ -220,6 +219,11 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 			}
 		}
 	}
+	fileEncoder.finished = true
+	if totalIn == 0 {
+		fileEncoder.curBlock = nil
+		return 0, nil
+	}
 	flateWrite.Close()
 	if totalIn-int64(buf.Len()) <= 0 {
 		return totalIn, nil
@@ -227,10 +231,7 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 	if buf.Len() > env.Default_Block_Size {
 		return totalIn, nil
 	}
-	if totalIn > 0 {
-		fileEncoder.curBlock = NewPlainBlock(buf.Bytes(), totalIn)
-	}
-	fileEncoder.finished = true
+	fileEncoder.curBlock = NewPlainBlock(buf.Bytes(), totalIn)
 	fileEncoder.readinTotal = fileEncoder.readinTotal + totalIn
 	return 0, nil
 }

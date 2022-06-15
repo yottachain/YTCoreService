@@ -26,7 +26,7 @@ func InitShardUpPool() {
 }
 
 func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, us *UpLoadShards, ids []int32, lrc2 bool) {
-	upshd := &UploadShard{uploadBlock: upblk, shard: shd, shardId: shdid, retrytimes: 0, parent: us}
+	upshd := &UploadShard{uploadBlock: upblk, shardData: shd.Data, shardVHF: shd.VHF, shardId: shdid, retrytimes: 0, parent: us}
 	if lrc2 {
 		upshd.logPrefix = fmt.Sprintf("[%s][%d][%d-1]", upblk.UPOBJ.VNU.Hex(), upblk.ID, shdid)
 	} else {
@@ -54,7 +54,8 @@ type UploadShardResult struct {
 
 type UploadShard struct {
 	uploadBlock *UploadBlock
-	shard       *codec.Shard
+	shardData   []byte
+	shardVHF    []byte
 	shardId     int32
 	logPrefix   string
 	res         *UploadShardResult
@@ -76,8 +77,8 @@ func (us *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 		SHARDID:  us.shardId,
 		BPDID:    ns.NodeInfo.SnId(),
 		BPDSIGN:  []byte(ns.NodeInfo.sign),
-		DAT:      us.shard.Data,
-		VHF:      us.shard.VHF,
+		DAT:      us.shardData,
+		VHF:      us.shardVHF,
 		USERSIGN: []byte(us.uploadBlock.UPOBJ.Sign),
 		HASHID:   us.uploadBlock.STime + int64(us.shardId),
 	}
@@ -193,9 +194,6 @@ func (us *UploadShard) DoSend() {
 		logrus.Infof("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			us.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 		AddShardOK(times)
-		if env.ThrowErr && !us.shard.IsCopyShard() {
-			us.shard.Clear()
-		}
 		break
 	}
 }

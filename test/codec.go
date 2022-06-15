@@ -17,8 +17,8 @@ import (
 func Codec() {
 	env.InitClient()
 	//TestMultiCutFile()
-	//TestCutFile()
-	TestLRC()
+	TestCutFile()
+	//TestLRC()
 }
 
 func TestAES() {
@@ -121,7 +121,7 @@ func TestLRC() {
 	ioutil.WriteFile("d://test.0.docx", b.Data, 0777)
 }
 
-var filepath = "D:/test/Windows2012.iso"
+var filepath = "D:/Downloads/AliIM_taobao_(9.12.10C).exe"
 
 func CreateFileEncoder(readinmemory bool) *codec.FileEncoder {
 	if !readinmemory {

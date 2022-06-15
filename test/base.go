@@ -3,6 +3,7 @@ package test
 import (
 	"crypto/sha256"
 	"io"
+	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
@@ -24,7 +25,7 @@ func UpAndDown() {
 }
 
 func testud() {
-	//time.Sleep(time.Minute * 2)
+	time.Sleep(time.Minute * 2)
 	for ii := 0; ii < 5; ii++ {
 		vhw, _ := upload()
 		if vhw != nil {
