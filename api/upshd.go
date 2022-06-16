@@ -85,7 +85,7 @@ func (us *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 }
 
 func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityResp, error) {
-	logrus.Debugf("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
+	logrus.Tracef("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
 	ctlreq := &pkt.GetNodeCapacityReq{StartTime: uint64(us.uploadBlock.STime),
 		RetryTimes: uint32(us.retrytimes)}
 	times := 0
@@ -116,7 +116,7 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 }
 
 func (us *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
-	logrus.Debugf("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
+	logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node, us.logPrefix)
 	if err != nil {
 		if strings.Contains(err.Msg, "no handler") {

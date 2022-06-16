@@ -200,7 +200,9 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 }
 
 func (me *DownLoadShardInfo) DoFinish() {
-	env.TracePanic("[DownloadShard]")
+	if r := recover(); r != nil {
+		env.TraceError("[DownloadShard]")
+	}
 	SHARD_DOWN_CH <- 1
 	me.DWNS.okSign <- 0
 }
@@ -213,7 +215,7 @@ func (me *DownLoadShardInfo) Download() []byte {
 	for {
 		m, err := net.RequestDN(req, me.NodeInfo, me.DWNS.logPrefix)
 		if err != nil {
-			logrus.Errorf("[DownloadShard]%sDownload ERR,%s from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
+			logrus.Errorf("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo.Id)
 			if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 				return nil
 			}
@@ -223,7 +225,7 @@ func (me *DownLoadShardInfo) Download() []byte {
 					msg = m
 					break
 				} else {
-					logrus.Errorf("[DownloadShard]%sDownload ERR,%s from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo2.Id)
+					logrus.Errorf("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo2.Id)
 					if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 						return nil
 					}

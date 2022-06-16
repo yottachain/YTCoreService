@@ -69,7 +69,7 @@ func NotInBlackList(oklist []*pkt.UploadBlockEndReqV2_OkList, uid int32) []int32
 }
 
 func Query() error {
-	defer env.TracePanic("GetBlackList")
+	defer env.TracePanic("[GetBlackList]")
 	nodes, err := net.NodeMgr.GetNodes(QUERY_ARGS)
 	if err != nil {
 		return err

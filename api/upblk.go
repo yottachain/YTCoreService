@@ -74,7 +74,9 @@ func (uploadBlock *UploadBlock) upload() {
 		return
 	}
 	uploadBlock.SN = net.GetBlockSuperNode(uploadBlock.BLK.VHP)
-	logrus.Infof("[UploadBlock]%sStart upload block to sn %d\n", uploadBlock.logPrefix, uploadBlock.SN.ID)
+	logrus.Infof("[UploadBlock]%sStart upload block to sn %d,chan size %d/%d\n",
+		uploadBlock.logPrefix, uploadBlock.SN.ID,
+		cap(BLOCK_MAKE_CH)-len(BLOCK_MAKE_CH), cap(BLOCK_ROUTINE_CH)-len(BLOCK_ROUTINE_CH))
 	startTime := time.Now()
 	bid := uint32(uploadBlock.ID)
 	i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
