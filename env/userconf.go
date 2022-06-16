@@ -87,6 +87,7 @@ func readClientProperties() {
 	size := config.GetRangeInt("cachemaxsize", 5, 1024*100, 20)
 	MaxCacheSize = int64(size) * 1024 * 1024 * 1024
 	LogLevel = config.GetString("logLevel", "trace,stdout")
+	LogClean = config.GetRangeInt("logClean", 0, 50000, 3)
 	PNN = config.GetRangeInt("PNN", 328, 328*10, 328*2)
 	PTR = config.GetRangeInt("PTR", 1, 60, 2)
 	ThrowErr = config.GetBool("throwErr", false)

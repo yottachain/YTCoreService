@@ -1,8 +1,12 @@
 package env
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -81,4 +85,36 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 		}
 	}
 	return []byte(output), nil
+}
+
+func clearLog(logName string, prefix string) {
+	if LogClean < 1 {
+		return
+	}
+	logs := []string{filepath.Base(logName)}
+	cur := time.Now()
+	for ii := 0; ii < LogClean; ii++ {
+		name := logName + "." + cur.Format("20060102")
+		logs = append(logs, filepath.Base(name))
+		cur = cur.Add(-time.Hour * 24)
+	}
+	dir := filepath.Dir(logName)
+	l, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, f := range l {
+		if strings.HasPrefix(f.Name(), prefix) {
+			del := true
+			for _, n := range logs {
+				if n == f.Name() {
+					del = false
+					break
+				}
+			}
+			if del {
+				os.Remove(dir + "/" + f.Name())
+			}
+		}
+	}
 }

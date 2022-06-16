@@ -54,6 +54,7 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 		}
 	}
 	ShardRoutineLock.Unlock()
+	startedsign <- 1
 	if env.ThrowErr {
 		for _, shd := range enc.Shards {
 			if shd.IsCopyShard() {
@@ -63,7 +64,6 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			shd.Clear()
 		}
 	}
-	startedsign <- 1
 	er := uploads.WaitUpload()
 	if er != nil {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
@@ -142,7 +142,7 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 		}
 		return ids, errmsg
 	} else {
-		logrus.Infof("[UploadBlock]%sWrite shardmetas OK,take times %d ms.\n", uploadBlock.logPrefix, time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[UploadBlock]%sWrite shardmetas OK,take times %d ms.\n", uploadBlock.logPrefix, time.Since(startTime).Milliseconds())
 		return nil, nil
 	}
 }

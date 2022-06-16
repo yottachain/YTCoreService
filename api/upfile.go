@@ -211,7 +211,7 @@ func doUpload(ca *cache.Cache) *pkt.ErrorMessage {
 	var emsg *pkt.ErrorMessage = nil
 	if ca.V.Type == 0 {
 		emsg = obj.UploadBytes(ca.V.Data)
-	} else if ca.V.Type == 0 {
+	} else if ca.V.Type == 1 {
 		emsg = obj.UploadFile(ca.V.Path[0])
 	} else {
 		emsg = obj.UploadMultiFile(ca.V.Path)

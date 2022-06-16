@@ -186,7 +186,7 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 	md5Digest.Write(data)
 	newvhf := md5Digest.Sum(nil)
 	if bytes.Equal(me.VHF, newvhf) {
-		logrus.Infof("[DownloadShard]%sDownload %s OK,from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
+		logrus.Debugf("[DownloadShard]%sDownload %s OK,from %d\n", me.DWNS.logPrefix, base58.Encode(me.VHF), me.NodeInfo.Id)
 		me.DWNS.OnResponse(data)
 		if me.Path != "" {
 			ioutil.WriteFile(me.Path+strconv.Itoa(int(data[0])), data, 0644)
@@ -199,10 +199,10 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 	}
 }
 
-func (self *DownLoadShardInfo) DoFinish() {
+func (me *DownLoadShardInfo) DoFinish() {
 	env.TracePanic("[DownloadShard]")
 	SHARD_DOWN_CH <- 1
-	self.DWNS.okSign <- 0
+	me.DWNS.okSign <- 0
 }
 
 func (me *DownLoadShardInfo) Download() []byte {

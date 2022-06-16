@@ -126,7 +126,7 @@ func (client *TcpClient) Request(msgid int32, data []byte, addrs []string, log_p
 	if serr != nil {
 		addrString := AddrsToString(addrs)
 		logmsg := fmt.Sprintf("%s COMM_ERROR:%s", addrString, serr.Error())
-		logrus.Errorf("[P2P]%s%s\n", log_pre, logmsg)
+		logrus.Debugf("[P2P]%s%s\n", log_pre, logmsg)
 		if atomic.LoadInt32(client.statu) != 2 {
 			client.connectedTime.Set(0)
 		}
@@ -225,7 +225,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool, to
 			addrString := AddrsToString(addrs)
 			if time.Now().Unix()-contime < env.DN_RETRY_WAIT {
 				logmsg := fmt.Sprintf("[P2P]%s%s did not connect successfully %d seconds ago\n", log_pre, addrString, env.DN_RETRY_WAIT)
-				logrus.Errorf(logmsg)
+				logrus.Debugf(logmsg)
 				return pkt.NewErrorMsg(pkt.CONN_ERROR, logmsg)
 			} else {
 				maddrs, err := StringListToMaddrs(addrs)
@@ -245,7 +245,7 @@ func (client *TcpClient) connect(addrs []string, log_pre string, nowait bool, to
 				if err != nil {
 					client.connectedTime.Set(time.Now().Unix())
 					logmsg := fmt.Sprintf("[P2P]%sConnect %s ERR:%s\n", log_pre, addrString, err.Error())
-					logrus.Errorf(logmsg)
+					logrus.Debugf(logmsg)
 					return pkt.NewErrorMsg(pkt.COMM_ERROR, logmsg)
 				}
 				client.connectedTime.Set(-1)

@@ -28,7 +28,7 @@ type AuthImporter struct {
 	filename   string
 }
 
-func (self *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
+func (imp *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
 	if data == nil || len(data) < 32+16+32 {
 		logrus.Error("[AuthImporter]Auth data err.\n")
 		return pkt.NewErrorMsg(pkt.BAD_FILE, "Auth data err")
@@ -36,9 +36,9 @@ func (self *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
 	databuf := bytes.NewBuffer(data)
 	pubkeyHash := make([]byte, 32)
 	databuf.Read(pubkeyHash)
-	k := self.UClient.GetKey(pubkeyHash)
+	k := imp.UClient.GetKey(pubkeyHash)
 	if k == nil {
-		emsg := fmt.Sprintf("The public key  of user '%s' does not exist or is not imported", self.UClient.Username)
+		emsg := fmt.Sprintf("The public key  of user '%s' does not exist or is not imported", imp.UClient.Username)
 		logrus.Errorf("[AuthImporter]%s\n", emsg)
 		return pkt.NewErrorMsg(pkt.PRIKEY_NOT_EXIST, emsg)
 	}
@@ -60,14 +60,14 @@ func (self *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
 	}
 	dhead := codec.ECBDecrypt(head, KL)
 	headbuf := bytes.NewBuffer(dhead)
-	self.VHW = make([]byte, 32)
-	headbuf.Read(self.VHW)
-	self.Length = int64(0)
-	binary.Read(headbuf, binary.BigEndian, &self.Length)
-	self.Meta = dhead[32+8:]
+	imp.VHW = make([]byte, 32)
+	headbuf.Read(imp.VHW)
+	imp.Length = int64(0)
+	binary.Read(headbuf, binary.BigEndian, &imp.Length)
+	imp.Meta = dhead[32+8:]
 	var l int64 = 0
-	self.REFS = []*pkt.Refer{}
-	self.KSS = [][]byte{}
+	imp.REFS = []*pkt.Refer{}
+	imp.KSS = [][]byte{}
 	for {
 		bs := make([]byte, 54)
 		n, _ := databuf.Read(bs)
@@ -79,27 +79,27 @@ func (self *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
 		KS := codec.ECBDecryptNoPad(ref.KEU, KL)
 		ref.KEU = codec.ECBEncryptNoPad(KS, k.AESKey)
 		ref.KeyNumber = int16(k.KeyNumber)
-		self.REFS = append(self.REFS, ref)
-		self.KSS = append(self.KSS, KS)
+		imp.REFS = append(imp.REFS, ref)
+		imp.KSS = append(imp.KSS, KS)
 	}
-	if self.Length != l {
+	if imp.Length != l {
 		logrus.Error("[AuthImporter]Auth data err:Unequal length.\n")
 		return pkt.NewErrorMsg(pkt.BAD_FILE, "Unequal length")
 	}
-	return self.upload()
+	return imp.upload()
 }
 
-func (self *AuthImporter) upload() *pkt.ErrorMessage {
-	up, err := NewUploadObjectAuth(self.UClient)
+func (imp *AuthImporter) upload() *pkt.ErrorMessage {
+	up, err := NewUploadObjectAuth(imp.UClient)
 	if err != nil {
 		return err
 	}
-	err = up.UploadAuthFile(self)
+	err = up.UploadAuthFile(imp)
 	if err != nil {
 		return err
 	}
 	if up.Exist {
-		err = self.checkHash()
+		err = imp.checkHash()
 		if err != nil {
 			return err
 		}
@@ -107,11 +107,11 @@ func (self *AuthImporter) upload() *pkt.ErrorMessage {
 	return up.writeMeta()
 }
 
-func (self *AuthImporter) checkHash() *pkt.ErrorMessage {
-	do := &DownloadObject{UClient: self.UClient, Progress: &DownProgress{}}
-	do.REFS = self.REFS
-	do.Length = self.Length
-	do.RSS = self.KSS
+func (imp *AuthImporter) checkHash() *pkt.ErrorMessage {
+	do := &DownloadObject{UClient: imp.UClient, Progress: &DownProgress{}}
+	do.REFS = imp.REFS
+	do.Length = imp.Length
+	do.RSS = imp.KSS
 	reader := do.Load()
 	sha256Digest := sha256.New()
 	size, err := codec.CalHash(sha256Digest, reader)
@@ -119,12 +119,12 @@ func (self *AuthImporter) checkHash() *pkt.ErrorMessage {
 		logrus.Errorf("[AuthImporter]CalHash err:%s.\n", err)
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, err.Error())
 	}
-	if size != self.Length {
+	if size != imp.Length {
 		logrus.Error("[AuthImporter]Auth file err:Unequal length.\n")
 		return pkt.NewErrorMsg(pkt.BAD_FILE, "Unequal length.")
 	}
 	hash := sha256Digest.Sum(nil)
-	if !bytes.Equal(hash, self.VHW) {
+	if !bytes.Equal(hash, imp.VHW) {
 		logrus.Error("[AuthImporter]Auth file err:Unequal hash.\n")
 		return pkt.NewErrorMsg(pkt.BAD_FILE, "Unequal hash.")
 	}
@@ -137,9 +137,9 @@ type Auth struct {
 	Key    string
 }
 
-func (self *Auth) MakeRefs(AuthorizedKey string) error {
+func (auth *Auth) MakeRefs(AuthorizedKey string) error {
 	refmap := make(map[int32]*pkt.Refer)
-	for _, ref := range self.REFS {
+	for _, ref := range auth.REFS {
 		id := int32(ref.Id) & 0xFFFF
 		refmap[id] = ref
 	}
@@ -149,7 +149,7 @@ func (self *Auth) MakeRefs(AuthorizedKey string) error {
 		if refer == nil {
 			break
 		}
-		k, ok := self.UClient.KeyMap[uint32(refer.KeyNumber)]
+		k, ok := auth.UClient.KeyMap[uint32(refer.KeyNumber)]
 		if !ok {
 			emsg := fmt.Sprintf("The user did not enter a private key with number%d", refer.KeyNumber)
 			logrus.Errorf("[Auth]%s\n", emsg)
@@ -167,39 +167,39 @@ func (self *Auth) MakeRefs(AuthorizedKey string) error {
 	return nil
 }
 
-func (self *Auth) LicensedTo(username, AuthorizedKey string) *pkt.ErrorMessage {
-	self.MakeRefs(AuthorizedKey)
+func (auth *Auth) LicensedTo(username, AuthorizedKey string) *pkt.ErrorMessage {
+	auth.MakeRefs(AuthorizedKey)
 	sn := net.GetRegSuperNode(username)
 	refers := [][]byte{}
-	for _, ref := range self.REFS {
+	for _, ref := range auth.REFS {
 		refers = append(refers, ref.Bytes())
 	}
 	count := uint32(len(refers))
 	list := &pkt.AuthReq_RefList{Refers: refers, Count: &count}
-	size := uint64(self.Length)
-	req := &pkt.AuthReq{UserId: &self.UClient.UserId,
-		SignData:   &self.UClient.SignKey.Sign,
-		KeyNumber:  &self.UClient.SignKey.KeyNumber,
-		Bucketname: &self.Bucket,
-		FileName:   &self.Key,
+	size := uint64(auth.Length)
+	req := &pkt.AuthReq{UserId: &auth.UClient.UserId,
+		SignData:   &auth.UClient.SignKey.Sign,
+		KeyNumber:  &auth.UClient.SignKey.KeyNumber,
+		Bucketname: &auth.Bucket,
+		FileName:   &auth.Key,
 		Username:   &username,
 		Pubkey:     &AuthorizedKey,
 		Length:     &size,
-		VHW:        self.VHW,
-		Meta:       self.Meta,
+		VHW:        auth.VHW,
+		Meta:       auth.Meta,
 		Reflist:    list,
 	}
 	resp, errmsg := net.RequestSN(req, sn, "", env.SN_RETRYTIMES, false)
 	if errmsg != nil {
-		logrus.Errorf("[Auth][%s]LicensedTo %s ERR:%s\n", self.UClient.Username, username, pkt.ToError(errmsg))
+		logrus.Errorf("[Auth][%s]LicensedTo %s ERR:%s\n", auth.UClient.Username, username, pkt.ToError(errmsg))
 		return errmsg
 	}
 	_, OK := resp.(*pkt.VoidResp)
 	if OK {
-		logrus.Errorf("[Auth][%s]LicensedTo %s/%s/%s OK\n", self.UClient.Username, username, self.Bucket, self.Key)
+		logrus.Errorf("[Auth][%s]LicensedTo %s/%s/%s OK\n", auth.UClient.Username, username, auth.Bucket, auth.Key)
 		return nil
 	} else {
-		logrus.Errorf("[Auth][%s]LicensedTo ERR:RETURN_ERR_MSG\n", self.UClient.Username)
+		logrus.Errorf("[Auth][%s]LicensedTo ERR:RETURN_ERR_MSG\n", auth.UClient.Username)
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
 	}
 }
@@ -212,10 +212,10 @@ type AuthExporter struct {
 	Meta    []byte
 }
 
-func (self *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessage) {
+func (auth *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessage) {
 	KL := codec.GenerateRandomKey()
 	refmap := make(map[int32]*pkt.Refer)
-	for _, ref := range self.REFS {
+	for _, ref := range auth.REFS {
 		id := int32(ref.Id) & 0xFFFF
 		refmap[id] = ref
 	}
@@ -225,9 +225,9 @@ func (self *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessag
 		return nil, pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
 	head := bytes.NewBuffer([]byte{})
-	head.Write(self.VHW)
-	binary.Write(head, binary.BigEndian, self.Length)
-	head.Write(self.Meta)
+	head.Write(auth.VHW)
+	binary.Write(head, binary.BigEndian, auth.Length)
+	head.Write(auth.Meta)
 	refs := bytes.NewBuffer([]byte{})
 	var referIndex int32 = 0
 	for {
@@ -235,7 +235,7 @@ func (self *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessag
 		if refer == nil {
 			break
 		}
-		k, ok := self.UClient.KeyMap[uint32(refer.KeyNumber)]
+		k, ok := auth.UClient.KeyMap[uint32(refer.KeyNumber)]
 		if !ok {
 			emsg := fmt.Sprintf("The user did not enter a private key with number%d", refer.KeyNumber)
 			logrus.Errorf("[AuthExporter]%s\n", emsg)
@@ -265,11 +265,11 @@ func (self *AuthExporter) Export(AuthorizedKey string) ([]byte, *pkt.ErrorMessag
 	return data.Bytes(), nil
 }
 
-func (self *AuthExporter) InitByKey(bucketName, filename string, version primitive.ObjectID) *pkt.ErrorMessage {
+func (auth *AuthExporter) InitByKey(bucketName, filename string, version primitive.ObjectID) *pkt.ErrorMessage {
 	req := &pkt.GetFileAuthReq{
-		UserId:     &self.UClient.UserId,
-		SignData:   &self.UClient.SignKey.Sign,
-		KeyNumber:  &self.UClient.SignKey.KeyNumber,
+		UserId:     &auth.UClient.UserId,
+		SignData:   &auth.UClient.SignKey.Sign,
+		KeyNumber:  &auth.UClient.SignKey.KeyNumber,
 		Bucketname: &bucketName,
 		FileName:   &filename,
 	}
@@ -280,12 +280,12 @@ func (self *AuthExporter) InitByKey(bucketName, filename string, version primiti
 		req.Versionid = v
 		key = key + "/" + version.Hex()
 	}
-	return self.init(req, key)
+	return auth.init(req, key)
 }
 
-func (self *AuthExporter) init(req proto.Message, key string) *pkt.ErrorMessage {
+func (auth *AuthExporter) init(req proto.Message, key string) *pkt.ErrorMessage {
 	startTime := time.Now()
-	resp, errmsg := net.RequestSN(req, self.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
+	resp, errmsg := net.RequestSN(req, auth.UClient.SuperNode, "", env.SN_RETRYTIMES, false)
 	if errmsg != nil {
 		logrus.Errorf("[AuthExporter][%s]Init ERR:%s\n", key, pkt.ToError(errmsg))
 		return errmsg
@@ -300,7 +300,7 @@ func (self *AuthExporter) init(req proto.Message, key string) *pkt.ErrorMessage 
 			logrus.Errorf("[AuthExporter][%s]Init ERR:RETURN_ERR_VHW\n", key)
 			return pkt.NewErrorMsg(pkt.SERVER_ERROR, "RETURN_ERR_VHW")
 		}
-		self.Length = int64(*dresp.Length)
+		auth.Length = int64(*dresp.Length)
 		refs := []*pkt.Refer{}
 		for _, ref := range dresp.Reflist.Refers {
 			r := pkt.NewRefer(ref)
@@ -310,14 +310,14 @@ func (self *AuthExporter) init(req proto.Message, key string) *pkt.ErrorMessage 
 			}
 			refs = append(refs, r)
 		}
-		self.REFS = refs
-		self.VHW = dresp.VHW
-		self.Meta = dresp.Meta
+		auth.REFS = refs
+		auth.VHW = dresp.VHW
+		auth.Meta = dresp.Meta
 	} else {
 		logrus.Errorf("[AuthExporter][%s]Init ERR:RETURN_ERR_MSG\n", key)
 		return pkt.NewErrorMsg(pkt.SERVER_ERROR, "Return err msg type")
 	}
-	logrus.Infof("[AuthExporter][%s]Init OK, length %d,num of blocks %d,take times %d ms.\n", key, self.Length,
-		len(self.REFS), time.Now().Sub(startTime).Milliseconds())
+	logrus.Infof("[AuthExporter][%s]Init OK, length %d,num of blocks %d,take times %d ms.\n", key, auth.Length,
+		len(auth.REFS), time.Since(startTime).Milliseconds())
 	return nil
 }

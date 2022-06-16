@@ -74,6 +74,7 @@ func readSnProperties() {
 	}
 	config.SetSection(YTSN_ENV_SEC)
 	LogLevel = config.GetString("logLevel", "trace,stdout")
+	LogClean = config.GetRangeInt("logClean", 0, 50000, 3)
 	num, ok := config.HasIntValue("superNodeID")
 	if !ok {
 		log.Panicf("The 'superNodeID' parameter is not configured.\n")

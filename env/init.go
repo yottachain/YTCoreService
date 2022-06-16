@@ -21,6 +21,7 @@ import (
 var YTSN_HOME string
 var YTFS_HOME string
 var LogLevel string
+var LogClean int = 3
 var Console bool = false
 
 func SetLimit() {
@@ -106,6 +107,13 @@ func initClientLog() {
 	logFileName := YTFS_HOME + "log/log"
 	os.MkdirAll(YTFS_HOME+"log", os.ModePerm)
 	initLog(logFileName, nil)
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+			clearLog(logFileName, "log")
+			time.Sleep(time.Minute * 30)
+		}
+	}()
 }
 
 func initServerLog() {

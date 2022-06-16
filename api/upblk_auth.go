@@ -16,14 +16,14 @@ type UploadBlockAuth struct {
 	REF *pkt.Refer
 }
 
-func (self *UploadBlockAuth) DoFinish() {
+func (auth *UploadBlockAuth) DoFinish() {
 	if r := recover(); r != nil {
 		env.TraceError("[AuthBlock]")
-		self.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
+		auth.UPOBJ.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 	}
 	BLOCK_MAKE_CH <- 1
-	self.WG.Done()
-	self.UPOBJ.ActiveTime.Set(time.Now().Unix())
+	auth.WG.Done()
+	auth.UPOBJ.ActiveTime.Set(time.Now().Unix())
 }
 
 func StartUploadBlockAuth(b *pkt.Refer, up *UploadObject, wg *sync.WaitGroup) {
@@ -40,25 +40,25 @@ func StartUploadBlockAuth(b *pkt.Refer, up *UploadObject, wg *sync.WaitGroup) {
 	go authup.upload()
 }
 
-func (self *UploadBlockAuth) upload() {
-	defer self.DoFinish()
-	self.SN = net.GetSuperNode(int(self.REF.SuperID))
-	logrus.Infof("[AuthBlock]%sStart upload block to sn %d\n", self.logPrefix, self.SN.ID)
+func (auth *UploadBlockAuth) upload() {
+	defer auth.DoFinish()
+	auth.SN = net.GetSuperNode(int(auth.REF.SuperID))
+	logrus.Infof("[AuthBlock]%sStart upload block to sn %d\n", auth.logPrefix, auth.SN.ID)
 	startTime := time.Now()
-	i1, i2, i3, i4 := pkt.ObjectIdParam(self.UPOBJ.VNU)
+	i1, i2, i3, i4 := pkt.ObjectIdParam(auth.UPOBJ.VNU)
 	vnu := &pkt.UploadBlockAuthReq_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
 	req := &pkt.UploadBlockAuthReq{
-		UserId:    &self.UPOBJ.UClient.UserId,
-		SignData:  &self.UPOBJ.UClient.SignKey.Sign,
-		KeyNumber: &self.UPOBJ.UClient.SignKey.KeyNumber,
+		UserId:    &auth.UPOBJ.UClient.UserId,
+		SignData:  &auth.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber: &auth.UPOBJ.UClient.SignKey.KeyNumber,
 		Vnu:       vnu,
-		Refer:     self.REF.Bytes(),
+		Refer:     auth.REF.Bytes(),
 	}
-	_, errmsg := net.RequestSN(req, self.SN, self.logPrefix, env.SN_RETRYTIMES, false)
+	_, errmsg := net.RequestSN(req, auth.SN, auth.logPrefix, env.SN_RETRYTIMES, false)
 	if errmsg == nil {
-		logrus.Infof("[AuthBlock]%sUpload block,VBI:%d,take times %d ms.\n", self.logPrefix,
-			self.REF.VBI, time.Now().Sub(startTime).Milliseconds())
+		logrus.Infof("[AuthBlock]%sUpload block,VBI:%d,take times %d ms.\n", auth.logPrefix,
+			auth.REF.VBI, time.Since(startTime).Milliseconds())
 	} else {
-		self.UPOBJ.ERR.Store(errmsg)
+		auth.UPOBJ.ERR.Store(errmsg)
 	}
 }

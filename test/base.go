@@ -3,7 +3,6 @@ package test
 import (
 	"crypto/sha256"
 	"io"
-	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
@@ -18,18 +17,18 @@ const epos = 1024*1024*8 + 12
 
 func UpAndDown() {
 	initApi()
-	for ii := 0; ii < 20; ii++ {
+	for ii := 0; ii < 1; ii++ {
 		go testud()
 	}
 	select {}
 }
 
 func testud() {
-	time.Sleep(time.Minute * 2)
-	for ii := 0; ii < 5; ii++ {
+	//time.Sleep(time.Minute * 2)
+	for ii := 0; ii < 2; ii++ {
 		vhw, _ := upload()
 		if vhw != nil {
-			//download(vhw)
+			download(vhw)
 		}
 	}
 	//downloadRange(vhw)
