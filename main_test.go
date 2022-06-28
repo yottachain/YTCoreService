@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/test"
@@ -41,6 +44,30 @@ var MemCond = sync.NewCond(new(sync.Mutex))
 var MemSize int64 = 0
 var MaxSize int64 = 50
 
+func stest(Lock chan int) error {
+	time.Sleep(5 * time.Second)
+	Lock <- 1
+	//fmt.Printf("stest %d\n", ii)
+	return nil
+}
 func call() {
+	Lock := make(chan int, 1)
+	timeout := time.Second * time.Duration(10)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	go stest(Lock)
+
+	//time.Sleep(6 * time.Second)
+
+	select {
+	case <-ctx.Done():
+		fmt.Println("timeout")
+
+	case <-Lock:
+		fmt.Println("OK")
+	}
+
+	select {}
 
 }

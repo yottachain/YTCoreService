@@ -14,6 +14,7 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
+	"github.com/yottachain/YTHost/client"
 	ytanalysis "github.com/yottachain/yotta-analysis"
 )
 
@@ -59,7 +60,7 @@ func SendSpotCheck(node *YTDNMgmt.Node) {
 func ExecSendSpotCheck() {
 	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
 	defer cancel()
 	defer env.TracePanic("[SendSpotCheckTask]")
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
@@ -68,7 +69,7 @@ func ExecSendSpotCheck() {
 		return
 	}
 	if ischeck {
-		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
+		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
 		defer cancel2()
 		list, err := SPOTCHECK_SERVICE.GetSpotCheckList(ctx2)
 		if err != nil {
@@ -106,7 +107,7 @@ func ExecSendSpotCheck() {
 		}
 		SPOT_NODE_LIST.RUnlock()
 		for _, n := range nodes {
-			_, err := net.RequestDN(req, n, "")
+			_, err := net.RequestDN(req, n)
 			if err != nil {
 				logrus.Errorf("[SendTask][%d]Send spotcheck task [%s] ERR:%d--%s\n", n.Id, req.TaskId, err.Code, err.Msg)
 			} else {
@@ -144,7 +145,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 	} else {
 		startTime := time.Now()
 		for _, res := range h.m.InvalidNodeList {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
 			defer cancel()
 			err := SPOTCHECK_SERVICE.UpdateTaskStatus(ctx, h.m.TaskId, int32(res))
 			if err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
+	"github.com/yottachain/YTHost/client"
 )
 
 type NodeStatWOK struct {
@@ -175,7 +176,7 @@ func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {
 	ns.snid = id
 	ns.timestamp = timestamp
 	ns.sign = sign
-	ns.ERRTIMES = int64(env.Writetimeout) * int64(time.Millisecond)
+	ns.ERRTIMES = int64(client.GlobalClientOption.ReadTimeout) * int64(time.Millisecond)
 	return ns
 }
 
@@ -259,47 +260,8 @@ func OrderNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {
 		ls = SortNodeList(nodes)
 	} else if env.ALLOC_MODE == -1 {
 		ls = ShuffleNodeList(nodes)
-	} else {
-		ls = P2pOrderNodeList(nodes)
 	}
 	return ls
-}
-
-func P2pOrderNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {
-	nmap := make(map[string]*NodeStatWOK)
-	var iids []string
-	for _, n := range nodes {
-		nmap[n.NodeInfo.Nodeid] = n
-		iids = append(iids, n.NodeInfo.Nodeid)
-	}
-	oids := iids
-	//cliM "github.com/yottachain/YTHost/ClientManage"
-	/*
-		startTime := time.Now()
-		randlen := int(float32(3*env.ALLOC_MODE) / 17)
-		peerAddrs,err := cliM.Manager.GetOptNodes(iids, env.ALLOC_MODE, randlen)
-		interval := time.Now().Sub(startTime).Milliseconds()
-		if err!=nil{
-			logrus.Errorf("[GetOptNodes]Err:%s,take times %d ms\n",err,interval)
-		}
-		oids= cliM.PA2ids(peerAddrs...)
-		logrus.Infof("[GetOptNodes]OK,%d/%d,take times %d ms\n",len(oids),len(iids),interval)
-	*/
-	nnodes := []*NodeStatWOK{}
-	for _, id := range oids {
-		n, ok := nmap[id]
-		if ok {
-			nnodes = append(nnodes, n)
-		}
-	}
-	if len(nnodes) == 0 {
-		logrus.Errorf("[GetOptNodes]Return 0 nodes\n")
-		s := &NodeStatOrder{Nodes: nodes, RandMode: false}
-		sort.Sort(s)
-		return nodes
-	} else {
-		return nnodes
-	}
 }
 
 func ShuffleNodeList(nodes []*NodeStatWOK) []*NodeStatWOK {

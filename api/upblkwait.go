@@ -70,7 +70,6 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 	}
 	times := time.Since(startTime).Milliseconds()
 	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", uploadBlock.logPrefix, uploads.Count(), size, times)
-	AddBlockOK(times)
 	startTime = time.Now()
 	uid := int32(uploadBlock.UPOBJ.UClient.UserId)
 	kn := int32(uploadBlock.UPOBJ.UClient.SignKey.KeyNumber)

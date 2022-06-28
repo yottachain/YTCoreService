@@ -213,14 +213,14 @@ func (me *DownLoadShardInfo) Download() []byte {
 	times := 0
 	var msg proto.Message
 	for {
-		m, err := net.RequestDN(req, me.NodeInfo, me.DWNS.logPrefix)
+		m, err := net.RequestDN(req, me.NodeInfo)
 		if err != nil {
 			logrus.Errorf("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo.Id)
 			if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 				return nil
 			}
 			if me.NodeInfo2 != nil {
-				m, err = net.RequestDN(req, me.NodeInfo2, me.DWNS.logPrefix)
+				m, err = net.RequestDN(req, me.NodeInfo2)
 				if err == nil {
 					msg = m
 					break

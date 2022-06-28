@@ -30,8 +30,3 @@ const DN_RETRY_WAIT = 3
 const CONN_EXPIRED = 60 * 2
 
 var ShardNumPerNode int
-
-var Conntimeout = 30000
-var DirectConntimeout = 1000
-var Writetimeout = 60000
-var DirectWritetimeout = 1000

@@ -150,10 +150,7 @@ func readSnProperties() {
 	PER_USER_MAX_READ_ROUTINE = int32(config.GetRangeInt("PER_USER_MAX_READ_ROUTINE", 1, 20, 5))
 	SLOW_OP_TIMES = config.GetRangeInt("SLOW_OP_TIMES", 10, 200, 50)
 
-	Conntimeout = config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 15000)
-	DirectConntimeout = CheckInt(Conntimeout/10, 500, 5000)
-	Writetimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 15000)
-	DirectWritetimeout = CheckInt(Writetimeout/10, 500, 5000)
+	P2PConfig(config)
 
 	DelLogPath = config.GetString("DelLogPath", "")
 	if !strings.HasSuffix(DelLogPath, "/") {

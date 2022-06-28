@@ -81,8 +81,8 @@ func PreAllocNode(c *Client) error {
 	req.Excludes = ErrorList()
 	res, err := net.RequestSN(req, c.SuperNode, "", 0, false)
 	if err != nil {
-		logrus.Debugf("[PreAllocNode]Return ERR:%d-%s\n", err.GetCode(), err.GetMsg())
-		return errors.New(fmt.Sprintf("%d-%s", err.GetCode(), err.GetMsg()))
+		logrus.Debugf("[PreAllocNode]%d-%s\n", err.GetCode(), err.GetMsg())
+		return fmt.Errorf("%d-%s", err.GetCode(), err.GetMsg())
 	}
 	resp, ok := res.(*pkt.PreAllocNodeResp)
 	if ok {
@@ -104,6 +104,9 @@ func PreAllocNode(c *Client) error {
 				} else {
 					ns.Weight = *n.Weight
 				}
+				if err := ns.Init(); err != nil {
+					continue
+				}
 				//logrus.Debugf("[PreAllocNode]Return %d,Weight:%f\n", ns.Id, ns.Weight)
 				if !IsError(ns.Id) {
 					nodemap[ns.Id] = ns
@@ -120,7 +123,7 @@ func PreAllocNode(c *Client) error {
 	} else {
 		logrus.Errorf("[PreAllocNode]Return err msg.\n")
 	}
-	return errors.New("Return err msg")
+	return errors.New("return err msg")
 }
 
 var ERR_LIST_CACHE = cache.New(time.Duration(180)*time.Minute, time.Duration(5)*time.Second)

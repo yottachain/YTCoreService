@@ -90,7 +90,7 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 		RetryTimes: uint32(us.retrytimes)}
 	times := 0
 	for {
-		msg, err := net.CallDN(ctlreq, &node.NodeInfo.Node, us.logPrefix, int64(env.GetTokenTimeout))
+		msg, err := net.RequestDN(ctlreq, &node.NodeInfo.Node)
 		times++
 		if err != nil {
 			if strings.Contains(err.Msg, "no handler") {
@@ -117,7 +117,7 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 
 func (us *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
 	logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
-	msg, err := net.RequestDN(req, &node.NodeInfo.Node, us.logPrefix)
+	msg, err := net.RequestDN(req, &node.NodeInfo.Node)
 	if err != nil {
 		if strings.Contains(err.Msg, "no handler") {
 			AddError(node.NodeInfo.Id)
@@ -179,13 +179,13 @@ func (us *UploadShard) DoSend() {
 			us.retrytimes++
 			node.DecCount()
 			if us.parent.IsCancle() {
-				logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d ms\n",
-					us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times)
+				logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
+					us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 				break
 			}
 			n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
-			logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d ms,retry next node %d\n",
-				us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times, n.NodeInfo.Id)
+			logrus.Errorf("[UploadShard]%sSendShard:%s,%s to %d,Gettoken retry %d times,take times %d/%d ms,retry next node %d\n",
+				us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times, n.NodeInfo.Id)
 			node = n
 			continue
 		}
@@ -193,7 +193,6 @@ func (us *UploadShard) DoSend() {
 		us.res.NODE = node.NodeInfo
 		logrus.Debugf("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			us.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
-		AddShardOK(times)
 		break
 	}
 }

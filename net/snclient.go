@@ -10,9 +10,9 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
-	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
+	"github.com/yottachain/YTHost/client"
 )
 
 var SN_MAP sync.Map
@@ -21,7 +21,7 @@ type SNClient struct {
 	PeerId        peer.ID
 	HttpSupported bool
 	HttpMultiAddr []ma.Multiaddr
-	TcpAddr       []string
+	TcpAddr       []ma.Multiaddr
 }
 
 func NewSNClient(sn *YTDNMgmt.SuperNode) (*SNClient, *pkt.ErrorMessage) {
@@ -47,7 +47,7 @@ func NewSNClient(sn *YTDNMgmt.SuperNode) (*SNClient, *pkt.ErrorMessage) {
 			h.HttpSupported = true
 			h.HttpMultiAddr = append(h.HttpMultiAddr, maddr)
 		} else {
-			h.TcpAddr = append(h.TcpAddr, addr)
+			h.TcpAddr = append(h.TcpAddr, maddr)
 		}
 	}
 	SN_MAP.Store(sn.NodeID, h)
@@ -55,9 +55,9 @@ func NewSNClient(sn *YTDNMgmt.SuperNode) (*SNClient, *pkt.ErrorMessage) {
 }
 
 func (me *SNClient) Request(msgid int32, data []byte, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
-	timeout := time.Millisecond * time.Duration(env.Writetimeout)
+	timeout := time.Millisecond * time.Duration(client.GlobalClientOption.ReadTimeout)
 	if nowait {
-		timeout = time.Millisecond * time.Duration(env.DirectWritetimeout)
+		timeout = time.Millisecond * time.Duration(client.GlobalClientOption.WriteTimeout)
 	}
 	for index, maddr := range me.HttpMultiAddr {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)

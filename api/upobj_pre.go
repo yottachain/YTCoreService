@@ -28,63 +28,63 @@ func NewUploadObjectToDisk(c *Client, bucketname, objectname string) *UploadObje
 	return &UploadObjectToDisk{UploadObject{UClient: c, PRO: p}, bucketname, objectname, ""}
 }
 
-func (self *UploadObjectToDisk) UploadMultiFile(path []string) *pkt.ErrorMessage {
+func (ud *UploadObjectToDisk) UploadMultiFile(path []string) *pkt.ErrorMessage {
 	enc, err := codec.NewMultiFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewMultiFileEncoder]ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
-	self.Encoder = enc
+	ud.Encoder = enc
 	defer enc.Close()
-	return self.Upload()
+	return ud.Upload()
 }
 
-func (self *UploadObjectToDisk) UploadFile(path string) *pkt.ErrorMessage {
+func (ud *UploadObjectToDisk) UploadFile(path string) *pkt.ErrorMessage {
 	enc, err := codec.NewFileEncoder(path)
 	if err != nil {
 		logrus.Errorf("[NewFileEncoder]Path:%s,ERR:%s\n", path, err)
 		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
-	self.Encoder = enc
+	ud.Encoder = enc
 	defer enc.Close()
-	return self.Upload()
+	return ud.Upload()
 }
 
-func (self *UploadObjectToDisk) UploadBytes(data []byte) *pkt.ErrorMessage {
+func (ud *UploadObjectToDisk) UploadBytes(data []byte) *pkt.ErrorMessage {
 	enc, err := codec.NewBytesEncoder(data)
 	if err != nil {
 		logrus.Errorf("[NewBytesEncoder]ERR:%s\n", err)
 		return pkt.NewErrorMsg(pkt.CODEC_ERROR, err.Error())
 	}
-	self.Encoder = enc
+	ud.Encoder = enc
 	defer enc.Close()
-	return self.Upload()
+	return ud.Upload()
 }
 
-func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
-	l := cache.AddSyncList(self.Encoder.GetVHW())
+func (ud *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
+	l := cache.AddSyncList(ud.Encoder.GetVHW())
 	defer func() {
 		if r := recover(); r != nil {
 			env.TraceError("[UploadObjectToDisk]")
-			self.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
+			ud.ERR.Store(pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error"))
 			reserr = pkt.NewErrorMsg(pkt.SERVER_ERROR, "Unknown error")
 		}
-		cache.DelSyncList(self.Encoder.GetVHW(), l)
+		cache.DelSyncList(ud.Encoder.GetVHW(), l)
 	}()
-	s3key := self.Bucket + "/" + self.ObjectKey
-	self.PRO.Length.Set(self.Encoder.GetLength())
-	exist := cache.SyncObjectExists(self.Encoder.GetVHW())
-	p := self.makePath(base58.Encode(self.Encoder.GetVHW()))
+	s3key := ud.Bucket + "/" + ud.ObjectKey
+	ud.PRO.Length.Set(ud.Encoder.GetLength())
+	exist := cache.SyncObjectExists(ud.Encoder.GetVHW())
+	p := ud.makePath(base58.Encode(ud.Encoder.GetVHW()))
 	if exist {
-		self.PRO.ReadinLength.Set(self.Encoder.GetLength())
-		self.PRO.ReadOutLength.Set(self.Encoder.GetLength())
-		self.PRO.WriteLength.Set(self.Encoder.GetLength())
+		ud.PRO.ReadinLength.Set(ud.Encoder.GetLength())
+		ud.PRO.ReadOutLength.Set(ud.Encoder.GetLength())
+		ud.PRO.WriteLength.Set(ud.Encoder.GetLength())
 		codec.Append(s3key, p)
 		logrus.Infof("[UploadObjectToDisk][%s]Already exists.\n", s3key)
 	} else {
-		enc := codec.NewEncoder(self.UClient.UserId, self.UClient.SignKey.KeyNumber,
-			self.UClient.StoreKey.KeyNumber, self.UClient.SignKey.Sign, s3key, self.Encoder, self)
-		enc.HandleProgress(self.PRO.ReadinLength, self.PRO.ReadOutLength, self.PRO.WriteLength)
+		enc := codec.NewEncoder(ud.UClient.UserId, ud.UClient.SignKey.KeyNumber,
+			ud.UClient.StoreKey.KeyNumber, ud.UClient.SignKey.Sign, s3key, ud.Encoder, ud)
+		enc.HandleProgress(ud.PRO.ReadinLength, ud.PRO.ReadOutLength, ud.PRO.WriteLength)
 		logrus.Infof("[UploadObjectToDisk][%s]Start encode object...\n", s3key)
 		err := enc.Handle(p)
 		if err != nil {
@@ -101,20 +101,20 @@ func (self *UploadObjectToDisk) Upload() (reserr *pkt.ErrorMessage) {
 	return nil
 }
 
-func (self *UploadObjectToDisk) Check(b *codec.PlainBlock, id int) (*codec.EncodedBlock, *pkt.ErrorMessage) {
+func (ud *UploadObjectToDisk) Check(b *codec.PlainBlock, id int) (*codec.EncodedBlock, *pkt.ErrorMessage) {
 	b.Sum()
 	SN := net.GetBlockSuperNode(b.VHP)
 	req := &pkt.CheckBlockDupReq{
-		UserId:    &self.UClient.UserId,
-		SignData:  &self.UClient.SignKey.Sign,
-		KeyNumber: &self.UClient.SignKey.KeyNumber,
+		UserId:    &ud.UClient.UserId,
+		SignData:  &ud.UClient.SignKey.Sign,
+		KeyNumber: &ud.UClient.SignKey.KeyNumber,
 		VHP:       b.VHP,
 	}
 	var resp proto.Message
 	for {
 		res, errmsg := net.RequestSN(req, SN, "", env.SN_RETRYTIMES, false)
 		if errmsg != nil {
-			logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", self.Bucket, self.ObjectKey, pkt.ToError(errmsg))
+			logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", ud.Bucket, ud.ObjectKey, pkt.ToError(errmsg))
 			time.Sleep(time.Duration(env.SN_RETRY_WAIT) * time.Second)
 		} else {
 			resp = res
@@ -123,23 +123,23 @@ func (self *UploadObjectToDisk) Check(b *codec.PlainBlock, id int) (*codec.Encod
 	}
 	dupResp, ok := resp.(*pkt.UploadBlockDupResp)
 	if ok {
-		keu, vhb := self.CheckBlockDup(dupResp, b)
+		keu, vhb := ud.CheckBlockDup(dupResp, b)
 		if keu != nil {
-			logrus.Infof("[UploadObjectToDisk][%s/%s]Write Block %d:repeat\n", self.Bucket, self.ObjectKey, id)
+			logrus.Infof("[UploadObjectToDisk][%s/%s]Write Block %d:repeat\n", ud.Bucket, ud.ObjectKey, id)
 			return &codec.EncodedBlock{IsDup: true, OriginalSize: b.OriginalSize,
 				RealSize: b.Length(), VHP: b.VHP, KEU: keu, VHB: vhb}, nil
 		}
 	}
-	bb, err := self.makeNODupBlock(b)
+	bb, err := ud.makeNODupBlock(b)
 	if err != nil {
-		logrus.Warnf("[UploadObjectToDisk][%s/%s]MakeNODupBlock ERR:%s\n", self.Bucket, self.ObjectKey, err)
+		logrus.Warnf("[UploadObjectToDisk][%s/%s]MakeNODupBlock ERR:%s\n", ud.Bucket, ud.ObjectKey, err)
 		return nil, err
 	}
-	logrus.Infof("[UploadObjectToDisk][%s/%s]Write Block %d:no-repeat\n", self.Bucket, self.ObjectKey, id)
+	logrus.Infof("[UploadObjectToDisk][%s/%s]Write Block %d:no-repeat\n", ud.Bucket, ud.ObjectKey, id)
 	return bb, nil
 }
 
-func (self *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.EncodedBlock, *pkt.ErrorMessage) {
+func (ud *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.EncodedBlock, *pkt.ErrorMessage) {
 	ks := codec.GenerateRandomKey()
 	rsize := b.Length()
 	aes := codec.NewBlockAESEncryptor(b, ks)
@@ -147,13 +147,13 @@ func (self *UploadObjectToDisk) makeNODupBlock(b *codec.PlainBlock) (*codec.Enco
 	if err != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, err.Error())
 	}
-	keu := codec.ECBEncryptNoPad(ks, self.UClient.StoreKey.AESKey)
+	keu := codec.ECBEncryptNoPad(ks, ud.UClient.StoreKey.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, b.KD)
 	return &codec.EncodedBlock{IsDup: false, OriginalSize: b.OriginalSize,
 		RealSize: rsize, VHP: b.VHP, KEU: keu, KED: ked, DATA: eblk.Data}, nil
 }
 
-func (self *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *codec.PlainBlock) ([]byte, []byte) {
+func (ud *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *codec.PlainBlock) ([]byte, []byte) {
 	keds := resp.Keds.KED
 	vhbs := resp.Vhbs.VHB
 	ars := resp.Ars.AR
@@ -162,19 +162,19 @@ func (self *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *c
 		aes := codec.NewBlockAESEncryptor(b, ks)
 		eblk, err := aes.Encrypt()
 		if err != nil {
-			logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", self.Bucket, self.ObjectKey, err)
+			logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", ud.Bucket, ud.ObjectKey, err)
 			return nil, nil
 		}
 		var vhb []byte
 		if eblk.NeedEncode() {
 			if ars[index] == codec.AR_RS_MODE {
-				logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:RS Not supported\n", self.Bucket, self.ObjectKey)
+				logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:RS Not supported\n", ud.Bucket, ud.ObjectKey)
 				return nil, nil
 			} else {
 				enc := codec.NewErasureEncoder(eblk)
 				err = enc.Encode()
 				if err != nil {
-					logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", self.Bucket, self.ObjectKey, err)
+					logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", ud.Bucket, ud.ObjectKey, err)
 					return nil, nil
 				}
 				vhb = eblk.VHB
@@ -182,13 +182,13 @@ func (self *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *c
 		} else {
 			err = eblk.MakeVHB()
 			if err != nil {
-				logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", self.Bucket, self.ObjectKey, err)
+				logrus.Warnf("[UploadObjectToDisk][%s/%s]CheckBlockDup ERR:%s\n", ud.Bucket, ud.ObjectKey, err)
 				return nil, nil
 			}
 			vhb = eblk.VHB
 		}
 		if bytes.Equal(vhb, vhbs[index]) {
-			return codec.ECBEncryptNoPad(ks, self.UClient.StoreKey.AESKey), vhb
+			return codec.ECBEncryptNoPad(ks, ud.UClient.StoreKey.AESKey), vhb
 		}
 	}
 	return nil, nil
@@ -196,17 +196,17 @@ func (self *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *c
 
 var pathmap sync.Map
 
-func (self *UploadObjectToDisk) makePath(hash string) string {
+func (ud *UploadObjectToDisk) makePath(hash string) string {
 	p := env.GetCache() + hash[0:2] + "/" + hash[2:4]
 	_, ok := pathmap.Load(p)
 	if !ok {
 		os.MkdirAll(p, os.ModePerm)
 		pathmap.Store(p, "")
 	}
-	self.out = p + "/" + hash
-	return self.out
+	ud.out = p + "/" + hash
+	return ud.out
 }
 
-func (self *UploadObjectToDisk) OutPath() string {
-	return self.out
+func (ud *UploadObjectToDisk) OutPath() string {
+	return ud.out
 }

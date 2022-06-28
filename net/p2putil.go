@@ -1,59 +1,80 @@
 package net
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/libp2p/go-libp2p-core/peer"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
+	cli "github.com/yottachain/YTHost/client"
 )
 
 type Node struct {
 	Id     int32
 	Nodeid string
-	Pubkey string
 	Addrs  []string
+	Pubkey string
 	Weight float64
+
+	PeerId peer.ID
+	Maddr  []ma.Multiaddr
 }
 
-func CallDN(msg proto.Message, dn *Node, log_prefix string, timeout int64) (proto.Message, *pkt.ErrorMessage) {
-	data, name, msgtype, merr := pkt.MarshalMsg(msg)
+func (n *Node) Init() error {
+	pid, err := peer.Decode(n.Nodeid)
+	if err != nil {
+		return err
+	}
+	n.PeerId = pid
+	ma, err := StringListToMaddrs(n.Addrs)
+	if err != nil {
+		return err
+	}
+	n.Maddr = ma
+	return nil
+}
+
+func (n *Node) Addstrings() string {
+	return AddrsToString(n.Addrs)
+}
+
+func DoRequest(msg proto.Message, PeerId peer.ID, Maddr []ma.Multiaddr) (proto.Message, *pkt.ErrorMessage) {
+	data, _, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
 	}
-	var log_pre string
-	if log_prefix == "" {
-		log_pre = fmt.Sprintf("[%s][%d]", name, dn.Id)
+	var client *cli.YTHostClient
+	if c, ok := p2phst.ClientStore().GetClient(PeerId); !ok {
+		newc, err := p2phst.ClientStore().Get(context.Background(), PeerId, Maddr)
+		if err != nil {
+			return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, fmt.Sprintf("%s,occurred on %s", err.Error(), MultiAddrsToString(Maddr)))
+		}
+		client = newc
 	} else {
-		log_pre = fmt.Sprintf("[%s][%d]%s", name, dn.Id, log_prefix)
+		client = c
 	}
-	client, err := NewClient(dn.Nodeid)
+	res, err := client.SendMsg(context.Background(), msgtype, data)
 	if err != nil {
-		return nil, err
+		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, fmt.Sprintf("%s,occurred on %s", err.Error(), MultiAddrsToString(Maddr)))
 	}
-	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false, time.Millisecond*time.Duration(timeout))
+	resmsg := pkt.UnmarshalMsg(res)
+	if errmsg, ok := msg.(*pkt.ErrorMessage); ok {
+		return nil, errmsg
+	} else {
+		return resmsg, nil
+	}
 }
 
-func RequestDN(msg proto.Message, dn *Node, log_prefix string) (proto.Message, *pkt.ErrorMessage) {
-	data, name, msgtype, merr := pkt.MarshalMsg(msg)
-	if merr != nil {
-		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
-	}
-	var log_pre string
-	if log_prefix == "" {
-		log_pre = fmt.Sprintf("[%s][%d]", name, dn.Id)
-	} else {
-		log_pre = fmt.Sprintf("[%s][%d]%s", name, dn.Id, log_prefix)
-	}
-	client, err := NewClient(dn.Nodeid)
-	if err != nil {
-		return nil, err
-	}
-	return client.Request(int32(msgtype), data, dn.Addrs, log_pre, false, time.Millisecond*time.Duration(env.Writetimeout))
+func RequestDN(msg proto.Message, dn *Node) (proto.Message, *pkt.ErrorMessage) {
+	return DoRequest(msg, dn.PeerId, dn.Maddr)
 }
 
 func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, retry int, nowait bool) (proto.Message, *pkt.ErrorMessage) {
@@ -78,11 +99,7 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 		if snclient.HttpSupported {
 			resmsg, errmsg = snclient.Request(int32(msgtype), data, log_pre, nowait)
 		} else {
-			client, err := NewClient(sn.NodeID)
-			if err != nil {
-				return nil, err
-			}
-			resmsg, errmsg = client.Request(int32(msgtype), data, snclient.TcpAddr, log_pre, nowait, time.Millisecond*time.Duration(env.Writetimeout))
+			resmsg, errmsg = DoRequest(msg, snclient.PeerId, snclient.TcpAddr)
 		}
 		if errmsg != nil {
 			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {
@@ -101,4 +118,51 @@ func RequestSN(msg proto.Message, sn *YTDNMgmt.SuperNode, log_prefix string, ret
 			return resmsg, nil
 		}
 	}
+}
+
+func StringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
+	maddrs := make([]ma.Multiaddr, len(addrs))
+	for k, addr := range addrs {
+		maddr, err := ma.NewMultiaddr(addr)
+		if err != nil {
+			return maddrs, err
+		}
+		maddrs[k] = maddr
+	}
+	return maddrs, nil
+}
+
+func MultiAddrsToString(addrs []ma.Multiaddr) string {
+	defer env.TracePanic("[P2P]")
+	var buffer bytes.Buffer
+	for index, addr := range addrs {
+		if index == 0 {
+			buffer.WriteString("[")
+			buffer.WriteString(addr.String())
+		} else {
+			buffer.WriteString(",")
+			buffer.WriteString(addr.String())
+		}
+	}
+	if buffer.Len() > 0 {
+		buffer.WriteString("]")
+	}
+	return buffer.String()
+}
+
+func AddrsToString(addrs []string) string {
+	var buffer bytes.Buffer
+	for index, addr := range addrs {
+		if index == 0 {
+			buffer.WriteString("[")
+			buffer.WriteString(addr)
+		} else {
+			buffer.WriteString(",")
+			buffer.WriteString(addr)
+		}
+	}
+	if buffer.Len() > 0 {
+		buffer.WriteString("]")
+	}
+	return buffer.String()
 }

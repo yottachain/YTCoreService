@@ -193,6 +193,7 @@ func NewHook(logName string, format *Formatter) (logrus.Hook, error) {
 		return nil, err
 	}
 	lfsHook := lfshook.NewHook(lfshook.WriterMap{
+		logrus.TraceLevel: writer,
 		logrus.DebugLevel: writer,
 		logrus.InfoLevel:  writer,
 		logrus.WarnLevel:  writer,

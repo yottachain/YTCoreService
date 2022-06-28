@@ -274,9 +274,6 @@ func StartApi() {
 	go DoCache()
 	go StartSync()
 	AutoReg()
-	if env.UploadStat {
-		go StartUploadStat()
-	}
 }
 
 func InitSuperList() {

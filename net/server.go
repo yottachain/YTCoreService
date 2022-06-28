@@ -2,7 +2,6 @@ package net
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -54,16 +53,7 @@ func Start(port int32, port2 int32, privatekey string) error {
 		}
 	}
 	go serverhost.Accept()
-	go Clear()
 	return nil
-}
-
-func Clear() {
-	for {
-		if ClearClient() {
-			time.Sleep(time.Duration(60) * time.Second)
-		}
-	}
 }
 
 func MessageHandler(requestData []byte, head service.Head) ([]byte, error) {
@@ -73,7 +63,6 @@ func MessageHandler(requestData []byte, head service.Head) ([]byte, error) {
 	sum := hasher.Sum(nil)
 	pkarr = append(pkarr, sum[0:4]...)
 	publicKey := base58.Encode(pkarr)
-	//logrus.Infof("[P2P receive msg size]=%d\n", len(requestData))
 	res := callback(uint16(head.MsgId), requestData, publicKey)
 	return res, nil
 }

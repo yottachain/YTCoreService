@@ -13,6 +13,7 @@ import (
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
 	"github.com/yottachain/YTDNMgmt"
+	"github.com/yottachain/YTHost/client"
 	ytrebuilder "github.com/yottachain/yotta-rebuilder"
 	"github.com/yottachain/yotta-rebuilder/pbrebuilder"
 )
@@ -46,7 +47,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	defer env.TracePanic("[SendRebuildTask]")
 	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
 	defer cancel()
 	ls, err := REBUILDER_SERVICE.GetRebuildTasks(ctx, n.ID)
 	stime := time.Now().Sub(startTime).Milliseconds()
@@ -57,7 +58,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	}
 	node := &net.Node{Id: n.ID, Nodeid: n.NodeID, Pubkey: n.PubKey, Addrs: n.Addrs}
 	req := &pkt.TaskList{Tasklist: ls.Tasklist, ExpiredTime: ls.ExpiredTime, SrcNodeID: ls.SrcNodeID, ExpiredTimeGap: ls.ExpiredTimeGap}
-	_, e := net.RequestDN(req, node, "")
+	_, e := net.RequestDN(req, node)
 	if err != nil {
 		logrus.Errorf("[SendRebuildTask][%d]Send rebuild task ERR:%d--%s\n", node.Id, e.Code, e.Msg)
 	} else {
@@ -129,7 +130,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 			return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
 		}
 		startTime := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(env.Writetimeout))
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
 		defer cancel()
 		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime, SrcNodeID: h.m.SrcNodeID}
 		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
