@@ -58,16 +58,17 @@ func call() {
 
 	go stest(Lock)
 
-	//time.Sleep(6 * time.Second)
+	time.Sleep(6 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("timeout")
+			cancel()
 
-	select {
-	case <-ctx.Done():
-		fmt.Println("timeout")
-
-	case <-Lock:
-		fmt.Println("OK")
+		case <-Lock:
+			fmt.Println("OK")
+		}
+		time.Sleep(time.Second)
 	}
-
-	select {}
 
 }

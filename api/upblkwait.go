@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -17,40 +18,22 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 	originalSize int64, ress []*UploadShardResult, ress2 []*UploadShardResult, ids []int32, startedsign chan int) ([]int32, *pkt.ErrorMessage) {
 	size := len(enc.Shards)
 	startTime := time.Now()
-	count := 0
-	for _, res := range ress {
-		if res == nil {
-			count++
-		}
-	}
-	bakcount := 0
-	waitcount := 0
-	if ress2 != nil {
-		bakcount = size * env.ExtraPercent / 100
-		for _, res := range ress2 {
-			if res != nil {
-				bakcount--
-			} else {
-				waitcount++
-			}
-		}
-		waitcount = waitcount - bakcount
-	}
 	isCopyShard := enc.IsCopyShard()
-	uploads := NewUpLoad(uploadBlock.logPrefix, ress, ress2, count, bakcount, waitcount)
+	wgroup := sync.WaitGroup{}
+	num := 0
 	ShardRoutineLock.Lock()
 	for index, shd := range enc.Shards {
 		if ress[index] == nil {
-			StartUploadShard(uploadBlock, shd, int32(index), uploads, ids, false)
+			wgroup.Add(1)
+			ress[index] = StartUploadShard(uploadBlock, shd, int32(index), &wgroup, ids, false)
+			num++
 		}
 	}
-	if ress2 != nil {
-		for index, shd := range enc.Shards {
-			if ress2[index] == nil {
-				if !uploads.IsCancle() {
-					StartUploadShard(uploadBlock, shd, int32(index), uploads, ids, true)
-				}
-			}
+	for index, res := range ress2 {
+		if res == nil {
+			wgroup.Add(1)
+			ress2[index] = StartUploadShard(uploadBlock, enc.Shards[index], int32(index), &wgroup, ids, true)
+			num++
 		}
 	}
 	ShardRoutineLock.Unlock()
@@ -64,12 +47,12 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			shd.Clear()
 		}
 	}
-	er := uploads.WaitUpload()
-	if er != nil {
+	wgroup.Wait()
+	if uploadBlock.CheckSendShardPanic(ress, ress2) {
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "Panic")
 	}
 	times := time.Since(startTime).Milliseconds()
-	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", uploadBlock.logPrefix, uploads.Count(), size, times)
+	logrus.Infof("[UploadBlock]%sUpload block OK,shardcount %d/%d,take times %d ms.\n", uploadBlock.logPrefix, num, size, times)
 	startTime = time.Now()
 	uid := int32(uploadBlock.UPOBJ.UClient.UserId)
 	kn := int32(uploadBlock.UPOBJ.UClient.SignKey.KeyNumber)
@@ -85,7 +68,6 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 	if ress2 == nil || isCopyShard {
 		i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
 		vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
-		uploads.RLock()
 		req := &pkt.UploadBlockEndReqV2{
 			UserId:       &uid,
 			SignData:     &uploadBlock.UPOBJ.UClient.SignKey.Sign,
@@ -102,7 +84,6 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
 			Vbi:          &uploadBlock.STime,
 		}
-		uploads.RUnlock()
 		if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
 			req.SignData = &sign
@@ -110,7 +91,6 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 		_, errmsg = net.RequestSN(req, uploadBlock.SN, uploadBlock.logPrefix, env.SN_RETRYTIMES, false)
 	} else {
 		vnu := uploadBlock.UPOBJ.VNU.Hex()
-		uploads.RLock()
 		req := &pkt.UploadBlockEndReqV3{
 			UserId:       &uid,
 			SignData:     &uploadBlock.UPOBJ.UClient.SignKey.Sign,
@@ -127,7 +107,6 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
 			Vbi:          &uploadBlock.STime,
 		}
-		uploads.RUnlock()
 		if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
 			req.SignData = &sign
@@ -177,6 +156,22 @@ func (uploadBlock *UploadBlock) CheckErrorMessage(ress, ress2 []*UploadShardResu
 	return nil
 }
 
+func (uploadBlock *UploadBlock) CheckSendShardPanic(ress []*UploadShardResult, ress2 []*UploadShardResult) bool {
+	for index, res := range ress {
+		if res.NODE == nil {
+			ress[index] = nil
+			return true
+		}
+	}
+	for index, res := range ress2 {
+		if res.NODE == nil {
+			ress[index] = nil
+			return true
+		}
+	}
+	return false
+}
+
 func ToUploadBlockEndReqV2_OkList(res []*UploadShardResult) []*pkt.UploadBlockEndReqV2_OkList {
 	oklist := make([]*pkt.UploadBlockEndReqV2_OkList, len(res))
 	for index, r := range res {
@@ -192,6 +187,7 @@ func ToUploadBlockEndReqV2_OkList(res []*UploadShardResult) []*pkt.UploadBlockEn
 
 func ToUploadBlockEndReqV3_OkList(res []*UploadShardResult, res2 []*UploadShardResult) []*pkt.UploadBlockEndReqV3_OkList {
 	oklist := make([]*pkt.UploadBlockEndReqV3_OkList, len(res))
+	size := len(res2)
 	for index, r := range res {
 		oklist[index] = &pkt.UploadBlockEndReqV3_OkList{
 			SHARDID: &r.SHARDID,
@@ -199,7 +195,7 @@ func ToUploadBlockEndReqV3_OkList(res []*UploadShardResult, res2 []*UploadShardR
 			VHF:     r.VHF,
 			DNSIGN:  &r.DNSIGN,
 		}
-		if res2[index] != nil {
+		if index < size {
 			oklist[index].NODEID2 = &res2[index].NODE.Id
 			oklist[index].DNSIGN2 = &res2[index].DNSIGN
 		}

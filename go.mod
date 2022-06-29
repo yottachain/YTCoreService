@@ -9,7 +9,6 @@ require (
 	github.com/gobuffalo/packr/v2 v2.5.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
-	github.com/grd/statistics v0.0.0-20130405091615-5af75da930c9
 	github.com/kardianos/service v1.1.0
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/libp2p/go-libp2p-core v0.3.1
@@ -21,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
 	github.com/yottachain/YTDNMgmt v0.0.0-20220429025320-4a62e6d257b2
-	github.com/yottachain/YTHost v1.0.2-0.20220628053728-e4b06b38d986
+	github.com/yottachain/YTHost v1.0.2-0.20220629033638-61d746e77f52
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
 	go.mongodb.org/mongo-driver v1.3.3

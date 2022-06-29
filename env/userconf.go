@@ -35,7 +35,6 @@ var LRCBugTime int64 = -1
 var LRC2 = false
 var CopyNum = 10
 var ExtraPercent = 100
-var BlkTimeout = 60
 
 var cfg *Config
 
@@ -103,8 +102,7 @@ func readClientProperties() {
 
 	P2PConfig(config)
 	CopyNum = config.GetRangeInt("CopyNum", 5, 18, 10)
-	ExtraPercent = config.GetRangeInt("ExtraPercent", 0, 100, 30)
-	BlkTimeout = config.GetRangeInt("BlkTimeout", 0, 60*5, 30)
+	ExtraPercent = config.GetRangeInt("ExtraPercent", 0, 100, 100)
 
 	LRC2 = config.GetBool("LRC2", true)
 	if config.HasValue("LRCBugTime") {

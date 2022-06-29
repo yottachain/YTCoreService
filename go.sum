@@ -177,8 +177,6 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/graph-gophers/graphql-go v0.0.0-20191115155744-f33e81362277/go.mod h1:9CQHMSxwO4MprSdzoIEobiHpoLtHm77vfxsvsIN5Vuc=
-github.com/grd/statistics v0.0.0-20130405091615-5af75da930c9 h1:VgcBlcf+gxSR6+X8PerbepV9x+WZV0f4K+SYVYCmk+U=
-github.com/grd/statistics v0.0.0-20130405091615-5af75da930c9/go.mod h1:0I4YW+/RI/5xLC4FZzEQuaSMK5DW8GyfYIVSZ1PeC6Y=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.1.0/go.mod h1:f5nM7jw/oeRSadq3xCzHAvxcr8HZnzsqU6ILg/0NiiE=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
@@ -467,8 +465,8 @@ github.com/yottachain/YTDNMgmt v0.0.0-20220429025320-4a62e6d257b2/go.mod h1:21to
 github.com/yottachain/YTHost v1.0.2-0.20200330065027-fd1b316f47cb/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200703084155-b2658f82b387/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20200918110720-68f155ccc541/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
-github.com/yottachain/YTHost v1.0.2-0.20220628053728-e4b06b38d986 h1:ffTH6ta8C9qW5YDedxkPTtTfQx8cT8AheVMpY6Oh7EE=
-github.com/yottachain/YTHost v1.0.2-0.20220628053728-e4b06b38d986/go.mod h1:8/hiqr3CQQLfc6y0U2QlyzoIJUSloFKcpgZBpsdIkR4=
+github.com/yottachain/YTHost v1.0.2-0.20220629033638-61d746e77f52 h1:c+qnFKk07Iu+MXaUxr7vgawLU+CQqNZ73AIE6jKf9hw=
+github.com/yottachain/YTHost v1.0.2-0.20220629033638-61d746e77f52/go.mod h1:8/hiqr3CQQLfc6y0U2QlyzoIJUSloFKcpgZBpsdIkR4=
 github.com/yottachain/yotta-analysis v0.0.0-20200427065413-d4b83ac9a92f/go.mod h1:WBAiITvR+7h/fwyUYkybMjaBb812On6Td7sMc/nAqKE=
 github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692 h1:LEWEYm5sR8SGk/+Qv23q7/4ArbGS0QZc9DSyxjFF0Mk=
 github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=

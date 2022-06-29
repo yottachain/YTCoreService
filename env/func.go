@@ -109,7 +109,7 @@ func TraceError(prefix string) {
 	ss := string(stack[0:length])
 	ls := strings.Split(ss, "\n")
 	for _, s := range ls {
-		logrus.Fatal(prefix + s + "\n")
+		logrus.Error(prefix + s + "\n")
 	}
 }
 
@@ -119,7 +119,7 @@ func TraceErrors(prefix string) string {
 	ss := string(stack[0:length])
 	ls := strings.Split(ss, "\n")
 	for _, s := range ls {
-		logrus.Fatal(prefix + s + "\n")
+		logrus.Error(prefix + s + "\n")
 	}
 	return ss
 }

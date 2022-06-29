@@ -215,7 +215,7 @@ func (me *DownLoadShardInfo) Download() []byte {
 	for {
 		m, err := net.RequestDN(req, me.NodeInfo)
 		if err != nil {
-			logrus.Errorf("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo.Id)
+			logrus.Infof("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo.Id)
 			if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 				return nil
 			}
@@ -225,7 +225,7 @@ func (me *DownLoadShardInfo) Download() []byte {
 					msg = m
 					break
 				} else {
-					logrus.Errorf("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo2.Id)
+					logrus.Infof("[DownloadShard]%sDownload ERR:%s,%s from %d\n", me.DWNS.logPrefix, err.Msg, base58.Encode(me.VHF), me.NodeInfo2.Id)
 					if atomic.LoadInt32(me.DWNS.cancel) == 1 {
 						return nil
 					}
