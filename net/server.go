@@ -24,7 +24,7 @@ func Stop() {
 
 func Start(port int32, port2 int32, privatekey string) error {
 	privbytes := base58.Decode(privatekey)
-	if privbytes == nil || len(privbytes) == 0 {
+	if len(privbytes) == 0 {
 		logrus.Panicf("[Booter]Bad format of private key,Base58 format needed")
 	}
 	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])

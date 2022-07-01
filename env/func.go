@@ -100,7 +100,7 @@ func P2PConfig(config *Config) {
 	client.GlobalClientOption.WriteTimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 7000)
 	client.GlobalClientOption.ReadTimeout = config.GetRangeInt("P2PHOST_READTIMEOUT", 1000, 180000, 20000)
 	client.GlobalClientOption.IdleTimeout = config.GetRangeInt("P2PHOST_IDLETIMEOUT", 60000, 3600000, 180000)
-	client.GlobalClientOption.PingInterval = config.GetRangeInt("P2PHOST_PINGINTERVAL", 1000, 180000, 20000)
+	client.GlobalClientOption.MuteTimeout = config.GetRangeInt("P2PHOST_MUTETIMEOUT", client.GlobalClientOption.WriteTimeout, client.GlobalClientOption.IdleTimeout, client.GlobalClientOption.WriteTimeout*3)
 }
 
 func TraceError(prefix string) {

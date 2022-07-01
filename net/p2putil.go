@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -24,11 +25,23 @@ type Node struct {
 	Pubkey string
 	Weight float64
 
+	sync.RWMutex
 	PeerId peer.ID
 	Maddr  []ma.Multiaddr
 }
 
+func (n *Node) PID() peer.ID {
+	n.RLock()
+	defer n.RUnlock()
+	return n.PeerId
+}
+
 func (n *Node) Init() error {
+	if n.PID() != "" {
+		return nil
+	}
+	n.Lock()
+	defer n.Unlock()
 	pid, err := peer.Decode(n.Nodeid)
 	if err != nil {
 		return err
@@ -74,6 +87,9 @@ func DoRequest(msg proto.Message, PeerId peer.ID, Maddr []ma.Multiaddr) (proto.M
 }
 
 func RequestDN(msg proto.Message, dn *Node) (proto.Message, *pkt.ErrorMessage) {
+	if e := dn.Init(); e != nil {
+		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, e.Error())
+	}
 	return DoRequest(msg, dn.PeerId, dn.Maddr)
 }
 

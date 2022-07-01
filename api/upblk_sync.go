@@ -145,10 +145,16 @@ func (uploadBlock *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 	size := len(enc.Shards)
 	rsize := int32(uploadBlock.EncBLK.RealSize)
 	ress := make([]*UploadShardResult, size)
+	useex := false
 	var ress2 []*UploadShardResult = nil
 	if !enc.IsCopyShard() && env.LRC2 {
-		bakcount := size * env.ExtraPercent / 100
-		ress2 = make([]*UploadShardResult, bakcount)
+		if env.BlkTimeout == 0 {
+			bakcount := size * env.ExtraPercent / 100
+			ress2 = make([]*UploadShardResult, bakcount)
+		} else {
+			ress2 = make([]*UploadShardResult, size)
+			useex = true
+		}
 	}
 	finishWg := uploadBlock.WG
 	uploadBlock.WG = nil
@@ -167,7 +173,13 @@ func (uploadBlock *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 		}()
 		var ids []int32
 		for {
-			blkls, err := uploadBlock.UploadShards(uploadBlock.EncBLK.VHP, uploadBlock.EncBLK.KEU, uploadBlock.EncBLK.KED, eblk.VHB, enc, &rsize, uploadBlock.EncBLK.OriginalSize, ress, ress2, ids, startedSign)
+			var blkls []int32
+			var err *pkt.ErrorMessage = nil
+			if useex {
+				blkls, err = uploadBlock.UploadShardsEx(uploadBlock.EncBLK.VHP, uploadBlock.EncBLK.KEU, uploadBlock.EncBLK.KED, eblk.VHB, enc, &rsize, uploadBlock.EncBLK.OriginalSize, ress, ress2, ids, startedSign)
+			} else {
+				blkls, err = uploadBlock.UploadShards(uploadBlock.EncBLK.VHP, uploadBlock.EncBLK.KEU, uploadBlock.EncBLK.KED, eblk.VHB, enc, &rsize, uploadBlock.EncBLK.OriginalSize, ress, ress2, ids, startedSign)
+			}
 			if err != nil {
 				if err.Code == pkt.DN_IN_BLACKLIST {
 					ids = blkls

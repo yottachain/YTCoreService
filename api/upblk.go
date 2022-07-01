@@ -256,10 +256,16 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 	ress := make([]*UploadShardResult, size)
 	keu := codec.ECBEncryptNoPad(ks, uploadBlock.UPOBJ.UClient.StoreKey.AESKey)
 	ked := codec.ECBEncryptNoPad(ks, uploadBlock.BLK.KD)
+	useex := false
 	var ress2 []*UploadShardResult = nil
 	if !enc.IsCopyShard() && env.LRC2 {
 		bakcount := size * env.ExtraPercent / 100
-		ress2 = make([]*UploadShardResult, bakcount)
+		if env.BlkTimeout == 0 {
+			ress2 = make([]*UploadShardResult, bakcount)
+		} else {
+			ress2 = make([]*UploadShardResult, size)
+			useex = true
+		}
 	}
 	finishWg := uploadBlock.WG
 	uploadBlock.WG = nil
@@ -278,7 +284,13 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 		}()
 		var ids []int32
 		for {
-			blkls, err := uploadBlock.UploadShards(uploadBlock.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, uploadBlock.BLK.OriginalSize, ress, ress2, ids, startedSign)
+			var blkls []int32
+			var err *pkt.ErrorMessage = nil
+			if useex {
+				blkls, err = uploadBlock.UploadShardsEx(uploadBlock.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, uploadBlock.BLK.OriginalSize, ress, ress2, ids, startedSign)
+			} else {
+				blkls, err = uploadBlock.UploadShards(uploadBlock.BLK.VHP, keu, ked, eblk.VHB, enc, &rsize, uploadBlock.BLK.OriginalSize, ress, ress2, ids, startedSign)
+			}
 			if err != nil {
 				if err.Code == pkt.DN_IN_BLACKLIST {
 					ids = blkls
