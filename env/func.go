@@ -94,13 +94,13 @@ func TracePanic(prefix string) {
 }
 
 func P2PConfig(config *Config) {
-	client.GlobalClientOption.ConnectTimeout = config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 5000)
-	client.GlobalClientOption.QueueSize = config.GetRangeInt("P2PHOST_QUEUESIZE", 1, 10, 1)
-	client.GlobalClientOption.QueueTimeout = config.GetRangeInt("P2PHOST_QUEUETIMEOUT", 1000, 60000, 3000)
-	client.GlobalClientOption.WriteTimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 7000)
-	client.GlobalClientOption.ReadTimeout = config.GetRangeInt("P2PHOST_READTIMEOUT", 1000, 180000, 20000)
-	client.GlobalClientOption.IdleTimeout = config.GetRangeInt("P2PHOST_IDLETIMEOUT", 60000, 3600000, 180000)
-	client.GlobalClientOption.MuteTimeout = config.GetRangeInt("P2PHOST_MUTETIMEOUT", client.GlobalClientOption.WriteTimeout, client.GlobalClientOption.IdleTimeout, client.GlobalClientOption.WriteTimeout*3)
+	client.ConnectTimeout = config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 5000)
+	client.QueueSize = config.GetRangeInt("P2PHOST_QUEUESIZE", 1, 10, 1)
+	client.QueueTimeout = config.GetRangeInt("P2PHOST_QUEUETIMEOUT", 1000, 60000, 3000)
+	client.WriteTimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 7000)
+	client.ReadTimeout = config.GetRangeInt("P2PHOST_READTIMEOUT", 1000, 180000, 20000)
+	client.IdleTimeout = config.GetRangeInt("P2PHOST_IDLETIMEOUT", 60000, 3600000, 180000)
+	client.MuteTimeout = config.GetRangeInt("P2PHOST_MUTETIMEOUT", client.WriteTimeout, client.IdleTimeout, client.WriteTimeout*3)
 }
 
 func TraceError(prefix string) {

@@ -28,7 +28,7 @@ func testud() {
 	for ii := 0; ii < 5; ii++ {
 		vhw, _ := upload()
 		if vhw != nil {
-			//download(vhw)
+			download(vhw)
 		}
 	}
 	//downloadRange(vhw)

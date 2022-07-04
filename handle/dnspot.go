@@ -60,7 +60,7 @@ func SendSpotCheck(node *YTDNMgmt.Node) {
 func ExecSendSpotCheck() {
 	atomic.AddInt32(AYNC_ROUTINE_NUM, 1)
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.ReadTimeout))
 	defer cancel()
 	defer env.TracePanic("[SendSpotCheckTask]")
 	ischeck, err := SPOTCHECK_SERVICE.IsNodeSelected(ctx)
@@ -69,7 +69,7 @@ func ExecSendSpotCheck() {
 		return
 	}
 	if ischeck {
-		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
+		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*time.Duration(client.ReadTimeout))
 		defer cancel2()
 		list, err := SPOTCHECK_SERVICE.GetSpotCheckList(ctx2)
 		if err != nil {
@@ -145,7 +145,7 @@ func (h *SpotCheckRepHandler) Handle() proto.Message {
 	} else {
 		startTime := time.Now()
 		for _, res := range h.m.InvalidNodeList {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.ReadTimeout))
 			defer cancel()
 			err := SPOTCHECK_SERVICE.UpdateTaskStatus(ctx, h.m.TaskId, int32(res))
 			if err != nil {

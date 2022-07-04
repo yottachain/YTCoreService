@@ -55,9 +55,9 @@ func NewSNClient(sn *YTDNMgmt.SuperNode) (*SNClient, *pkt.ErrorMessage) {
 }
 
 func (me *SNClient) Request(msgid int32, data []byte, log_pre string, nowait bool) (proto.Message, *pkt.ErrorMessage) {
-	timeout := time.Millisecond * time.Duration(client.GlobalClientOption.ReadTimeout)
+	timeout := time.Millisecond * time.Duration(client.ReadTimeout)
 	if nowait {
-		timeout = time.Millisecond * time.Duration(client.GlobalClientOption.WriteTimeout)
+		timeout = time.Millisecond * time.Duration(client.WriteTimeout)
 	}
 	for index, maddr := range me.HttpMultiAddr {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)

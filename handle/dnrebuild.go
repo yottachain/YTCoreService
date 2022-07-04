@@ -47,7 +47,7 @@ func ExecSendRebuildTask(n *YTDNMgmt.Node) {
 	defer atomic.AddInt32(AYNC_ROUTINE_NUM, -1)
 	defer env.TracePanic("[SendRebuildTask]")
 	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.ReadTimeout))
 	defer cancel()
 	ls, err := REBUILDER_SERVICE.GetRebuildTasks(ctx, n.ID)
 	stime := time.Now().Sub(startTime).Milliseconds()
@@ -130,7 +130,7 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 			return &pkt.MultiTaskOpResultRes{ErrCode: 2, SuccNum: int32(len(metas))}
 		}
 		startTime := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.GlobalClientOption.ReadTimeout))
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.ReadTimeout))
 		defer cancel()
 		req := &pbrebuilder.MultiTaskOpResult{Id: h.m.Id, RES: h.m.RES, NodeID: newid, ExpiredTime: h.m.ExpiredTime, SrcNodeID: h.m.SrcNodeID}
 		err = REBUILDER_SERVICE.UpdateTaskStatus(ctx, req)
