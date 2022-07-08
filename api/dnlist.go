@@ -176,7 +176,7 @@ func NewNodeStat(id int32, timestamp int64, sign string) *NodeStat {
 	ns.snid = id
 	ns.timestamp = timestamp
 	ns.sign = sign
-	ns.ERRTIMES = int64(client.ReadTimeout+client.ConnectTimeout+client.WriteTimeout+client.QueueTimeout) * int64(time.Millisecond)
+	ns.ERRTIMES = int64(client.ReadTimeout+client.ConnectTimeout+client.WriteTimeout) * int64(time.Millisecond)
 	return ns
 }
 

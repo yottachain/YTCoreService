@@ -95,8 +95,8 @@ func TracePanic(prefix string) {
 
 func P2PConfig(config *Config) {
 	client.ConnectTimeout = config.GetRangeInt("P2PHOST_CONNECTTIMEOUT", 1000, 60000, 5000)
-	client.QueueSize = config.GetRangeInt("P2PHOST_QUEUESIZE", 1, 10, 1)
-	client.QueueTimeout = config.GetRangeInt("P2PHOST_QUEUETIMEOUT", 1000, 60000, 3000)
+	client.RequestQueueSize = config.GetRangeInt("P2PHOST_REQ_QUEUESIZE", 1, 10, 2)
+	client.ResponseQueueSize = config.GetRangeInt("P2PHOST_RESP_QUEUESIZE", 10, 100, 10)
 	client.WriteTimeout = config.GetRangeInt("P2PHOST_WRITETIMEOUT", 1000, 60000, 7000)
 	client.ReadTimeout = config.GetRangeInt("P2PHOST_READTIMEOUT", 1000, 180000, 20000)
 	client.IdleTimeout = config.GetRangeInt("P2PHOST_IDLETIMEOUT", 60000, 3600000, 180000)
