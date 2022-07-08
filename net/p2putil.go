@@ -79,7 +79,7 @@ func DoRequest(msg proto.Message, PeerId peer.ID, Maddr []ma.Multiaddr) (proto.M
 		return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, fmt.Sprintf("%s,occurred on %s", err.Error(), MultiAddrsToString(Maddr)))
 	}
 	resmsg := pkt.UnmarshalMsg(res)
-	if errmsg, ok := msg.(*pkt.ErrorMessage); ok {
+	if errmsg, ok := resmsg.(*pkt.ErrorMessage); ok {
 		return nil, errmsg
 	} else {
 		return resmsg, nil
