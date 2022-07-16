@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Launch MakeCode",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceRoot}/main_test.go",
+            "args": ["makeconst"]
+        },
+        {
+            "name": "Launch YTSN",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}",
+            "env":{
+                "YTSN_HOME":"D:/YTCoreService"
+            },
+            "args": ["init"]
+        }
+
+    ]
+}

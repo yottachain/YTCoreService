@@ -1,0 +1,66 @@
+syntax = "proto2";
+
+package pkt;
+
+message ActiveCache{    
+    optional group VNU = 1 {
+        optional uint32 timestamp=1;
+        optional int32 machineIdentifier=2;
+        optional uint32 processIdentifier=3;
+        optional int32 counter=4;
+    }  
+}
+
+
+message TotalReq{
+    optional bool b=1;
+}
+
+message TotalResp{
+    optional uint64 fileTotal=1; 
+    optional uint64 spaceTotal=2; 
+    optional uint64 usedspace=3; 
+    optional uint64 bkTotal=4; 
+    optional uint64 actualBkTotal=5; 
+}
+
+message UpdateDNIReq{
+    optional bytes dni=1;
+    optional uint32 nodeid=2;
+    optional bool delete=3; 
+}
+
+message UpdateDNIMutiReq{
+    repeated group DNI=1{
+        optional bytes dni=1;
+        optional uint32 nodeid=2;
+        optional bool delete=3; 
+    }
+}
+
+message UserListReq{
+    optional int32 lastId=1;
+    optional int32 count=2;
+}
+
+message UserListResp{
+    repeated group UserSpace=1{
+        optional uint32 userId=1;
+        optional string userName=2;
+        optional uint64 spaceTotal=3;
+    }
+}
+
+message UserSpaceReq{
+    optional uint32 userid=1;
+}
+
+message UserSpaceResp{
+    optional string jsonstr=1;
+}
+
+
+
+
+
+
