@@ -19,6 +19,8 @@ type Node struct {
 	Addrs  []string
 	Pubkey string
 	Weight float64
+	Pool   string
+	Region string
 
 	sync.RWMutex
 	PeerId peer.ID

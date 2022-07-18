@@ -19,6 +19,8 @@ import (
 
 const SPOTCHECKNUM = 3
 
+var AYNC_ROUTINE_NUM *int32 = new(int32)
+
 var SPOT_NODE_LIST = struct {
 	sync.RWMutex
 	nodes [SPOTCHECKNUM]*YTDNMgmt.Node
@@ -27,7 +29,7 @@ var SPOT_NODE_LIST = struct {
 
 var SPOTCHECK_SERVICE *ytanalysis.AnalysisClient
 
-func InitSpotCheckService() {
+func initSpotCheckService() {
 	if env.SPOTCHECK_ADDR != "" {
 		var err error
 		SPOTCHECK_SERVICE, err = ytanalysis.NewClient(env.SPOTCHECK_ADDR)

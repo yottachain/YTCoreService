@@ -1,12 +1,17 @@
 package http
 
 import (
+	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync/atomic"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
@@ -21,61 +26,55 @@ func Stop() {
 	server.Close()
 }
 
-func Start(port int) {
-	/*
-		path := env.YTSN_HOME + "res/statapi.html"
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			logrus.Errorf("[Http]Resource file 'statapi.html' read failure\n")
-			return errors.New("Resource file 'statapi.html' read failure\n")
-		}*/
-	/*
-		home_page = string(data)
-		list := strings.Split(env.HttpRemoteIp, ";")
-		for _, ip := range list {
-			s := strings.TrimSpace(ip)
-			if s != "" {
-				ip_list = append(ip_list, s)
-			}
-		}*/
-	/*
-		http.HandleFunc("/total", TotalHandle)
-		http.HandleFunc("/usertotal", UserTotalHandle)
-		http.HandleFunc("/list", ListHandle)
-		http.HandleFunc("/active_nodes", ActiveNodesHandle)
-		http.HandleFunc("/readable_nodes", ReadableNodesHandle)
-
-		http.HandleFunc("/statistics", StatisticsHandle)
-		http.HandleFunc("/relationship", RelationshipHandle)
-		http.HandleFunc("/newnodeid", NewnodeidHandle)
-		http.HandleFunc("/preregnode", PreregnodeHandle)
-		http.HandleFunc("/changeminerpool", ChangeminerpoolHandle)
-		http.HandleFunc("/ChangeAdminAcc", ChangeAdminAccHandle)
-		http.HandleFunc("/ChangeProfitAcc", ChangeProfitAccHandle)
-		http.HandleFunc("/ChangePoolID", ChangePoolIDHandle)
-		http.HandleFunc("/ChangeAssignedSpace", ChangeAssignedSpaceHandle)
-		http.HandleFunc("/ChangeDepAcc", ChangeDepAccHandle)
-		http.HandleFunc("/ChangeDeposit", ChangeDepositHandle)
-		http.HandleFunc("/IncreaseDeposit", IncreaseDepositHandle)
-		http.HandleFunc("/NodeQuit", NodeQuitHandle)
-		http.HandleFunc("/UndepStore", UndepStoreHandle)
-		http.HandleFunc("/Querydeposit", QueryDepositHandle)
-
-		http.HandleFunc("/statuser", UserStatHandle)
-		http.HandleFunc("/", RootHandle)
-	*/
-	//InitCache()
-	/*
-		server = &http.Server{
-			Addr:         fmt.Sprintf(":%d", port),
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
+func Start(port int) error {
+	path := env.YTSN_HOME + "res/statapi.html"
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		logrus.Errorf("[Http]Resource file 'statapi.html' read failure\n")
+		return errors.New("resource file 'statapi.html' read failure")
+	}
+	home_page = string(data)
+	list := strings.Split(env.HttpRemoteIp, ";")
+	for _, ip := range list {
+		s := strings.TrimSpace(ip)
+		if s != "" {
+			ip_list = append(ip_list, s)
 		}
-		err = server.ListenAndServe()
-		if err != nil {
-			logrus.Panicf("[Http]ListenAndServe: %s\n", err)
-		}*/
+	}
+	http.HandleFunc("/total", TotalHandle)
+	http.HandleFunc("/usertotal", UserTotalHandle)
+	http.HandleFunc("/list", ListHandle)
+	http.HandleFunc("/active_nodes", ActiveNodesHandle)
+	http.HandleFunc("/readable_nodes", ReadableNodesHandle)
 
+	http.HandleFunc("/statistics", StatisticsHandle)
+	http.HandleFunc("/relationship", RelationshipHandle)
+	http.HandleFunc("/newnodeid", NewnodeidHandle)
+	http.HandleFunc("/preregnode", PreregnodeHandle)
+	http.HandleFunc("/changeminerpool", ChangeminerpoolHandle)
+	http.HandleFunc("/ChangeAdminAcc", ChangeAdminAccHandle)
+	http.HandleFunc("/ChangeProfitAcc", ChangeProfitAccHandle)
+	http.HandleFunc("/ChangePoolID", ChangePoolIDHandle)
+	http.HandleFunc("/ChangeAssignedSpace", ChangeAssignedSpaceHandle)
+	http.HandleFunc("/ChangeDepAcc", ChangeDepAccHandle)
+	http.HandleFunc("/ChangeDeposit", ChangeDepositHandle)
+	http.HandleFunc("/IncreaseDeposit", IncreaseDepositHandle)
+	http.HandleFunc("/NodeQuit", NodeQuitHandle)
+	http.HandleFunc("/UndepStore", UndepStoreHandle)
+	http.HandleFunc("/Querydeposit", QueryDepositHandle)
+
+	http.HandleFunc("/", RootHandle)
+	initCache()
+	server = &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+	err = server.ListenAndServe()
+	if err != nil {
+		logrus.Panicf("[Http]ListenAndServe: %s\n", err)
+	}
+	return nil
 }
 
 func RootHandle(w http.ResponseWriter, req *http.Request) {
@@ -110,7 +109,7 @@ func checkPostMethod(req *http.Request) bool {
 }
 
 func checkIp(ip string) bool {
-	if ip_list == nil || len(ip_list) == 0 {
+	if len(ip_list) == 0 {
 		return true
 	}
 	index := strings.Index(ip, ":")

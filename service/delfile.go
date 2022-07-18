@@ -13,35 +13,35 @@ import (
 
 var DEL_BLK_CH chan int
 
-func InitDELPool() {
+func initDELPool() {
 	DEL_BLK_CH = make(chan int, env.MAX_DELBLK_ROUTINE)
 	for ii := 0; ii < int(env.MAX_DELBLK_ROUTINE); ii++ {
 		DEL_BLK_CH <- 1
 	}
 }
 
-func StartDoDelete() {
-	InitDELPool()
+func startDoDelete() {
+	initDELPool()
 	time.Sleep(time.Duration(10) * time.Second)
 	for {
-		IterateDELLog()
+		iterateDELLog()
 		time.Sleep(time.Duration(10) * time.Second)
 	}
 }
 
-func IterateDELLog() {
+func iterateDELLog() {
 	for {
 		log := dao.FindOneDelLOG()
 		if log == nil {
 			return
 		}
-		DelBlocks(log.UID, log.VNU, true, false)
+		delBlocks(log.UID, log.VNU, true, false)
 	}
 }
 
 const VBI_COUNT_LIMIT = 10
 
-func DelBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
+func delBlocks(uid int32, vnu primitive.ObjectID, decSpace bool, del bool) {
 	for {
 		meta, err := dao.DelOrUpObject(uid, vnu, decSpace, del)
 		if err != nil {

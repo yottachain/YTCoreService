@@ -280,51 +280,7 @@ func ListObjectsForDel(userid uint32, startVnu primitive.ObjectID, limit int, In
 	return VNUS, nil
 }
 
-func ListObjects3(userid uint32, startVnu primitive.ObjectID, limit int) (uint64, primitive.ObjectID, error) {
-	source := NewUserMetaSource(userid)
-	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
-	fields := bson.M{"VNU": 1, "usedspace": 1}
-	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
-	defer cancel()
-	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
-	defer func() {
-		if cur != nil {
-			cur.Close(ctx)
-		}
-	}()
-	if err != nil {
-		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
-		return 0, startVnu, err
-	}
-	var usedspace uint64 = 0
-	count := 0
-	for cur.Next(ctx) {
-		var res = &ObjectMeta{}
-		err = cur.Decode(res)
-		if err != nil {
-			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
-			continue
-			//return 0, startVnu, err
-		}
-		if count > limit {
-			break
-		}
-		count++
-		usedspace = usedspace + res.Usedspace
-		startVnu = res.VNU
-	}
-	if count == 0 {
-		startVnu = primitive.NilObjectID
-	}
-	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[ObjectMeta]ListObjects Cursor ERR:%s, file count:%d\n", count)
-		return 0, startVnu, curerr
-	}
-	return usedspace, startVnu, nil
-}
-
-func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64, primitive.ObjectID, error) {
+func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) (uint64, primitive.ObjectID, error) {
 	source := NewUserMetaSource(userid)
 	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
 	fields := bson.M{"VNU": 1, "NLINK": 1, "usedspace": 1}
@@ -354,7 +310,6 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 		if err != nil {
 			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
 			continue
-			//return 0, startVnu, err
 		}
 		if res.VNU.Timestamp().Unix() > stoptime {
 			logrus.Infof("[ObjectMeta]Sum Stop Timestamp:%s\n", res.VNU.Timestamp().Format("2006-01-02 15:04:05"))
@@ -380,61 +335,4 @@ func ListObjects2(userid uint32, startVnu primitive.ObjectID, limit int) (uint64
 		return 0, startVnu, curerr
 	}
 	return usedspace, startVnu, nil
-}
-
-func ListObjects(userid uint32, startVnu primitive.ObjectID, limit int) ([][]byte, primitive.ObjectID, error) {
-	source := NewUserMetaSource(userid)
-	filter := bson.M{"VNU": bson.M{"$gt": startVnu}}
-	fields := bson.M{"VNU": 1, "NLINK": 1, "blocks": 1}
-	opt := options.Find().SetProjection(fields).SetSort(bson.M{"VNU": 1})
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
-	defer cancel()
-	cur, err := source.GetObjectColl().Find(ctx, filter, opt)
-	defer func() {
-		if cur != nil {
-			cur.Close(ctx)
-		}
-	}()
-	if err != nil {
-		logrus.Errorf("[ObjectMeta]ListObjects ERR:%s\n", err)
-		return nil, startVnu, err
-	}
-	vbis := [][]byte{}
-	pms := env.PMS
-	if env.SUM_USER_FEE > 0 {
-		pms = uint64(env.SUM_USER_FEE)
-	}
-	stoptime := time.Now().Unix() - int64(pms*24*60*60)
-	for cur.Next(ctx) {
-		var res = &ObjectMeta{}
-		err = cur.Decode(res)
-		if err != nil {
-			logrus.Errorf("[ObjectMeta]ListObjects Decode ERR:%s\n", err)
-			continue
-			//return nil, startVnu, err
-		}
-		if res.VNU.Timestamp().Unix() > stoptime {
-			startVnu = primitive.NilObjectID
-			break
-		}
-		if res.NLINK <= 0 {
-			startVnu = res.VNU
-			continue
-		}
-		if len(vbis) > limit {
-			break
-		}
-		for _, bs := range res.BlockList {
-			vbis = append(vbis, bs[0:9])
-		}
-		startVnu = res.VNU
-	}
-	if curerr := cur.Err(); curerr != nil {
-		logrus.Errorf("[ObjectMeta]ListObjects Cursor ERR:%s, block count:%d\n", curerr, len(vbis))
-		return nil, startVnu, curerr
-	}
-	if len(vbis) == 0 {
-		startVnu = primitive.NilObjectID
-	}
-	return vbis, startVnu, nil
 }

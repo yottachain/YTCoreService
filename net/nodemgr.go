@@ -117,5 +117,5 @@ func initSuperList() {
 	if err != nil {
 		logrus.Panicf("[Init]snlist Addr err:%s\n", err)
 	}
-	SuperNode = &YTDNMgmt.SuperNode{ID: jsonsn.Number, NodeID: jsonsn.ID, Addrs: jsonsn.Addrs, Multiaddrs: maddr}
+	SuperNode = &YTDNMgmt.SuperNode{ID: 0, NodeID: jsonsn.ID, Addrs: jsonsn.Addrs, Multiaddrs: maddr}
 }

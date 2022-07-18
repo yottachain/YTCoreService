@@ -306,7 +306,7 @@ var OBJ_LIST_CACHE *cache.Cache
 var OBJ_DEL_LIST_CACHE *cache.Cache
 var OBJ_ADD_LIST_CACHE *cache.Cache
 
-func InitCache() {
+func initCache() {
 	OBJ_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
 	OBJ_DEL_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)
 	OBJ_ADD_LIST_CACHE = cache.New(time.Duration(env.LsCacheExpireTime)*time.Second, time.Duration(5)*time.Second)

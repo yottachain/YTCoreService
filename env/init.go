@@ -1,7 +1,9 @@
 package env
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -50,6 +52,28 @@ func GetCurrentPath() string {
 			return ApplicationPath
 		}
 	}
+}
+func InitClient() {
+	pathstr := os.Getenv("YTFS_HOME")
+	if pathstr == "" {
+		pathstr = GetCurrentPath()
+	}
+	pathstr = strings.ReplaceAll(pathstr, "\\", "/")
+	pathstr = path.Clean(pathstr)
+	if !strings.HasSuffix(pathstr, "/") {
+		pathstr = pathstr + "/"
+	}
+	YTFS_HOME = pathstr
+	readClientProperties()
+	InitLog(YTFS_HOME, "log", logrus.StandardLogger())
+	ULimit()
+	port, err := GetFreePort()
+	if err != nil {
+		return
+	}
+	addr := fmt.Sprintf("0.0.0.0:%d", port)
+	logrus.Infof("[Init]Starting pprof server on address %s\n", addr)
+	go http.ListenAndServe(addr, nil)
 }
 
 func InitServer() {

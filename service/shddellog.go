@@ -11,10 +11,10 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-func init() {
+func initLog() {
 	go func() {
 		for {
-			if ClearNodeLog() {
+			if clearNodeLog() {
 				time.Sleep(time.Duration(60) * time.Second)
 			}
 		}
@@ -26,7 +26,7 @@ var LOGS = struct {
 	NodeMAP map[int32]*NodeLog
 }{NodeMAP: make(map[int32]*NodeLog)}
 
-func ClearNodeLog() bool {
+func clearNodeLog() bool {
 	var del_id int32 = -1
 	var del_c *NodeLog
 	LOGS.RLock()

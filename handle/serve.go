@@ -13,33 +13,24 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var AYNC_ROUTINE_NUM *int32 = new(int32)
-var SYNC_ROUTINE_NUM *int32 = new(int32)
 var READ_ROUTINE_NUM *int32 = new(int32)
 var WRITE_ROUTINE_NUM *int32 = new(int32)
 var STAT_ROUTINE_NUM *int32 = new(int32)
-var HTTP_ROUTINE_NUM *int32 = new(int32)
-var SUMFEE_ROUTINE_NUM *int32 = new(int32)
-var DELBLK_ROUTINE_NUM *int32 = new(int32)
 var AUTH_ROUTINE_NUM *int32 = new(int32)
 
 func Start() {
-	//InitCache()
-	atomic.StoreInt32(AYNC_ROUTINE_NUM, 0)
-	atomic.StoreInt32(SYNC_ROUTINE_NUM, 0)
 	atomic.StoreInt32(READ_ROUTINE_NUM, 0)
 	atomic.StoreInt32(WRITE_ROUTINE_NUM, 0)
 	atomic.StoreInt32(STAT_ROUTINE_NUM, 0)
-	atomic.StoreInt32(HTTP_ROUTINE_NUM, 0)
-	atomic.StoreInt32(SUMFEE_ROUTINE_NUM, 0)
-	atomic.StoreInt32(DELBLK_ROUTINE_NUM, 0)
 	atomic.StoreInt32(AUTH_ROUTINE_NUM, 0)
-
+	initCache()
+	initSpotCheckService()
+	initRebuildService()
+	go startDNBlackListCheck()
 	/*
 		if env.STAT_SERVICE {
-			InitSpotCheckService()
-			InitRebuildService()
-			//go StartSyncNodes()
+
+
 			go StartDoCacheFee()
 			go StartSumUsedSpace()
 			go StartIterateShards()
@@ -47,7 +38,7 @@ func Start() {
 			go StartDNBlackListCheck()
 			go StartDoDelete()
 			go StartGC()
-			//go StartSumUser()
+
 		}*/
 }
 
@@ -137,37 +128,17 @@ func CheckRoutine(rnum *int32) error {
 		if atomic.LoadInt32(WRITE_ROUTINE_NUM) > env.MAX_WRITE_ROUTINE {
 			return errors.New("WRITE_ROUTINE:Too many routines")
 		}
-	} else if SYNC_ROUTINE_NUM == rnum {
-		if atomic.LoadInt32(SYNC_ROUTINE_NUM) > env.MAX_SYNC_ROUTINE {
-			return errors.New("SYNC_ROUTINE:Too many routines")
-		}
-	} else if READ_ROUTINE_NUM == rnum {
-		if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
-			return errors.New("READ_ROUTINE:Too many routines")
-		}
 	} else if STAT_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(STAT_ROUTINE_NUM) > env.MAX_STAT_ROUTINE {
 			return errors.New("STAT_ROUTINE:Too many routines")
-		}
-	} else if HTTP_ROUTINE_NUM == rnum {
-		if atomic.LoadInt32(HTTP_ROUTINE_NUM) > env.MAX_HTTP_ROUTINE {
-			return errors.New("HTTP_ROUTINE:Too many routines")
-		}
-	} else if SUMFEE_ROUTINE_NUM == rnum {
-		if atomic.LoadInt32(SUMFEE_ROUTINE_NUM) > env.MAX_SUMFEE_ROUTINE {
-			return errors.New("SUMFEE_ROUTINE:Too many routines")
-		}
-	} else if DELBLK_ROUTINE_NUM == rnum {
-		if atomic.LoadInt32(DELBLK_ROUTINE_NUM) > env.MAX_DELBLK_ROUTINE {
-			return errors.New("DELBLK_ROUTINE:Too many routines")
 		}
 	} else if AUTH_ROUTINE_NUM == rnum {
 		if atomic.LoadInt32(AUTH_ROUTINE_NUM) > env.MAX_AUTH_ROUTINE {
 			return errors.New("AUTH_ROUTINE:Too many routines")
 		}
 	} else {
-		if atomic.LoadInt32(AYNC_ROUTINE_NUM) > env.MAX_AYNC_ROUTINE {
-			return errors.New("AYNC_ROUTINE:Too many routines")
+		if atomic.LoadInt32(READ_ROUTINE_NUM) > env.MAX_READ_ROUTINE {
+			return errors.New("READ_ROUTINE:Too many routines")
 		}
 	}
 	return nil

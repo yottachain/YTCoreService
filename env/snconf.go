@@ -20,17 +20,16 @@ var (
 )
 
 var (
+	DE_DUPLICATION bool   = true
 	SPOTCHECK_ADDR string = ""
 	REBUILD_ADDR   string = ""
+	DelLogPath     string = ""
 )
 
 var HttpPort = 8082
+var HttpRemoteIp string
 
-var DE_DUPLICATION bool = true
-var ShardNumPerNode = 1
-
-var GC bool = false
-var DelLogPath string = ""
+var SUM_SERVICE bool = false
 
 func readSnProperties() {
 	confpath := YTSN_HOME + "conf/server.properties"
@@ -39,23 +38,41 @@ func readSnProperties() {
 		logrus.Panicf("[Init]No properties file could be found for ytsn service:%s\n", confpath)
 	}
 	config.SetSection(YTSN_ENV_SEC)
-
 	logConfig(config)
+
+	SPOTCHECK_ADDR = config.GetString("SPOTCHECK_ADDR", "")
+	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
+
+	HttpPort = config.GetRangeInt("httpPort", 8000, 20000, 8082)
+	HttpRemoteIp = config.GetString("httpRemoteIp", "")
+
+	DE_DUPLICATION = config.GetBool("DE_DUPLICATION", true)
+	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 1)
+	LsCacheExpireTime = config.GetRangeInt("lsCacheExpireTime", 5, 60*5, 30)
+	LsCachePageNum = config.GetRangeInt("lsCachePageNum", 1, 100, 10)
+	LsCursorLimit = config.GetRangeInt("lsCursorLimit", 0, 5, 1)
+	LsCacheMaxSize = config.GetRangeInt("lsCacheMaxSize", 1000, 500000, 20000)
+	Version = config.GetString("s3Version", "")
+	DelLogPath = config.GetString("DelLogPath", "")
+	if !strings.HasSuffix(DelLogPath, "/") {
+		DelLogPath = DelLogPath + "/"
+	}
+
 	p2pConfig(config)
 	routineConfig(config)
 	eosConfig(config)
 	feeConfig(config)
+
+	SUM_SERVICE = config.GetBool("SUM_SERVICE", false)
 }
 
 var (
 	MAX_HTTP_ROUTINE int32
 
 	MAX_AYNC_ROUTINE          int32
-	MAX_SYNC_ROUTINE          int32
 	MAX_READ_ROUTINE          int32
 	MAX_WRITE_ROUTINE         int32
 	MAX_STAT_ROUTINE          int32
-	MAX_SUMFEE_ROUTINE        int32
 	MAX_DELBLK_ROUTINE        int32
 	MAX_AUTH_ROUTINE          int32
 	PER_USER_MAX_READ_ROUTINE int32
@@ -65,10 +82,8 @@ var (
 func routineConfig(config *Config) {
 	MAX_HTTP_ROUTINE = int32(config.GetRangeInt("MAX_HTTP_ROUTINE", 500, 2000, 1000))
 	MAX_DELBLK_ROUTINE = int32(config.GetRangeInt("MAX_DELBLK_ROUTINE", 3, 21*50, 21))
-	MAX_SUMFEE_ROUTINE = int32(config.GetRangeInt("MAX_SUMFEE_ROUTINE", 3, 21*50, 21))
 	MAX_AYNC_ROUTINE = int32(config.GetRangeInt("MAX_AYNC_ROUTINE", 500, 5000, 2000))
 	MAX_WRITE_ROUTINE = int32(config.GetRangeInt("MAX_WRITE_ROUTINE", 500, 5000, 2000))
-	MAX_SYNC_ROUTINE = int32(config.GetRangeInt("MAX_SYNC_ROUTINE", 200, 3000, 2000))
 	MAX_READ_ROUTINE = int32(config.GetRangeInt("MAX_READ_ROUTINE", 200, 2000, 1000))
 	MAX_STAT_ROUTINE = int32(config.GetRangeInt("MAX_STAT_ROUTINE", 200, 2000, 1000))
 	PER_USER_MAX_READ_ROUTINE = int32(config.GetRangeInt("PER_USER_MAX_READ_ROUTINE", 1, 20, 5))

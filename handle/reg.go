@@ -78,7 +78,7 @@ func (h *RegUserV3Handler) Handle() proto.Message {
 }
 
 func RegUser(username string, pubkeys []string) (*dao.User, *pkt.ErrorMessage) {
-	logrus.Debugf("[QueryUser]User '%s' login request.\n", username)
+	logrus.Debugf("[RegUser]User '%s' login request.\n", username)
 	pubkeymap := make(map[string]bool)
 	pass := false
 	for _, pkey := range pubkeys {
@@ -86,15 +86,15 @@ func RegUser(username string, pubkeys []string) (*dao.User, *pkt.ErrorMessage) {
 			pubkeymap[pkey] = true
 			pass = true
 		} else {
-			logrus.Warnf("[QueryUser]User %s failed to authenticate public key %s\n", username, pkey)
+			logrus.Warnf("[RegUser]User %s failed to authenticate public key %s\n", username, pkey)
 			pubkeymap[pkey] = false
 		}
 	}
 	if !pass {
-		logrus.Errorf("[QueryUser]User '%s' auth failed\n", username)
+		logrus.Errorf("[RegUser]User '%s' auth failed\n", username)
 		return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "UserID invalid")
 	}
-	logrus.Infof("[QueryUser][%s] Certification passed.\n", username)
+	logrus.Infof("[RegUser][%s] Certification passed.\n", username)
 	user := dao.GetUserByUsername(username)
 	if user != nil {
 		for k, v := range pubkeymap {

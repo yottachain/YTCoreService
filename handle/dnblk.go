@@ -13,7 +13,7 @@ import (
 var DN_Black_List atomic.Value
 var QUERY_ARGS = []int32{-1}
 
-func StartDNBlackListCheck() {
+func startDNBlackListCheck() {
 	for {
 		err := Query()
 		if err != nil {

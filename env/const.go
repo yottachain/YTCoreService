@@ -24,3 +24,5 @@ const (
 
 const SN_RETRY_WAIT = 5
 const SN_RETRY_TIMES = 12 * 5
+
+var ShardNumPerNode = 1

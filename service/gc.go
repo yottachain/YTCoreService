@@ -11,19 +11,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func StartGC() {
-	if !env.GC {
-		return
-	}
+func startGC() {
 	for {
 		time.Sleep(time.Duration(10 * time.Minute))
-		ListUser(true)
-		ListUser(false)
+		listUser(true)
+		listUser(false)
 		time.Sleep(time.Duration(3 * time.Hour))
 	}
 }
 
-func ListUser(InArrears bool) {
+func listUser(InArrears bool) {
 	defer env.TracePanic("[GC]")
 	var lastId int32 = 0
 	limit := 100
@@ -102,7 +99,7 @@ func IterateObjects(user *dao.User, del bool) {
 		}
 		for _, vnu := range vnus {
 			if time.Now().Unix()-vnu.Timestamp().Unix() >= 60*60*24 {
-				DelBlocks(user.UserID, vnu, false, del)
+				delBlocks(user.UserID, vnu, false, del)
 			}
 			firstId = vnu
 		}

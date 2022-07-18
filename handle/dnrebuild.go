@@ -16,7 +16,7 @@ import (
 
 var REBUILDER_SERVICE *ytrebuilder.RebuilderClient
 
-func InitRebuildService() {
+func initRebuildService() {
 	if env.REBUILD_ADDR != "" {
 		var err error
 		REBUILDER_SERVICE, err = ytrebuilder.NewClient(env.REBUILD_ADDR)

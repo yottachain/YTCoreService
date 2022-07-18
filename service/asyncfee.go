@@ -9,10 +9,22 @@ import (
 	"github.com/yottachain/YTCoreService/eos"
 )
 
-func StartDoCacheFee() {
+func Start() {
+	go initLog()
+	if env.SUM_SERVICE {
+		go startIterateShards()
+		go startDoCacheFee()
+		go startDoCycleFee()
+		go startDoDelete()
+		go startGC()
+		go startRelationshipSum()
+	}
+}
+
+func startDoCacheFee() {
 	time.Sleep(time.Duration(30) * time.Second)
 	for {
-		if !DoCacheAction() {
+		if !doCacheAction() {
 			time.Sleep(time.Duration(300) * time.Second)
 		} else {
 			time.Sleep(time.Duration(env.PayInterval) * time.Millisecond)
@@ -20,7 +32,7 @@ func StartDoCacheFee() {
 	}
 }
 
-func DoCacheAction() bool {
+func doCacheAction() bool {
 	defer env.TracePanic("[DoCacheFee]")
 	action := dao.FindAndDeleteNewObject()
 	if action == nil {

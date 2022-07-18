@@ -74,17 +74,12 @@ func (me *SNClient) Request(msgid int32, data []byte, log_pre string) (proto.Mes
 	return nil, nil
 }
 
-func RequestSN(msg proto.Message, log_prefix string) (proto.Message, *pkt.ErrorMessage) {
+func RequestSN(msg proto.Message) (proto.Message, *pkt.ErrorMessage) {
 	data, name, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
 	}
-	var log_pre string
-	if log_prefix == "" {
-		log_pre = fmt.Sprintf("[%s]", name)
-	} else {
-		log_pre = fmt.Sprintf("[%s]%s", name, log_prefix)
-	}
+	log_pre := fmt.Sprintf("[%s]", name)
 	retryTimes := 0
 	for {
 		var resmsg proto.Message
