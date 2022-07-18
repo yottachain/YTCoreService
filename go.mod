@@ -19,7 +19,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20220706043819-900a99de3a6d
+	github.com/yottachain/YTDNMgmt v0.0.0-20220714014805-36f11556d47f
 	github.com/yottachain/YTHost v1.0.2-0.20220708030402-f160518f851c
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e

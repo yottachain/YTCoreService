@@ -99,6 +99,12 @@ func PreAllocNode(c *Client) error {
 				ns.Nodeid = *n.Nodeid
 				ns.Pubkey = *n.Pubkey
 				ns.Addrs = n.Addrs
+				if n.Pool != nil {
+					ns.Pool = *n.Pool
+				}
+				if n.Region != nil {
+					ns.Region = *n.Region
+				}
 				if n.Weight == nil {
 					ns.Weight = 0
 				} else {
@@ -107,7 +113,6 @@ func PreAllocNode(c *Client) error {
 				if err := ns.Init(); err != nil {
 					continue
 				}
-				//logrus.Debugf("[PreAllocNode]Return %d,Weight:%f\n", ns.Id, ns.Weight)
 				if !IsError(ns.Id) {
 					nodemap[ns.Id] = ns
 				}

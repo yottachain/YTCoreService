@@ -119,6 +119,8 @@ func signNode(nodes []*pkt.PreAllocNodeResp_PreAllocNode, n *YTDNMgmt.Node) []*p
 		node := &pkt.PreAllocNodeResp_PreAllocNode{Id: &n.ID,
 			Nodeid: &n.NodeID, Pubkey: &n.PubKey, Addrs: n.Addrs, Timestamp: &n.Timestamp}
 		node.Weight = &n.Weight
+		node.Pool = &n.PoolID
+		node.Region = &n.Ext
 		bytebuf := bytes.NewBuffer([]byte{})
 		for _, s := range n.Addrs {
 			bytebuf.WriteString(s)
