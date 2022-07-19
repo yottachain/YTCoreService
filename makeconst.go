@@ -108,7 +108,7 @@ func ListHandler() {
 		if !f.IsDir() {
 			name := f.Name()
 			ext := path.Ext(name)
-			if ext == ".go" && name != "sync.go" {
+			if ext == ".go" {
 				ReadHandler("handle/" + name)
 				ID_HANDLER_MAP_CODE.WriteString("\n")
 			}
@@ -145,13 +145,15 @@ func Match(contect string) {
 	}
 }
 
+const REG = "type([^\\{]+)struct([^\\}]+)\\}"
+
 func ReadHandler(handlefile string) {
 	txt, err := ioutil.ReadFile(handlefile)
 	if err != nil {
 		panic("Read file '" + handlefile + "' err:" + err.Error())
 	}
 	content := string(txt)
-	r, _ := regexp.Compile(`type([^\\{]+)struct([^\\}]+)\\}`)
+	r, _ := regexp.Compile(REG)
 	var ss string
 	for {
 		ss = r.FindString(content)
