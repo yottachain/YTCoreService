@@ -2,3 +2,5 @@
 /res/protoc.exe
 /test
 /conf/userlist.cfg
+/p2phostinfo.log
+cache

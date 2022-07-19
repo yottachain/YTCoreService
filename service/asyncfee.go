@@ -1,4 +1,4 @@
-package handle
+package service
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/yottachain/YTCoreService/eos"
 )
 
-func Start() {
+func StartServer() {
 	go initLog()
 	if env.SUM_SERVICE {
 		go startIterateShards()

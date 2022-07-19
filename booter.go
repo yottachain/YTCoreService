@@ -11,6 +11,8 @@ import (
 	"github.com/yottachain/YTCoreService/handle"
 	"github.com/yottachain/YTCoreService/http"
 	"github.com/yottachain/YTCoreService/net"
+	ytservice "github.com/yottachain/YTCoreService/service"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 var logger service.Logger
@@ -53,7 +55,7 @@ func main() {
 			return
 		}
 		if cmd == "test" {
-			//test.UpAndDown()
+			test.UpAndDown()
 			return
 		}
 		if cmd == "console" {
@@ -132,6 +134,7 @@ func StartServer() {
 	net.InitServer(dao.MongoAddress, nil)
 	eos.Init()
 	handle.Start()
+	ytservice.StartServer()
 	http.Start(env.HttpPort)
 }
 
