@@ -46,7 +46,6 @@ func addPubkey(c *Client, username, pubkey string) (uint32, error) {
 		if ok {
 			if resp.UserId != nil && resp.KeyNumber != nil &&
 				len(resp.KeyNumber) == 1 && resp.KeyNumber[0] >= 0 {
-
 				return uint32(resp.KeyNumber[0]), nil
 			}
 			logrus.Infof("[AddPubkey]User '%s' add pubkey successful,ID-KeyNumber:%d/%d\n",
