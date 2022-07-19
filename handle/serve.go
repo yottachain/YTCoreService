@@ -27,19 +27,6 @@ func Start() {
 	initSpotCheckService()
 	initRebuildService()
 	go startDNBlackListCheck()
-	/*
-		if env.STAT_SERVICE {
-
-
-			go StartDoCacheFee()
-			go StartSumUsedSpace()
-			go StartIterateShards()
-			go StartIterateUser()
-			go StartDNBlackListCheck()
-			go StartDoDelete()
-			go StartGC()
-
-		}*/
 }
 
 type MessageEvent interface {

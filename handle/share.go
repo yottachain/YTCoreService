@@ -10,6 +10,7 @@ import (
 
 	"github.com/mr-tron/base58"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/codec"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/eos"
@@ -66,7 +67,7 @@ func (h *AuthHandler) Handle() proto.Message {
 			return h.writeMeta(meta.VNU)
 		}
 	}
-	vbigroup := make(map[int32][]int64)
+	var ids []int64
 	refers := []*pkt.Refer{}
 	for _, refbs := range h.m.Reflist.Refers {
 		refer := pkt.NewRefer(refbs)
@@ -76,37 +77,48 @@ func (h *AuthHandler) Handle() proto.Message {
 		}
 		refer.KeyNumber = int16(h.authkeynumber)
 		refers = append(refers, refer)
-		//ids := vbigroup[int32(refer.SuperID)]
-		//ids = append(ids, refer.VBI)
-		//vbigroup[int32(refer.SuperID)] = ids
+		ids = append(ids, refer.VBI)
 	}
 	startTime := time.Now()
-	usedspaces := make([]int64, len(vbigroup))
-	wgroup := sync.WaitGroup{}
-	index := 0
-	for k, v := range vbigroup {
-		wgroup.Add(1)
-		go h.addNLink(k, v, &usedspaces[index], &wgroup)
-		index++
+	metas, err := dao.GetUsedSpace(ids)
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	wgroup.Wait()
-	usedspace := int64(0)
-	for _, us := range usedspaces {
-		if us == -1 {
-			return pkt.NewError(pkt.SERVER_ERROR)
+	if len(metas) != len(ids) {
+		return pkt.NewError(pkt.BAD_FILE)
+	}
+	err = dao.AddLinks(ids)
+	if err != nil {
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	var space int64 = 0
+	for _, ref := range refers {
+		m, ok := metas[ref.VBI]
+		if ok {
+			ref.Dup = 1
+			ref.ShdCount = uint8(m.VNF)
+			uspace := int64(env.PCM)
+			if m.AR != codec.AR_DB_MODE {
+				if m.AR == codec.AR_COPY_MODE {
+					uspace = int64(env.PFL) * int64(m.VNF)
+				} else {
+					uspace = int64(env.PFL) * int64(m.VNF) * 2
+				}
+			}
+			space = space + uspace*int64(env.Space_factor)/100
 		} else {
-			usedspace = usedspace + us
+			return pkt.NewError(pkt.BAD_FILE)
 		}
 	}
-	logrus.Infof("[AuthHandler][%d]Sum fee result %d,add nlink %d,take times %d ms\n", *h.m.UserId, usedspace,
+	logrus.Infof("[AuthHandler][%d]Sum fee result %d,add nlink %d,take times %d ms\n", *h.m.UserId, space,
 		len(refers), time.Since(startTime).Milliseconds())
 	VNU := primitive.NewObjectID()
-	er := h.addMeta(uint64(usedspace), VNU, refers)
+	er := h.addMeta(uint64(space), VNU, refers)
 	if er != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	logrus.Infof("[AuthHandler][%d]Auth object /%s/%s to %s OK\n", *h.m.UserId, *h.m.Bucketname, *h.m.FileName, *h.m.Username)
-	h.doFee(uint64(usedspace), VNU)
+	h.doFee(uint64(space), VNU)
 	return h.writeMeta(VNU)
 }
 
@@ -218,98 +230,6 @@ func (h *AuthHandler) doFee(usedspace uint64, VNU primitive.ObjectID) {
 	logrus.Infof("[AuthHandler]/%d/%s OK.\n", h.authuser.UserID, VNU.Hex())
 }
 
-func (h *AuthHandler) addNLink(snid int32, vibs []int64, usedSpace *int64, wg *sync.WaitGroup) {
-	defer wg.Done()
-	/*
-		req := &pkt.AuthBlockLinkReq{VBIS: vibs}
-		var longmsg proto.Message
-		sn := net.GetSuperNode(int(snid))
-		if sn.ID == int32(env.SuperNodeID) {
-			handler := &AuthBlockLinkHandler{pkey: sn.PubKey, m: req}
-			msg := handler.Handle()
-			if _, ok := msg.(*pkt.ErrorMessage); ok {
-				*usedSpace = -1
-				return
-			} else {
-				longmsg = msg
-			}
-		} else {
-			msg, err := net.RequestSN(req, sn, "", 0, false)
-			if err != nil {
-				*usedSpace = -1
-				return
-			} else {
-				longmsg = msg
-			}
-		}
-		if resp, ok := longmsg.(*pkt.LongResp); ok {
-			*usedSpace = resp.Value
-		} else {
-			*usedSpace = -1
-		}
-	*/
-}
-
-/*
-type AuthBlockLinkHandler struct {
-	pkey string
-	m    *pkt.AuthBlockLinkReq
-}
-
-func (h *AuthBlockLinkHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
-	h.pkey = pubkey
-	req, ok := msg.(*pkt.AuthBlockLinkReq)
-	if ok {
-		h.m = req
-		if h.m.VBIS == nil || len(h.m.VBIS) == 0 {
-			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
-		}
-		return nil, SUMFEE_ROUTINE_NUM, nil
-	} else {
-		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
-	}
-}
-
-func (h *AuthBlockLinkHandler) Handle() proto.Message {
-	_, err := net.AuthSuperNode(h.pkey)
-	if err != nil {
-		logrus.Errorf("[AuthBlockLink]AuthSuper ERR:%s\n", err)
-		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, err.Error())
-	}
-	logrus.Debugf("[AuthBlockLink]Receive request:Count %d\n", len(h.m.VBIS))
-	startTime := time.Now()
-	m, err := dao.GetUsedSpace(h.m.VBIS)
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	err = dao.AddLinks(h.m.VBIS)
-	if err != nil {
-		return pkt.NewError(pkt.SERVER_ERROR)
-	}
-	us := h.GetUsedSpace(m)
-	logrus.Debugf("[AuthBlockLink]Sum OK,count %d,take times %d ms\n", len(h.m.VBIS), time.Now().Sub(startTime).Milliseconds())
-	return &pkt.LongResp{Value: us}
-}
-
-func (h *AuthBlockLinkHandler) GetUsedSpace(metas map[int64]*dao.BlockMeta) int64 {
-	var space int64 = 0
-	for _, id := range h.m.VBIS {
-		m, ok := metas[id]
-		if ok {
-			if m.AR != codec.AR_DB_MODE {
-				if m.NLINK > 0 {
-					space = space + env.PFL*int64(m.VNF)*int64(env.Space_factor)/100
-				} else {
-					space = space + env.PFL*int64(m.VNF)
-				}
-			} else {
-				space = space + int64(env.PCM)
-			}
-		}
-	}
-	return space
-}
-*/
 type GetFileMetaHandler struct {
 	pkey  string
 	m     *pkt.GetFileAuthReq
@@ -407,27 +327,17 @@ func (h *UploadBlockAuthHandler) Handle() proto.Message {
 	if meta == nil {
 		return pkt.NewError(pkt.NO_SUCH_BLOCK)
 	}
-	/*
-		usedSpace := env.PCM
-		if meta.AR != codec.AR_DB_MODE {
-			usedSpace = env.PFL * uint64(meta.VNF+1) * uint64(env.Space_factor) / 100
-		}
-
-		vnustr := h.vnu.Hex()
-		saveObjectMetaReq := &pkt.SaveObjectMetaReq{UserID: &h.user.UserID, VNU: &vnustr,
-			Refer: h.m.Refer, UsedSpace: &usedSpace, Mode: new(bool)}
-		*saveObjectMetaReq.Mode = false
-		res, perr := SaveObjectMeta(saveObjectMetaReq, h.ref, h.vnu)
-		if perr != nil {
-			return perr
-		} else {
-			if saveObjectMetaResp, ok := res.(*pkt.SaveObjectMetaResp); ok {
-				if saveObjectMetaResp.Exists != nil && *saveObjectMetaResp.Exists == true {
-					logrus.Warnf("[UploadBLKAuth]Block %d/%s/%d has been uploaded.\n", h.user.UserID, h.vnu.Hex(), h.ref.Id)
-				} else {
-					dao.INCBlockNLINK(meta)
-				}
-			}
-		}*/
+	var vnf uint8 = 1
+	if meta.AR != codec.AR_DB_MODE {
+		vnf = uint8(meta.VNF)
+	}
+	ref := &pkt.Refer{VBI: meta.VBI, Dup: 1, ShdCount: vnf, OriginalSize: h.ref.OriginalSize,
+		RealSize: h.ref.RealSize, KEU: h.ref.KEU, KeyNumber: h.ref.KeyNumber, Id: h.ref.Id}
+	perr := SaveObjectMeta(h.user, ref, h.vnu)
+	if perr != nil {
+		return perr
+	} else {
+		dao.INCBlockNLINK(meta)
+	}
 	return &pkt.VoidResp{}
 }

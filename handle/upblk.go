@@ -603,7 +603,6 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 			VNF: int16(shardcount), NLINK: 1, AR: int16(*h.m.AR)}
 		dao.SaveBlockMeta(meta)
 	}
-
 	ref := &pkt.Refer{VBI: meta.VBI, Dup: 0, ShdCount: uint8(shardcount), OriginalSize: *h.m.OriginalSize,
 		RealSize: *h.m.RealSize, KEU: h.m.KEU, KeyNumber: int16(h.storeNumber), Id: int16(*h.m.Id)}
 	perr := SaveObjectMeta(h.user, ref, h.vnu)

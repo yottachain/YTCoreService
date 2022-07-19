@@ -54,7 +54,7 @@ type SNClient struct {
 
 func (me *SNClient) Request(msgid int32, data []byte, log_pre string) (proto.Message, *pkt.ErrorMessage) {
 	for index, maddr := range me.HttpMultiAddr {
-		res, serr := SendHTTPMsg(me.PeerId, maddr, msgid, data)
+		res, serr := SendHTTPMsg(maddr, msgid, data)
 		if serr != nil {
 			logmsg := fmt.Sprintf("Request %s,COMM_ERROR:%s\n", maddr, serr.Error())
 			logrus.Errorf("[SnClient]%s%s\n", log_pre, logmsg)

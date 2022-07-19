@@ -26,8 +26,6 @@ const SHARD_TABLE_NAME = "shards"
 const SHARD_CNT_TABLE_NAME = "shard_count"
 const SHARD_RBD_TABLE_NAME = "shards_rebuild"
 
-const OPLOG = "oplogs"
-
 type MetaBaseSource struct {
 	db           *mongo.Database
 	user_c       *mongo.Collection
@@ -38,7 +36,6 @@ type MetaBaseSource struct {
 	shard_c      *mongo.Collection
 	shard_cnt_c  *mongo.Collection
 	shard_rbd_c  *mongo.Collection
-	oplogs_c     *mongo.Collection
 	supernodes_c *mongo.Collection
 }
 
@@ -74,7 +71,6 @@ func (source *MetaBaseSource) initMetaDB() {
 	source.shard_c = source.db.Collection(SHARD_TABLE_NAME)
 	source.shard_cnt_c = source.db.Collection(SHARD_CNT_TABLE_NAME)
 	source.shard_rbd_c = source.db.Collection(SHARD_RBD_TABLE_NAME)
-	source.oplogs_c = source.db.Collection(OPLOG)
 	source.supernodes_c = source.db.Collection(SUPER_NODE)
 	index4 := mongo.IndexModel{
 		Keys:    bson.M{"snid": 1},
@@ -105,8 +101,6 @@ func (source *MetaBaseSource) GetColl(name string) *mongo.Collection {
 		return source.shard_cnt_c
 	} else if name == SHARD_RBD_TABLE_NAME {
 		return source.shard_rbd_c
-	} else if name == OPLOG {
-		return source.oplogs_c
 	} else if name == SUPER_NODE {
 		return source.supernodes_c
 	}
@@ -143,10 +137,6 @@ func (source *MetaBaseSource) GetShardCountColl() *mongo.Collection {
 
 func (source *MetaBaseSource) GetShardRebuildColl() *mongo.Collection {
 	return source.shard_rbd_c
-}
-
-func (source *MetaBaseSource) GetOPLogsColl() *mongo.Collection {
-	return source.oplogs_c
 }
 
 func (source *MetaBaseSource) GetSuperNodesColl() *mongo.Collection {

@@ -6,7 +6,6 @@ require (
 	github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974
 	github.com/boltdb/bolt v1.3.1
 	github.com/gobuffalo/packr/v2 v2.2.0
-	github.com/golang/protobuf v1.4.1
 	github.com/kardianos/service v1.2.1
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/libp2p/go-libp2p-core v0.3.1
@@ -26,6 +25,8 @@ require (
 	golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211
 	google.golang.org/protobuf v1.22.0
 )
+
+require github.com/golang/protobuf v1.4.1
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect

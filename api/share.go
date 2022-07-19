@@ -68,9 +68,9 @@ func (imp *AuthImporter) Import(data []byte) *pkt.ErrorMessage {
 	imp.REFS = []*pkt.Refer{}
 	imp.KSS = [][]byte{}
 	for {
-		bs := make([]byte, 54)
+		bs := make([]byte, 55)
 		n, _ := databuf.Read(bs)
-		if n < 54 {
+		if n < 55 {
 			break
 		}
 		ref := pkt.NewRefer(bs)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr-net"
 	"github.com/sirupsen/logrus"
@@ -117,7 +116,7 @@ func (h *HttpHost) RegHttpHandler(callback OnMessageFunc) {
 
 var client *http.Client
 
-func SendHTTPMsg(id peer.ID, ma multiaddr.Multiaddr, mid int32, msg []byte) ([]byte, error) {
+func SendHTTPMsg(ma multiaddr.Multiaddr, mid int32, msg []byte) ([]byte, error) {
 	addr, err := ma.ValueForProtocol(multiaddr.P_DNS4)
 	if err != nil {
 		ip, err := ma.ValueForProtocol(multiaddr.P_IP4)

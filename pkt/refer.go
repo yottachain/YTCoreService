@@ -65,7 +65,7 @@ func NewRefer(bs []byte) *Refer {
 		return nil
 	}
 	size := len(bs)
-	if !(size == 54 || size == 167 || size == 15 || size == 168) {
+	if !(size == 54 || size == 167 || size == 55 || size == 168) {
 		return nil
 	}
 	vbi := int64(bs[0] & 0xFF)

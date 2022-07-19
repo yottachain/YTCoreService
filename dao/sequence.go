@@ -106,7 +106,7 @@ func init_SEQ() {
 }
 
 func sequence(seq *int32, inc int) int32 {
-	id := atomic.AddInt32(BLKID_SEQ, int32(inc))
+	id := atomic.AddInt32(seq, int32(inc))
 	h := int32(SNID)
 	high := (h & 0x00ffffff) << 24
 	low := id & 0x00ffffff

@@ -125,7 +125,6 @@ func INCBlockNLINK(meta *BlockMeta) error {
 		logrus.Errorf("[BlockMeta]INCBlockNLINK ERR:%s\n", err)
 		return err
 	}
-	UpdateLog(filter, update, source.GetBlockColl().Name(), false)
 	IncBlockNlinkCount(1)
 	return nil
 }
@@ -261,7 +260,6 @@ func AddLinks(ids []int64) error {
 	if err != nil {
 		logrus.Errorf("[BlockMeta]AddLinks ERR:%s\n", err)
 	}
-	UpdateLog(filter, update, source.GetBlockColl().Name(), true)
 	IncBlockNlinkCount(len(ids))
 	return nil
 }
