@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -38,7 +39,9 @@ func SaveEncryptUserProperties(userinfo []*UserInfo) {
 		logrus.Errorf("[Init]Marshal userlist.cfg ERR:%s\n", err)
 		return
 	}
-	context := string(bs)
+	var out bytes.Buffer
+	json.Indent(&out, bs, "", "	")
+	context := out.String()
 	if isEncrypted {
 		context = "encrypt:" + string(encryptedFunc(bs))
 	}
