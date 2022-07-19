@@ -2,8 +2,11 @@ package env
 
 import (
 	"crypto/md5"
+	"encoding/binary"
 	"math/big"
+	"math/rand"
 	"net"
+	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	mnet "github.com/multiformats/go-multiaddr-net"
@@ -131,4 +134,14 @@ func GetFreePort() (int, error) {
 	}
 	defer l.Close()
 	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+func MakeRandData(size int64) []byte {
+	rand.Seed(time.Now().UnixNano())
+	loop := size / 8
+	buf := make([]byte, loop*8)
+	for ii := int64(0); ii < loop; ii++ {
+		binary.BigEndian.PutUint64(buf[ii*8:(ii+1)*8], rand.Uint64())
+	}
+	return buf
 }

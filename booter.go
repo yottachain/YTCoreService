@@ -48,19 +48,14 @@ func main() {
 	}
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
-		/*
-			if cmd == "init" {
-				handle.InitSN()
-				return
-			}
-			if cmd == "statuser" {
-				handle.StartIterateUser()
-				return
-			}
-			if cmd == "test" {
-				test.UpAndDown()
-				return
-			}*/
+		if cmd == "init" {
+			InitSN()
+			return
+		}
+		if cmd == "test" {
+			//test.UpAndDown()
+			return
+		}
 		if cmd == "console" {
 			env.Console = true
 			err = s.Run()
