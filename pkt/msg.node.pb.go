@@ -135,116 +135,6 @@ func (x *GetNodeCapacityResp) GetAllocId() string {
 	return ""
 }
 
-type ListDNIReq struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NextId string `protobuf:"bytes,1,opt,name=nextId,proto3" json:"nextId,omitempty"`
-	Count  uint32 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
-}
-
-func (x *ListDNIReq) Reset() {
-	*x = ListDNIReq{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_node_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListDNIReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListDNIReq) ProtoMessage() {}
-
-func (x *ListDNIReq) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_node_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListDNIReq.ProtoReflect.Descriptor instead.
-func (*ListDNIReq) Descriptor() ([]byte, []int) {
-	return file_msg_node_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ListDNIReq) GetNextId() string {
-	if x != nil {
-		return x.NextId
-	}
-	return ""
-}
-
-func (x *ListDNIReq) GetCount() uint32 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
-}
-
-type ListDNIResp struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	VhfList [][]byte `protobuf:"bytes,1,rep,name=vhfList,proto3" json:"vhfList,omitempty"`
-	NextId  string   `protobuf:"bytes,2,opt,name=nextId,proto3" json:"nextId,omitempty"`
-}
-
-func (x *ListDNIResp) Reset() {
-	*x = ListDNIResp{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_msg_node_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListDNIResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListDNIResp) ProtoMessage() {}
-
-func (x *ListDNIResp) ProtoReflect() protoreflect.Message {
-	mi := &file_msg_node_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListDNIResp.ProtoReflect.Descriptor instead.
-func (*ListDNIResp) Descriptor() ([]byte, []int) {
-	return file_msg_node_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ListDNIResp) GetVhfList() [][]byte {
-	if x != nil {
-		return x.VhfList
-	}
-	return nil
-}
-
-func (x *ListDNIResp) GetNextId() string {
-	if x != nil {
-		return x.NextId
-	}
-	return ""
-}
-
 var File_msg_node_proto protoreflect.FileDescriptor
 
 var file_msg_node_proto_rawDesc = []byte{
@@ -259,15 +149,7 @@ var file_msg_node_proto_rawDesc = []byte{
 	0x12, 0x1a, 0x0a, 0x08, 0x77, 0x72, 0x69, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x08, 0x52, 0x08, 0x77, 0x72, 0x69, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07,
 	0x61, 0x6c, 0x6c, 0x6f, 0x63, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61,
-	0x6c, 0x6c, 0x6f, 0x63, 0x49, 0x64, 0x22, 0x3a, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x4e,
-	0x49, 0x52, 0x65, 0x71, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x65, 0x78, 0x74, 0x49, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x65, 0x78, 0x74, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05,
-	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x22, 0x3f, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x4e, 0x49, 0x52, 0x65, 0x73,
-	0x70, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x68, 0x66, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x01, 0x20, 0x03,
-	0x28, 0x0c, 0x52, 0x07, 0x76, 0x68, 0x66, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e,
-	0x65, 0x78, 0x74, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x65, 0x78,
-	0x74, 0x49, 0x64, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6c, 0x6c, 0x6f, 0x63, 0x49, 0x64, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -282,12 +164,10 @@ func file_msg_node_proto_rawDescGZIP() []byte {
 	return file_msg_node_proto_rawDescData
 }
 
-var file_msg_node_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_msg_node_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_msg_node_proto_goTypes = []interface{}{
 	(*GetNodeCapacityReq)(nil),  // 0: pkt.GetNodeCapacityReq
 	(*GetNodeCapacityResp)(nil), // 1: pkt.GetNodeCapacityResp
-	(*ListDNIReq)(nil),          // 2: pkt.ListDNIReq
-	(*ListDNIResp)(nil),         // 3: pkt.ListDNIResp
 }
 var file_msg_node_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -327,30 +207,6 @@ func file_msg_node_proto_init() {
 				return nil
 			}
 		}
-		file_msg_node_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDNIReq); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_msg_node_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDNIResp); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -358,7 +214,7 @@ func file_msg_node_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_msg_node_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

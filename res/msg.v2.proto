@@ -50,23 +50,6 @@ message PreAllocNodeReqV2{
     repeated int32 excludes=5;
 }
 
-message QueryUserReqV2{
-    repeated string pubkey=1;
-    optional string username=2;
-    optional int32 UserId = 3;
-}
-
-message SyncUserReq{
-    repeated bytes pubkey=1;
-    optional string username=2;
-    optional int32 UserId = 3;
-}
-
-message RegUserReqV2{
-    optional string pubKey=1;
-    optional string username=2;
-    optional string versionId=3;
-}
 
 message RegUserReqV3{
     repeated string pubKey=1;

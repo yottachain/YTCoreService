@@ -11,7 +11,9 @@ func init() {
 	ID_HANDLER_MAP[0xde6c] = func() MessageEvent { return MessageEvent(&UpdateBucketHandler{}) }
 	ID_HANDLER_MAP[0xfd39] = func() MessageEvent { return MessageEvent(&ListBucketHandler{}) }
 
+
 	ID_HANDLER_MAP[0xc9a9] = func() MessageEvent { return MessageEvent(&StatusRepHandler{}) }
+
 
 	ID_HANDLER_MAP[0x1b31] = func() MessageEvent { return MessageEvent(&TaskOpResultListHandler{}) }
 
@@ -30,6 +32,7 @@ func init() {
 	ID_HANDLER_MAP[0x4076] = func() MessageEvent { return MessageEvent(&DeleteFileHandler{}) }
 	ID_HANDLER_MAP[0x0d8e] = func() MessageEvent { return MessageEvent(&GetObjectHandler{}) }
 	ID_HANDLER_MAP[0xc23f] = func() MessageEvent { return MessageEvent(&ListObjectHandler{}) }
+
 
 	ID_HANDLER_MAP[0x47fb] = func() MessageEvent { return MessageEvent(&AuthHandler{}) }
 	ID_HANDLER_MAP[0x1c45] = func() MessageEvent { return MessageEvent(&GetFileMetaHandler{}) }

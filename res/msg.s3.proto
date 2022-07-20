@@ -2,14 +2,6 @@ syntax = "proto2";
 
 package pkt;
 
-message CopyObjectReq{
-    optional string srcBucket=1;
-    optional string srcObjectKey=2;
-    optional string  destBucket=3;
-    optional string destObjectKey=4;
-    optional bytes meta=5;
-}
-
 message CopyObjectResp{
     optional group BucketId=1{
         optional uint32 timestamp=1;
@@ -34,51 +26,13 @@ message CopyObjectResp{
     }
 }
 
-message CreateBucketReq{
-    optional string bucketName=1;
-    optional bytes meta=2;
-}
 
-message DeleteBucketReq{
-    optional string bucketName=1;
-}
-
-message DeleteFileReq{
-    optional string bucketName=1;
-    optional string fileName=2;
-    optional group VNU=3{
-        optional uint32 timestamp=1;
-        optional int32 machineIdentifier=2;
-        optional uint32 processIdentifier=3;
-        optional int32 counter=4;
-    }
-    optional bytes meta=4;
-}
-
-message DownloadFileReq{
-    optional string bucketname=1;
-    optional string fileName=2;
-    optional group VersionId=3{
-        optional uint32 timestamp=1;
-        optional int32 machineIdentifier=2;
-        optional uint32 processIdentifier=3;
-        optional int32 counter=4;
-    }
-}
-
-message GetBucketReq{
-    optional string bucketName=1;
-}
 
 message GetBucketResp{
     optional string bucketName=1;
     optional bytes meta=2;
 }
 
-message GetObjectReq{
-    optional string bucketName=1;
-    optional string fileName=2;
-}
 
 message GetObjectResp{
     optional string fileName=1;
@@ -92,9 +46,6 @@ message GetObjectResp{
     optional string bucketName=4;
 }
 
-message ListBucketReq{
-    optional bool b=1;
-}
 
 message ListBucketResp{
     optional group Buckets=1{
@@ -133,23 +84,6 @@ message ListObjectResp{
 message ListObjectRespV2{
     optional bytes data=1;
     optional bool lastline=2;
-}
-
-message UpdateBucketReq{
-    optional string bucketName=1;
-    optional bytes meta=2;
-}
-
-message UploadFileReq{
-    optional string bucketname=1;
-    optional string fileName=2;
-    optional group VNU=3{
-        optional uint32 timestamp=1;
-        optional int32 machineIdentifier=2;
-        optional uint32 processIdentifier=3;
-        optional int32 counter=4;           
-    }
-    optional bytes meta=4;
 }
 
 message StringMap{

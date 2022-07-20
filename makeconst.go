@@ -41,7 +41,6 @@ func CreateMsgCode() {
 
 	ReadProto("msg.proto")
 	ReadProto("msg.user.proto")
-	ReadProto("msg.bp.proto")
 	ReadProto("msg.node.proto")
 	ReadProto("msg.s3.proto")
 	ReadProto("msg.s3.v2.proto")

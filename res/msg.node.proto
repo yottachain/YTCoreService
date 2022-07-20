@@ -11,13 +11,4 @@ message GetNodeCapacityResp{
     bool writable=1;
     string allocId=2;
 }
-
-message ListDNIReq{
-    string nextId=1;
-    uint32 count=2;
-}
-
-message ListDNIResp{
-    repeated bytes vhfList=1;
-    string nextId=2;
-}
+ 
