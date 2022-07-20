@@ -33,6 +33,7 @@ func init() {
 	ID_HANDLER_MAP[0x76a8] = func() MessageEvent { return MessageEvent(&ListSuperNodeHandler{}) }
 	ID_HANDLER_MAP[0x1d20] = func() MessageEvent { return MessageEvent(&PreAllocNodeHandler{}) }
 
+
 	ID_HANDLER_MAP[0x3868] = func() MessageEvent { return MessageEvent(&RegUserV3Handler{}) }
 	ID_HANDLER_MAP[0xf8a9] = func() MessageEvent { return MessageEvent(&RegUserHandler{}) }
 	ID_HANDLER_MAP[0x197f] = func() MessageEvent { return MessageEvent(&QueryUserHandler{}) }

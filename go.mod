@@ -19,7 +19,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20220714014805-36f11556d47f
+	github.com/yottachain/YTDNMgmt v0.0.0-20220720025849-9092629f6a30
 	github.com/yottachain/YTHost v1.0.2-0.20220708030402-f160518f851c
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
@@ -81,7 +81,7 @@ require (
 	github.com/tidwall/sjson v1.1.1 // indirect
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
-	github.com/yottachain/P2PHost v1.0.2-0.20200921072702-609d35770f59 // indirect
+	github.com/yottachain/P2PHost v1.0.2-0.20220720024223-9c9dbf53dd0e // indirect
 	go.uber.org/atomic v1.5.0 // indirect
 	go.uber.org/multierr v1.3.0 // indirect
 	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect
