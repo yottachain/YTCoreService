@@ -1,6 +1,7 @@
 package env
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -71,6 +72,8 @@ func readClientProperties() {
 	SyncMode = config.GetRangeInt("syncmode", 0, 1, 0)
 	StartSync = config.GetRangeInt("startSync", 0, 1, 0)
 	Driver = strings.ToLower(config.GetString("driver", "yotta"))
+
+	readCert(config)
 }
 
 var (
@@ -117,4 +120,20 @@ var (
 func downConfig(config *Config) {
 	DownloadRetryTimes = config.GetRangeInt("downloadRetryTimes", 3, 10, 3)
 	DownloadThread = config.GetRangeInt("downloadThread", 328, 328*4, 328*2)
+}
+
+var (
+	CertFilePath string = YTFS_HOME + "crt/server.crt"
+	KeyFilePath  string = YTFS_HOME + "crt/server.key"
+	S3Port       int    = 8083
+)
+
+func readCert(config *Config) {
+	S3Port = config.GetRangeInt("S3Port", 8000, 20000, 8083)
+	_, err1 := ioutil.ReadFile(CertFilePath)
+	_, err2 := ioutil.ReadFile(KeyFilePath)
+	if err1 != nil || err2 != nil {
+		CertFilePath = ""
+		KeyFilePath = ""
+	}
 }

@@ -26,11 +26,9 @@ type Server struct {
 	versioned VersionedBackend
 
 	timeSource              TimeSource
-	timeSkew                time.Duration
 	metadataSizeLimit       int
 	integrityCheck          bool
 	failOnUnimplementedPage bool
-	hostBucket              bool
 	autoBucket              bool
 	uploader                *uploader
 }
@@ -38,7 +36,6 @@ type Server struct {
 func NewS3(backend Backend) *Server {
 	s3 := &Server{
 		storage:           backend,
-		timeSkew:          DefaultSkewLimit,
 		metadataSizeLimit: DefaultMetadataSizeLimit,
 		integrityCheck:    true,
 		uploader:          newUploader(),
@@ -56,44 +53,7 @@ func (g *Server) nextRequestID() uint64 {
 }
 
 func (g *Server) Server() http.Handler {
-	var handler http.Handler = &withCORS{r: http.HandlerFunc(g.routeBase)}
-	if g.timeSkew != 0 {
-		handler = g.timeSkewMiddleware(handler)
-	}
-	if g.hostBucket {
-		handler = g.hostBucketMiddleware(handler)
-	}
-	return handler
-}
-
-func (g *Server) timeSkewMiddleware(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		timeHdr := rq.Header.Get("x-amz-date")
-		if timeHdr != "" {
-			rqTime, _ := time.Parse("20060102T150405Z", timeHdr)
-			at := g.timeSource.Now()
-			skew := at.Sub(rqTime)
-			if skew < -g.timeSkew || skew > g.timeSkew {
-				g.httpError(w, rq, RequestTimeTooSkewed(at, g.timeSkew))
-				return
-			}
-		}
-		handler.ServeHTTP(w, rq)
-	})
-}
-
-func (g *Server) hostBucketMiddleware(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		parts := strings.SplitN(rq.Host, ".", 2)
-		bucket := parts[0]
-		p := rq.URL.Path
-		rq.URL.Path = "/" + bucket
-		if p != "/" {
-			rq.URL.Path += p
-		}
-		logrus.Infof("[S3]%s=>%s", p, rq.URL)
-		handler.ServeHTTP(w, rq)
-	})
+	return &withCORS{r: http.HandlerFunc(g.routeBase)}
 }
 
 func (g *Server) httpError(w http.ResponseWriter, r *http.Request, err error) {

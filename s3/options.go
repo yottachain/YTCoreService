@@ -1,9 +1,6 @@
 package s3
 
-import "time"
-
 var (
-	DefaultSkewLimit         = 15 * time.Minute
 	DefaultMetadataSizeLimit = 2000
 	KeySizeLimit             = 1024
 

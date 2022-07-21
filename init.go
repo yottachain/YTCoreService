@@ -43,7 +43,7 @@ type JsonSuperNode struct {
 	Addrs      []string
 }
 
-func InitSN() {
+func InitSN() error {
 	env.InitServer()
 	dao.Init()
 	logrus.SetOutput(os.Stdout)
@@ -60,6 +60,7 @@ func InitSN() {
 	insertSuperNode()
 	dao.Close()
 	logrus.Infof("Init OK!\n")
+	return nil
 }
 
 func insertSuperNode() {
@@ -70,8 +71,11 @@ func insertSuperNode() {
 	}
 	list := []*JsonSuperNode{}
 	err = json.Unmarshal(data, &list)
-	if err != nil || len(list) != 1 {
+	if err != nil {
 		logrus.Panicf("Failed to unmarshal snlist.properties:%s\n", err)
+	}
+	if len(list) != 1 {
+		logrus.Panicf("Snlist num:%d\n", len(list))
 	}
 	for _, sn := range list {
 		n := &SuperNode{ID: 0, Nodeid: sn.ID, Privkey: sn.PrivateKey, Addrs: sn.Addrs}

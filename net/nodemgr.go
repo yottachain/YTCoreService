@@ -109,8 +109,11 @@ func initSuperList() {
 	}
 	list := []*JsonSuperNode{}
 	err = json.Unmarshal(data, &list)
-	if err != nil || len(list) == 0 {
+	if err != nil {
 		logrus.Panicf("[Init]Failed to unmarshal snlist.properties:%s\n", err)
+	}
+	if len(list) == 0 {
+		logrus.Panicln("[Init]Snlist num:0\n")
 	}
 	jsonsn := list[0]
 	maddr, err := StringListToMaddrs(jsonsn.Addrs)

@@ -25,8 +25,8 @@ func NewYTFS() *YTFS {
 		return defauleFs
 	}
 	fs := &YTFS{}
-	InitObjectUpPool()
 	api.StartApi()
+	InitObjectUpPool()
 	return fs
 }
 

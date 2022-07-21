@@ -22,16 +22,16 @@
             "args": ["up&down"]
         },
         {
-            "name": "Launch YTSN",
+            "name": "Launch",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}",
             "env":{
-                "YTSN_HOME":"D:/YTCoreService"
+                "YTSN_HOME":"D:/YTCoreService",
+                "YTFS_HOME":"D:/YTCoreService"
             },
-            "args": ["init"]
+            "args": []
         }
-
     ]
 }
