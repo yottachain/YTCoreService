@@ -17,16 +17,20 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20220706043819-900a99de3a6d
+	github.com/yottachain/YTDNMgmt v0.0.0-20220720025849-9092629f6a30
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
-	golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	google.golang.org/protobuf v1.22.0
 )
 
-require github.com/golang/protobuf v1.4.1
+require (
+	github.com/aws/aws-sdk-go v1.44.58
+	github.com/golang/protobuf v1.4.1
+	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
+)
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
@@ -86,22 +90,22 @@ require (
 	github.com/tidwall/sjson v1.1.1 // indirect
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
-	github.com/yottachain/P2PHost v1.0.2-0.20200921072702-609d35770f59 // indirect
-	github.com/yottachain/YTHost v1.0.2-0.20200918110720-68f155ccc541 // indirect
+	github.com/yottachain/P2PHost v1.0.2-0.20220720024223-9c9dbf53dd0e // indirect
+	github.com/yottachain/YTHost v1.0.2-0.20220708030402-f160518f851c // indirect
 	go.uber.org/atomic v1.5.0 // indirect
 	go.uber.org/multierr v1.3.0 // indirect
 	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect
 	golang.org/x/mod v0.3.0 // indirect
-	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.0.0-20200605181038-cef9fc3bc8f0 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/genproto v0.0.0-20191216205247-b31c10ee225f // indirect
 	google.golang.org/grpc v1.26.0 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
-	gopkg.in/yaml.v2 v2.2.4 // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 	honnef.co/go/tools v0.0.1-2019.2.3 // indirect
 )
