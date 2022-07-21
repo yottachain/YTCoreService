@@ -49,38 +49,38 @@ REALDIR=`dirname "$REALPATH"`
 # Normalize the path
 REALDIR=`cd "${REALDIR}/../"; pwd`
 
-export YTSN_HOME=$REALDIR
+export YTFS_HOME=$REALDIR
 
-if [ -z $YTSN_HOME ]; then  
-    echo "Environment variable 'YTSN_HOME' not found "
+if [ -z $YTFS_HOME ]; then  
+    echo "Environment variable 'YTFS_HOME' not found "
     exit 0;
 fi 
 
-echo "YTSN_HOME:$YTSN_HOME"
+echo "YTFS_HOME:$YTFS_HOME"
 
-cd $YTSN_HOME
+cd $YTFS_HOME
 
 case "$1" in
 start)
-    ./ytsn start  
+    ./yts3 start  
     ;;
 stop)
-    ./ytsn stop
+    ./yts3 stop
     ;;
 console)
-    ./ytsn console
+    ./yts3 console
     ;;
 init)
-    ./ytsn init
+    ./yts3 init
     ;;
 restart)
-    ./ytsn restart
+    ./yts3 restart
     ;;
 install)
-    ./ytsn install
+    ./yts3 install
     ;;
 uninstall)
-    ./ytsn uninstall
+    ./yts3 uninstall
     ;;
 *)
     echo "usage: $0 console|init|start|stop|restart|install|uninstall"
