@@ -26,7 +26,7 @@ func Stop() {
 	server.Close()
 }
 
-func Start(port int) error {
+func StartHttp(port int) error {
 	path := env.YTSN_HOME + "res/statapi.html"
 	data, err := ioutil.ReadFile(path)
 	if err != nil {

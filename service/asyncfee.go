@@ -9,18 +9,6 @@ import (
 	"github.com/yottachain/YTCoreService/eos"
 )
 
-func StartServer() {
-	go initLog()
-	if env.SUM_SERVICE {
-		go startIterateShards()
-		go startDoCacheFee()
-		go startDoCycleFee()
-		go startDoDelete()
-		go startGC()
-		go startRelationshipSum()
-	}
-}
-
 func startDoCacheFee() {
 	time.Sleep(time.Duration(30) * time.Second)
 	for {
