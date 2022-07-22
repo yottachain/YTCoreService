@@ -123,12 +123,14 @@ func downConfig(config *Config) {
 }
 
 var (
-	CertFilePath string = YTFS_HOME + "crt/server.crt"
-	KeyFilePath  string = YTFS_HOME + "crt/server.key"
-	S3Port       int    = 8083
+	CertFilePath string
+	KeyFilePath  string
+	S3Port       int = 8083
 )
 
 func readCert(config *Config) {
+	CertFilePath = YTFS_HOME + "crt/server.crt"
+	KeyFilePath = YTFS_HOME + "crt/server.key"
 	S3Port = config.GetRangeInt("S3Port", 8000, 20000, 8083)
 	_, err1 := ioutil.ReadFile(CertFilePath)
 	_, err2 := ioutil.ReadFile(KeyFilePath)

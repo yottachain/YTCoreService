@@ -25,7 +25,7 @@ var StdLog string = "OFF"
 func logConfig(config *Config) {
 	LogLevel = config.GetString("logLevel", "trace,stdout")
 	LogClean = config.GetRangeInt("logClean", 0, 50000, 3)
-	StdLog = config.GetUpperString("stdLog", "")
+	StdLog = config.GetUpperString("stdLog", "OFF")
 	log.SetOutput(&LogWrite{})
 }
 

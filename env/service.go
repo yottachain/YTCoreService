@@ -23,18 +23,23 @@ func (p *Service) AddStop(fn func() error) {
 }
 
 func (p *Service) Start(s service.Service) error {
-	for _, fn := range p.Startup {
-		err := fn()
-		if err != nil {
-			return err
-		}
-	}
+	go p.Run(s)
 	return nil
 }
 
 func (p *Service) Stop(s service.Service) error {
 	for _, fn := range p.Shutdown {
 		fn()
+	}
+	return nil
+}
+
+func (p *Service) Run(s service.Service) error {
+	for _, fn := range p.Startup {
+		err := fn()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -13,14 +13,14 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 )
 
 type Server struct {
-	requestID uint64
+	requestID *env.AtomInt64
 
 	storage   Backend
 	versioned VersionedBackend
@@ -39,7 +39,7 @@ func NewS3(backend Backend) *Server {
 		metadataSizeLimit: DefaultMetadataSizeLimit,
 		integrityCheck:    true,
 		uploader:          newUploader(),
-		requestID:         0,
+		requestID:         env.NewAtomInt64(0),
 	}
 	s3.versioned, _ = backend.(VersionedBackend)
 	if s3.timeSource == nil {
@@ -49,7 +49,7 @@ func NewS3(backend Backend) *Server {
 }
 
 func (g *Server) nextRequestID() uint64 {
-	return atomic.AddUint64(&g.requestID, 1)
+	return uint64(g.requestID.Add(1))
 }
 
 func (g *Server) Server() http.Handler {

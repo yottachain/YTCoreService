@@ -48,6 +48,8 @@ func InitObjectUpPool() {
 	MaxListNum = env.GetConfig().GetRangeInt("MaxListNum", 1, 10, 2)
 }
 
+var httpserver *http.Server
+
 func StartS3() error {
 	fs := NewYTFS()
 	addr := fmt.Sprintf(":%d", env.S3Port)
@@ -56,16 +58,19 @@ func StartS3() error {
 		return err
 	}
 	defer listener.Close()
-	server := &http.Server{Addr: addr, Handler: s3.NewS3(fs).Server()}
+	httpserver = &http.Server{Addr: addr, Handler: s3.NewS3(fs).Server()}
 	if env.CertFilePath != "" {
 		logrus.Infof("[Booter]Start S3 server https port :%d\n", listener.Addr().(*net.TCPAddr).Port)
-		return server.ServeTLS(listener, env.CertFilePath, env.KeyFilePath)
+		return httpserver.ServeTLS(listener, env.CertFilePath, env.KeyFilePath)
 	} else {
 		logrus.Infof("[Booter]Start S3 server http port :%d\n", listener.Addr().(*net.TCPAddr).Port)
-		return server.Serve(listener)
+		return httpserver.Serve(listener)
 	}
 }
 
 func StopS3() error {
+	if httpserver != nil {
+		httpserver.Close()
+	}
 	return nil
 }
