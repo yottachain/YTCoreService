@@ -31,7 +31,7 @@
                 "YTSN_HOME":"D:/YTCoreService",
                 "YTFS_HOME":"D:/YTCoreService"
             },
-            "args": []
+            "args": ["init"]
         }
     ]
 }

@@ -22,11 +22,14 @@ var LogClean int = 3
 var Console bool = false
 var StdLog string = "OFF"
 
+func init() {
+	log.SetOutput(&LogWrite{})
+}
+
 func logConfig(config *Config) {
 	LogLevel = config.GetString("logLevel", "trace,stdout")
 	LogClean = config.GetRangeInt("logClean", 0, 50000, 3)
 	StdLog = config.GetUpperString("stdLog", "OFF")
-	log.SetOutput(&LogWrite{})
 }
 
 func InitLog(LOG_HOME string, prefix string, log *logrus.Logger) {

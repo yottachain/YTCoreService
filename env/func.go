@@ -2,13 +2,13 @@ package env
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/binary"
 	"math/big"
 	"math/rand"
 	"net"
 	"time"
 
-	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	mnet "github.com/multiformats/go-multiaddr-net"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -26,7 +26,7 @@ func NetID() (string, error) {
 		md5Digest.Write(ma.Bytes())
 	}
 	id := md5Digest.Sum(nil)
-	return base58.Encode(id), nil
+	return base64.StdEncoding.EncodeToString(id), nil
 }
 
 func ZeroLenFileID() primitive.ObjectID {
