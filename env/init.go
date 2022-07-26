@@ -1,6 +1,7 @@
 package env
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net/http"
@@ -93,6 +94,7 @@ func InitServer() {
 	InitLog(YTSN_HOME, "log", logrus.StandardLogger())
 	InitLog(YTSN_HOME, "std", STDLog)
 	ULimit()
+	ReadExport(YTSN_HOME + "bin/ytsn.ev")
 }
 
 func p2pConfig(config *Config) {
@@ -103,4 +105,37 @@ func p2pConfig(config *Config) {
 	P2P_ReadTimeout = config.GetRangeInt("P2PHOST_READTIMEOUT", 1000, 180000, 20000)
 	P2P_IdleTimeout = config.GetRangeInt("P2PHOST_IDLETIMEOUT", 60000, 3600000, 180000)
 	P2P_MuteTimeout = config.GetRangeInt("P2PHOST_MUTETIMEOUT", P2P_WriteTimeout, P2P_IdleTimeout, P2P_WriteTimeout*3)
+}
+
+func ReadExport(path string) {
+	f, err := os.Open(path)
+	if err != nil {
+		logrus.Errorf("[Init]Read export %s ERR: %s\n", path, err)
+		return
+	}
+	defer f.Close()
+	r := bufio.NewReader(f)
+	for {
+		b, _, err := r.ReadLine()
+		if err != nil {
+			break
+		}
+		s := strings.TrimSpace(string(b))
+		if strings.HasPrefix(strings.ToUpper(s), "EXPORT") {
+			s = strings.TrimSpace(s[7:])
+			index := strings.Index(s, "=")
+			if index < 0 {
+				continue
+			}
+			key := strings.TrimSpace(s[:index])
+			if len(key) == 0 {
+				continue
+			}
+			value := strings.TrimSpace(s[index+1:])
+			if !strings.Contains(value, "$") {
+				os.Setenv(key, value)
+				logrus.Infof("[Init]Set ENV %s=%s\n", key, value)
+			}
+		}
+	}
 }
