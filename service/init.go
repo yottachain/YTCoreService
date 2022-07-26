@@ -25,7 +25,7 @@ func StartService() {
 func StartSN() error {
 	env.InitServer()
 	dao.Init()
-	net.InitServer(dao.MongoAddress, nil)
+	net.InitServer(dao.MongoAddress, handle.OnMessage)
 	eos.Init()
 	handle.StartHandler()
 	StartService()
