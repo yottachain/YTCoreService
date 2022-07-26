@@ -7,6 +7,7 @@ import (
 	"github.com/yottachain/YTCoreService/api/backend"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/service"
+	"github.com/yottachain/YTCoreService/test"
 )
 
 func main() {
@@ -30,5 +31,6 @@ func StartYTSN() {
 
 func StartYTS3() {
 	env.YTS3.AddStart(backend.StartS3)
+	env.YTS3.Test = test.UpAndDown
 	env.LaunchYTS3()
 }

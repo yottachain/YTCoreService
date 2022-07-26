@@ -12,6 +12,7 @@ type Service struct {
 	Startup  []func() error
 	Shutdown []func() error
 	Init     func() error
+	Test     func() error
 }
 
 func (p *Service) AddStart(fn func() error) {
@@ -78,6 +79,12 @@ func launch(srv *Service) {
 		if cmd == "init" {
 			if srv.Init != nil {
 				srv.Init()
+			}
+			return
+		}
+		if cmd == "test" {
+			if srv.Test != nil {
+				srv.Test()
 			}
 			return
 		}
