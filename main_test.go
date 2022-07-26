@@ -5,26 +5,21 @@ import (
 	"testing"
 
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/test"
+	"github.com/yottachain/YTCoreService/examples"
 )
 
-func init() {
-	env.Console = false
-}
-
 func Test(t *testing.T) {
+	env.Console = false
 	defer env.TracePanic("Test")
 	if len(os.Args) > 1 {
 		if os.Args[1] == "makeconst" {
 			Make()
 		} else if os.Args[1] == "auth" {
-			test.Auth()
+			examples.Auth()
 		} else if os.Args[1] == "sync" {
-			test.Sync()
+			examples.Sync()
 		} else if os.Args[1] == "s3" {
-			test.S3()
-		} else if os.Args[1] == "up&down" {
-			test.UpAndDown()
+			examples.S3()
 		}
 	}
 	select {}

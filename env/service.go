@@ -9,17 +9,17 @@ import (
 
 type Service struct {
 	Config   *service.Config
-	Startup  []func() error
-	Shutdown []func() error
-	Init     func() error
-	Test     func() error
+	Startup  []func()
+	Shutdown []func()
+	Init     func()
+	Test     func()
 }
 
-func (p *Service) AddStart(fn func() error) {
+func (p *Service) AddStart(fn func()) {
 	p.Startup = append(p.Startup, fn)
 }
 
-func (p *Service) AddStop(fn func() error) {
+func (p *Service) AddStop(fn func()) {
 	p.Shutdown = append(p.Shutdown, fn)
 }
 

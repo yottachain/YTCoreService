@@ -50,27 +50,37 @@ func InitObjectUpPool() {
 
 var httpserver *http.Server
 
-func StartS3() error {
+func StartS3() {
 	fs := NewYTFS()
 	addr := fmt.Sprintf(":%d", env.S3Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return err
+		logrus.Panicf("[S3]Listen %s ERR:%s", addr, err)
 	}
-	defer listener.Close()
 	httpserver = &http.Server{Addr: addr, Handler: s3.NewS3(fs).Server()}
-	if env.CertFilePath != "" {
-		logrus.Infof("[Booter]Start S3 server https port :%d\n", listener.Addr().(*net.TCPAddr).Port)
-		return httpserver.ServeTLS(listener, env.CertFilePath, env.KeyFilePath)
-	} else {
-		logrus.Infof("[Booter]Start S3 server http port :%d\n", listener.Addr().(*net.TCPAddr).Port)
-		return httpserver.Serve(listener)
-	}
+	go func() {
+		if env.CertFilePath != "" {
+			err := httpserver.ServeTLS(listener, env.CertFilePath, env.KeyFilePath)
+			if err == nil {
+				logrus.Infof("[S3]Start S3 server https port :%d\n", listener.Addr().(*net.TCPAddr).Port)
+			} else {
+				listener.Close()
+				logrus.Infof("[S3]Start S3 server ERR:%s\n", err)
+			}
+		} else {
+			err := httpserver.Serve(listener)
+			if err == nil {
+				logrus.Infof("[S3]Start S3 server http port :%d\n", listener.Addr().(*net.TCPAddr).Port)
+			} else {
+				listener.Close()
+				logrus.Infof("[S3]Start S3 server ERR:%s\n", err)
+			}
+		}
+	}()
 }
 
-func StopS3() error {
+func StopS3() {
 	if httpserver != nil {
 		httpserver.Close()
 	}
-	return nil
 }

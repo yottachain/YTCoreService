@@ -43,7 +43,7 @@ type JsonSuperNode struct {
 	Addrs      []string
 }
 
-func InitSN() error {
+func InitSN() {
 	env.InitServer()
 	dao.Init()
 	logrus.SetOutput(os.Stdout)
@@ -60,7 +60,6 @@ func InitSN() error {
 	insertSuperNode()
 	dao.Close()
 	logrus.Infof("Init OK!\n")
-	return nil
 }
 
 func insertSuperNode() {

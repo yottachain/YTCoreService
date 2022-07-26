@@ -1,4 +1,4 @@
-package test
+package examples
 
 import (
 	"os"
@@ -19,7 +19,7 @@ func Encode() {
 	}
 	do := c.UploadPreEncode("test", "sss.txt")
 
-	err1 := do.UploadFile("d:/1-21480-12210608112421­_12vv(1).xls")
+	err1 := do.UploadFile("d:\\1-21480-.xls")
 	if err1 != nil {
 		logrus.Panicf(":%s\n", err1)
 	}

@@ -7,15 +7,15 @@ import (
 	"github.com/yottachain/YTCoreService/api/backend"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/service"
-	"github.com/yottachain/YTCoreService/test"
 )
 
 func main() {
-	if strings.Contains(strings.ToUpper(os.Args[0]), "DEBUG") {
-		StartYTSN()
+	programname := os.Getenv("ProgramName")
+	if programname == "" {
+		programname = os.Args[0]
 	}
-
-	if strings.Contains(strings.ToUpper(os.Args[0]), "YTSN") {
+	programname = strings.ToUpper(programname)
+	if strings.Contains(programname, "YTSN") {
 		StartYTSN()
 	} else {
 		StartYTS3()
@@ -31,6 +31,7 @@ func StartYTSN() {
 
 func StartYTS3() {
 	env.YTS3.AddStart(backend.StartS3)
-	env.YTS3.Test = test.UpAndDown
+	env.YTS3.AddStop(backend.StopS3)
+	env.YTS3.Test = TestApi
 	env.LaunchYTS3()
 }

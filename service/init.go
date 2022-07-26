@@ -22,7 +22,7 @@ func StartService() {
 	}
 }
 
-func StartSN() error {
+func StartSN() {
 	env.InitServer()
 	dao.Init()
 	net.InitServer(dao.MongoAddress, handle.OnMessage)
@@ -30,11 +30,9 @@ func StartSN() error {
 	handle.StartHandler()
 	StartService()
 	http.StartHttp(env.HttpPort)
-	return nil
 }
 
-func StopSN() error {
+func StopSN() {
 	dao.Close()
 	logrus.Infof("[Booter]Service shutdown.\n")
-	return nil
 }
