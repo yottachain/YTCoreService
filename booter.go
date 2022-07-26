@@ -12,7 +12,7 @@ import (
 
 func main() {
 	if strings.Contains(strings.ToUpper(os.Args[0]), "DEBUG") {
-		StartYTSN()
+		StartYTS3()
 	}
 
 	if strings.Contains(strings.ToUpper(os.Args[0]), "YTSN") {

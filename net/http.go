@@ -43,10 +43,10 @@ func startHttpClient() {
 func StartHttpServer(config *Config, callback OnMessageFunc) {
 	serverhost, err := NewHttpHost(config)
 	if err != nil {
-		logrus.Panicf("[HttpHost]Init TcpHost ERR.\n")
+		logrus.Panicf("[HttpHost]Init HttpHost ERR.\n")
 	}
 	serverhost.RegHttpHandler(callback)
-	logrus.Infof("[HttpHost]TcpServer starting...,NodeID:%s\n", config.ID.String())
+	logrus.Infof("[HttpHost]HttpServer starting...,NodeID:%s\n", config.ID.String())
 	maddrs := config.Addrs()
 	for k, m := range maddrs {
 		logrus.Infof("[HttpHost]Node Addrs %d:%s\n", k, m.String())
@@ -73,7 +73,7 @@ func NewHttpHost(config *Config) (*HttpHost, error) {
 
 func (h *HttpHost) Accept() {
 	hlis := manet.NetListener(h.listenner)
-	http.Serve(hlis, nil)
+	go http.Serve(hlis, nil)
 }
 
 func (h *HttpHost) RegHttpHandler(callback OnMessageFunc) {

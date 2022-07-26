@@ -24,25 +24,22 @@ func (p *Service) AddStop(fn func() error) {
 }
 
 func (p *Service) Start(s service.Service) error {
-	go p.Run(s)
+	for _, fn := range p.Startup {
+		go fn()
+	}
 	return nil
 }
 
 func (p *Service) Stop(s service.Service) error {
 	for _, fn := range p.Shutdown {
-		fn()
+		go fn()
 	}
 	return nil
 }
 
 func (p *Service) Run(s service.Service) error {
-	for _, fn := range p.Startup {
-		err := fn()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	p.Start(s)
+	select {}
 }
 
 var YTSN = &Service{
