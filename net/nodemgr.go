@@ -32,17 +32,20 @@ func InitServer(MongoAddress string, callback OnMessageFunc) {
 		if err != nil {
 			continue
 		}
+		if _, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
+			if httpcfg == nil {
+				if port, err := maddr.ValueForProtocol(ma.P_TCP); err == nil && port != "" {
+					httpcfg = httpConfig(port, SuperNode.PrivKey)
+					StartHttpServer(httpcfg, callback)
+				}
+			}
+			continue
+		}
 		if port, err := maddr.ValueForProtocol(ma.P_TCP); err == nil {
 			if tcpcfg == nil {
 				tcpcfg = tcpConfig(port, SuperNode.PrivKey)
 				startTcpServer(tcpcfg, callback)
 				startTcpClient(tcpcfg)
-			}
-		}
-		if port, err := maddr.ValueForProtocol(ma.P_HTTP); err == nil {
-			if httpcfg == nil {
-				httpcfg = httpConfig(port, SuperNode.PrivKey)
-				StartHttpServer(httpcfg, callback)
 			}
 		}
 	}

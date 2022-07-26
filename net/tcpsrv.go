@@ -33,7 +33,7 @@ func tcpConfig(port, privatekey string) *Config {
 func startTcpServer(tcpconfig *Config, callback OnMessageFunc) {
 	serverhost, err := NewTcpHost(tcpconfig)
 	if err != nil {
-		logrus.Panicf("[TcpHost]Init TcpHost ERR.\n")
+		logrus.Panicf("[TcpHost]Init TcpHost ERR:%s\n", err)
 	}
 	serverhost.RegHandler(callback)
 	logrus.Infof("[TcpHost]TcpServer starting...,NodeID:%s\n", serverhost.Config().ID.String())
