@@ -14,6 +14,10 @@ func TestS3(t *testing.T) {
 	examples.S3()
 }
 
-func TestMake(t *testing.T) {
+func Test_MakeConst(t *testing.T) {
 	Make()
+}
+
+func Test_SetVersion(t *testing.T) {
+	SetVersion()
 }

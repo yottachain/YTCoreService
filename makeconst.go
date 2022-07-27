@@ -163,3 +163,27 @@ func ReadHandler(handlefile string) {
 		content = strings.ReplaceAll(content, ss, "")
 	}
 }
+
+func SetVersion() {
+	context, err := ioutil.ReadFile("version")
+	if err != nil {
+		panic("Read file 'version' err:" + err.Error())
+	}
+	txt := strings.TrimSpace(string(context))
+	if !strings.HasPrefix(txt, "version=") {
+		panic("file 'version' format err")
+	}
+	txt = strings.TrimPrefix(txt, "version=")
+	var content bytes.Buffer
+	content.WriteString("package env\n\n")
+
+	content.WriteString("var Version string = \"")
+	content.WriteString(strings.TrimSpace(txt))
+	content.WriteString("\"\n\n")
+
+	content.WriteString("func SetVersionID(id string) {\n")
+	content.WriteString("	Version = id\n")
+	content.WriteString("}\n")
+	filename := "env/version.go"
+	ioutil.WriteFile(filename, content.Bytes(), 0777)
+}

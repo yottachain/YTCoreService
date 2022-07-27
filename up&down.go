@@ -16,9 +16,11 @@ import (
 
 var client *api.Client
 
-const testsize = 1024*1024*9 + 8192
-const spos = 1024*1024*5 + 798
-const epos = 1024*1024*8 + 12
+var (
+	FileSize int64 = 1024*1024*9 + 8192
+	Spos     int64 = FileSize * 382 / 1000
+	Epos     int64 = Spos * 2
+)
 
 func TestApi() {
 	env.Console = false
@@ -40,11 +42,15 @@ func TestApi() {
 		return
 	}
 	stdtest := config.GetBool("STDTest", true)
+	ThreadNum := config.GetRangeInt("ThreadNum", 1, 100, 20)
+	Loop := config.GetRangeInt("Loop", 1, 100, 5)
+	size := config.GetRangeInt("FileSize", 1, 100, 9)
+	FileSize = 1024*1024*int64(size) + 8192
+	Spos = FileSize * 382 / 1000
+	Epos = Spos * 2
 	if stdtest {
 		stdTest()
 	} else {
-		ThreadNum := config.GetRangeInt("ThreadNum", 1, 100, 20)
-		Loop := config.GetRangeInt("Loop", 1, 100, 5)
 		loopUp(ThreadNum, Loop)
 	}
 }
@@ -53,7 +59,7 @@ func loopUp(threadnum, loop int) error {
 	for ii := 0; ii < threadnum; ii++ {
 		go func() {
 			for ii := 0; ii < loop; ii++ {
-				upload(env.MakeRandData(testsize))
+				upload(env.MakeRandData(FileSize))
 			}
 		}()
 	}
@@ -61,7 +67,7 @@ func loopUp(threadnum, loop int) error {
 }
 
 func stdTest() {
-	var data []byte = env.MakeRandData(testsize)
+	var data []byte = env.MakeRandData(FileSize)
 	vhw, _ := upload(data)
 	if vhw != nil {
 		download(vhw)
@@ -96,25 +102,25 @@ func download(vhw []byte) {
 }
 
 func downloadRange(vhw []byte, data []byte) {
-	if len(data) < epos {
-		logrus.Panicf("[DownLoadFile]ERR:%d<%d\n", len(data), epos)
+	if len(data) < int(Epos) {
+		logrus.Panicf("[DownLoadFile]ERR:%d<%d\n", len(data), Epos)
 	}
 	dn, errmsg := client.NewDownloadObject(vhw)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}
-	bs := data[spos:epos]
+	bs := data[int(Spos):int(Epos)]
 	sha256Digest := sha256.New()
 	sha256Digest.Write(bs)
 	hash := sha256Digest.Sum(nil)
 	logrus.Infof("[DownloadFile]Start download %d--%d,hash:%s,size:%d\n",
-		spos, epos, base58.Encode(hash), (epos - spos))
-	read := dn.LoadRange(int64(spos), int64(epos))
+		Spos, Epos, base58.Encode(hash), (Epos - Spos))
+	read := dn.LoadRange(Spos, Epos)
 	newvhw, count := readData(read)
 	if bytes.Equal(hash, newvhw) {
-		logrus.Infof("[DownloadFile]Download %d--%d OK,hash:%s,size:%d\n", spos, epos, base58.Encode(newvhw), count)
+		logrus.Infof("[DownloadFile]Download %d--%d OK,hash:%s,size:%d\n", Spos, Epos, base58.Encode(newvhw), count)
 	} else {
-		logrus.Panicf("[DownloadFile]Download %d--%d, hash ERR:%s,size:%d\n", spos, epos, base58.Encode(newvhw), count)
+		logrus.Panicf("[DownloadFile]Download %d--%d, hash ERR:%s,size:%d\n", Spos, Epos, base58.Encode(newvhw), count)
 	}
 }
 
