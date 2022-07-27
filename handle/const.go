@@ -23,6 +23,7 @@ func init() {
 	ID_HANDLER_MAP[0xbef5] = func() MessageEvent { return MessageEvent(&DownloadFileHandler{}) }
 	ID_HANDLER_MAP[0xe66e] = func() MessageEvent { return MessageEvent(&DownloadBlockInitHandler{}) }
 
+	ID_HANDLER_MAP[0x76a8] = func() MessageEvent { return MessageEvent(&ListSuperNodeHandler{}) }
 	ID_HANDLER_MAP[0x1d20] = func() MessageEvent { return MessageEvent(&PreAllocNodeHandler{}) }
 
 	ID_HANDLER_MAP[0x3868] = func() MessageEvent { return MessageEvent(&RegUserV3Handler{}) }

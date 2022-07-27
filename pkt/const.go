@@ -45,6 +45,8 @@ func init_id_class() {
 	ID_CLASS_MAP[0x35bb]=func() proto.Message { return &UploadBlockEndResp{} }
 	ID_CLASS_MAP[0x5893]=func() proto.Message { return &UploadBlockInitResp{} }
 	ID_CLASS_MAP[0x014c]=func() proto.Message { return &UploadObjectInitResp{} }
+	ID_CLASS_MAP[0x76a8]=func() proto.Message { return &ListSuperNodeReq{} }
+	ID_CLASS_MAP[0x3a77]=func() proto.Message { return &ListSuperNodeResp{} }
 	ID_CLASS_MAP[0xc487]=func() proto.Message { return &GetNodeCapacityReq{} }
 	ID_CLASS_MAP[0xe684]=func() proto.Message { return &GetNodeCapacityResp{} }
 	ID_CLASS_MAP[0x67fc]=func() proto.Message { return &CopyObjectResp{} }
@@ -111,6 +113,8 @@ func init_class_id() {
 	CLASS_ID_MAP["UploadBlockEndResp"]=0x35bb
 	CLASS_ID_MAP["UploadBlockInitResp"]=0x5893
 	CLASS_ID_MAP["UploadObjectInitResp"]=0x014c
+	CLASS_ID_MAP["ListSuperNodeReq"]=0x76a8
+	CLASS_ID_MAP["ListSuperNodeResp"]=0x3a77
 	CLASS_ID_MAP["GetNodeCapacityReq"]=0xc487
 	CLASS_ID_MAP["GetNodeCapacityResp"]=0xe684
 	CLASS_ID_MAP["CopyObjectResp"]=0x67fc
