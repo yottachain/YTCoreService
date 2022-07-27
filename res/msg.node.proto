@@ -11,4 +11,4 @@ message GetNodeCapacityResp{
     bool writable=1;
     string allocId=2;
 }
- 
+

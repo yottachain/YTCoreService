@@ -16,6 +16,35 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type ListSuperNodeHandler struct {
+	pkey string
+	m    *pkt.ListSuperNodeReq
+}
+
+func (h *ListSuperNodeHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+	h.pkey = pubkey
+	req, ok := msg.(*pkt.ListSuperNodeReq)
+	if ok {
+		h.m = req
+		return nil, READ_ROUTINE_NUM, nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
+	}
+}
+
+func (h *ListSuperNodeHandler) Handle() proto.Message {
+	ls := []*YTDNMgmt.SuperNode{net.SuperNode}
+	count := uint32(1)
+	snlist := make([]*pkt.ListSuperNodeResp_SuperNodes_SuperNode, count)
+	for index, n := range ls {
+		pkey := "NA"
+		snlist[index] = &pkt.ListSuperNodeResp_SuperNodes_SuperNode{Id: &n.ID, Nodeid: &n.NodeID, Pubkey: &n.PubKey, Privkey: &pkey, Addrs: n.Addrs}
+	}
+	sns := &pkt.ListSuperNodeResp_SuperNodes{Count: &count, Supernode: snlist}
+	resp := &pkt.ListSuperNodeResp{Supernodes: sns}
+	return resp
+}
+
 var NODELIST_CACHE = cache.New(30*time.Second, 30*time.Second)
 
 type PreAllocNodeHandler struct {

@@ -196,3 +196,20 @@ message UploadObjectInitResp{
     optional uint64 stamp=5;
 }
 
+
+message ListSuperNodeReq{
+    optional bool b=1;
+}
+
+message ListSuperNodeResp{
+    optional group SuperNodes=1{
+        optional uint32 count=1;
+        repeated group SuperNode=2{
+            optional int32 id=1;
+            optional string nodeid=2;
+            optional string pubkey=3;
+            optional string privkey=4;
+            repeated string addrs=5;              
+        }
+    }
+}
