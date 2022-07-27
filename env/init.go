@@ -54,6 +54,7 @@ func GetCurrentPath() string {
 		}
 	}
 }
+
 func InitClient() {
 	pathstr := os.Getenv("YTFS_HOME")
 	if pathstr == "" {
@@ -66,7 +67,7 @@ func InitClient() {
 	}
 	YTFS_HOME = pathstr
 	readClientProperties()
-	InitLog(YTFS_HOME, "log", logrus.StandardLogger())
+	InitLog(YTFS_HOME, "cli", logrus.StandardLogger())
 	ULimit()
 	port, err := GetFreePort()
 	if err != nil {
