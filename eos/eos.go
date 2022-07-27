@@ -202,7 +202,7 @@ func RequestWRetry(actname string, obj interface{}, retrytimes int) (*eos.PushTr
 				return nil, err
 			}
 		} else {
-			logrus.Infof("[wangjun][RequestWRetry] res=%+v\n", *res)
+			logrus.Infof("[EOS]Res=%+v\n", *res)
 			return res, nil
 		}
 	}

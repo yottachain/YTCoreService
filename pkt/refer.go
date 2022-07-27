@@ -28,6 +28,18 @@ func ParseRefers(blks [][]byte) []*Refer {
 	return refs
 }
 
+func ToOldBlockList(ls [][]byte) {
+	for index, bs := range ls {
+		size := len(bs)
+		if size == 55 {
+			ls[index] = bs[0:54]
+		}
+		if size == 168 {
+			ls[index] = bs[0:167]
+		}
+	}
+}
+
 func MapRefers(refers []*Refer) map[int32]*Refer {
 	refmap := make(map[int32]*Refer)
 	for _, ref := range refers {

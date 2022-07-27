@@ -12,7 +12,7 @@
                 "YTSN_HOME":"D:/YTCoreService",
                 "YTFS_HOME":"D:/YTCoreService"
             },
-            "args": ["test","console"]
+            "args": ["console","test"]
         }
     ]
 }

@@ -281,6 +281,7 @@ func (h *GetFileMetaHandler) Handle() proto.Message {
 		return pkt.NewError(pkt.INVALID_OBJECT_NAME)
 	}
 	size := uint32(len(meta.BlockList))
+	pkt.ToOldBlockList(meta.BlockList)
 	refs := &pkt.GetFileAuthResp_RefList{Count: &size, Refers: meta.BlockList}
 	return &pkt.GetFileAuthResp{Reflist: refs, Length: &meta.Length, VHW: meta.VHW, Meta: fmeta.Meta}
 }
