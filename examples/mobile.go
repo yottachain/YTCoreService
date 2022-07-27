@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
+	"github.com/yottachain/YTCoreService/sgx"
 )
 
 func Encode() {
@@ -33,5 +34,29 @@ func Encode() {
 	err1 = up.Upload()
 	if err1 != nil {
 		logrus.Panicf(":%s\n", err1)
+	}
+}
+
+func Decode() {
+
+	//1.创建私钥
+	key, err := sgx.NewKey("111111111111111111111", 2)
+	if err != nil {
+		return
+	}
+
+	//2.要写入的文件
+	f, err := os.OpenFile("d:/test", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	//3.解密,data是下载到的未解密数据块
+	data := []byte{}
+	block := sgx.NewEncryptedBlock(data)
+	err = block.Decode(key, f)
+	if err != nil {
+		return
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 func Sync() {
 	UploadFile()
-	//SyncFile()
+	SyncFile()
 }
 
 //1.注册一个用户(从配置文件conf/userlist.cfg自动注册),上传几个文件

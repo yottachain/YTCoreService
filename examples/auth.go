@@ -25,7 +25,7 @@ func Auth() {
 	api.AddPublicKey("testusernew1", c.StoreKey.PublicKey)
 }
 
-func Auth3() {
+func LicensedTo() {
 	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"
 	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 	api.InitApi()
@@ -82,7 +82,7 @@ func Auth3() {
 	}
 }
 
-func Auth2() {
+func Export_Import() {
 	os.Setenv("YTFS.snlist", "conf/snlistYF.properties")
 
 	//0.初始化SDK,加载"conf/snlist.properties","conf/ytfs.properties"

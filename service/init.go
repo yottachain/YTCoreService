@@ -15,7 +15,7 @@ func StartService() {
 	if env.SUM_SERVICE {
 		go startIterateShards()
 		go startDoCacheFee()
-		go startDoCycleFee()
+		//go startDoCycleFee()
 		go startDoDelete()
 		go startGC()
 		go startRelationshipSum()
