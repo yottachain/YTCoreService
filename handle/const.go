@@ -48,5 +48,6 @@ func init() {
 
 	ID_HANDLER_MAP[0xf380] = func() MessageEvent { return MessageEvent(&UploadObjectInitHandler{}) }
 	ID_HANDLER_MAP[0xa52b] = func() MessageEvent { return MessageEvent(&UploadObjectEndHandler{}) }
+	ID_HANDLER_MAP[0x775e] = func() MessageEvent { return MessageEvent(&ActiveCacheHandler{}) }
 
 }

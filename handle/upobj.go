@@ -252,3 +252,21 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	logrus.Infof("[UploadOBJEnd]/%d/%s OK.\n", h.user.UserID, meta.VNU.Hex())
 	return &pkt.VoidResp{}
 }
+
+type ActiveCacheHandler struct {
+	m *pkt.ActiveCacheV2
+}
+
+func (h *ActiveCacheHandler) SetMessage(pubkey string, msg proto.Message) (*pkt.ErrorMessage, *int32, *int32) {
+	req, ok := msg.(*pkt.ActiveCacheV2)
+	if ok {
+		h.m = req
+		return nil, WRITE_ROUTINE_NUM, nil
+	} else {
+		return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request"), nil, nil
+	}
+}
+
+func (h *ActiveCacheHandler) Handle() proto.Message {
+	return &pkt.VoidResp{}
+}
