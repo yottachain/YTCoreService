@@ -44,8 +44,8 @@ func TestApi() {
 	stdtest := config.GetBool("STDTest", true)
 	ThreadNum := config.GetRangeInt("ThreadNum", 1, 100, 20)
 	Loop := config.GetRangeInt("Loop", 1, 100, 5)
-	size := config.GetRangeInt("FileSize", 1, 100, 9)
-	FileSize = 1024*1024*int64(size) + 8192
+	size := config.GetRangeInt("FileSize", 1, 1024*100, 15)
+	FileSize = 1024 * int64(size)
 	Spos = FileSize * 382 / 1000
 	Epos = Spos * 2
 	if stdtest {

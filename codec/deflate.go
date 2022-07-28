@@ -152,7 +152,7 @@ func (fileEncoder *FileEncoder) pack() error {
 		return err
 	}
 	if num > 0 {
-		buf.Write(data)
+		buf.Write(data[0:num])
 		fileEncoder.curBlock = NewPlainBlock(buf.Bytes(), int64(num))
 		if err == io.EOF || err == io.ErrUnexpectedEOF || num < env.Default_Block_Size-2 {
 			fileEncoder.finished = true
