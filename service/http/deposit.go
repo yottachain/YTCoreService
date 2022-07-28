@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
-	"github.com/yottachain/YTCoreService/eos"
+	"github.com/yottachain/YTCoreService/net/eos"
 )
 
 func UndepStoreHandle(w http.ResponseWriter, req *http.Request) {

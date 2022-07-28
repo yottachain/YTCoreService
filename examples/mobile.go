@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
-	"github.com/yottachain/YTCoreService/sgx"
+	"github.com/yottachain/YTCoreService/api/sgx"
 )
 
 func Encode() {

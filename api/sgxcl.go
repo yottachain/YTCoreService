@@ -6,10 +6,10 @@ import (
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/api/sgx"
 	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/net"
 	"github.com/yottachain/YTCoreService/pkt"
-	"github.com/yottachain/YTCoreService/sgx"
 )
 
 func AddPublicKey(username, pubkey string) (uint32, error) {

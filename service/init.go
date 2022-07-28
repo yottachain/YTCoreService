@@ -4,10 +4,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/eos"
 	"github.com/yottachain/YTCoreService/handle"
-	"github.com/yottachain/YTCoreService/http"
 	"github.com/yottachain/YTCoreService/net"
+	"github.com/yottachain/YTCoreService/net/eos"
+	"github.com/yottachain/YTCoreService/service/http"
 )
 
 func StartService() {
@@ -15,7 +15,7 @@ func StartService() {
 	if env.SUM_SERVICE {
 		go startIterateShards()
 		go startDoCacheFee()
-		//go startDoCycleFee()
+		go startDoCycleFee()
 		go startDoDelete()
 		go startGC()
 		go startRelationshipSum()

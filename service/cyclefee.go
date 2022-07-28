@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/dao"
 	"github.com/yottachain/YTCoreService/env"
-	"github.com/yottachain/YTCoreService/eos"
+	"github.com/yottachain/YTCoreService/net/eos"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
