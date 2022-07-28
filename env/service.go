@@ -3,6 +3,7 @@ package env
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/kardianos/service"
 )
@@ -23,18 +24,28 @@ func (p *Service) AddStop(fn func()) {
 	p.Shutdown = append(p.Shutdown, fn)
 }
 
-func (p *Service) Start(s service.Service) error {
-	for _, fn := range p.Startup {
-		go fn()
+func (p *Service) execFunction(fns []func()) error {
+	resChan := make(chan interface{}, 1)
+	for _, fn := range fns {
+		go func() {
+			fn()
+			resChan <- 1
+		}()
+		timeout := time.After(time.Second * 5)
+		select {
+		case <-resChan:
+		case <-timeout:
+		}
 	}
 	return nil
 }
 
+func (p *Service) Start(s service.Service) error {
+	return p.execFunction(p.Startup)
+}
+
 func (p *Service) Stop(s service.Service) error {
-	for _, fn := range p.Shutdown {
-		go fn()
-	}
-	return nil
+	return p.execFunction(p.Shutdown)
 }
 
 func (p *Service) Run(s service.Service) error {
