@@ -71,7 +71,7 @@ console)
     ./yts3 console
     ;;
 init)
-    ./yts3 init
+    ./yts3 test
     ;;
 restart)
     ./yts3 restart
@@ -83,7 +83,7 @@ uninstall)
     ./yts3 uninstall
     ;;
 *)
-    echo "usage: $0 console|init|start|stop|restart|install|uninstall"
+    echo "usage: $0 console|test|start|stop|restart|install|uninstall"
     exit 0;
 esac
 exit
