@@ -312,7 +312,7 @@ func (mpu *multipartUpload) AddPart(partNumber int, at time.Time, rdr io.Reader,
 	defer mpu.mu.Unlock()
 	if mpu.rootpath == "" {
 		id := time.Now().Format("200601021504")
-		mpu.rootpath = env.GetS3Cache() + "/" + id + string(mpu.ID)
+		mpu.rootpath = env.GetS3Cache() + id + string(mpu.ID)
 		_, err := os.Stat(mpu.rootpath)
 		if err != nil {
 			if !os.IsExist(err) {
@@ -350,7 +350,7 @@ func (mpu *multipartUpload) AddPart(partNumber int, at time.Time, rdr io.Reader,
 func (mpu *multipartUpload) Reassemble(input *CompleteMultipartUploadRequest) ([]string, error) {
 	mpu.mu.Lock()
 	defer mpu.mu.Unlock()
-	mpuPartsLen := len(mpu.parts)
+	mpuPartsLen := len(mpu.parts) - 1
 	if len(input.Parts) > mpuPartsLen {
 		return nil, ErrInvalidPart
 	}
@@ -359,14 +359,14 @@ func (mpu *multipartUpload) Reassemble(input *CompleteMultipartUploadRequest) ([
 	}
 	res := make([]string, len(input.Parts))
 	for _, inPart := range input.Parts {
-		if inPart.PartNumber >= mpuPartsLen || mpu.parts[inPart.PartNumber] == nil {
+		if inPart.PartNumber > mpuPartsLen || mpu.parts[inPart.PartNumber] == nil {
 			return nil, ErrorMessagef(ErrInvalidPart, "unexpected part number %d in complete request", inPart.PartNumber)
 		}
 		upPart := mpu.parts[inPart.PartNumber]
 		if strings.Trim(inPart.ETag, "\"") != strings.Trim(upPart.ETag, "\"") {
 			return nil, ErrorMessagef(ErrInvalidPart, "unexpected part etag for number %d in complete request", inPart.PartNumber)
 		}
-		res[inPart.PartNumber] = fmt.Sprintf("%s/%d", mpu.rootpath, inPart.PartNumber)
+		res[inPart.PartNumber-1] = fmt.Sprintf("%s/%d", mpu.rootpath, inPart.PartNumber)
 	}
 	return res, nil
 }
@@ -380,12 +380,14 @@ func writeCacheFilePart(path string, input io.Reader) (string, int64, error) {
 	defer f.Close()
 	hash := md5.New()
 	readbuf := make([]byte, 8192)
+	count := 0
 	for {
 		num, err := input.Read(readbuf)
 		if err != nil && err != io.EOF {
 			return "", 0, err
 		}
 		if num > 0 {
+			count = count + num
 			bs := readbuf[0:num]
 			f.Write(bs)
 			hash.Write(bs)
@@ -394,6 +396,7 @@ func writeCacheFilePart(path string, input io.Reader) (string, int64, error) {
 			break
 		}
 	}
+
 	partEtag := fmt.Sprintf(`"%s"`, hex.EncodeToString(hash.Sum(nil)))
-	return partEtag, int64(hash.Size()), nil
+	return partEtag, int64(count), nil
 }

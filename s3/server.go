@@ -107,6 +107,9 @@ func (g *Server) listBucket(bucketName string, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
+	if page.MaxKeys > 10000 {
+		page.MaxKeys = 10000
+	}
 	isVersion2 := q.Get("list-type") == "2"
 	logrus.Infof("[S3]LIST BUCKET:%s,prefix:%s,page:%+v", bucketName, prefix, page)
 	objects, err := g.storage.ListBucket(accesskey, bucketName, &prefix, page)
@@ -408,6 +411,9 @@ func (g *Server) createObjectBrowserUpload(bucket string, w http.ResponseWriter,
 }
 
 func (g *Server) createObject(bucket, object string, w http.ResponseWriter, r *http.Request) (err error) {
+	if r.URL.RawQuery == "acl=" {
+		return nil
+	}
 	logrus.Infof("[S3]CREATED OBJECT:/%s/%s", bucket, object)
 	accesskey, autherr := GetAccessKey(r)
 	if autherr != nil {
@@ -467,7 +473,6 @@ func (g *Server) createObject(bucket, object string, w http.ResponseWriter, r *h
 		w.Header().Set("x-amz-version-id", string(result.VersionID))
 	}
 	w.Header().Set("ETag", `"`+hex.EncodeToString(rdr.Sum(nil))+`"`)
-
 	return nil
 }
 
