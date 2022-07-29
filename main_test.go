@@ -9,7 +9,7 @@ import (
 	"github.com/yottachain/YTCoreService/pkt"
 )
 
-func Test(t *testing.T) {
+func Test_Test(t *testing.T) {
 
 	ss := "YuNDoQEABH0AAAAAH/99H/9/kc39xQbYN6Mw2U8Kbo8yjEHEn99SQig+xaRxCDI1ZnoAAAAApA=="
 	bs, _ := base64.StdEncoding.DecodeString(ss)
@@ -32,7 +32,7 @@ func Test(t *testing.T) {
 	fmt.Println(uint64(refer.ShdCount))
 }
 
-func TestS3(t *testing.T) {
+func Test_S3(t *testing.T) {
 	examples.S3()
 }
 
