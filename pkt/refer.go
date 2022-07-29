@@ -48,7 +48,7 @@ func MapRefers(refers []*Refer) map[int32]*Refer {
 	}
 	refs := make(map[int32]*Refer)
 	for ii := 0; ; ii++ {
-		ref := refs[int32(ii)]
+		ref := refmap[int32(ii)]
 		if ref == nil {
 			break
 		}
