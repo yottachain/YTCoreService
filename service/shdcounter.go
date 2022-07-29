@@ -55,9 +55,7 @@ func iterateUploadShards() {
 		time.Sleep(time.Duration(30) * time.Second)
 		return
 	}
-	if len(hash) > 0 {
-		UpdateShardCount(hash, firstId, id)
-	}
+	UpdateShardCount(hash, firstId, id)
 	var s1, s2 string
 	if id != firstId {
 		err = dao.SetShardCountProgress(id)

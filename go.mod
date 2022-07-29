@@ -30,7 +30,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.58
 	github.com/golang/protobuf v1.4.2
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
-	github.com/yottachain/YTS3 v0.0.0-20220728054822-86e4c6017e25
+	github.com/yottachain/YTS3 v0.0.0-20220729032353-ce5b5331fb80
 )
 
 require (

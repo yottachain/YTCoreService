@@ -191,6 +191,7 @@ func (n *NodeStat) SetERR() {
 func (n *NodeStat) SetOK(t int64) {
 	n.okTimes.Add(1)
 	n.okDelayTimes.Add(t * int64(time.Millisecond))
+	SetOK(t)
 }
 
 func (n *NodeStat) RandDelayTimes(size int) int {

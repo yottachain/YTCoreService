@@ -23,6 +23,7 @@ func InitShardUpPool() {
 	for ii := 0; ii < env.UploadShardThreadNum; ii++ {
 		SHARD_UP_CH <- 1
 	}
+	NewQueue()
 }
 
 func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *sync.WaitGroup, ids []int32, lrc2 bool) *UploadShardResult {
@@ -107,6 +108,7 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 			if resp.Writable && resp.AllocId != "" {
 				return times, resp, nil
 			} else {
+				node.NodeInfo.SetERR()
 				if times >= env.UploadShardRetryTimes {
 					return times, nil, errors.New("NO_TOKEN")
 				}
@@ -115,29 +117,26 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 	}
 }
 
-func (us *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
+func (us *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, *pkt.ErrorMessage) {
 	logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node)
 	if err != nil {
 		if strings.Contains(err.Msg, "no handler") {
 			AddError(node.NodeInfo.Id)
 		}
-		node.NodeInfo.SetERR()
-		return nil, errors.New(err.Msg)
+		return nil, err
 	} else {
 		resp, ok := msg.(*pkt.UploadShard2CResp)
 		if !ok {
-			node.NodeInfo.SetERR()
-			return nil, errors.New("RETURN ERR MSGTYPE")
+			return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "RETURN ERR MSGTYPE")
 		} else {
 			if resp.RES == DN_RES_OK || resp.RES == DN_RES_VNF_EXISTS {
 				return resp, nil
 			} else {
-				node.NodeInfo.SetERR()
 				if resp.RES == DN_RES_NO_SPACE {
 					AddError(node.NodeInfo.Id)
 				}
-				return nil, fmt.Errorf("RETURN ERR %d", resp.RES)
+				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, fmt.Sprintf("RETURN ERR %d", resp.RES))
 			}
 		}
 	}
@@ -160,11 +159,11 @@ func (us *UploadShard) DoSend() {
 			node = n
 			continue
 		}
-		node.NodeInfo.SetOK(ctrtimes)
 		req.AllocId = ctlresp.AllocId
 		resp, err1 := us.SendShard(node, req)
 		times := time.Since(startTime).Milliseconds()
 		if err1 != nil {
+			node.NodeInfo.SetERR()
 			us.retrytimes++
 			node.DecCount()
 			n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
@@ -172,6 +171,8 @@ func (us *UploadShard) DoSend() {
 				us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times, n.NodeInfo.Id)
 			node = n
 			continue
+		} else {
+			node.NodeInfo.SetOK(times - ctrtimes)
 		}
 		us.res.DNSIGN = resp.DNSIGN
 		us.res.NODE = node.NodeInfo
