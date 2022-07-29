@@ -166,30 +166,31 @@ func (h *UploadObjectEndHandler) SetMessage(pubkey string, msg proto.Message) (*
 
 func (h *UploadObjectEndHandler) SumUsedSpace(meta *dao.ObjectMeta) uint64 {
 	refs := pkt.MapRefers(pkt.ParseRefers(meta.BlockList))
-	for ii := 0; ; ii++ {
-		ref := refs[int32(ii)]
-		if ref == nil {
-			break
-		}
-	}
 	var usedspace uint64 = 0
 	for _, ref := range refs {
+		logrus.Warnf("[UploadOBJEnd][%s]id:%d\n", h.vnu.Hex(), ref.Id)
 		var uspace uint64 = 0
 		if ref.ShdCount == 0 || ref.RealSize < env.PL2 {
 			uspace = uint64(env.PCM)
+			logrus.Warnf("[UploadOBJEnd][%s]db:%d\n", h.vnu.Hex(), uspace)
 		} else {
 			if ref.RealSize/(env.PFL-1) > 0 {
-				uspace = uint64(env.PFL) * uint64(2*ref.ShdCount)
+				uspace = uint64(env.PFL) * uint64(ref.ShdCount) * 2
+				logrus.Warnf("[UploadOBJEnd][%s]lrc:%d\n", h.vnu.Hex(), uspace)
 			} else {
 				uspace = uint64(env.PFL) * uint64(ref.ShdCount)
+				logrus.Warnf("[UploadOBJEnd][%s]copy:%d\n", h.vnu.Hex(), uspace)
 			}
 		}
 		if ref.Dup == 0 {
 			usedspace = usedspace + uspace
+			logrus.Warnf("[UploadOBJEnd][%s]nodup:%d\n", h.vnu.Hex(), usedspace)
 		} else {
 			usedspace = usedspace + uspace*uint64(env.Space_factor)/100
+			logrus.Warnf("[UploadOBJEnd][%s]dup:%d\n", h.vnu.Hex(), usedspace)
 		}
 	}
+	logrus.Warnf("[UploadOBJEnd][%s]usedspace:%d\n", h.vnu.Hex(), usedspace)
 	return usedspace
 }
 

@@ -46,7 +46,15 @@ func MapRefers(refers []*Refer) map[int32]*Refer {
 		id := int32(ref.Id) & 0xFFFF
 		refmap[id] = ref
 	}
-	return refmap
+	refs := make(map[int32]*Refer)
+	for ii := 0; ; ii++ {
+		ref := refs[int32(ii)]
+		if ref == nil {
+			break
+		}
+		refs[int32(ii)] = ref
+	}
+	return refs
 }
 
 func MergeRefers(ls []*Refer) [][]byte {
