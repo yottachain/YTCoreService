@@ -98,7 +98,7 @@ var (
 	UploadShardThreadNum  int = 1500
 	UploadShardRetryTimes int = 3
 	ThrowErr                  = false
-	CriticalTime          int = 0
+	DelayLine             int = 0
 )
 
 func upConfig(config *Config) {
@@ -109,10 +109,10 @@ func upConfig(config *Config) {
 	BlkTimeout = config.GetRangeInt("BlkTimeout", 0, 100, 0)
 	MakeBlockThreadNum = config.GetRangeInt("makeBlockThreadNum", 1, 20, 5)
 	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 1024, 100)
-	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 1500, 100000, 1500)
+	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 328, 100000, 1500)
 	UploadShardRetryTimes = config.GetRangeInt("uploadShardRetryTimes", 1, 10, 3)
 	ThrowErr = config.GetBool("throwErr", false)
-	CriticalTime = config.GetRangeInt("CriticalTime", 50, 30000, 0)
+	DelayLine = config.GetRangeInt("DelayLine", 50, 30000, 0)
 }
 
 var (

@@ -70,12 +70,12 @@ func (us *UploadShardEx) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 			if strings.Contains(err.Msg, "no handler") {
 				AddError(node.NodeInfo.Id)
 			}
-			node.NodeInfo.SetERR()
+			node.NodeInfo.SetERR(err.Code == pkt.COMM_ERROR)
 			return times, nil, errors.New(err.Msg)
 		} else {
 			resp, ok := msg.(*pkt.GetNodeCapacityResp)
 			if !ok {
-				node.NodeInfo.SetERR()
+				node.NodeInfo.SetERR(false)
 				return times, nil, errors.New("RESP_INVALID_MSG")
 			}
 			if resp.Writable && resp.AllocId != "" {
@@ -89,29 +89,26 @@ func (us *UploadShardEx) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 	}
 }
 
-func (us *UploadShardEx) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, error) {
+func (us *UploadShardEx) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, *pkt.ErrorMessage) {
 	logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node)
 	if err != nil {
 		if strings.Contains(err.Msg, "no handler") {
 			AddError(node.NodeInfo.Id)
 		}
-		node.NodeInfo.SetERR()
-		return nil, errors.New(err.Msg)
+		return nil, err
 	} else {
 		resp, ok := msg.(*pkt.UploadShard2CResp)
 		if !ok {
-			node.NodeInfo.SetERR()
-			return nil, errors.New("RETURN ERR MSGTYPE")
+			return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, "RETURN ERR MSGTYPE")
 		} else {
 			if resp.RES == DN_RES_OK || resp.RES == DN_RES_VNF_EXISTS {
 				return resp, nil
 			} else {
-				node.NodeInfo.SetERR()
 				if resp.RES == DN_RES_NO_SPACE {
 					AddError(node.NodeInfo.Id)
 				}
-				return nil, fmt.Errorf("RETURN ERR %d", resp.RES)
+				return nil, pkt.NewErrorMsg(pkt.SERVER_ERROR, fmt.Sprintf("RETURN ERR %d", resp.RES))
 			}
 		}
 	}
@@ -142,7 +139,6 @@ func (us *UploadShardEx) DoSend() {
 			node = n
 			continue
 		}
-		node.NodeInfo.SetOK(ctrtimes)
 		if us.parent.IsCancle() {
 			break
 		}
@@ -150,6 +146,7 @@ func (us *UploadShardEx) DoSend() {
 		resp, err1 := us.SendShard(node, req)
 		times := time.Since(startTime).Milliseconds()
 		if err1 != nil {
+			node.NodeInfo.SetERR(err1.Code == pkt.COMM_ERROR)
 			us.retrytimes++
 			node.DecCount()
 			if us.parent.IsCancle() {
@@ -162,6 +159,8 @@ func (us *UploadShardEx) DoSend() {
 				us.logPrefix, err1, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, times, n.NodeInfo.Id)
 			node = n
 			continue
+		} else {
+			node.NodeInfo.SetOK(times - ctrtimes)
 		}
 		us.res.DNSIGN = resp.DNSIGN
 		us.res.NODE = node.NodeInfo

@@ -23,7 +23,7 @@ func InitShardUpPool() {
 	for ii := 0; ii < env.UploadShardThreadNum; ii++ {
 		SHARD_UP_CH <- 1
 	}
-	NewQueue()
+	InitSendStat()
 }
 
 func StartUploadShard(upblk *UploadBlock, shd *codec.Shard, shdid int32, wg *sync.WaitGroup, ids []int32, lrc2 bool) *UploadShardResult {
@@ -86,7 +86,7 @@ func (us *UploadShard) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 }
 
 func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityResp, error) {
-	logrus.Tracef("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
+	//logrus.Tracef("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
 	ctlreq := &pkt.GetNodeCapacityReq{StartTime: uint64(us.uploadBlock.STime),
 		RetryTimes: uint32(us.retrytimes)}
 	times := 0
@@ -97,18 +97,17 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 			if strings.Contains(err.Msg, "no handler") {
 				AddError(node.NodeInfo.Id)
 			}
-			node.NodeInfo.SetERR()
+			node.NodeInfo.SetERR(err.Code == pkt.COMM_ERROR)
 			return times, nil, errors.New(err.Msg)
 		} else {
 			resp, ok := msg.(*pkt.GetNodeCapacityResp)
 			if !ok {
-				node.NodeInfo.SetERR()
+				node.NodeInfo.SetERR(false)
 				return times, nil, errors.New("RESP_INVALID_MSG")
 			}
 			if resp.Writable && resp.AllocId != "" {
 				return times, resp, nil
 			} else {
-				node.NodeInfo.SetERR()
 				if times >= env.UploadShardRetryTimes {
 					return times, nil, errors.New("NO_TOKEN")
 				}
@@ -118,7 +117,7 @@ func (us *UploadShard) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityRes
 }
 
 func (us *UploadShard) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, *pkt.ErrorMessage) {
-	logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
+	//logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node)
 	if err != nil {
 		if strings.Contains(err.Msg, "no handler") {
@@ -163,7 +162,7 @@ func (us *UploadShard) DoSend() {
 		resp, err1 := us.SendShard(node, req)
 		times := time.Since(startTime).Milliseconds()
 		if err1 != nil {
-			node.NodeInfo.SetERR()
+			node.NodeInfo.SetERR(err1.Code == pkt.COMM_ERROR)
 			us.retrytimes++
 			node.DecCount()
 			n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)

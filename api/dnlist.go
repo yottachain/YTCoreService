@@ -184,8 +184,11 @@ func (n *NodeStat) SetNodeInfo(node *net.Node) {
 	n.Pubkey = node.Pubkey
 }
 
-func (n *NodeStat) SetERR() {
+func (n *NodeStat) SetERR(istimeout bool) {
 	n.errTimes.Add(1)
+	if istimeout {
+		SetERR()
+	}
 }
 
 func (n *NodeStat) SetOK(t int64) {
