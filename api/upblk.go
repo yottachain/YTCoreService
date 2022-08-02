@@ -255,7 +255,7 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 	ked := codec.ECBEncryptNoPad(ks, uploadBlock.BLK.KD)
 	useex := false
 	var ress2 []*UploadShardResult = nil
-	if !enc.IsCopyShard() && env.LRC2 {
+	if !enc.IsCopyShard() && env.LRC2 && size > env.LRCMinShardNum {
 		bakcount := size * env.ExtraPercent / 100
 		if env.BlkTimeout == 0 {
 			ress2 = make([]*UploadShardResult, bakcount)

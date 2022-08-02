@@ -1,9 +1,10 @@
-goversioninfo.exe -icon=favicon.ico 
+go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+goversioninfo.exe -icon=favicon.ico -internal-name=YTS3_32.exe -original-name=YTS3_32.exe
 move resource.syso ../resource.syso
 
 cd ..
 
-set CC=D:\ming\mingw32\bin\gcc.exe
+set PATH=D:\ming\mingw32\bin;%PATH%
 set GOARCH=386
 set CGO_ENABLED=1
 
