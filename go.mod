@@ -35,6 +35,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/aurawing/auramq v0.0.2-0.20200521072017-845ffa488ac8 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/ethereum/go-ethereum v1.9.9 // indirect
@@ -63,6 +64,7 @@ require (
 	github.com/ipipdotnet/ipdb-go v1.2.0 // indirect
 	github.com/ivpusic/grpool v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
+	github.com/josephspurrier/goversioninfo v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/karrick/godirwalk v1.10.3 // indirect

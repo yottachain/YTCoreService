@@ -1,9 +1,10 @@
-goversioninfo.exe -icon=favicon.ico -64
+go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+goversioninfo -icon=favicon.ico -64
 move resource.syso ../resource.syso
 
 cd ..
 
-set CC=D:\ming\mingw64\bin\gcc
+set PATH=D:\ming\mingw64\bin;%PATH%
 set GOARCH=amd64
 set CGO_ENABLED=1
 
