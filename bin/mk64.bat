@@ -1,4 +1,4 @@
-go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+echo go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 goversioninfo -icon=favicon.ico -internal-name=YTS3_64.exe -original-name=YTS3_64.exe -64
 move resource.syso ../resource.syso
 
