@@ -98,7 +98,6 @@ var (
 	UploadShardThreadNum  int = 1500
 	UploadShardRetryTimes int = 3
 	ThrowErr                  = false
-	DelayLine             int = 0
 )
 
 func upConfig(config *Config) {
@@ -112,7 +111,6 @@ func upConfig(config *Config) {
 	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 328, 100000, 1500)
 	UploadShardRetryTimes = config.GetRangeInt("uploadShardRetryTimes", 1, 10, 3)
 	ThrowErr = config.GetBool("throwErr", false)
-	DelayLine = config.GetRangeInt("DelayLine", 50, 30000, 0)
 }
 
 var (

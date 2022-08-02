@@ -9,7 +9,12 @@ import (
 )
 
 const StatSize = 1640
-const SuccessRate = 85
+const MinShardSend = 164
+
+var (
+	DelayLine   int = 0
+	SuccessRate     = 85
+)
 
 var Send_Stat *SendStat
 
@@ -22,8 +27,10 @@ type SendStat struct {
 }
 
 func InitSendStat() {
+	DelayLine = env.GetConfig().GetRangeInt("DelayLine", 50, 30000, 0)
+	SuccessRate = env.GetConfig().GetRangeInt("SuccessRate", 50, 100, 85)
 	Send_Stat = &SendStat{}
-	if env.DelayLine >= 0 {
+	if DelayLine >= 0 {
 		go Send_Stat.loop()
 	}
 }
@@ -65,12 +72,12 @@ func (q *SendStat) suit() {
 	curnum := env.UploadShardThreadNum - q.routines
 	if rate < SuccessRate {
 		logrus.Infof("[Limit]The rate of success:%d,The average time to send:%d,Current concurrency:%d", rate, timeout, curnum)
-		if curnum <= 328 {
+		if curnum <= MinShardSend {
 			return
 		}
 		decnum := curnum * 1 / 10
-		if curnum-decnum < 328 {
-			decnum = curnum - 328
+		if curnum-decnum < MinShardSend {
+			decnum = curnum - MinShardSend
 		}
 		for ii := 0; ii < decnum; ii++ {
 			<-SHARD_UP_CH
@@ -79,8 +86,8 @@ func (q *SendStat) suit() {
 		logrus.Infof("[Limit]Reduce %d concurrency", decnum)
 		q.reset()
 	} else {
-		if timeout > int64(env.DelayLine) {
-			if curnum <= 328 {
+		if timeout > int64(DelayLine) {
+			if curnum <= MinShardSend {
 				return
 			}
 			<-SHARD_UP_CH
@@ -111,14 +118,14 @@ func (q *SendStat) sum() (int64, int) {
 }
 
 func SetOK(t int64) {
-	if env.DelayLine == 0 {
+	if DelayLine == 0 {
 		return
 	}
 	Send_Stat.addok(t)
 }
 
 func SetERR() {
-	if env.DelayLine == 0 {
+	if DelayLine == 0 {
 		return
 	}
 	Send_Stat.adderr()
