@@ -116,7 +116,7 @@ func EnsureErrorResponse(err error, requestID string) Error {
 	default:
 		return &ErrorResponse{
 			Code:      ErrInternal,
-			Message:   "Internal Error",
+			Message:   err.Error(),
 			RequestID: requestID,
 		}
 	}
