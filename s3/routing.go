@@ -2,12 +2,21 @@ package s3
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/yottachain/YTCoreService/env"
 )
 
 func (g *Server) routeBase(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			env.TraceError("routeBase")
+			g.httpError(w, r, errors.New("service ERR"))
+		}
+	}()
 	var (
 		path   = strings.Trim(r.URL.Path, "/")
 		parts  = strings.SplitN(path, "/", 2)
