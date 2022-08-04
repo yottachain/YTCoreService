@@ -90,7 +90,7 @@ func RequestSN(msg proto.Message) (proto.Message, *pkt.ErrorMessage) {
 			resmsg, errmsg = DoRequest(msg, snclient.PeerId, snclient.TcpAddr)
 		}
 		if errmsg != nil {
-			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR || errmsg.Code == pkt.CONN_ERROR) {
+			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR) {
 				return nil, errmsg
 			}
 			if retryTimes >= env.SN_RETRY_TIMES {
@@ -98,7 +98,7 @@ func RequestSN(msg proto.Message) (proto.Message, *pkt.ErrorMessage) {
 			} else {
 				logrus.Errorf("[SnClient]%sServiceError %d:%s,Retry...\n", log_pre, errmsg.Code, strings.TrimSpace(errmsg.Msg))
 			}
-			if !(retryTimes == 0 && (errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.CONN_ERROR)) {
+			if !(retryTimes == 0 && errmsg.Code == pkt.COMM_ERROR) {
 				time.Sleep(time.Duration(env.SN_RETRY_WAIT) * time.Second)
 			}
 			retryTimes++

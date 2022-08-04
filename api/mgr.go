@@ -146,7 +146,7 @@ func (me *Register) regist(retrytimes int) error {
 	if err != nil {
 		emsg := fmt.Sprintf("User '%s' registration failed!%s", me.c.Username, pkt.ToError(err))
 		logrus.Errorf("[Regist]%s\n", emsg)
-		if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.CONN_ERROR || err.Code == pkt.TOO_MANY_CURSOR) {
+		if !(err.Code == pkt.COMM_ERROR || err.Code == pkt.SERVER_ERROR || err.Code == pkt.TOO_MANY_CURSOR) {
 			return errors.New(emsg)
 		} else {
 			return &RetrieableError{msg: emsg}

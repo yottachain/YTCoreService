@@ -13,7 +13,7 @@ import (
 func (g *Server) routeBase(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			env.TraceError("routeBase")
+			env.TraceError("RouteBase")
 			g.httpError(w, r, errors.New("service ERR"))
 		}
 	}()
@@ -33,7 +33,6 @@ func (g *Server) routeBase(w http.ResponseWriter, r *http.Request) {
 	if len(parts) == 2 {
 		object = parts[1]
 	}
-
 	if uploadID := UploadID(query.Get("uploadId")); uploadID != "" {
 		err = g.routeMultipartUpload(bucket, object, uploadID, w, r)
 	} else if _, ok := query["uploads"]; ok {

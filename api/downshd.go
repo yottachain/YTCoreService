@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/mr-tron/base58"
 	"github.com/sirupsen/logrus"
@@ -231,12 +230,12 @@ func (me *DownLoadShardInfo) Download() []byte {
 					}
 				}
 			}
-			if err.Code == pkt.CONN_ERROR {
-				time.Sleep(time.Duration(1) * time.Second)
-			} else {
+			if err.Code == pkt.COMM_ERROR {
 				times++
-			}
-			if times >= me.RetryTimes {
+				if times >= me.RetryTimes {
+					return nil
+				}
+			} else {
 				return nil
 			}
 		} else {

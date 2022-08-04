@@ -68,6 +68,7 @@ func (q *SendStat) loop() {
 }
 
 func (q *SendStat) suit() {
+	defer env.TracePanic("Limit")
 	timeout, rate := q.sum()
 	curnum := env.UploadShardThreadNum - q.routines
 	if rate < SuccessRate {
