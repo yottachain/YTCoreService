@@ -23,12 +23,12 @@ require (
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
-	google.golang.org/protobuf v1.25.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
 	github.com/aws/aws-sdk-go v1.44.58
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.5.2
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
 	github.com/yottachain/YTS3 v0.0.0-20220729032353-ce5b5331fb80
 )
