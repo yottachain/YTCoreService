@@ -7,7 +7,7 @@
             "request": "launch",
             "mode": "test",
             "program": "${workspaceRoot}/main_test.go",
-            "args": ["-test.run","Test_Test"]
+            "args": ["-test.run","Test_MakeConst"]
         }, 
         {
             "name": "Launch",
@@ -22,7 +22,7 @@
             },
             "args": [
                 //"console"
-                //"test"
+                "test"
                 //"init"
             ]
         }

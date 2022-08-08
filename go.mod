@@ -4,8 +4,10 @@ go 1.17
 
 require (
 	github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974
+	github.com/aws/aws-sdk-go v1.44.70
 	github.com/boltdb/bolt v1.3.1
-	github.com/gobuffalo/packr/v2 v2.2.0
+	github.com/gobuffalo/packr/v2 v2.5.1
+	github.com/golang/protobuf v1.4.2
 	github.com/kardianos/service v1.2.1
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/libp2p/go-libp2p-core v0.3.1
@@ -14,23 +16,18 @@ require (
 	github.com/multiformats/go-multiaddr-net v0.1.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
+	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
 	github.com/yottachain/YTDNMgmt v0.0.0-20220720025849-9092629f6a30
+	github.com/yottachain/YTS3 v0.0.0-20220728054822-86e4c6017e25
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
 	go.mongodb.org/mongo-driver v1.3.3
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
-	google.golang.org/protobuf v1.28.1
-)
-
-require (
-	github.com/aws/aws-sdk-go v1.44.58
-	github.com/golang/protobuf v1.5.2
-	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
-	github.com/yottachain/YTS3 v0.0.0-20220729032353-ce5b5331fb80
+	google.golang.org/protobuf v1.25.0
 )
 
 require (
@@ -43,17 +40,13 @@ require (
 	github.com/gin-contrib/cors v1.3.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.6.3 // indirect
-	github.com/go-playground/locales v0.13.0 // indirect; indirects
+	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gobuffalo/envy v1.7.0 // indirect
-	github.com/gobuffalo/genny v0.1.1 // indirect
-	github.com/gobuffalo/gogen v0.1.1 // indirect
-	github.com/gobuffalo/logger v0.0.0-20190315122211-86e12af44bc2 // indirect
-	github.com/gobuffalo/mapi v1.0.2 // indirect
-	github.com/gobuffalo/packd v0.1.0 // indirect
-	github.com/gobuffalo/syncx v0.0.0-20190224160051-33c29581e754 // indirect
+	github.com/gobuffalo/logger v1.0.0 // indirect
+	github.com/gobuffalo/packd v0.3.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
@@ -65,14 +58,12 @@ require (
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/juju/ratelimit v1.0.1 // indirect
-	github.com/karrick/godirwalk v1.10.3 // indirect
+	github.com/karrick/godirwalk v1.10.12 // indirect
 	github.com/klauspost/compress v1.9.5 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.1 // indirect
 	github.com/libp2p/go-openssl v0.0.4 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2 // indirect
-	github.com/markbates/safe v1.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
@@ -93,7 +84,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.0 // indirect
-	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/subchen/go-trylock/v2 v2.0.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/tidwall/gjson v1.6.0 // indirect
