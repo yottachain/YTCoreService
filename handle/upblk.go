@@ -94,7 +94,7 @@ func (h *UploadBlockInitHandler) Handle() proto.Message {
 func CheckBlockDup(vhp []byte) proto.Message {
 	st := uint64(time.Now().Unix())
 	if env.DE_DUPLICATION {
-		vbi := uint64(dao.GenerateBlockID(env.Max_Shard_Count + env.Default_PND))
+		vbi := uint64(dao.GenerateBlockID(int(env.Max_Shard_Count + env.Default_PND)))
 		return &pkt.UploadBlockInitResp{StartTime: &vbi}
 	}
 	ls, err := dao.GetBlockByVHP(vhp)
@@ -102,7 +102,7 @@ func CheckBlockDup(vhp []byte) proto.Message {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
 	if ls == nil {
-		vbi := uint64(dao.GenerateBlockID(env.Max_Shard_Count + env.Default_PND))
+		vbi := uint64(dao.GenerateBlockID(int(env.Max_Shard_Count + env.Default_PND)))
 		return &pkt.UploadBlockInitResp{StartTime: &vbi}
 	} else {
 		size := len(ls)
@@ -309,7 +309,7 @@ func (h *UploadBlockEndHandler) SetMessage(pubkey string, msg proto.Message) (*p
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || len(h.m.Oklist) > env.Max_Shard_Count+env.Default_PND {
+		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || int64(len(h.m.Oklist)) > env.Max_Shard_Count+env.Default_PND {
 			return pkt.NewError(pkt.TOO_MANY_SHARDS), nil, nil
 		}
 		if h.m.VHB == nil || len(h.m.VHB) != 16 {
@@ -509,7 +509,7 @@ func (h *UploadBlockEndV3Handler) SetMessage(pubkey string, msg proto.Message) (
 		if h.user == nil {
 			return pkt.NewError(pkt.INVALID_SIGNATURE), nil, nil
 		}
-		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || len(h.m.Oklist) > (env.Max_Shard_Count+env.Default_PND)*2 {
+		if h.m.Oklist == nil || len(h.m.Oklist) == 0 || int64(len(h.m.Oklist)) > (env.Max_Shard_Count+env.Default_PND)*2 {
 			return pkt.NewError(pkt.TOO_MANY_SHARDS), nil, nil
 		}
 		if h.m.VHB == nil || len(h.m.VHB) != 16 {

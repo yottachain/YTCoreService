@@ -200,7 +200,7 @@ func (eb *EncryptedBlock) NeedEncode() bool {
 
 func NeedLRCEncode(size int) bool {
 	if size >= env.PL2 {
-		shardsize := env.PFL - 1
+		shardsize := int(env.PFL) - 1
 		dataShardCount := size / shardsize
 		if dataShardCount > 0 {
 			return true

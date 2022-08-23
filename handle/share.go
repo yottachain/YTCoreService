@@ -97,7 +97,7 @@ func (h *AuthHandler) Handle() proto.Message {
 		if ok {
 			ref.Dup = 1
 			ref.ShdCount = uint8(m.VNF)
-			uspace := int64(env.PCM)
+			uspace := int64(env.PFL)
 			if m.AR != codec.AR_DB_MODE {
 				if m.AR == codec.AR_COPY_MODE {
 					uspace = int64(env.PFL) * int64(m.VNF)
@@ -204,13 +204,13 @@ func (h *AuthHandler) addMeta(usedspace uint64, VNU primitive.ObjectID, refers [
 }
 
 func (h *AuthHandler) doFee(usedspace uint64, VNU primitive.ObjectID) {
-	unitspace := uint64(1024 * 16)
+	unitspace := uint64(env.PFL)
 	addusedspace := usedspace / unitspace
 	if usedspace%unitspace > 1 {
 		addusedspace = addusedspace + 1
 	}
 	dao.UpdateUserSpace(h.authuser.UserID, int64(usedspace), 1, int64(*h.m.Length))
-	if usedspace <= env.PCM {
+	if usedspace <= uint64(env.PFL) {
 		dao.AddNewObject(VNU, usedspace, h.authuser.UserID, h.authuser.Username, 0)
 		logrus.Infof("[AuthHandler][%d]File length less than 16K,Delay billing...\n", h.authuser.UserID)
 	}

@@ -16,9 +16,9 @@ var BlockParityPool *PointPool
 var PointArrayPool *PointPool
 
 func InitPool() {
-	BlockDataPool = NewPointPool(env.PFL*env.Max_Shard_Count, &BytesCreator{})
-	BlockParityPool = NewPointPool(env.PFL*env.Default_PND, &BytesCreator{})
-	PointArrayPool = NewPointPool(env.Max_Shard_Count, &ArrayCreator{})
+	BlockDataPool = NewPointPool(int(env.PFL*env.Max_Shard_Count), &BytesCreator{})
+	BlockParityPool = NewPointPool(int(env.PFL*env.Default_PND), &BytesCreator{})
+	PointArrayPool = NewPointPool(int(env.Max_Shard_Count), &ArrayCreator{})
 }
 
 type PointCreater interface {

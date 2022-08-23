@@ -40,6 +40,8 @@ func readSnProperties() {
 	config.SetSection(YTSN_ENV_SEC)
 	logConfig(config)
 
+	initCodecArgs(config)
+
 	SPOTCHECK_ADDR = config.GetString("SPOTCHECK_ADDR", "")
 	REBUILD_ADDR = config.GetString("REBUILD_ADDR", "")
 

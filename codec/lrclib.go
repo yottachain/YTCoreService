@@ -229,6 +229,8 @@ func LRC_Encode(data [][]byte) ([][]byte, error) {
 	}
 }
 
+const PointNum = 128
+
 func LRC_Encode_Linux(data [][]byte) ([][]byte, error) {
 	size := uint16(len(data))
 	outsize := env.PFL * env.Default_PND
@@ -236,7 +238,7 @@ func LRC_Encode_Linux(data [][]byte) ([][]byte, error) {
 	outptr := parityPoint.PTR
 	pointArray := PointArrayPool.GetPointer()
 	ptrs := pointArray.PTR
-	ps := (*[env.Max_Shard_Count]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
+	ps := (*[PointNum]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
 	for ii := 0; ii < int(size); ii++ {
 		ps[ii] = C.CBytes(data[ii])
 	}
@@ -255,8 +257,8 @@ func LRC_Encode_Linux(data [][]byte) ([][]byte, error) {
 	out := C.GoBytes(outptr, C.int(outsize))
 	pout := make([][]byte, osize)
 	for ii := 0; ii < int(osize); ii++ {
-		spos := ii * env.PFL
-		epos := (ii + 1) * env.PFL
+		spos := ii * int(env.PFL)
+		epos := (ii + 1) * int(env.PFL)
 		pout[ii] = out[spos:epos]
 	}
 	return pout, nil
@@ -269,7 +271,7 @@ func LRC_Encode_Win(data [][]byte) ([][]byte, error) {
 	outptr := unsafe.Pointer(&out[0])
 	ptrs := C.allocArray(C.int(size))
 	defer C.freeArray(ptrs)
-	ps := (*[env.Max_Shard_Count]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
+	ps := (*[PointNum]unsafe.Pointer)(unsafe.Pointer(ptrs))[:size]
 	for ii := 0; ii < int(size); ii++ {
 		ps[ii] = unsafe.Pointer(&data[ii][0])
 	}
@@ -280,8 +282,8 @@ func LRC_Encode_Win(data [][]byte) ([][]byte, error) {
 	}
 	pout := make([][]byte, osize)
 	for ii := 0; ii < int(osize); ii++ {
-		spos := ii * env.PFL
-		epos := (ii + 1) * env.PFL
+		spos := ii * int(env.PFL)
+		epos := (ii + 1) * int(env.PFL)
 		pout[ii] = out[spos:epos]
 	}
 	return pout, nil

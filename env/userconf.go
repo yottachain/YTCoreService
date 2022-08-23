@@ -53,6 +53,7 @@ func readClientProperties() {
 	cfg = config
 	logConfig(config)
 	p2pConfig(config)
+	initCodecArgs(config)
 
 	MaxCacheSize = int64(config.GetRangeInt("cachemaxsize", 5, 1024*100, 20)) * 1024 * 1024 * 1024
 	CachePath = config.GetString("cache", YTFS_HOME+"cache")

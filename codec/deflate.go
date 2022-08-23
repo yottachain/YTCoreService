@@ -154,7 +154,7 @@ func (fileEncoder *FileEncoder) pack() error {
 	if num > 0 {
 		buf.Write(data[0:num])
 		fileEncoder.curBlock = NewPlainBlock(buf.Bytes(), int64(num))
-		if err == io.EOF || err == io.ErrUnexpectedEOF || num < env.Default_Block_Size-2 {
+		if err == io.EOF || err == io.ErrUnexpectedEOF || num < int(env.Default_Block_Size)-2 {
 			fileEncoder.finished = true
 		}
 		fileEncoder.readinTotal = fileEncoder.readinTotal + int64(num)
@@ -183,7 +183,7 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 		}
 		totalIn = totalIn + int64(num)
 		flateWrite.Write(bs[0:num])
-		remainSize := env.Default_Block_Size - buf.Len()
+		remainSize := env.Default_Block_Size - int64(buf.Len())
 		if remainSize < 0 {
 			return totalIn, nil
 		}
@@ -192,7 +192,7 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 			if totalIn-int64(buf.Len()) <= 0 {
 				return totalIn, nil
 			}
-			remainSize = env.Default_Block_Size - buf.Len()
+			remainSize = env.Default_Block_Size - int64(buf.Len())
 			if remainSize < 0 {
 				return totalIn, nil
 			} else {
@@ -228,7 +228,7 @@ func (fileEncoder *FileEncoder) deflate() (int64, error) {
 	if totalIn-int64(buf.Len()) <= 0 {
 		return totalIn, nil
 	}
-	if buf.Len() > env.Default_Block_Size {
+	if int64(buf.Len()) > env.Default_Block_Size {
 		return totalIn, nil
 	}
 	fileEncoder.curBlock = NewPlainBlock(buf.Bytes(), totalIn)

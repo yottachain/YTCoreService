@@ -170,9 +170,9 @@ func (h *UploadObjectEndHandler) SumUsedSpace(meta *dao.ObjectMeta) uint64 {
 	for _, ref := range refs {
 		var uspace uint64 = 0
 		if ref.ShdCount == 0 || ref.RealSize < env.PL2 {
-			uspace = uint64(env.PCM)
+			uspace = uint64(env.PFL)
 		} else {
-			if ref.RealSize/(env.PFL-1) > 0 {
+			if ref.RealSize/(int32(env.PFL)-1) > 0 {
 				uspace = uint64(env.PFL) * uint64(ref.ShdCount) * 2
 			} else {
 				uspace = uint64(env.PFL) * uint64(ref.ShdCount)
@@ -206,7 +206,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	unitspace := uint64(1024 * 16)
+	unitspace := uint64(env.PFL)
 	addusedspace := usedspace / unitspace
 	if usedspace%unitspace > 1 {
 		addusedspace = addusedspace + 1
@@ -215,7 +215,7 @@ func (h *UploadObjectEndHandler) Handle() proto.Message {
 	if err != nil {
 		return pkt.NewError(pkt.SERVER_ERROR)
 	}
-	if usedspace <= env.PCM {
+	if usedspace <= uint64(env.PFL) {
 		dao.AddNewObject(meta.VNU, usedspace, h.user.UserID, h.user.Username, 0)
 		logrus.Infof("[UploadOBJEnd][%d]File length less than 16K,Delay billing...\n", h.user.UserID)
 		return &pkt.VoidResp{}

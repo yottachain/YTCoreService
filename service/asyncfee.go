@@ -28,7 +28,7 @@ func doCacheAction() bool {
 	}
 	usedspace := action.UsedSpace
 	if action.Step == 0 {
-		unitspace := uint64(1024 * 16)
+		unitspace := uint64(env.PFL)
 		addusedspace := usedspace / unitspace
 		if usedspace%unitspace > 1 {
 			addusedspace = addusedspace + 1

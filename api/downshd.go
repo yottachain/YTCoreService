@@ -29,21 +29,19 @@ func InitShardDownPool() {
 
 type DownLoadShards struct {
 	sync.RWMutex
-	coder      *codec.ErasureDecoder
-	cancel     *int32
-	logPrefix  string
-	okSign     chan int
-	ERR        atomic.Value
-	shardcount int
+	coder     *codec.ErasureDecoder
+	cancel    *int32
+	logPrefix string
+	okSign    chan int
+	ERR       atomic.Value
 }
 
-func NewDownLoad(logpre string, chansize int, ids int) *DownLoadShards {
+func NewDownLoad(logpre string, chansize int) *DownLoadShards {
 	dns := &DownLoadShards{cancel: new(int32), logPrefix: logpre}
 	if chansize > 0 {
 		dns.okSign = make(chan int, chansize)
 	}
 	*dns.cancel = 0
-	dns.shardcount = ids
 	return dns
 }
 
@@ -159,27 +157,13 @@ func (me *DownLoadShardInfo) Verify(data []byte) []byte {
 		return nil
 	}
 	size := len(data)
-	if size < env.PFL {
+	if size < int(env.PFL) {
 		logrus.Errorf("[DownloadShard]%sVerify shard %s ERR,Invalid data len %d,from %d\n",
 			me.DWNS.logPrefix, base58.Encode(me.VHF), size, me.NodeInfo.Id)
 		return nil
 	}
-	if size > env.PFL {
+	if size > int(env.PFL) {
 		data = data[0:env.PFL]
-	}
-	if me.DWNS.shardcount != 0 {
-		index := data[0]
-		if me.DWNS.shardcount == 17 {
-			if index == 3 {
-				logrus.Warnf("[DownloadShard]Activate LRC bug %d/%d\n", index, me.DWNS.shardcount)
-				return nil
-			}
-		} else {
-			if index == 4 || index == 5 {
-				logrus.Warnf("[DownloadShard]Activate LRC bug %d/%d\n", index, me.DWNS.shardcount)
-				return nil
-			}
-		}
 	}
 	md5Digest := md5.New()
 	md5Digest.Write(data)

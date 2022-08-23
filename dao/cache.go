@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yottachain/YTCoreService/env"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -91,7 +92,7 @@ type Action struct {
 }
 
 func (me *Action) RoundUsedSpace() {
-	unitspace := uint64(1024 * 16)
+	unitspace := uint64(env.PFL)
 	addusedspace := me.UsedSpace / unitspace
 	if me.UsedSpace%unitspace > 1 {
 		addusedspace = addusedspace + 1
