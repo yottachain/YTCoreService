@@ -58,7 +58,7 @@ func InitLRC() {
 			}
 		}
 	}
-	s1 := int16(env.Default_PND - 23)
+	s1 := int16(env.LRCInit)
 	ret := C.LRC_Initial(C.short(s1))
 	if ret <= 0 {
 		logrus.Panicf("[LRC]Init ERR,return:%d\n", ret)
