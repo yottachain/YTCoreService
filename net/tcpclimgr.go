@@ -54,7 +54,7 @@ func (cs *ClientStore) Connect(ctx context.Context, pid peer.ID, mas []multiaddr
 			d := &mnet.Dialer{}
 			if conn, err := d.DialContext(ctx, addr); err == nil {
 				ytclt := NewClient(conn, &peer.AddrInfo{ID: cs.cfg.ID, Addrs: cs.cfg.Addrs()},
-					cs.cfg.Privkey.GetPublic(), cs.cfg.Version,
+					cs.cfg.Privkey.GetPublic(), cs.cfg.Version, pid,
 				)
 				if atomic.AddInt32(&isOK, 1) > 1 {
 					conn.Close()
@@ -164,6 +164,7 @@ func (cs *ClientStore) CheckDeadConnetion() {
 	cs.RUnlock()
 	for _, c := range cons {
 		if c.IsDazed() {
+			logrus.Infof("[ClientStore]IDLE,Closing ID:%s", c.remoteId)
 			c.Close()
 		}
 	}

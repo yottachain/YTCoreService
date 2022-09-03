@@ -43,20 +43,9 @@ func InitLRC() {
 	if BlockDataPool != nil {
 		return
 	}
-	LRCNoCGO := env.GetConfig().GetBool("LRCNoCGO", false)
 	sysType := runtime.GOOS
 	if sysType == "windows" {
-		if LRCNoCGO {
-			xbit := 32 << (^uint(0) >> 63)
-			if xbit == 32 {
-				NoCGO = true
-			} else {
-				v, err := env.GetWinVersion()
-				if err == nil && v == "6.1" {
-					NoCGO = true
-				}
-			}
-		}
+		NoCGO = env.GetConfig().GetBool("LRCNoCGO", false)
 	}
 	s1 := int16(env.LRCInit)
 	ret := C.LRC_Initial(C.short(s1))

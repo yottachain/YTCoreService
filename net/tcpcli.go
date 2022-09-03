@@ -15,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
 )
 
@@ -86,9 +87,6 @@ func (ytcall *YTCall) ReadDone(ctx context.Context) ([]byte, error) {
 	select {
 	case <-ytcall.call.Done:
 		if ytcall.call.Error != nil {
-			if ytcall.call.Error == rpc.ErrShutdown || ytcall.call.Error == io.ErrUnexpectedEOF {
-				ytcall.client.Close()
-			}
 			return nil, ytcall.call.Error
 		} else {
 			return ytcall.call.Reply.(*Response).Data, nil
@@ -99,6 +97,7 @@ func (ytcall *YTCall) ReadDone(ctx context.Context) ([]byte, error) {
 }
 
 type TcpClient struct {
+	remoteId        peer.ID
 	localPeerID     peer.ID
 	localPeerAddrs  []string
 	localPeerPubKey []byte
@@ -120,8 +119,9 @@ type TcpClient struct {
 	closing bool
 }
 
-func NewClient(conn io.ReadWriteCloser, pi *peer.AddrInfo, pk crypto.PubKey, v int32) *TcpClient {
+func NewClient(conn io.ReadWriteCloser, pi *peer.AddrInfo, pk crypto.PubKey, v int32, rid peer.ID) *TcpClient {
 	yc := &TcpClient{
+		remoteId:    rid,
 		localPeerID: pi.ID,
 		Version:     v,
 		reqQueue:    make(chan *YTCall, env.P2P_RequestQueueSize),
@@ -145,9 +145,24 @@ func (yc *TcpClient) Start(remover func()) {
 }
 
 func (yc *TcpClient) output() {
+	defer func() {
+		if r := recover(); r != nil {
+			env.TraceError("[P2P]")
+		}
+		for {
+			select {
+			case req := <-yc.reqQueue:
+				call := &rpc.Call{ServiceMethod: "ms.HandleMsg", Args: req.args, Reply: req.reply, Error: rpc.ErrShutdown, Done: make(chan *rpc.Call, 1)}
+				call.Done <- call
+				req.writeDone <- call
+			default:
+				return
+			}
+		}
+	}()
 	lasttime := time.Now()
 	timer := time.NewTimer(time.Millisecond * time.Duration(env.P2P_WriteTimeout))
-	for {
+	for !yc.IsClosed() {
 		select {
 		case req := <-yc.reqQueue:
 			if atomic.LoadInt32(&req.cancel) > 0 {
@@ -162,7 +177,11 @@ func (yc *TcpClient) output() {
 			req.writeDone <- yc.send(req, "ms.HandleMsg")
 			lasttime = time.Now()
 		case <-timer.C:
-			if yc.IsClosed() || yc.IsDazed() || time.Since(lasttime).Milliseconds() > int64(env.P2P_IdleTimeout) {
+			if yc.IsClosed() {
+				return
+			}
+			if yc.IsDazed() || time.Since(lasttime).Milliseconds() > int64(env.P2P_IdleTimeout) {
+				logrus.Infof("[P2P]IsDazed,Closed ID:%s", yc.remoteId)
 				yc.Close()
 				return
 			}
@@ -174,10 +193,15 @@ func (yc *TcpClient) output() {
 
 func (yc *TcpClient) send(req *YTCall, method string) *rpc.Call {
 	call := &rpc.Call{ServiceMethod: method, Args: req.args, Reply: req.reply, Done: make(chan *rpc.Call, 1)}
-	yc.respQueue <- 1
 	if atomic.LoadInt32(&req.cancel) > 0 {
-		<-yc.respQueue
 		call.Error = fmt.Errorf("ctx time out:writing")
+		call.Done <- call
+		return call
+	}
+	yc.respQueue <- 1
+	if yc.IsClosed() {
+		<-yc.respQueue
+		call.Error = rpc.ErrShutdown
 		call.Done <- call
 		return call
 	}
@@ -205,6 +229,35 @@ func (yc *TcpClient) send(req *YTCall, method string) *rpc.Call {
 
 func (yc *TcpClient) input() {
 	var err error
+	defer func() {
+		if r := recover(); r != nil {
+			env.TraceError("[P2P]")
+		}
+		yc.mutex.Lock()
+		closing := yc.closing
+		if err == io.EOF {
+			if closing {
+				err = rpc.ErrShutdown
+			} else {
+				err = io.ErrUnexpectedEOF
+			}
+		}
+		yc.mutex.Unlock()
+		yc.Close()
+		logrus.Infof("[P2P]Read err:%s,Closed ID:%s", err, yc.remoteId)
+		yc.mutex.Lock()
+		var ids []uint64
+		for id, call := range yc.pending {
+			ids = append(ids, id)
+			call.Error = err
+			call.Done <- call
+			<-yc.respQueue
+		}
+		for _, seq := range ids {
+			delete(yc.pending, seq)
+		}
+		yc.mutex.Unlock()
+	}()
 	var response rpc.Response
 	for err == nil {
 		response = rpc.Response{}
@@ -241,21 +294,6 @@ func (yc *TcpClient) input() {
 			call.Done <- call
 		}
 	}
-	yc.mutex.Lock()
-	closing := yc.closing
-	if err == io.EOF {
-		if closing {
-			err = rpc.ErrShutdown
-		} else {
-			err = io.ErrUnexpectedEOF
-		}
-	}
-	for _, call := range yc.pending {
-		call.Error = err
-		call.Done <- call
-		<-yc.respQueue
-	}
-	yc.mutex.Unlock()
 }
 
 func (yc *TcpClient) IsDazed() bool {
@@ -267,6 +305,9 @@ func (yc *TcpClient) IsDazed() bool {
 }
 
 func (yc *TcpClient) pushMsg(ctx context.Context, id int32, data []byte) (*YTCall, error) {
+	if yc.IsClosed() {
+		return nil, rpc.ErrShutdown
+	}
 	req := Request{MsgId: id,
 		ReqData: data,
 		RemotePeerInfo: PeerInfo{ID: yc.localPeerID,

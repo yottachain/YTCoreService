@@ -7,7 +7,7 @@
             "request": "launch",
             "mode": "test",
             "program": "${workspaceRoot}/main_test.go",
-            "args": ["-test.run","Test_MakeConst"]
+            "args": ["-test.run","Test_Test"]
         }, 
         {
             "name": "Launch",
@@ -16,6 +16,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}",
             "env":{
+                "GOTRACEBACK":"crash",
                 "ProgramName":"YTS3",
                 "YTSN_HOME":"D:/YTCoreService",
                 "YTFS_HOME":"D:/YTCoreService"
