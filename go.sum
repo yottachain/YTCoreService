@@ -567,6 +567,7 @@ github.com/yottachain/P2PHost v1.0.1-0.20200330065720-69572fdc7d92/go.mod h1:V7g
 github.com/yottachain/P2PHost v1.0.2-0.20220720024223-9c9dbf53dd0e h1:gU+rwttUgYT9dZV8uKl16NTPR11HnwxqN/XwDzTFwcU=
 github.com/yottachain/P2PHost v1.0.2-0.20220720024223-9c9dbf53dd0e/go.mod h1:4ZBTjWbVgjQbVAjLDWsj0VSB723F02mau38rGp1W5yU=
 github.com/yottachain/YTCoreService v0.0.0-20220728043439-9ea4a14eed17/go.mod h1:LyPPxJq9+GE3RgkI6IPfx9WZl5jy/M6OjlfEsMHGgCM=
+github.com/yottachain/YTCoreService v0.0.0-20220728092844-461ee0e40973/go.mod h1:RAD0Ck77rbpxBsjrxGGi+68CHUo/DEGMmBBDrHUf2HI=
 github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812 h1:XG9TtLosanLdwqSoporMr8OASUOjxuaj6cJDlut1c9s=
 github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812/go.mod h1:jDJUVGeQ1clW7k9OTRBAFtCMwGs9B9fGQ9QY64SKqlk=
 github.com/yottachain/YTDNMgmt v0.0.0-20220720025849-9092629f6a30 h1:AyQ7ZYkHku0ElvVolJhXHrGCUw9eQV/bMyDp/H7P03A=
@@ -576,8 +577,9 @@ github.com/yottachain/YTHost v1.0.2-0.20200703084155-b2658f82b387/go.mod h1:PMIX
 github.com/yottachain/YTHost v1.0.2-0.20200918110720-68f155ccc541/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 github.com/yottachain/YTHost v1.0.2-0.20220708030402-f160518f851c h1:hHziZK7mSpU+zZ9s82UX/NFYX5JNSXlGee8ViAct5Qs=
 github.com/yottachain/YTHost v1.0.2-0.20220708030402-f160518f851c/go.mod h1:8/hiqr3CQQLfc6y0U2QlyzoIJUSloFKcpgZBpsdIkR4=
-github.com/yottachain/YTS3 v0.0.0-20220728054822-86e4c6017e25 h1:Gppa4/vdxsoq0TBRAJ+PuMfvMhxSogFhObfCGgrCh6A=
 github.com/yottachain/YTS3 v0.0.0-20220728054822-86e4c6017e25/go.mod h1:T2JKZhQOZISsUzIsIlx3iHwRX8cD7QWALyB4+y6n2vU=
+github.com/yottachain/YTS3 v0.0.0-20220915033217-731d3c1c269d h1:k8U1Zw6R11LUQpaPSfkHGTSwD5RI75UESKAAeuU6cf0=
+github.com/yottachain/YTS3 v0.0.0-20220915033217-731d3c1c269d/go.mod h1:BYYLUkQbpsBI5N/GMfFpcZRdNQDVF6C+2d3VQyq2utg=
 github.com/yottachain/yotta-analysis v0.0.0-20200427065413-d4b83ac9a92f/go.mod h1:WBAiITvR+7h/fwyUYkybMjaBb812On6Td7sMc/nAqKE=
 github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692 h1:LEWEYm5sR8SGk/+Qv23q7/4ArbGS0QZc9DSyxjFF0Mk=
 github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692/go.mod h1:jkzWxLT0S/YYMbXukSBAehYg63AW3kj2hzhcubrgqhc=
