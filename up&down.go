@@ -17,7 +17,7 @@ import (
 var client *api.Client
 
 var (
-	FileSize int64 = 1024*1024*1 + 8192
+	FileSize int64 = 1024*1024*9 + 8192
 	Spos     int64 = FileSize * 382 / 1000
 	Epos     int64 = Spos * 2
 )

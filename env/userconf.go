@@ -90,7 +90,6 @@ func dnConfig(config *Config) {
 }
 
 var (
-	LRC2                      = false
 	CopyNum                   = 10
 	LRCMinShardNum            = 50
 	ExtraPercent              = 100
@@ -104,7 +103,6 @@ var (
 
 func upConfig(config *Config) {
 	ShardNumPerNode = config.GetRangeInt("shardNumPerNode", 1, 200, 1)
-	LRC2 = config.GetBool("LRC2", true)
 	LRCMinShardNum = config.GetRangeInt("LRCMinShardNum", 30, 164, 50)
 	CopyNum = config.GetRangeInt("CopyNum", 5, 18, 10)
 	ExtraPercent = config.GetRangeInt("ExtraPercent", 0, 100, 100)

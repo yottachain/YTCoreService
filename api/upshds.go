@@ -14,86 +14,73 @@ type UpLoadShards struct {
 	cancel    *int32
 	logPrefix string
 	okSign    chan int
-	bakSign   chan int
-	bakcount  int
-	waitcount int
 	ress      []*UploadShardResult
 	ress2     []*UploadShardResult
-	count     int
+	waitnum   int32
+	oknum     int
+	baknum    int
 }
 
-func NewUpLoad(logpre string, ress []*UploadShardResult, ress2 []*UploadShardResult, chansize, chansize2, chansize3 int) *UpLoadShards {
+func NewUpLoad(logpre string, ress []*UploadShardResult, ress2 []*UploadShardResult, num int) *UpLoadShards {
 	dns := &UpLoadShards{cancel: new(int32), logPrefix: logpre}
-	dns.okSign = make(chan int, chansize)
+	dns.okSign = make(chan int, len(ress))
 	dns.ress = ress
 	dns.ress2 = ress2
-	dns.bakcount = chansize2
-	dns.waitcount = chansize3
-	if chansize2 > 0 {
-		dns.bakSign = make(chan int, chansize2+chansize3)
-	}
+	dns.waitnum = int32(num)
+	dns.oknum = num
 	*dns.cancel = 0
 	return dns
 }
 
-func (upLoadShards *UpLoadShards) WaitUpload() error {
-	startTime := time.Now().Unix()
-	size := len(upLoadShards.ress)
-	for ii := 0; ii < size; ii++ {
+func (upLoadShards *UpLoadShards) WaitComplete() error {
+	for atomic.LoadInt32(&upLoadShards.waitnum) > 0 {
+		atomic.AddInt32(&upLoadShards.waitnum, -1)
 		sign := <-upLoadShards.okSign
 		if sign < 0 {
 			return errors.New("")
 		}
 	}
-	for ii := 0; ii < upLoadShards.bakcount; ii++ {
-		sign := <-upLoadShards.bakSign
-		if sign < 0 {
-			return errors.New("")
-		}
-	}
-	t := int64(env.BlkTimeout) - (time.Now().Unix() - startTime)
-	if t <= 0 {
-		atomic.StoreInt32(upLoadShards.cancel, 1)
-		return nil
-	}
-	timeout := time.After(time.Second * time.Duration(t))
-	for ii := 0; ii < upLoadShards.waitcount; ii++ {
-		select {
-		case <-upLoadShards.bakSign:
-		case <-timeout:
-			atomic.StoreInt32(upLoadShards.cancel, 1)
-			return nil
-		}
-	}
-	atomic.StoreInt32(upLoadShards.cancel, 1)
 	return nil
 }
 
-func (upLoadShards *UpLoadShards) Count() int {
-	upLoadShards.RLock()
-	defer upLoadShards.RUnlock()
-	return upLoadShards.count
+func (upLoadShards *UpLoadShards) WaitUpload() error {
+	size := int(upLoadShards.waitnum)
+	timeout := time.After(time.Second * time.Duration(int64(env.BlkTimeout)))
+	for ii := 0; ii < size; ii++ {
+		select {
+		case sign := <-upLoadShards.okSign:
+			upLoadShards.waitnum--
+			if sign < 0 {
+				return errors.New("")
+			}
+		case <-timeout:
+			return nil
+		}
+	}
+	return nil
 }
 
-func (upLoadShards *UpLoadShards) OnResponse(rec *UploadShardResult) {
+func (upLoadShards *UpLoadShards) OnResponse(rec *UploadShardResult, iserr bool) {
 	upLoadShards.Lock()
 	defer upLoadShards.Unlock()
+	if iserr {
+		upLoadShards.okSign <- -1
+	} else {
+		upLoadShards.okSign <- 1
+	}
 	if upLoadShards.ress[rec.SHARDID] == nil {
-		if rec.NODE == nil {
-			upLoadShards.okSign <- -1
-		} else {
+		if rec.NODE != nil {
 			upLoadShards.ress[rec.SHARDID] = rec
-			upLoadShards.okSign <- 1
-			upLoadShards.count++
+			upLoadShards.oknum--
 		}
 	} else {
-		if rec.NODE == nil {
-			upLoadShards.bakSign <- -1
-		} else {
+		if rec.NODE != nil {
 			upLoadShards.ress2[rec.SHARDID] = rec
-			upLoadShards.bakSign <- 1
-			upLoadShards.count++
+			upLoadShards.baknum++
 		}
+	}
+	if upLoadShards.oknum == 0 {
+		atomic.StoreInt32(upLoadShards.cancel, 1)
 	}
 }
 

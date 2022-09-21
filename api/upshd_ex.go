@@ -42,9 +42,11 @@ type UploadShardEx struct {
 func (us *UploadShardEx) DoFinish() {
 	if r := recover(); r != nil {
 		env.TraceError("[UploadShard]")
+		us.parent.OnResponse(us.res, true)
+	} else {
+		us.parent.OnResponse(us.res, false)
 	}
 	SHARD_UP_CH <- 1
-	us.parent.OnResponse(us.res)
 }
 
 func (us *UploadShardEx) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
@@ -59,7 +61,7 @@ func (us *UploadShardEx) MakeRequest(ns *NodeStatWOK) *pkt.UploadShardReq {
 }
 
 func (us *UploadShardEx) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityResp, error) {
-	logrus.Tracef("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
+	//logrus.Tracef("[UploadShard]%sGetToken from %d......\n", us.logPrefix, node.NodeInfo.Id)
 	ctlreq := &pkt.GetNodeCapacityReq{StartTime: uint64(us.uploadBlock.STime),
 		RetryTimes: uint32(us.retrytimes)}
 	times := 0
@@ -90,7 +92,7 @@ func (us *UploadShardEx) GetToken(node *NodeStatWOK) (int, *pkt.GetNodeCapacityR
 }
 
 func (us *UploadShardEx) SendShard(node *NodeStatWOK, req *pkt.UploadShardReq) (*pkt.UploadShard2CResp, *pkt.ErrorMessage) {
-	logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
+	//logrus.Tracef("[UploadShard]%sSendShard %s to %d......\n", us.logPrefix, base58.Encode(req.VHF), node.NodeInfo.Id)
 	msg, err := net.RequestDN(req, &node.NodeInfo.Node)
 	if err != nil {
 		if strings.Contains(err.Msg, "no handler") {

@@ -135,10 +135,21 @@ func (uploadBlock *UploadBlock) CheckErrorMessage(ress, ress2 []*UploadShardResu
 					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", uploadBlock.logPrefix, res.NODE.Id)
 					ress[index] = nil
 					AddError(res.NODE.Id)
+					res2size := len(ress2)
+					if index < res2size && ress2[index] != nil {
+						if env.IsExistInArray(ress2[index].NODE.Id, ids) {
+							logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", uploadBlock.logPrefix, ress2[index].NODE.Id)
+							AddError(ress2[index].NODE.Id)
+							ress2[index] = nil
+						} else {
+							ress[index] = ress2[index]
+							ress2[index] = nil
+						}
+					}
 				}
 			}
 			for index, res := range ress2 {
-				if env.IsExistInArray(res.NODE.Id, ids) {
+				if res != nil && env.IsExistInArray(res.NODE.Id, ids) {
 					logrus.Warnf("[UploadBlock]%sFind DN_IN_BLACKLIST ERR:%d\n", uploadBlock.logPrefix, res.NODE.Id)
 					ress2[index] = nil
 					AddError(res.NODE.Id)
