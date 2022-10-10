@@ -1,10 +1,8 @@
 package examples
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -12,19 +10,30 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-const FileSize int64 = 1024*1024*9 + 8192
+const FileSize int64 = 1024*1024*9 - 204
 
 func TestCodec() {
 	env.InitClient()
 	codec.InitLRC()
-	for ii := 0; ii < 20; ii++ {
+	loop := 10
+	filenum := 50
+	stime := time.Now()
+	wgroup := sync.WaitGroup{}
+	for ii := 0; ii < loop; ii++ {
+		id := ii
+		wgroup.Add(1)
 		go func() {
-			for ii := 0; ii < 3000; ii++ {
+			for i := 0; i < filenum; i++ {
 				codefile()
 			}
-			logrus.Infof("complete %d\n", ii)
+			logrus.Infof("complete %d\n", id)
+			wgroup.Done()
 		}()
 	}
+	wgroup.Wait()
+	size := loop * filenum * 9
+	s := int(time.Since(stime).Seconds())
+	logrus.Infof("平均速度：%dM/s\n", size/s)
 	select {}
 }
 
@@ -34,11 +43,17 @@ func codefile() {
 	if err != nil {
 		panic(err)
 	}
-	b, err := enc.ReadNext()
-	if err != nil {
-		panic(err)
+	for {
+		b, err := enc.ReadNext()
+		if err != nil {
+			panic(err)
+		}
+		if b == nil {
+			break
+		}
+		codeblock(b)
 	}
-	codeblock(b)
+
 }
 
 func codeblock(b *codec.PlainBlock) {
@@ -60,38 +75,39 @@ func codeblock(b *codec.PlainBlock) {
 	}
 
 	rsize := codec.GetEncryptedBlockSize(int64(size))
-	c, err := codec.NewErasureDecoder(rsize)
+	_, err = codec.NewErasureDecoder(rsize)
 	if err != nil {
 		panic(err)
 	}
-
-	shds := enc.Shards
-	rand.Seed(time.Now().Unix())
-	rand.Shuffle(len(shds), func(i, j int) { shds[i], shds[j] = shds[j], shds[i] })
-	for _, shd := range shds {
-		b, err := c.AddShard(shd.Data)
+	/*
+		shds := enc.Shards
+		rand.Seed(time.Now().Unix())
+		rand.Shuffle(len(shds), func(i, j int) { shds[i], shds[j] = shds[j], shds[i] })
+		for _, shd := range shds {
+			b, err := c.AddShard(shd.Data)
+			if err != nil {
+				panic(err)
+			}
+			if b {
+				break
+			}
+		}
+		if !c.IsOK() {
+			panic(errors.New("shards is not enough"))
+		}
+		newblk := c.GetEncryptedBlock()
+		newblk.SecretKey = ks
+		dec := codec.NewBlockAESDecryptor(newblk)
+		pb, err := dec.Decrypt()
 		if err != nil {
 			panic(err)
 		}
-		if b {
-			break
+		er = pb.Sum()
+		if er != nil {
+			panic(er)
 		}
-	}
-	if !c.IsOK() {
-		panic(errors.New("shards is not enough"))
-	}
-	newblk := c.GetEncryptedBlock()
-	newblk.SecretKey = ks
-	dec := codec.NewBlockAESDecryptor(newblk)
-	pb, err := dec.Decrypt()
-	if err != nil {
-		panic(err)
-	}
-	er = pb.Sum()
-	if er != nil {
-		panic(er)
-	}
-	if bytes.Equal(b.VHP, pb.VHP) {
-		fmt.Println("ok")
-	}
+		if bytes.Equal(b.VHP, pb.VHP) {
+			fmt.Println("ok")
+		}*/
+	fmt.Println("ok")
 }

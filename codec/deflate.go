@@ -115,21 +115,29 @@ func (fileEncoder *FileEncoder) HasNext() (bool, error) {
 		fileEncoder.Close()
 		return false, nil
 	}
-	readTotal, err := fileEncoder.deflate()
-	if err != nil {
-		fileEncoder.Close()
-		return false, err
-	}
-	if readTotal > 0 {
-		_, err1 := fileEncoder.reader.Seek(-readTotal, io.SeekCurrent)
-		if err1 != nil {
-			fileEncoder.Close()
-			return false, err1
-		}
+	if !env.Compress {
 		err2 := fileEncoder.pack()
 		if err2 != nil {
 			fileEncoder.Close()
 			return false, err2
+		}
+	} else {
+		readTotal, err := fileEncoder.deflate()
+		if err != nil {
+			fileEncoder.Close()
+			return false, err
+		}
+		if readTotal > 0 {
+			_, err1 := fileEncoder.reader.Seek(-readTotal, io.SeekCurrent)
+			if err1 != nil {
+				fileEncoder.Close()
+				return false, err1
+			}
+			err2 := fileEncoder.pack()
+			if err2 != nil {
+				fileEncoder.Close()
+				return false, err2
+			}
 		}
 	}
 	if fileEncoder.finished {

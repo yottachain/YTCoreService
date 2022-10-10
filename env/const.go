@@ -22,6 +22,7 @@ const SN_RETRY_WAIT = 5
 const SN_RETRY_TIMES = 12 * 5
 
 var ShardNumPerNode = 1
+var Compress = true
 var Default_Block_Size int64 = 1024*1024*2 - 1 - 128
 var Max_Shard_Count int64 = 128
 var Default_PND int64 = 36
@@ -29,6 +30,7 @@ var PFL int64 = 16 * 1024
 var LRCInit = 13
 
 func initCodecArgs(config *Config) {
+	Compress = config.GetBool("Compress", true)
 	pfl := config.GetRangeInt("PFL", 16, 1024*2, 16)
 	if pfl%16 > 0 {
 		logrus.Panicf("Invalid parameter value.PFL=%d\n", pfl)
@@ -39,10 +41,8 @@ func initCodecArgs(config *Config) {
 	Default_PND = int64(config.GetRangeInt("PND", 8, 128, 36))
 
 	Default_Block_Size = (PFL - 1) * Max_Shard_Count
-	if Default_Block_Size%16 == 0 {
-		Default_Block_Size = Default_Block_Size - 1
-	}
-
+	remain := Default_Block_Size % 16
+	Default_Block_Size = Default_Block_Size - 1 - remain
 	LRCInit = config.GetRangeInt("LRCInit", 1, 100, 13)
 
 }
