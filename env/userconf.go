@@ -110,7 +110,7 @@ func upConfig(config *Config) {
 	MakeBlockThreadNum = config.GetRangeInt("makeBlockThreadNum", 1, 20, 5)
 	UploadBlockThreadNum = config.GetRangeInt("uploadBlockThreadNum", 10, 1024, 100)
 	UploadShardThreadNum = config.GetRangeInt("uploadShardThreadNum", 328, 100000, 1500)
-	UploadShardRetryTimes = config.GetRangeInt("uploadShardRetryTimes", 1, 10, 3)
+	UploadShardRetryTimes = config.GetRangeInt("uploadShardRetryTimes", 0, 10, 3)
 	ThrowErr = config.GetBool("throwErr", false)
 }
 

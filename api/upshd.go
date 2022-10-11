@@ -147,18 +147,22 @@ func (us *UploadShard) DoSend() {
 	for {
 		startTime := time.Now()
 		req := us.MakeRequest(node)
-		rtimes, ctlresp, err := us.GetToken(node)
-		ctrtimes := time.Since(startTime).Milliseconds()
-		if err != nil {
-			us.retrytimes++
-			node.DecCount()
-			n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
-			logrus.Infof("[UploadShard]%sGetNodeCapacity:%s,%s to %d,retry %d times,take times %d ms,retry next node %d\n",
-				us.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
-			node = n
-			continue
+		rtimes := 0
+		ctrtimes := 0
+		if env.UploadShardRetryTimes > 0 {
+			rtimes, ctlresp, err := us.GetToken(node)
+			ctrtimes := time.Since(startTime).Milliseconds()
+			if err != nil {
+				us.retrytimes++
+				node.DecCount()
+				n := us.uploadBlock.Queue.GetNodeStatExcluld(us.blkList)
+				logrus.Infof("[UploadShard]%sGetNodeCapacity:%s,%s to %d,retry %d times,take times %d ms,retry next node %d\n",
+					us.logPrefix, err, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, n.NodeInfo.Id)
+				node = n
+				continue
+			}
+			req.AllocId = ctlresp.AllocId
 		}
-		req.AllocId = ctlresp.AllocId
 		resp, err1 := us.SendShard(node, req)
 		times := time.Since(startTime).Milliseconds()
 		if err1 != nil {
@@ -171,7 +175,7 @@ func (us *UploadShard) DoSend() {
 			node = n
 			continue
 		} else {
-			node.NodeInfo.SetOK(times - ctrtimes)
+			node.NodeInfo.SetOK(times - int64(ctrtimes))
 		}
 		us.res.DNSIGN = resp.DNSIGN
 		us.res.NODE = node.NodeInfo
