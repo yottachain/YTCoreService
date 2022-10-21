@@ -3,7 +3,6 @@ package api
 import (
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
@@ -19,8 +18,6 @@ type UploadObjectSync struct {
 
 func NewUploadEncObject(filename string) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
-	u.ActiveTime = env.NewAtomInt64(0)
-	u.activesign = make(chan int)
 	u.PRO = &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	err := u.createDecoder2(filename)
 	if err != nil {
@@ -47,8 +44,6 @@ func (upload *UploadObjectSync) createDecoder2(filename string) error {
 
 func NewUploadObjectSync(sha256 []byte) (*UploadObjectSync, *pkt.ErrorMessage) {
 	u := &UploadObjectSync{UploadObject: UploadObject{}}
-	u.ActiveTime = env.NewAtomInt64(0)
-	u.activesign = make(chan int)
 	u.PRO = &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
 	err := u.createDecoder(sha256)
 	if err != nil {
@@ -97,8 +92,6 @@ func (upload *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 		logrus.Infof("[SyncUpload][%s]Already exists.\n", upload.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
-		upload.ActiveTime.Set(time.Now().Unix())
-		go upload.waitcheck()
 		var id uint32 = 0
 		for {
 			b, err := upload.decoder.ReadNext()
@@ -123,7 +116,6 @@ func (upload *UploadObjectSync) Upload() (reserr *pkt.ErrorMessage) {
 			id++
 		}
 		wgroup.Wait()
-		<-upload.activesign
 		var errmsg *pkt.ErrorMessage
 		v := upload.ERR.Load()
 		if v != nil {

@@ -2,7 +2,6 @@ package api
 
 import (
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/env"
@@ -16,8 +15,6 @@ type UploadObjectAuth struct {
 
 func NewUploadObjectAuth(c *Client) (*UploadObjectAuth, *pkt.ErrorMessage) {
 	u := &UploadObjectAuth{UploadObject: UploadObject{}}
-	u.ActiveTime = env.NewAtomInt64(0)
-	u.activesign = make(chan int)
 	u.UClient = c
 	u.Exist = false
 	return u, nil
@@ -68,8 +65,6 @@ func (auth *UploadObjectAuth) Upload() (reserr *pkt.ErrorMessage) {
 		logrus.Infof("[AuthUpload][%s]Already exists.\n", auth.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
-		auth.ActiveTime.Set(time.Now().Unix())
-		go auth.waitcheck()
 		var id uint32 = 0
 		for _, ref := range auth.Info.REFS {
 			if auth.ERR.Load() != nil {
@@ -83,7 +78,6 @@ func (auth *UploadObjectAuth) Upload() (reserr *pkt.ErrorMessage) {
 			}
 		}
 		wgroup.Wait()
-		<-auth.activesign
 		var errmsg *pkt.ErrorMessage
 		v := auth.ERR.Load()
 		if v != nil {

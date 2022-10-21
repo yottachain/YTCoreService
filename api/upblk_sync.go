@@ -42,7 +42,6 @@ func (uploadBlock *UploadBlockSync) DoFinish() {
 	BLOCK_MAKE_CH <- 1
 	if uploadBlock.WG != nil {
 		uploadBlock.WG.Done()
-		uploadBlock.UPOBJ.ActiveTime.Set(time.Now().Unix())
 		uploadBlock.UPOBJ.PRO.WriteLength.Add(uploadBlock.Length)
 	}
 }
@@ -167,7 +166,6 @@ func (uploadBlock *UploadBlockSync) uploadDedup(eblk *codec.EncryptedBlock) {
 			}
 			BLOCK_ROUTINE_CH <- 1
 			finishWg.Done()
-			uploadBlock.UPOBJ.ActiveTime.Set(time.Now().Unix())
 			uploadBlock.UPOBJ.PRO.WriteLength.Add(uploadBlock.Length)
 		}()
 		var ids []int32

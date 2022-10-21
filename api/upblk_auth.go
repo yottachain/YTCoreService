@@ -23,7 +23,6 @@ func (auth *UploadBlockAuth) DoFinish() {
 	}
 	BLOCK_MAKE_CH <- 1
 	auth.WG.Done()
-	auth.UPOBJ.ActiveTime.Set(time.Now().Unix())
 }
 
 func StartUploadBlockAuth(b *pkt.Refer, up *UploadObject, wg *sync.WaitGroup) {

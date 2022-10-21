@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/aurawing/eos-go/btcsuite/btcutil/base58"
 	"github.com/sirupsen/logrus"
@@ -17,22 +16,20 @@ import (
 )
 
 type UploadObject struct {
-	UClient    *Client
-	Encoder    *codec.FileEncoder
-	VNU        primitive.ObjectID
-	Sign       string
-	Stamp      int64
-	Blocks     []uint32
-	Exist      bool
-	ActiveTime *env.AtomInt64
-	ERR        atomic.Value
-	activesign chan int
-	PRO        *UpProgress
+	UClient *Client
+	Encoder *codec.FileEncoder
+	VNU     primitive.ObjectID
+	Sign    string
+	Stamp   int64
+	Blocks  []uint32
+	Exist   bool
+	ERR     atomic.Value
+	PRO     *UpProgress
 }
 
 func NewUploadObject(c *Client) *UploadObject {
 	p := &UpProgress{Length: env.NewAtomInt64(0), ReadinLength: env.NewAtomInt64(0), ReadOutLength: env.NewAtomInt64(0), WriteLength: env.NewAtomInt64(0)}
-	o := &UploadObject{UClient: c, ActiveTime: env.NewAtomInt64(0), activesign: make(chan int), PRO: p}
+	o := &UploadObject{UClient: c, PRO: p}
 	return o
 }
 
@@ -138,8 +135,6 @@ func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 		logrus.Infof("[UploadObject][%s]Already exists.\n", uploadobject.VNU.Hex())
 	} else {
 		wgroup := sync.WaitGroup{}
-		uploadobject.ActiveTime.Set(time.Now().Unix())
-		go uploadobject.waitcheck()
 		var id uint32 = 0
 		for {
 			b, err := uploadobject.Encoder.ReadNext()
@@ -164,7 +159,6 @@ func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 			id++
 		}
 		wgroup.Wait()
-		<-uploadobject.activesign
 		var errmsg *pkt.ErrorMessage
 		v := uploadobject.ERR.Load()
 		if v != nil {
@@ -180,40 +174,6 @@ func (uploadobject *UploadObject) Upload() (reserr *pkt.ErrorMessage) {
 		}
 	}
 	return nil
-}
-
-func (uploadobject *UploadObject) waitcheck() {
-	for {
-		timeout := time.After(time.Second * 30)
-		select {
-		case uploadobject.activesign <- 1:
-			close(uploadobject.activesign)
-			return
-		case <-timeout:
-			if uploadobject.ERR.Load() != nil {
-				break
-			}
-			uploadobject.active()
-		}
-	}
-}
-
-func (uploadobject *UploadObject) active() {
-	lt := uploadobject.ActiveTime.Value()
-	if time.Now().Unix()-lt > 60 {
-		i1, i2, i3, i4 := pkt.ObjectIdParam(uploadobject.VNU)
-		vnu := &pkt.ActiveCacheV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
-		req := &pkt.ActiveCacheV2{
-			UserId:    &uploadobject.UClient.UserId,
-			SignData:  &uploadobject.UClient.SignKey.Sign,
-			KeyNumber: &uploadobject.UClient.SignKey.KeyNumber,
-			Vnu:       vnu,
-		}
-		_, err := net.RequestSN(req)
-		if err == nil {
-			uploadobject.ActiveTime.Set(time.Now().Unix())
-		}
-	}
 }
 
 func (uploadobject *UploadObject) complete(sha []byte) *pkt.ErrorMessage {

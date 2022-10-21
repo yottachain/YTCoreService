@@ -18,8 +18,8 @@
             "env":{
                 "GOTRACEBACK":"crash",
                 "ProgramName":"YTS3",
-                "YTSN_HOME":"D:/YTCoreService",
-                "YTFS_HOME":"D:/YTCoreService"
+                "YTSN_HOME":"/root/YTCoreService",
+                "YTFS_HOME":"/root/YTCoreService"
             },
             "args": [
                 //"console"
