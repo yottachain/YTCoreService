@@ -46,6 +46,7 @@ const DN_RES_BAD_REQUEST = 100
 const DN_RES_NO_SPACE = 101
 const DN_RES_VNF_EXISTS = 102
 const DN_RES_CACHE_FILL = 105
+const DN_RES_BUSY = 112
 
 type UploadShardResult struct {
 	SHARDID int32
