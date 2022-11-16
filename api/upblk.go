@@ -77,14 +77,17 @@ func (uploadBlock *UploadBlock) upload() {
 	bid := uint32(uploadBlock.ID)
 	i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
 	vnu := &pkt.UploadBlockInitReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
+	//compare s3 flag
+	compareFlag := true
 	req := &pkt.UploadBlockInitReqV2{
-		UserId:    &uploadBlock.UPOBJ.UClient.UserId,
-		SignData:  &uploadBlock.UPOBJ.UClient.SignKey.Sign,
-		KeyNumber: &uploadBlock.UPOBJ.UClient.SignKey.KeyNumber,
-		VHP:       uploadBlock.BLK.VHP,
-		Id:        &bid,
-		Vnu:       vnu,
-		Version:   &env.Version,
+		UserId:      &uploadBlock.UPOBJ.UClient.UserId,
+		SignData:    &uploadBlock.UPOBJ.UClient.SignKey.Sign,
+		KeyNumber:   &uploadBlock.UPOBJ.UClient.SignKey.KeyNumber,
+		VHP:         uploadBlock.BLK.VHP,
+		Id:          &bid,
+		Vnu:         vnu,
+		Version:     &env.Version,
+		CompareFlag: &compareFlag,
 	}
 	resp, errmsg := net.RequestSN(req)
 	if errmsg != nil {
