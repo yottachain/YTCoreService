@@ -53,6 +53,7 @@ type UploadShardResult struct {
 	NODE    *NodeStat
 	VHF     []byte
 	DNSIGN  string
+	Seq     uint64 //compare
 }
 
 type UploadShard struct {

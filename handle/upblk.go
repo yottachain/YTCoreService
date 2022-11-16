@@ -5,6 +5,10 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -57,6 +61,13 @@ func (h *UploadBlockInitHandler) SetMessage(pubkey string, msg proto.Message) (*
 	h.pkey = pubkey
 	req, ok := msg.(*pkt.UploadBlockInitReqV2)
 	if ok {
+		//compare
+		reqInterface := reflect.TypeOf(*req)
+		logrus.Infof("[wangjun][UploadBLK][SetMessage] req=%+v\n", *req)
+		_, result := reqInterface.FieldByName("CompareFlag")
+		if !result || req.CompareFlag == nil {
+			return pkt.NewErrorMsg(pkt.TOO_LOW_VERSION, "CompareFlag check failed"), nil, nil
+		}
 		h.m = req
 		if h.m.UserId == nil || h.m.SignData == nil || h.m.KeyNumber == nil || h.m.Id == nil || h.m.VHP == nil || h.m.Vnu == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:Null value"), nil, nil
@@ -371,7 +382,9 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 	shardMetas := make([]*dao.ShardMeta, shardcount)
 	signs := make([][]string, shardcount)
 	nodeidsls := []int32{}
-	for _, v := range h.m.Oklist {
+	//compare shards
+	var compareShards []*pkt.CompareShardReq_Shards
+	for n, v := range h.m.Oklist {
 		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.VHF == nil || v.DNSIGN == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
@@ -380,7 +393,32 @@ func (h *UploadBlockEndHandler) Handle() proto.Message {
 		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
+		//compare
+		var shardId int64
+		shardId = vbi + int64(*v.SHARDID)
+		compareShard := &pkt.CompareShardReq_Shards{NodeId: v.NODEID, Seq: h.m.Shardseqlist[n].Seq, VHF: v.VHF, Hid: &shardId}
+		compareShards = append(compareShards, compareShard)
+
 	}
+	//save compare shard
+	body := url.Values{}
+	s, _ := json.Marshal(compareShards)
+	body.Add("shards", string(s))
+	resp, err := http.PostForm(env.SAVE_COMPARE_SHARD_URL, body)
+	if err != nil {
+		logrus.Errorf("[UploadBLK]SaveCompareShard request ERR:%s\n", err)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logrus.Errorf("[UploadBLK]SaveCompareShard resp ReadAll ERR:%s\n", err)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	if resp.StatusCode != http.StatusOK {
+		logrus.Errorf("[UploadBLK]SaveCompareShard failed. respbody:%s\n", string(respBody))
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+
 	msgerr := VerifyShards(shardMetas, signs, nodeidsls, vbi, *h.m.AR, h.m.VHB, false)
 	if msgerr != nil {
 		return msgerr

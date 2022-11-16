@@ -31,6 +31,9 @@ var HttpRemoteIp string
 
 var SUM_SERVICE bool = false
 
+//compare
+var SAVE_COMPARE_SHARD_URL string
+
 func readSnProperties() {
 	confpath := YTSN_HOME + "conf/server.properties"
 	config, err := NewConfig(confpath)
@@ -58,6 +61,11 @@ func readSnProperties() {
 	DelLogPath = config.GetString("DelLogPath", "")
 	if !strings.HasSuffix(DelLogPath, "/") {
 		DelLogPath = DelLogPath + "/"
+	}
+	//compare
+	SAVE_COMPARE_SHARD_URL = config.GetString("SAVE_COMPARE_SHARD_URL", "")
+	if SAVE_COMPARE_SHARD_URL == "" {
+		log.Panicf("The 'SAVE_COMPARE_SHARD_URL' parameter is not configured.\n")
 	}
 
 	p2pConfig(config)

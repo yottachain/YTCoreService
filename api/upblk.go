@@ -308,3 +308,36 @@ func (uploadBlock *UploadBlock) UploadBlockDedup() {
 	}()
 	<-startedSign
 }
+
+//compare seq
+func ToUploadBlockEndReqV2_ShardSeqList(res []*UploadShardResult) []*pkt.UploadBlockEndReqV2_ShardSeqList {
+	shardSeqList := make([]*pkt.UploadBlockEndReqV2_ShardSeqList, len(res))
+	for index, r := range res {
+		shardSeqList[index] = &pkt.UploadBlockEndReqV2_ShardSeqList{
+			Seq: &r.Seq,
+		}
+	}
+	return shardSeqList
+}
+
+//compare seq lrc2
+func ToUploadBlockEndReqV3_ShardSeqList(res []*UploadShardResult) []*pkt.UploadBlockEndReqV3_ShardSeqList {
+	shardSeqList := make([]*pkt.UploadBlockEndReqV3_ShardSeqList, len(res))
+	for index, r := range res {
+		shardSeqList[index] = &pkt.UploadBlockEndReqV3_ShardSeqList{
+			Seq: &r.Seq,
+		}
+	}
+	return shardSeqList
+}
+
+//compare seq lrc2
+func ToUploadBlockEndReqV3_ShardSeqList2(res2 []*UploadShardResult) []*pkt.UploadBlockEndReqV3_ShardSeqList2 {
+	shardSeqList2 := make([]*pkt.UploadBlockEndReqV3_ShardSeqList2, len(res2))
+	for index, r := range res2 {
+		shardSeqList2[index] = &pkt.UploadBlockEndReqV3_ShardSeqList2{
+			Seq: &r.Seq,
+		}
+	}
+	return shardSeqList2
+}

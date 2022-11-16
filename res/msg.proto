@@ -1,5 +1,7 @@
 syntax = "proto3";
  
+
+option go_package="./;pkt";
 package pkt;
 
 message DownloadShardReq{
@@ -91,6 +93,7 @@ message TaskOpResultList{
 message UploadShard2CResp{
    int32 RES= 1; 
    string DNSIGN =2;
+   uint64 seq=3;
 }
 
 message UploadShardReq{ 
