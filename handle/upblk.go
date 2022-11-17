@@ -611,7 +611,10 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 	signs := make([][]string, shardcount)
 	nodeidsls := []int32{}
 	scount := 0
-	for _, v := range h.m.Oklist {
+
+	//compare shards lrc2
+	var compareShards []*pkt.CompareShardReq_Shards
+	for n, v := range h.m.Oklist {
 		if v.SHARDID == nil || *v.SHARDID >= int32(shardcount) || v.NODEID == nil || v.VHF == nil || v.DNSIGN == nil {
 			return pkt.NewErrorMsg(pkt.INVALID_ARGS, "Invalid request:OkList")
 		}
@@ -631,7 +634,33 @@ func (h *UploadBlockEndV3Handler) Handle() proto.Message {
 		if !env.IsExistInArray(int32(*v.NODEID), nodeidsls) {
 			nodeidsls = append(nodeidsls, int32(*v.NODEID))
 		}
+
+		//compare
+		var shardId int64
+		shardId = vbi + int64(*v.SHARDID)
+		compareShards = append(compareShards, &pkt.CompareShardReq_Shards{NodeId: v.NODEID, Seq: h.m.Shardseqlist[n].Seq, VHF: v.VHF, Hid: &shardId})
+		compareShards = append(compareShards, &pkt.CompareShardReq_Shards{NodeId: v.NODEID2, Seq: h.m.Shardseqlist2[n].Seq, VHF: v.VHF, Hid: &shardId})
+
 	}
+	//save compare shard
+	body := url.Values{}
+	s, _ := json.Marshal(compareShards)
+	body.Add("shards", string(s))
+	resp, err := http.PostForm(env.SAVE_COMPARE_SHARD_URL, body)
+	if err != nil {
+		logrus.Errorf("[UploadBLK]SaveCompareShard request ERR:%s\n", err)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logrus.Errorf("[UploadBLK]SaveCompareShard resp ReadAll ERR:%s\n", err)
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+	if resp.StatusCode != http.StatusOK {
+		logrus.Errorf("[UploadBLK]SaveCompareShard failed. respbody:%s\n", string(respBody))
+		return pkt.NewError(pkt.SERVER_ERROR)
+	}
+
 	msgerr := VerifyShards(shardMetas, signs, nodeidsls, vbi, *h.m.AR, h.m.VHB, true)
 	if msgerr != nil {
 		return msgerr
