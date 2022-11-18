@@ -83,6 +83,7 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
 			Vbi:          &uploadBlock.STime,
+			Shardseqlist: ToUploadBlockEndReqV2_ShardSeqList(ress), //compare seq
 		}
 		if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
@@ -92,20 +93,22 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 	} else {
 		vnu := uploadBlock.UPOBJ.VNU.Hex()
 		req := &pkt.UploadBlockEndReqV3{
-			UserId:       &uid,
-			SignData:     &uploadBlock.UPOBJ.UClient.SignKey.Sign,
-			KeyNumber:    &kn,
-			Id:           &bid,
-			VHP:          vhp,
-			VHB:          vhb,
-			KEU:          keu,
-			KED:          ked,
-			VNU:          &vnu,
-			OriginalSize: &osize,
-			RealSize:     rsize,
-			AR:           &ar,
-			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
-			Vbi:          &uploadBlock.STime,
+			UserId:        &uid,
+			SignData:      &uploadBlock.UPOBJ.UClient.SignKey.Sign,
+			KeyNumber:     &kn,
+			Id:            &bid,
+			VHP:           vhp,
+			VHB:           vhb,
+			KEU:           keu,
+			KED:           ked,
+			VNU:           &vnu,
+			OriginalSize:  &osize,
+			RealSize:      rsize,
+			AR:            &ar,
+			Oklist:        ToUploadBlockEndReqV3_OkList(ress, ress2),
+			Vbi:           &uploadBlock.STime,
+			Shardseqlist:  ToUploadBlockEndReqV3_ShardSeqList(ress),   //compare seq
+			Shardseqlist2: ToUploadBlockEndReqV3_ShardSeqList2(ress2), //compare seq
 		}
 		if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
