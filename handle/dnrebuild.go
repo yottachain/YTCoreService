@@ -55,9 +55,10 @@ func (h *TaskOpResultListHandler) Handle() proto.Message {
 		logrus.Warnf("[DNRebuidRep]Node unequal:%d!=%d.\n", newid, h.m.NodeId)
 		newid = h.m.NodeId
 	}
+
 	if h.m.SrcNodeID == 0 {
-		logrus.Error("[DNRebuidRep]Invalid SrcNodeID id:0")
-		return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, "Invalid SrcNodeID id:0")
+		logrus.Warnf("[DNRebuidRep]SrcNodeID id:0")
+		//return pkt.NewErrorMsg(pkt.INVALID_NODE_ID, "Invalid SrcNodeID id:0")
 	}
 	if h.m.Id == nil || len(h.m.Id) == 0 || h.m.RES == nil || len(h.m.RES) == 0 {
 		logrus.Errorf("[DNRebuidRep][%d]Rebuild task OpResultList is empty.\n", newid)
@@ -119,14 +120,14 @@ func SaveRep(newid int32, metas []*dao.ShardMeta) error {
 	vbi := dao.GenerateShardID(size)
 	vbi2 := dao.GenerateShardID(size)
 	for index, m := range metas {
-		if m.NodeId != 0 {
+		if m.NodeId != -1 {
 			rm := &dao.ShardRebuidMeta{ID: vbi + int64(index)}
 			rm.VFI = m.VFI
 			rm.NewNodeId = newid
 			rm.OldNodeId = m.NodeId
 			rebuildmeta = append(rebuildmeta, rm)
 		}
-		if m.NodeId2 != 0 {
+		if m.NodeId2 != -1 {
 			rm := &dao.ShardRebuidMeta{ID: vbi2 + int64(index)}
 			rm.VFI = m.VFI
 			rm.NewNodeId = newid
@@ -142,11 +143,13 @@ func SaveRep(newid int32, metas []*dao.ShardMeta) error {
 		} else {
 			count[res.NewNodeId] = 1
 		}
-		num, ok = count[res.OldNodeId]
-		if ok {
-			count[res.OldNodeId] = num - 1
-		} else {
-			count[res.OldNodeId] = -1
+		if res.OldNodeId != 0 {
+			num, ok = count[res.OldNodeId]
+			if ok {
+				count[res.OldNodeId] = num - 1
+			} else {
+				count[res.OldNodeId] = -1
+			}
 		}
 	}
 	startTime := time.Now()

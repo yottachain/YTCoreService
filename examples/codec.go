@@ -16,7 +16,7 @@ func TestCodec() {
 	env.InitClient()
 	codec.InitLRC()
 	loop := 10
-	filenum := 50
+	filenum := 40
 	stime := time.Now()
 	wgroup := sync.WaitGroup{}
 	for ii := 0; ii < loop; ii++ {
@@ -61,53 +61,54 @@ func codeblock(b *codec.PlainBlock) {
 	if er != nil {
 		panic(er)
 	}
-	size := len(b.Data)
+	//size := len(b.Data)
 	ks := codec.GenerateRandomKey()
 	aes := codec.NewBlockAESEncryptor(b, ks)
-	eblk, err := aes.Encrypt()
-	if err != nil {
-		panic(err)
-	}
-	enc := codec.NewErasureEncoder(eblk)
-	err = enc.Encode()
-	if err != nil {
-		panic(err)
-	}
-
-	rsize := codec.GetEncryptedBlockSize(int64(size))
-	_, err = codec.NewErasureDecoder(rsize)
+	_, err := aes.Encrypt()
 	if err != nil {
 		panic(err)
 	}
 	/*
-		shds := enc.Shards
-		rand.Seed(time.Now().Unix())
-		rand.Shuffle(len(shds), func(i, j int) { shds[i], shds[j] = shds[j], shds[i] })
-		for _, shd := range shds {
-			b, err := c.AddShard(shd.Data)
-			if err != nil {
-				panic(err)
-			}
-			if b {
-				break
-			}
-		}
-		if !c.IsOK() {
-			panic(errors.New("shards is not enough"))
-		}
-		newblk := c.GetEncryptedBlock()
-		newblk.SecretKey = ks
-		dec := codec.NewBlockAESDecryptor(newblk)
-		pb, err := dec.Decrypt()
+		enc := codec.NewErasureEncoder(eblk)
+		err = enc.Encode()
 		if err != nil {
 			panic(err)
 		}
-		er = pb.Sum()
-		if er != nil {
-			panic(er)
+
+		rsize := codec.GetEncryptedBlockSize(int64(size))
+		_, err = codec.NewErasureDecoder(rsize)
+		if err != nil {
+			panic(err)
 		}
-		if bytes.Equal(b.VHP, pb.VHP) {
-			fmt.Println("ok")
-		}*/
+
+			shds := enc.Shards
+			rand.Seed(time.Now().Unix())
+			rand.Shuffle(len(shds), func(i, j int) { shds[i], shds[j] = shds[j], shds[i] })
+			for _, shd := range shds {
+				b, err := c.AddShard(shd.Data)
+				if err != nil {
+					panic(err)
+				}
+				if b {
+					break
+				}
+			}
+			if !c.IsOK() {
+				panic(errors.New("shards is not enough"))
+			}
+			newblk := c.GetEncryptedBlock()
+			newblk.SecretKey = ks
+			dec := codec.NewBlockAESDecryptor(newblk)
+			pb, err := dec.Decrypt()
+			if err != nil {
+				panic(err)
+			}
+			er = pb.Sum()
+			if er != nil {
+				panic(er)
+			}
+			if bytes.Equal(b.VHP, pb.VHP) {
+				fmt.Println("ok")
+			}*/
 	fmt.Println("ok")
 }

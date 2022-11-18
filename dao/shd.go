@@ -86,19 +86,19 @@ func UpdateShardMeta(metas []*ShardMeta, newid int32) error {
 	source := NewBaseSource()
 	operations := []mongo.WriteModel{}
 	for _, v := range metas {
-		if v.NodeId != 0 && v.NodeId2 != 0 {
+		if v.NodeId != -1 && v.NodeId2 != -1 {
 			filter := bson.M{"_id": v.VFI}
 			update := bson.M{"$set": bson.M{"nodeId": newid, "nodeId2": newid}}
 			mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
 			operations = append(operations, mode)
 		} else {
-			if v.NodeId != 0 {
+			if v.NodeId != -1 {
 				filter := bson.M{"_id": v.VFI}
 				update := bson.M{"$set": bson.M{"nodeId": newid}}
 				mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
 				operations = append(operations, mode)
 			}
-			if v.NodeId2 != 0 {
+			if v.NodeId2 != -1 {
 				filter := bson.M{"_id": v.VFI}
 				update := bson.M{"$set": bson.M{"nodeId2": newid}}
 				mode := &mongo.UpdateOneModel{Filter: filter, Update: update}
@@ -183,10 +183,10 @@ func GetShardNodes(ids []int64, srcnodeid int32) ([]*ShardMeta, []int64, error) 
 		}
 		if srcnodeid == res.NodeId || srcnodeid == res.NodeId2 {
 			if srcnodeid != res.NodeId {
-				res.NodeId = 0
+				res.NodeId = -1
 			}
 			if srcnodeid != res.NodeId2 {
-				res.NodeId2 = 0
+				res.NodeId2 = -1
 			}
 			metas = append(metas, res)
 		} else {
