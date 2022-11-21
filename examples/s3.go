@@ -19,7 +19,7 @@ func S3() {
 
 func DownLoadFile() {
 	outpath := "D:/YTSDK.ok.rar"
-	dn, errmsg := client.NewDownloadFile("cloudtrust-backup", "data/1/fB95AYmB-iFXkoCpPs-Ah0bB1mYnUC5Btqb6pEDyk8s=/SH8Xz2_RrdZA7GxySliAH9L1UxebGrsSK21KwyGpRvk=", primitive.NilObjectID)
+	dn, errmsg := client.NewDownloadFile("lsptest", "aa", primitive.NilObjectID)
 	if errmsg != nil {
 		logrus.Panicf("[DownLoadFile]ERR:%s\n", pkt.ToError(errmsg))
 	}

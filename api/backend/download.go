@@ -93,7 +93,7 @@ func (db *YTFS) getObjectV2(publicKey, bucketName, objectName string, rangeReque
 		return nil, err
 	}
 	meta["x-amz-meta-s3b-last-modified"] = t.Format("20060102T150405Z")
-	content := getContentByMeta(meta)
+	content := GetContentByMeta(meta)
 	content.Key = objectName
 	content.Owner = &s3.UserInfo{
 		ID:          c.Username,
@@ -111,7 +111,7 @@ func (db *YTFS) getObjectV2(publicKey, bucketName, objectName string, rangeReque
 		logrus.Errorf("[S3Download]toObject err:%s\n", err)
 		return nil, err
 	}
-	content = getContentByMeta(result.Metadata)
+	content = GetContentByMeta(result.Metadata)
 	result.Size = content.Size
 	if result.Size > 0 {
 		if rangeRequest != nil {

@@ -196,14 +196,18 @@ func (ud *UploadObjectToDisk) CheckBlockDup(resp *pkt.UploadBlockDupResp, b *cod
 
 var pathmap sync.Map
 
-func (ud *UploadObjectToDisk) makePath(hash string) string {
+func MakePath(hash string) string {
 	p := env.GetCache() + hash[0:2] + "/" + hash[2:4]
 	_, ok := pathmap.Load(p)
 	if !ok {
 		os.MkdirAll(p, os.ModePerm)
 		pathmap.Store(p, "")
 	}
-	ud.out = p + "/" + hash
+	return p + "/" + hash
+}
+
+func (ud *UploadObjectToDisk) makePath(hash string) string {
+	ud.out = MakePath(hash)
 	return ud.out
 }
 

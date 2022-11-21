@@ -81,6 +81,10 @@ func (uploadBlock *UploadBlock) UploadShardsEx(vhp, keu, ked, vhb []byte, enc *c
 	var ar int32 = enc.DataCount
 	var errmsg *pkt.ErrorMessage
 	vnu := uploadBlock.UPOBJ.VNU.Hex()
+	var vbi *int64 = &uploadBlock.STime
+	if uploadBlock.STime == 0 {
+		vbi = nil
+	}
 	req := &pkt.UploadBlockEndReqV3{
 		UserId:       &uid,
 		SignData:     &uploadBlock.UPOBJ.UClient.SignKey.Sign,
@@ -95,7 +99,7 @@ func (uploadBlock *UploadBlock) UploadShardsEx(vhp, keu, ked, vhb []byte, enc *c
 		RealSize:     rsize,
 		AR:           &ar,
 		Oklist:       ToUploadBlockEndReqV3_OkListEx(ress, ress2),
-		Vbi:          &uploadBlock.STime,
+		Vbi:          vbi,
 	}
 	if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 		sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))

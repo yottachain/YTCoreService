@@ -65,6 +65,10 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 		ar = enc.DataCount
 	}
 	var errmsg *pkt.ErrorMessage
+	var vbi *int64 = &uploadBlock.STime
+	if uploadBlock.STime == 0 {
+		vbi = nil
+	}
 	if ress2 == nil || isCopyShard {
 		i1, i2, i3, i4 := pkt.ObjectIdParam(uploadBlock.UPOBJ.VNU)
 		vnu := &pkt.UploadBlockEndReqV2_VNU{Timestamp: i1, MachineIdentifier: i2, ProcessIdentifier: i3, Counter: i4}
@@ -82,7 +86,7 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV2_OkList(ress),
-			Vbi:          &uploadBlock.STime,
+			Vbi:          vbi,
 		}
 		if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))
@@ -105,7 +109,7 @@ func (uploadBlock *UploadBlock) UploadShards(vhp, keu, ked, vhb []byte, enc *cod
 			RealSize:     rsize,
 			AR:           &ar,
 			Oklist:       ToUploadBlockEndReqV3_OkList(ress, ress2),
-			Vbi:          &uploadBlock.STime,
+			Vbi:          vbi,
 		}
 		if uploadBlock.UPOBJ.UClient.StoreKey != uploadBlock.UPOBJ.UClient.SignKey {
 			sign, _ := SetStoreNumber(uploadBlock.UPOBJ.UClient.SignKey.Sign, int32(uploadBlock.UPOBJ.UClient.StoreKey.KeyNumber))

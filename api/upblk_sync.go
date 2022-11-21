@@ -58,7 +58,7 @@ func (uploadBlock *UploadBlockSync) upload() {
 		if uploadBlock.EncBLK.Length() < env.PL2 {
 			uploadBlock.uploadDB(eblk)
 		} else {
-			uploadBlock.STime = time.Now().Unix()
+			uploadBlock.STime = 0
 			uploadBlock.uploadDedup(eblk)
 		}
 	}

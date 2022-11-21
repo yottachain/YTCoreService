@@ -6,6 +6,8 @@ require (
 	github.com/aurawing/eos-go v0.9.1-0.20200517054114-c338bd5d1974
 	github.com/aws/aws-sdk-go v1.44.58
 	github.com/boltdb/bolt v1.3.1
+	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-gonic/gin v1.6.3
 	github.com/gobuffalo/packr/v2 v2.2.0
 	github.com/golang/protobuf v1.4.2
 	github.com/kardianos/service v1.2.1
@@ -19,9 +21,9 @@ require (
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.8.1
+	github.com/unrolled/secure v1.0.8
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
 	github.com/yottachain/YTDNMgmt v0.0.0-20220720025849-9092629f6a30
-	github.com/yottachain/YTS3 v0.0.0-20220915033217-731d3c1c269d
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
 	go.mongodb.org/mongo-driver v1.3.3
@@ -34,13 +36,12 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/aurawing/auramq v0.0.2-0.20200521072017-845ffa488ac8 // indirect
+	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/ethereum/go-ethereum v1.9.9 // indirect
 	github.com/fatih/set v0.2.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
-	github.com/gin-contrib/cors v1.3.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.6.3 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
@@ -98,7 +99,6 @@ require (
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tidwall/sjson v1.1.1 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
-	github.com/unrolled/secure v1.0.8 // indirect
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
 	github.com/yottachain/P2PHost v1.0.2-0.20220720024223-9c9dbf53dd0e // indirect

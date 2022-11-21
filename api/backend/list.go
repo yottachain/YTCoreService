@@ -116,7 +116,7 @@ func (me *YTFS) ListBucket(publicKey, name string, prefix *s3.Prefix, page s3.Li
 		}
 		t := time.Unix(v.FileId.Timestamp().Unix(), 0)
 		meta["x-amz-meta-s3b-last-modified"] = t.Format("20060102T150405Z")
-		content := getContentByMeta(meta)
+		content := GetContentByMeta(meta)
 		content.Key = v.FileName
 		content.Owner = &s3.UserInfo{
 			ID:          c.Username,
@@ -132,7 +132,7 @@ func (me *YTFS) ListBucket(publicKey, name string, prefix *s3.Prefix, page s3.Li
 	return response, nil
 }
 
-func getContentByMeta(meta map[string]string) *s3.Content {
+func GetContentByMeta(meta map[string]string) *s3.Content {
 	var content s3.Content
 	content.ETag = meta["ETag"]
 	if contentLengthString, ok := meta["content-length"]; ok {
