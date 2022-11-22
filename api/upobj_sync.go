@@ -157,6 +157,13 @@ func (upload *UploadObjectSync) writeMeta() *pkt.ErrorMessage {
 	}
 }
 
+func (upload *UploadObjectSync) GetPath() string {
+	if upload.decoder != nil {
+		return upload.decoder.GetPath()
+	}
+	return ""
+}
+
 func (upload *UploadObjectSync) GetLength() int64 {
 	if upload.decoder != nil {
 		return upload.decoder.GetLength()

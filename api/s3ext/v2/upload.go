@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/yottachain/YTCoreService/api"
-	"github.com/yottachain/YTCoreService/api/cache"
 	"github.com/yottachain/YTCoreService/env"
+	"github.com/yottachain/YTCoreService/pkt"
 )
 
 func Upload(g *gin.Context) {
@@ -68,12 +68,25 @@ func Upload(g *gin.Context) {
 	f.Close()
 	f = nil
 	sha := base58.Decode(vhw)
-	inserterr := cache.InsertSyncObject(sha)
+	inserterr := doSyncUpload(sha)
 	if inserterr != nil {
-		logrus.Errorf("[S3EXT][Upload]InsertSyncObject ERR:%s\n", inserterr)
+		logrus.Errorf("[S3EXT][Upload]SyncObject ERR:%s\n", inserterr)
 		g.AbortWithError(http.StatusGatewayTimeout, err)
 		return
 	}
-	logrus.Infof("[S3EXT][Upload]Upload object %s to cache OK.\n", vhw)
 	g.JSON(http.StatusOK, nil)
+}
+
+func doSyncUpload(key []byte) *pkt.ErrorMessage {
+	up, err := api.NewUploadObjectSync(key)
+	if err != nil {
+		return err
+	}
+	err = up.Upload()
+	if err != nil {
+		os.Remove(up.GetPath())
+		return err
+	}
+	os.Remove(up.GetPath())
+	return nil
 }
