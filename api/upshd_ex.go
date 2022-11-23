@@ -170,6 +170,7 @@ func (us *UploadShardEx) DoSend() {
 		}
 		us.res.DNSIGN = resp.DNSIGN
 		us.res.NODE = node.NodeInfo
+		us.res.Seq = resp.Seq //compare
 		logrus.Debugf("[UploadShard]%sSendShard:RETURN OK %d,%s to %d,Gettoken retry %d times,take times %d/%d ms\n",
 			us.logPrefix, resp.RES, base58.Encode(req.VHF), node.NodeInfo.Id, rtimes, ctrtimes, times)
 		break
