@@ -15,11 +15,23 @@ import (
 	"github.com/yottachain/YTCoreService/env"
 )
 
-var ClientMgr *ClientStore
+var data_Connects *ClientStore
+var ctl_Connects *ClientStore
+
+func ClientMgrForData() *ClientStore {
+	return data_Connects
+}
+
+func ClientMgrForCtl() *ClientStore {
+	if ctl_Connects != nil {
+		return ctl_Connects
+	}
+	return data_Connects
+}
 
 func startTcpClient(tcpconfig *Config) {
-	if ClientMgr == nil {
-		ClientMgr = &ClientStore{
+	if data_Connects == nil {
+		data_Connects = &ClientStore{
 			connects:  make(map[peer.ID]*TcpClient),
 			IdLockMap: make(map[peer.ID]chan time.Time),
 			cfg:       tcpconfig,
@@ -27,7 +39,20 @@ func startTcpClient(tcpconfig *Config) {
 		go func() {
 			for {
 				time.Sleep(time.Millisecond * time.Duration(env.P2P_MuteTimeout))
-				ClientMgr.CheckDeadConnetion()
+				data_Connects.CheckDeadConnetion()
+			}
+		}()
+	}
+	if ctl_Connects == nil && env.P2P_DualConnection {
+		ctl_Connects = &ClientStore{
+			connects:  make(map[peer.ID]*TcpClient),
+			IdLockMap: make(map[peer.ID]chan time.Time),
+			cfg:       tcpconfig,
+		}
+		go func() {
+			for {
+				time.Sleep(time.Millisecond * time.Duration(env.P2P_MuteTimeout))
+				ctl_Connects.CheckDeadConnetion()
 			}
 		}()
 	}

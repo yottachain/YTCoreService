@@ -103,14 +103,20 @@ func AddrsToString(addrs []string) string {
 	return buffer.String()
 }
 
-func DoRequest(msg proto.Message, PeerId peer.ID, Maddr []ma.Multiaddr) (proto.Message, *pkt.ErrorMessage) {
+func DoRequest(msg proto.Message, PeerId peer.ID, Maddr []ma.Multiaddr, ctl bool) (proto.Message, *pkt.ErrorMessage) {
 	data, _, msgtype, merr := pkt.MarshalMsg(msg)
 	if merr != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, merr.Error())
 	}
+	var mgr *ClientStore
+	if ctl {
+		mgr = ClientMgrForCtl()
+	} else {
+		mgr = ClientMgrForData()
+	}
 	var client *TcpClient
-	if c, ok := ClientMgr.GetClient(PeerId); !ok {
-		newc, err := ClientMgr.Get(context.Background(), PeerId, Maddr)
+	if c, ok := mgr.GetClient(PeerId); !ok {
+		newc, err := mgr.Get(context.Background(), PeerId, Maddr)
 		if err != nil {
 			return nil, pkt.NewErrorMsg(pkt.COMM_ERROR, fmt.Sprintf("%s,occurred on %s", err.Error(), MultiAddrsToString(Maddr)))
 		}
@@ -130,9 +136,9 @@ func DoRequest(msg proto.Message, PeerId peer.ID, Maddr []ma.Multiaddr) (proto.M
 	}
 }
 
-func RequestDN(msg proto.Message, dn *Node) (proto.Message, *pkt.ErrorMessage) {
+func RequestDN(msg proto.Message, dn *Node, ctl bool) (proto.Message, *pkt.ErrorMessage) {
 	if e := dn.Init(); e != nil {
 		return nil, pkt.NewErrorMsg(pkt.INVALID_ARGS, e.Error())
 	}
-	return DoRequest(msg, dn.PeerId, dn.Maddr)
+	return DoRequest(msg, dn.PeerId, dn.Maddr, ctl)
 }

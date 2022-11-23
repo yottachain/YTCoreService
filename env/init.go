@@ -25,6 +25,7 @@ var P2P_WriteTimeout int = 15000
 var P2P_ReadTimeout int = 15000
 var P2P_MuteTimeout int = 60000
 var P2P_IdleTimeout int = 60000 * 3
+var P2P_DualConnection = false
 
 func GetCurrentPath() string {
 	file, _ := exec.LookPath(os.Args[0])
@@ -106,6 +107,7 @@ func p2pConfig(config *Config) {
 	P2P_ReadTimeout = config.GetRangeInt("P2PHOST_READTIMEOUT", 1000, 180000, 20000)
 	P2P_IdleTimeout = config.GetRangeInt("P2PHOST_IDLETIMEOUT", 60000, 3600000, 180000)
 	P2P_MuteTimeout = config.GetRangeInt("P2PHOST_MUTETIMEOUT", P2P_WriteTimeout, P2P_IdleTimeout, P2P_WriteTimeout*3)
+	P2P_DualConnection = config.GetBool("P2PHOST_DUALCONNECTION", false)
 }
 
 func ReadExport(path string) {

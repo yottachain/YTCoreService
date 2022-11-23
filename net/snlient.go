@@ -87,7 +87,7 @@ func RequestSN(msg proto.Message) (proto.Message, *pkt.ErrorMessage) {
 		if snclient.HttpSupported {
 			resmsg, errmsg = snclient.Request(int32(msgtype), data, log_pre)
 		} else {
-			resmsg, errmsg = DoRequest(msg, snclient.PeerId, snclient.TcpAddr)
+			resmsg, errmsg = DoRequest(msg, snclient.PeerId, snclient.TcpAddr, false)
 		}
 		if errmsg != nil {
 			if !(errmsg.Code == pkt.COMM_ERROR || errmsg.Code == pkt.SERVER_ERROR) {
