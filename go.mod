@@ -36,7 +36,6 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/aurawing/auramq v0.0.2-0.20200521072017-845ffa488ac8 // indirect
-	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/ethereum/go-ethereum v1.9.9 // indirect
 	github.com/fatih/set v0.2.1 // indirect
