@@ -20,7 +20,7 @@ var SuperNode *YTDNMgmt.SuperNode
 
 func InitClient() {
 	initSuperList()
-	startTcpClient(DefaultConfig())
+	StartTcpClient(DefaultConfig())
 	startSnClient(SuperNode.NodeID, SuperNode.Addrs)
 }
 
@@ -45,12 +45,12 @@ func InitServer(MongoAddress string, callback OnMessageFunc) {
 			if tcpcfg == nil {
 				tcpcfg = tcpConfig(port, SuperNode.PrivKey)
 				startTcpServer(tcpcfg, callback)
-				startTcpClient(tcpcfg)
+				StartTcpClient(tcpcfg)
 			}
 		}
 	}
 	if tcpcfg == nil {
-		startTcpClient(DefaultConfig())
+		StartTcpClient(DefaultConfig())
 	}
 }
 

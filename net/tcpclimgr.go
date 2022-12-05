@@ -29,7 +29,7 @@ func ClientMgrForCtl() *ClientStore {
 	return data_Connects
 }
 
-func startTcpClient(tcpconfig *Config) {
+func StartTcpClient(tcpconfig *Config) {
 	if data_Connects == nil {
 		data_Connects = &ClientStore{
 			connects:  make(map[peer.ID]*TcpClient),
