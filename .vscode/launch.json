@@ -15,7 +15,7 @@
             "program": "${workspaceRoot}/main_test.go",
             "args": [
                 "-test.run",
-                "Test_S3"
+                "Test_Test"
             ]
         },
         {
@@ -32,7 +32,7 @@
             },
             "args": [
                 //"console"
-                "test"
+                //"test"
                 //"init"
             ]
         }

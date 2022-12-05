@@ -66,6 +66,7 @@ message TaskList{
     int64 expiredTime=2;
     int32 srcNodeID=3;
     int32 expiredTimeGap=4;
+    int32 padding=5;
 }
 
 message TaskDispatchList{
