@@ -21,7 +21,8 @@ func StartServer() {
 		if env.CertFilePath == "" {
 			e = router.Run(":" + strconv.Itoa(port))
 		} else {
-			e = router.RunTLS(":"+strconv.Itoa(port), env.CertFilePath, env.KeyFilePath)
+			e = router.Run(":" + strconv.Itoa(port))
+			//e = router.RunTLS(":"+strconv.Itoa(port), env.CertFilePath, env.KeyFilePath)
 		}
 		if e != nil {
 			logrus.Errorf("[S3EXT]Port %d,err:%s \n", port, e)

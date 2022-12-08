@@ -7,3 +7,5 @@ cache
 /log
 crt
 /conf/yotta.ipdb
+/conf/userlist_yf.cfg
+/conf/snlist_yf.properties

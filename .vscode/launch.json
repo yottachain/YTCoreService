@@ -28,7 +28,9 @@
                 "GOTRACEBACK": "crash",
                 "ProgramName": "YTS3",
                 "YTSN_HOME": "D:/YTCoreService",
-                "YTFS_HOME": "D:/YTCoreService"
+                "YTFS_HOME": "D:/YTCoreService",
+                "YTFS.snlist": "conf/snlist.properties",
+                "YTFS.userlist": "conf/userlist.cfg"
             },
             "args": [
                 //"console"

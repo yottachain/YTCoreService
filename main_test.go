@@ -10,6 +10,7 @@ import (
 )
 
 func Test_Test(t *testing.T) {
+
 	s, _ := YTCrypto.Sign("5JnLRW1bTRD2bxo93wZ1qnpXfMDHzA97qcQjabnoqgmJTt7kBoH", []byte("lsptest"))
 
 	fmt.Println(s)
