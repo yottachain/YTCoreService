@@ -23,7 +23,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/unrolled/secure v1.0.8
 	github.com/yottachain/YTCrypto v0.0.0-20200122165219-0ea35dc29812
-	github.com/yottachain/YTDNMgmt v0.0.0-20220720025849-9092629f6a30
+	github.com/yottachain/YTDNMgmt v0.0.0-20230208091310-ae0eb76e4c97
 	github.com/yottachain/yotta-analysis v0.0.0-20200827070430-a2cc45d44692
 	github.com/yottachain/yotta-rebuilder v0.0.0-20201208032400-af42fe398b9e
 	go.mongodb.org/mongo-driver v1.3.3
