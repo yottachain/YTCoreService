@@ -71,7 +71,7 @@ func Upload(g *gin.Context) {
 	inserterr := doSyncUpload(sha)
 	if inserterr != nil {
 		logrus.Errorf("[S3EXT][Upload]SyncObject ERR:%s\n", inserterr)
-		g.AbortWithError(http.StatusGatewayTimeout, err)
+		g.AbortWithError(http.StatusGatewayTimeout, pkt.ToError(inserterr))
 		return
 	}
 	g.JSON(http.StatusOK, nil)
