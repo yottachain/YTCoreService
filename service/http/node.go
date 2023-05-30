@@ -208,9 +208,12 @@ func CallApiHandle(w http.ResponseWriter, req *http.Request, callname string) {
 				logrus.Errorf(emsg)
 				WriteErr(w, emsg)
 			} else {
-				WriteText(w, "OK")
+				if callname == "PreRegisterNode" {
+					WriteJson(w, fmt.Sprintf("{\"shardsize\":%d}", env.PFL/1024))
+				} else {
+					WriteText(w, "OK")
+				}
 			}
-
 		}
 	}
 }

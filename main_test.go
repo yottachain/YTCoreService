@@ -3,10 +3,20 @@ package main
 import (
 	"testing"
 
+	"github.com/yottachain/YTCoreService/env"
 	"github.com/yottachain/YTCoreService/examples"
+	"github.com/yottachain/YTCoreService/service"
 )
 
 func Test_Test(t *testing.T) {
+	env.DelLogPath = "D:/"
+	log, err := service.GetNodeLog(1221)
+	if err != nil {
+		return
+	}
+	log.WriteLog("dsssssss")
+	log.WriteLog("dsssssss")
+	log.WriteLog("dsssssss")
 
 }
 

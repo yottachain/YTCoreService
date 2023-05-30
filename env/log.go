@@ -205,7 +205,11 @@ const FormatString = "[%s][%s]%s%s"
 
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if f.NoPrefix {
-		return []byte(entry.Message), nil
+		if strings.HasSuffix(entry.Message, "\n") {
+			return []byte(entry.Message), nil
+		} else {
+			return []byte(entry.Message + "\n"), nil
+		}
 	}
 	output := FormatString
 	if !strings.HasSuffix(entry.Message, "\n") {
